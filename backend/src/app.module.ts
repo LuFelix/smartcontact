@@ -11,6 +11,7 @@ import { GlobalJwtModule } from './shared/global-jwt.module';
 import { SeedModule } from './seeds/seed.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { ProfilesModule } from './profiles/profiles.module';
+import { TagsModule } from './tags/tags.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { ProfilesModule } from './profiles/profiles.module';
     RolesModule,
     UsersModule,
     ProfilesModule,
+    TagsModule,
     GlobalJwtModule,
     SeedModule,
   ],
