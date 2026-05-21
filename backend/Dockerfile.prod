@@ -1,0 +1,19 @@
+# Estágio 1: Build (Compila o TypeScript para JavaScript)
+FROM node:20-alpine as builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+
+# Estágio 2: Execução (Roda apenas o necessário)
+FROM node:20-alpine
+WORKDIR /app
+COPY --from=builder /app/package*.json ./
+# Instala apenas as dependências de produção (ignora devDependencies)
+RUN npm install --omit=dev
+# Copia apenas o código compilado da etapa anterior
+COPY --from=builder /app/dist ./dist
+
+EXPOSE 3000
+CMD ["node", "dist/main"]
