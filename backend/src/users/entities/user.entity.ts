@@ -2,6 +2,8 @@
 import { Role } from 'src/roles/entities/role.entity';
 import { Profile } from '../../profiles/entities/profile.entity';
 import { Tag } from '../../tags/entities/tag.entity';
+import { Phone } from './phone.entity';
+import { Address } from './address.entity';
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index, ManyToOne, JoinColumn, OneToMany, OneToOne } from 'typeorm';
 
 @Entity()
@@ -66,4 +68,10 @@ export class User {
 
     @OneToMany(() => Tag, (tag) => tag.user)
     tags?: Tag[];
+
+    @OneToMany(() => Phone, (phone) => phone.user, { cascade: true })
+    phones?: Phone[];
+
+    @OneToMany(() => Address, (address) => address.user, { cascade: true })
+    addresses?: Address[];
 }

@@ -6,7 +6,6 @@ import { FindManyOptions, ILike, Like, Repository } from 'typeorm';
 import { CreateUserDto } from './dto/user.dto';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/roles/entities/role.entity';
-import * as XLSX from 'xlsx';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { RolesService } from 'src/roles/roles.service';
 
@@ -22,25 +21,14 @@ export class UsersService {
         private readonly rolesService: RolesService,
     ) { }
 
-   /**
-     * Cria um novo usuário. Suporta atribuição dinâmica de roles (para Admins) 
-     * ou fallback para a role padrão (para auto-cadastro público).
-     *
-     * @param {CreateUserDto} createUserDto - DTO com dados do usuário.
-     * @throws {BadRequestException} Se o E-mail/CPF já existir ou a role for inválida.
-     * @returns {Promise<User>} O usuário criado.
-     */
     async create(createUserDto: CreateUserDto): Promise<User> {
-        // Agora extraímos também o e-mail e possivelmente a role que o Admin quer passar
-        const { email, cpf, password, role_id } = createUserDto; 
+        const { email, cpf, password, role_id, phones, addresses } = createUserDto; 
 
-        // 1. Validação de E-mail (Nova Regra de Ouro)
         const emailExists = await this.usersRepository.findOne({ where: { email } });
         if (emailExists) {
             throw new BadRequestException('Usuário com este e-mail já existe');
         }
 
-        // 2. Validação de CPF (Condicional)
         if (cpf) {
             const cpfExists = await this.usersRepository.findOne({ where: { cpf } });
             if (cpfExists) {
@@ -50,13 +38,10 @@ export class UsersService {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // 3. Lógica Dinâmica de Roles
         let assignedRole;
         if (role_id) {
-            // Se vier um role_id no DTO (ex: Admin criando outro usuário via painel)
             assignedRole = await this.rolesRepository.findOne({ where: { id: role_id } });
         } else {
-            // Fallback: Cadastro público via AuthService assume a role padrão
             assignedRole = await this.rolesRepository.findOne({ where: { name: 'colaborador' } });
         }
 
@@ -67,57 +52,28 @@ export class UsersService {
         const user = this.usersRepository.create({
             ...createUserDto,
             password: hashedPassword,
-            role: assignedRole, // Atribui a role resolvida
+            role: assignedRole,
+            phones: phones ? phones.map(p => ({ ...p })) : [],
+            addresses: addresses ? addresses.map(a => ({ ...a })) : [],
         });
 
         return this.usersRepository.save(user);
     }
-    async updateRole(userId: string, roleName: string): Promise<User> {
-        const user = await this.usersRepository.findOneBy({ id: userId });
-        if (!user) {
-            throw new NotFoundException(`Usuário com o ID "${userId}" não encontrado.`);
-        }
 
-        const role = await this.rolesRepository.findOneBy({ name: roleName });
-        if (!role) {
-            throw new BadRequestException(`A role "${roleName}" não é válida.`);
-        }
-
-        user.role = role;
-
-        return this.usersRepository.save(user);
-    }
-
-    /**
-     * Busca um usuário pelo CPF e retorna com a role.
-     *
-     * @param {string} cpf - CPF do usuário.
-     * @returns {Promise<User | null>} Usuário encontrado ou null.
-     */
     async findByCpf(cpf: string): Promise<User | null> {
-        return this.usersRepository.findOne({ where: { cpf }, relations: ['role'] });
+        return this.usersRepository.findOne({ 
+            where: { cpf }, 
+            relations: ['role', 'phones', 'addresses'] 
+        });
     }
 
-    /**
-     * Busca um usuário pelo CPF e retorna com a role.
-     *
-     * @param {string} userId - Id do usuário no banco de dados.
-     * @returns {Promise<User | null>} Usuário encontrado ou null.
-     */
     async findById(userId: string): Promise<User | null> {
-        return this.usersRepository.findOne({ where: { id: userId }, relations: ['role'] });
+        return this.usersRepository.findOne({ 
+            where: { id: userId }, 
+            relations: ['role', 'phones', 'addresses'] 
+        });
     }
 
-    /**
-     * Busca todos os usuários com paginação e filtros opcionais.
-     *
-     * @param {number} page - Número da página.
-     * @param {number} limit - Limite de itens por página.
-     * @param {string} [name] - Nome para filtro opcional.
-     * @param {string} [email] - Email para filtro opcional.
-     * @param {string} [cpf] - CPF para filtro opcional.
-     * @returns {Promise<{ data: User[], total: number }>} Lista de usuários e total.
-     */
     async findAll(page?: number, limit?: number, name?: string, email?: string, cpf?: string): Promise<{ data: User[], total: number }> {
         const skip = page && limit ? (page - 1) * limit : 0;
 
@@ -140,7 +96,8 @@ export class UsersService {
             skip: skip,
             take: limit ?? undefined,
             where: where,
-            select: ['id', 'name', 'email', 'cpf','isVerified'],   
+            relations: ['role', 'phones', 'addresses'],
+            // Removi o 'select' restritivo para garantir que as relações venham completas
         };
 
         const [data, total] = await this.usersRepository.findAndCount(findOptions);
@@ -154,7 +111,7 @@ export class UsersService {
    async update(id: string, updateUserDto: UpdateUserDto): Promise<User> { 
         const user = await this.usersRepository.findOne({
             where: { id },
-            relations: ['role'],
+            relations: ['role', 'phones', 'addresses'],
         });
 
         if (!user) {
@@ -174,25 +131,27 @@ export class UsersService {
             updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
         }
 
-        // LÓGICA CORRIGIDA: Usa o roleId (UUID) para buscar e atribuir a role
         if (updateUserDto.roleId) {
-            const role = await this.rolesService.findOne(updateUserDto.roleId); // Busca por ID, não por Nome
+            const role = await this.rolesService.findOne(updateUserDto.roleId);
             user.role = role;
         }
 
-        // Remove o roleId do DTO para o TypeORM não tentar inserir numa coluna solta
-        const { roleId, ...userUpdateData } = updateUserDto;
+        // TypeORM cascade handles update if items have IDs, or creates new ones if they don't.
+        // For simpler logic, we'll merge the top level properties first.
+        const { roleId, phones, addresses, ...userUpdateData } = updateUserDto;
+        
+        this.usersRepository.merge(user, userUpdateData);
 
-        // Mescla as outras propriedades normais (nome, email, etc)
-        const updatedUser = this.usersRepository.merge(user, userUpdateData);
+        if (phones) {
+            user.phones = phones as any;
+        }
+        if (addresses) {
+            user.addresses = addresses as any;
+        }
 
-        return this.usersRepository.save(updatedUser);
+        return this.usersRepository.save(user);
     }
 
-    /**
-     * Injeta o código de verificação e a data de expiração no usuário.
-     * Chamado logo após a criação da conta.
-     */
     async setVerificationData(userId: string, code: string, expires: Date): Promise<void> {
         await this.usersRepository.update(userId, {
             verificationCode: code,
@@ -200,10 +159,6 @@ export class UsersService {
         });
     }
 
-    /**
-     * Marca o e-mail do usuário como verificado e limpa os dados temporários.
-     * Chamado quando o usuário acerta o código enviado por e-mail.
-     */
     async markEmailAsVerified(userId: string): Promise<void> {
         await this.usersRepository.update(userId, {
             isVerified: true,
@@ -214,16 +169,11 @@ export class UsersService {
     
     async findByEmail(email: string): Promise<User | null> {
         return this.usersRepository.findOne({ 
-        where: { email }, 
-        relations: ['role'] 
-  });
+            where: { email }, 
+            relations: ['role', 'phones', 'addresses'] 
+        });
     }
-    /**
-     * Remove um usuário do sistema pelo ID.
-     * * @param {number} id - ID do usuário a ser removido.
-     * @throws {NotFoundException} Se o usuário não existir.
-     * @returns {Promise<{ message: string }>} Mensagem de sucesso.
-     */
+
     async remove(id: string): Promise<{ message: string }> { 
         const user = await this.usersRepository.findOneBy({ id });
         
@@ -235,5 +185,4 @@ export class UsersService {
 
         return { message: `Usuário com ID ${id} foi removido com sucesso.` };
     }
-
 }
