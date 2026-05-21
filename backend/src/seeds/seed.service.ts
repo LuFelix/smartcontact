@@ -62,13 +62,13 @@ export class SeedService {
   }
 
   /**
-   * Cria o usuário administrador com o CPF e senha fornecidos.
+   * Cria o usuário administrador com o Email e senha fornecidos.
    */
   private async seedAdminUser(adminRole: Role) {
-    const adminCPF = '00000000000'; // CPF do admin
+    const adminEmail = 'admin@smartcontact.com.br'; // Email padrão do admin
     const adminPassword = 'Senha@123'; // Senha do admin
 
-    const existingAdmin = await this.userRepository.findOne({ where: { cpf: adminCPF } });
+    const existingAdmin = await this.userRepository.findOne({ where: { email: adminEmail } });
 
     if (!existingAdmin) {
       const salt = await bcrypt.genSalt();
@@ -76,8 +76,8 @@ export class SeedService {
 
       const adminUser = this.userRepository.create({
         name: 'Usuário Administrador',
-        email: 'admin@meusistema.com',
-        cpf: adminCPF,
+        email: adminEmail,
+        cpf: '00000000000',
         password: hashedPassword,
         isVerified: true,
         phonenumber: '00000000000',
@@ -89,9 +89,9 @@ export class SeedService {
       });
       adminUser.role = adminRole;
       await this.userRepository.save(adminUser);
-      this.logger.log(`Usuário administrador com CPF ${adminCPF} criado com sucesso.`);
+      this.logger.log(`Usuário administrador com Email ${adminEmail} criado com sucesso.`);
     } else {
-      this.logger.log(`Usuário administrador com CPF ${adminCPF} já existe.`);
+      this.logger.log(`Usuário administrador com Email ${adminEmail} já existe.`);
     }
   }
 }
