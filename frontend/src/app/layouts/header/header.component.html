@@ -12,6 +12,10 @@
     <span class="spacer"></span>
 
     <!-- Botão de Notificações (Exemplo) -->
+    <button mat-icon-button (click)="toggleDarkMode()" aria-label="Alternar modo escuro" class="theme-toggle-button">
+      <mat-icon>{{ darkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+
     <button mat-icon-button aria-label="Notificações" class="notification-button">
        <mat-icon matBadge="{{ notificationCount > 0 ? notificationCount : '' }}"
                  matBadgeColor="warn"
