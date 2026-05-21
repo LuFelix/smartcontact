@@ -50,7 +50,7 @@
 }
 
 .hamburger-btn {
-  display: none !important; // Hidden on desktop
+  display: inline-flex; // Always visible in Admin area to toggle sidenav
   align-items: center;
   justify-content: center;
   background-color: var(--mat-sys-surface-container-high) !important;
@@ -82,8 +82,8 @@
   mat-icon {
       margin: 0 !important;
       display: flex !important;
-      align-items: center;
-      justify-content: center;
+      align-items: center !important;
+      justify-content: center !important;
   }
 }
 
@@ -125,9 +125,5 @@
   
   .header-content {
       padding: 0 4px;
-  }
-
-  .hamburger-btn {
-      display: inline-flex !important; // Visible on mobile
   }
 }
