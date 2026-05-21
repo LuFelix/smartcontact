@@ -1,21 +1,47 @@
-/* You can add global styles to this file, and also import other style files */
 @use "@angular/material" as mat;
 
-:root {
-    color-scheme: light;
-
-    @include mat.theme(
-        (
-            color: mat.$azure-palette,
-            typography: Roboto,
-            density: 0
-        )
-    )
+html {
+  @include mat.theme((
+    color: mat.$azure-palette,
+    typography: Roboto,
+    density: 0,
+  ));
+  
+  color-scheme: light;
 }
 
-:root.dark-mode {
-    color-scheme: dark;
+.dark-mode {
+  @include mat.theme((
+    color: (
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
+      theme-type: dark
+    ),
+  ));
+  
+  color-scheme: dark;
 }
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+html, body { 
+  height: 100%; 
+  scroll-behavior: smooth;
+}
+
+body { 
+  margin: 0; 
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background-color: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+// Custom utility for section spacing
+section {
+    position: relative;
+    overflow: hidden;
+}
+
+// Ensure icons have a consistent look
+mat-icon {
+    vertical-align: middle;
+}

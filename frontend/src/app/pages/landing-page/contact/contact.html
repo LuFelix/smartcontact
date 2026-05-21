@@ -1,40 +1,56 @@
-<div class="container">
-    <h1>Interessado? Entre em contato!</h1>
+<section class="contact-section">
+  <div class="content-container">
+    <div class="info-side">
+      <span class="badge">Contato</span>
+      <h2 class="title">Vamos Conversar?</h2>
+      <p class="description">Tire suas dúvidas sobre como o SmartContact pode transformar o networking da sua empresa ou evento.</p>
+      
+      <div class="contact-info">
+        <div class="info-item">
+          <mat-icon color="primary">email</mat-icon>
+          <div>
+            <h3>Email</h3>
+            <p>contato&#64;smartcontact.com.br</p>
+          </div>
+        </div>
+        <div class="info-item">
+          <mat-icon color="primary">phone</mat-icon>
+          <div>
+            <h3>Telefone</h3>
+            <p>(82) 99999-9999</p>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    <mat-card class="form-container">
-        <form [formGroup]="contactForm" (submit)="send()">
-
-            <!-- CPF Field -->
-            <mat-form-field>
-                <mat-label>Seu Nome</mat-label>
-                <input
-                matInput
-                formControlName="name"
-                />
+    <div class="form-side">
+      <mat-card class="contact-card" appearance="raised">
+        <mat-card-content>
+          <form [formGroup]="contactForm" (submit)="send()" class="contact-form">
+            <mat-form-field appearance="outline">
+              <mat-label>Nome Completo</mat-label>
+              <mat-icon matPrefix>person</mat-icon>
+              <input matInput formControlName="name" placeholder="Ex: João Silva" required>
             </mat-form-field>
 
-            <!-- Email Field -->
-            <mat-form-field>
-                <mat-label>Seu melhor email</mat-label>
-                <input
-                matInput
-                formControlName="email"
-                />
+            <mat-form-field appearance="outline">
+              <mat-label>E-mail Corporativo</mat-label>
+              <mat-icon matPrefix>email</mat-icon>
+              <input matInput formControlName="email" type="email" placeholder="joao@empresa.com" required>
             </mat-form-field>
 
-            <!-- Phone Field -->
-            <mat-form-field>
-                <mat-label>Telefone</mat-label>
-                <input
-                matInput
-                formControlName="phone"
-                />
+            <mat-form-field appearance="outline">
+              <mat-label>Telefone / WhatsApp</mat-label>
+              <mat-icon matPrefix>phone</mat-icon>
+              <input matInput formControlName="phone" placeholder="(82) 90000-0000">
             </mat-form-field>
 
-        </form>
-
-        <button matButton="filled" (click)="send()" class="primary">Eu quero!</button>
-
-    </mat-card>
-
-</div>
+            <button mat-flat-button color="primary" type="submit" class="submit-btn">
+              Enviar Mensagem
+            </button>
+          </form>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</section>

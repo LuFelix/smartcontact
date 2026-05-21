@@ -1,21 +1,33 @@
-<div class="carousel-wrapper">
-    <img src="logo2.png" alt="Logo da empresa" />
-    <div class="carousel">
-        @for (slide of slides; track $index) {
-            <div class="slide" [class.active]="$index === currentSlide">
-                <h2>{{ slide.title }}</h2>
-                <p>{{ slide.description }}</p>
-            </div>
-        }
+<div class="hero-carousel">
+  <div class="carousel-container">
+    @for (slide of slides; track $index) {
+    <div class="slide" [class.active]="$index === currentSlide">
+      <div class="slide-content">
+        <mat-icon class="slide-icon">{{ slide.icon }}</mat-icon>
+        <h1 class="slide-title">{{ slide.title }}</h1>
+        <p class="slide-description">{{ slide.description }}</p>
+        <div class="slide-actions">
+          <a mat-flat-button color="primary" href="#about">Saiba Mais</a>
+          <a mat-stroked-button color="primary" href="#contact">Fale Conosco</a>
+        </div>
+      </div>
+    </div>
+    }
+  </div>
+
+  <div class="carousel-navigation">
+    <button mat-icon-button (click)="prevSlide()" aria-label="Anterior">
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+    
+    <div class="indicators">
+      @for (slide of slides; track $index) {
+        <span class="dot" [class.active]="$index === currentSlide" (click)="goToSlide($index)"></span>
+      }
     </div>
 
-    <div class="controls">
-        <button matFab (click)="prevSlide()">
-            <mat-icon>chevron_left</mat-icon>
-        </button>
-
-        <button matFab (click)="nextSlide()">
-            <mat-icon>chevron_right</mat-icon>
-        </button>
-    </div>
+    <button mat-icon-button (click)="nextSlide()" aria-label="Próximo">
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+  </div>
 </div>

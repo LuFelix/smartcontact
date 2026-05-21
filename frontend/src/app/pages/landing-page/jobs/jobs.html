@@ -1,21 +1,37 @@
-<body>
-    <h1>Trabalhe Conosco</h1>
-    <div class="vagas-container">
-        @for (vaga of vagas; track $index) {
-            <mat-card class="vaga-card">
-                <mat-card-header>
-                    <mat-card-title>{{ vaga.titulo }}</mat-card-title>
-                    <mat-card-subtitle>{{ vaga.localizacao }}</mat-card-subtitle>
-                </mat-card-header>
+<section class="jobs-section">
+  <div class="header">
+    <span class="badge">Carreiras</span>
+    <h2 class="title">Faça parte da Revolução NFC</h2>
+    <p class="subtitle">Estamos em busca de talentos que queiram construir o futuro do networking digital.</p>
+  </div>
 
-                <mat-card-content>
-                    <p>{{ vaga.descricao }}</p>
-                </mat-card-content>
+  <div class="vagas-container">
+    @for (vaga of vagas; track $index) {
+      <mat-card class="vaga-card" appearance="outlined">
+        <mat-card-header>
+          <div mat-card-avatar class="job-icon">
+            <mat-icon color="primary">work_outline</mat-icon>
+          </div>
+          <mat-card-title>{{ vaga.titulo }}</mat-card-title>
+          <mat-card-subtitle>
+            <mat-icon class="small-icon">place</mat-icon> {{ vaga.localizacao }} • {{ vaga.tipo }}
+          </mat-card-subtitle>
+        </mat-card-header>
 
-                <mat-card-actions>
-                    <a matButton="filled" color="primary" href="#contact">Candidatar-se</a>
-                </mat-card-actions>
-            </mat-card>
-        }
-    </div>
-</body>
+        <mat-card-content>
+          <p class="description">{{ vaga.descricao }}</p>
+          <mat-chip-set class="tech-tags">
+            @for (tag of vaga.tags; track tag) {
+              <mat-chip>{{ tag }}</mat-chip>
+            }
+          </mat-chip-set>
+        </mat-card-content>
+
+        <mat-card-actions align="end">
+          <a mat-button color="primary" href="#contact">Saber Mais</a>
+          <a mat-flat-button color="primary" href="#contact">Candidatar-se</a>
+        </mat-card-actions>
+      </mat-card>
+    }
+  </div>
+</section>

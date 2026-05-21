@@ -14,21 +14,24 @@ export class Carousel {
 
   slides = [
     {
-      title: 'Inovação em Tecnologia',
-      description: 'Soluções sob medida para sua empresa crescer com segurança.'
+      title: 'Networking Inteligente',
+      description: 'Substitua o cartão de visita tradicional por uma experiência digital sem fricção via NFC.',
+      icon: 'nfc'
     },
     {
-      title: 'Serviços de TI Especializados',
-      description: 'Consultoria, suporte e desenvolvimento com qualidade e agilidade.'
+      title: 'Perfil Dinâmico',
+      description: 'Atualize seus dados, links e redes sociais instantaneamente sem precisar regravar sua tag.',
+      icon: 'contact_page'
     },
     {
-      title: 'Equipe Multidisciplinar',
-      description: 'Profissionais capacitados para atender às suas necessidades.'
+      title: 'Analytics de Conexão',
+      description: 'Acompanhe o engajamento de seus contatos e receba notificações em tempo real a cada leitura.',
+      icon: 'insights'
     }
   ];
 
   ngOnInit() {
-    this.intervalId = setInterval(() => this.nextSlide(), 5000);
+    this.intervalId = setInterval(() => this.nextSlide(), 6000);
   }
 
   ngOnDestroy() {
@@ -43,5 +46,9 @@ export class Carousel {
 
   prevSlide() {
     this.currentSlide = (this.currentSlide - 1 + this.slides.length) % this.slides.length;
+  }
+
+  goToSlide(index: number) {
+    this.currentSlide = index;
   }
 }
