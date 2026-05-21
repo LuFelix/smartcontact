@@ -30,16 +30,6 @@ a[mat-list-item] {
   }
 }
 
-.toggle-content-wrapper {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    
-    mat-icon {
-        margin-right: 12px;
-    }
-}
-
 .layout-toggle-button {
   margin-top: 16px !important;
   color: var(--mat-sys-secondary) !important;

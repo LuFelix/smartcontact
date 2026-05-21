@@ -1,9 +1,10 @@
 .container {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100vh;
   width: 100%;
   position: relative;
+  overflow: hidden;
 }
 
 .left-panel {
@@ -13,7 +14,10 @@
   align-items: center;
   padding: 24px;
   margin: 0;
-  z-index: 1;
+  z-index: 2;
+  flex: 1;
+  // Fundo sólido no mobile para evitar transparência que atrapalha a visão
+  background-color: var(--mat-sys-surface); 
 }
 
 .right-panel {
@@ -24,25 +28,28 @@
   bottom: 0;
   background: url('/macbook-air-on-desk.jpg') no-repeat center center;
   background-size: cover;
-  z-index: -1;
+  z-index: 1;
+  opacity: 0.3; // Diminui opacidade no mobile para não brigar com o form
 }
 
 @media (min-width: 768px) {
   .container {
     flex-direction: row;
-    height: 100vh;
   }
 
   .left-panel,
   .right-panel {
     flex: 1;
+    position: relative;
+    opacity: 1;
   }
 
   .left-panel {
     background-color: var(--mat-sys-surface);
+    z-index: 1;
   }
 
   .right-panel {
-    position: relative;
+      z-index: 1;
   }
 }

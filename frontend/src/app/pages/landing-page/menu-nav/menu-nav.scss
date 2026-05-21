@@ -71,13 +71,19 @@
 }
 
 .hamburger {
-  display: none;
+  display: none; // Hidden on desktop by default
   color: var(--mat-sys-on-surface);
-  
-  // Centering and background
   background-color: var(--mat-sys-surface-container-high) !important;
   box-shadow: var(--mat-sys-level1);
   border-radius: 50%;
+  width: 40px !important;
+  height: 40px !important;
+  align-items: center;
+  justify-content: center;
+
+  mat-icon {
+      margin: 0 !important;
+  }
 }
 
 .nav-links {
@@ -119,7 +125,7 @@
   justify-content: center;
 }
 
-.theme-toggle-btn, .hamburger {
+.theme-toggle-btn {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -133,14 +139,14 @@
   mat-icon {
       margin: 0 !important;
       display: flex !important;
-      align-items: center;
+      align-items: center !important;
       justify-content: center;
   }
 }
 
 @media (max-width: 768px) {
   .hamburger {
-    display: flex !important;
+    display: flex !important; // Only visible on mobile
     margin-right: 1rem;
   }
 
