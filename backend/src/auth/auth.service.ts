@@ -81,33 +81,43 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto): Promise<{ access_token: string }> {
+    try {
+      const { identifier, password } = loginDto;
+      let user;
 
-   const { identifier, password } = loginDto;
-    let user;
+      if (identifier.includes('@')) {
+        user = await this.usersService.findByEmail(identifier);
+      } else {
+        const cleanCpf = identifier.replace(/\D/g, ''); 
+        user = await this.usersService.findByCpf(cleanCpf);
+      }
 
-    if (identifier.includes('@')) {
-      user = await this.usersService.findByEmail(identifier);
-     } else {
-      const cleanCpf = identifier.replace(/\D/g, ''); // Limpa pontuações caso o front envie
-      user = await this.usersService.findByCpf(cleanCpf);
+      if (!user) {
+        throw new UnauthorizedException('Credenciais inválidas');
+      }
+
+      const passwordValid = await bcrypt.compare(password, user.password);
+      if (!passwordValid) {
+        throw new UnauthorizedException('CPF ou senha inválidos');
+      }
+
+      if (!user.isVerified) {
+        throw new UnauthorizedException('Por favor, verifique seu e-mail antes de acessar o sistema.');
+      }
+
+      const payload = { sub: user.id, name: user.name, email: user.email, role: user.role?.name || 'usuario' };
+      
+      const token = await this.jwtService.signAsync(payload);
+      return {
+        access_token: token,
+      };
+    } catch (error: any) {
+      console.error('[AuthService Login] Erro Crítico:', error.message);
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Erro ao processar login. Verifique os logs do servidor.');
     }
-    if (!user) {
-      throw new UnauthorizedException('Credenciais inválidas'); // Mensagem genérica por segurança
-    }
-
-    const passwordValid = await bcrypt.compare(password, user.password);
-    if (!passwordValid) {
-      throw new UnauthorizedException('CPF ou senha inválidos');
-    }
-
-    if (!user.isVerified) {
-      throw new UnauthorizedException('Por favor, verifique seu e-mail antes de acessar o sistema.');
-    }
-
-    const payload = { sub: user.id, name: user.name, email: user.email, role: user.role?.name || 'usuario' };
-    return {
-      access_token: await this.jwtService.signAsync(payload),
-    };
   }
 
   async loginWithGoogle(token: string): Promise<{ access_token: string }> {
