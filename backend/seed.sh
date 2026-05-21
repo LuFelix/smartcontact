@@ -61,7 +61,7 @@ case $command in
     simple)
         print_header "🌱 EXECUTANDO SEED SIMPLES"
         print_info "Rodando: npm run seed"
-        print_warn "Saia que você verá menos logs"
+        print_warn "Saiba que você verá menos logs"
         print_info "Rodando...\n"
         npm run seed
         print_success "Seed concluído!"
@@ -70,26 +70,26 @@ case $command in
     docker)
         print_header "🐳 EXECUTANDO SEED NO DOCKER"
 
-        # Verificar se docker-compose está disponível
-        if ! command -v docker-compose &> /dev/null; then
-            print_error "docker-compose não encontrado!"
-            print_info "Instale o Docker Desktop ou docker-compose"
+        # Verificar se docker compose está disponível
+        if ! command -v docker &> /dev/null; then
+            print_error "docker não encontrado!"
+            print_info "Instale o Docker Desktop"
             exit 1
         fi
 
         print_info "Verificando se os containers estão rodando..."
 
         # Verificar se o backend container está rodando
-        if ! docker-compose ps backend | grep -q "Up"; then
+        if ! docker compose ps api 2>/dev/null | grep -q "Up"; then
             print_error "Backend não está rodando!"
-            print_info "Execute: docker-compose up -d"
+            print_info "Execute: docker compose up -d"
             exit 1
         fi
 
         print_success "Containers estão rodando"
         print_info "Executando seed dentro do Docker...\n"
 
-        docker-compose exec -T backend npm run seed:verbose
+        docker compose exec -T api npm run seed:verbose
 
         print_success "Seed concluído no Docker!"
         ;;
