@@ -53,15 +53,20 @@
   .logo {
     height: 32px;
     width: auto;
-    // Azure theme adjustment for logo if needed
-    // filter: brightness(0) saturate(100%) invert(48%) sepia(79%) saturate(2476%) hue-rotate(186deg) brightness(118%) contrast(119%);
   }
 
   .brand-name {
     font: var(--mat-sys-title-large);
-    font-weight: 700;
-    color: var(--mat-sys-primary);
+    font-weight: 800;
     letter-spacing: -0.5px;
+    
+    .smart {
+        color: #0078d4;
+    }
+    
+    .contact {
+        color: #9c27b0;
+    }
   }
 }
 
@@ -97,14 +102,31 @@
   }
 }
 
+.login-btn-nav {
+    background-color: var(--mat-sys-primary) !important;
+    color: var(--mat-sys-on-primary) !important;
+    padding: 0 1.5rem !important;
+    height: 40px !important;
+    border-radius: 20px !important;
+}
+
 .actions {
   margin-left: 2rem;
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 
-.theme-toggle {
+.theme-toggle-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--mat-sys-on-surface-variant);
+  background-color: var(--mat-sys-surface-container-high);
+  box-shadow: var(--mat-sys-level1);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
 }
 
 @media (max-width: 768px) {

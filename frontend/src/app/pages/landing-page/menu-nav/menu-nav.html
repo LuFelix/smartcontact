@@ -6,18 +6,24 @@
 
     <div class="logo-container" (click)="scrollToTop()">
       <img src="mas-logo.svg" alt="SmartContact Logo" class="logo" />
-      <span class="brand-name">SmartContact</span>
+      <span class="brand-name">
+        <span class="smart">Smart</span><span class="contact">Contact</span>
+      </span>
     </div>
 
     <ul class="nav-links" [class.open]="menuOpen">
       <li><a href="#about" (click)="closeMenu()">O Projeto</a></li>
       <li><a href="#jobs" (click)="closeMenu()">Carreiras</a></li>
       <li><a href="#contact" (click)="closeMenu()">Contato</a></li>
-      <li class="login-item"><a href="/login" mat-flat-button color="primary" (click)="closeMenu()">Acessar Painel</a></li>
+      <li class="login-item">
+        <a href="/login" mat-flat-button color="primary" class="login-btn-nav" (click)="closeMenu()">
+          Acessar Painel
+        </a>
+      </li>
     </ul>
 
     <div class="actions">
-      <button mat-icon-button (click)="toggleDarkMode()" aria-label="Alternar modo escuro" class="theme-toggle">
+      <button mat-icon-button (click)="toggleDarkMode()" aria-label="Alternar modo escuro" class="theme-toggle-container">
         <mat-icon>{{ darkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
       </button>
     </div>
