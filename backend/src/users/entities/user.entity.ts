@@ -1,6 +1,7 @@
 // users/entities/user.entity.ts
 import { Role } from 'src/roles/entities/role.entity';
 import { Profile } from '../../profiles/entities/profile.entity';
+import { Tag } from '../../tags/entities/tag.entity';
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index, ManyToOne, JoinColumn, OneToMany, OneToOne } from 'typeorm';
 
 @Entity()
@@ -62,4 +63,7 @@ export class User {
 
     @OneToOne(() => Profile, (profile) => profile.user)
     profile?: Profile;
+
+    @OneToMany(() => Tag, (tag) => tag.user)
+    tags?: Tag[];
 }
