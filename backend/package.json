@@ -19,7 +19,9 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed": "ts-node -r tsconfig-paths/register src/seed.ts",
-    "seed:verbose": "ts-node -r tsconfig-paths/register src/run-seed.ts"
+    "seed:verbose": "ts-node -r tsconfig-paths/register src/run-seed.ts",
+    "seed:prod": "node dist/seed",
+    "seed:prod:verbose": "node dist/run-seed"
   },
   "dependencies": {
     "@google/genai": "^1.23.0",
