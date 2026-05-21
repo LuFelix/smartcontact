@@ -98,3 +98,77 @@ Abaixo está o mapa de execução passo a passo, desde a fundação até o Go-Li
 - [ ] **Issue 5.2 (Hardware):** Gravar UUIDs nas Tags NFC físicas.
 - [ ] **Issue 5.3 (QA):** Realizar teste End-to-End (Celular > Leitura Física > Roteamento > Analytics).
 - [ ] **Issue 5.4:** Aprovação de Performance (< 500ms na leitura) e finalização da POC.
+
+---
+
+## 🚀 9. Guia de Setup e Deploy (Docker)
+
+Este projeto utiliza uma arquitetura isolada para garantir que múltiplos sistemas possam rodar na mesma VPS sem conflitos.
+
+### 🔑 9.1. Configuração do Arquivo `.env` (CRÍTICO)
+
+O arquivo `.env` deve ser criado na raíz do projeto. **Atenção à sintaxe:** não utilize espaços ao redor do `=` e certifique-se de que todas as chaves estão corretas.
+
+**Dados Sensíveis:** Solicite diretamente ao Luciano/Coordenação os valores de `JWT_SECRET`, `GEMINI_API_KEY`, `SUI_ADMIN_PRIVATE_KEY` e credenciais de e-mail.
+
+#### Exemplo de Estrutura Necessária:
+```bash
+# Database (Conexão da API)
+DB_TYPE=postgres
+DB_HOST=db  # Nome do serviço no docker-compose
+DB_PORT=5432
+DB_USERNAME=smartcontact_admin
+DB_PASSWORD=SUA_SENHA_AQUI
+DB_DATABASE=smartcontact_db
+
+# PostgreSQL (Inicialização do Container)
+POSTGRES_DB=smartcontact_db
+POSTGRES_USER=smartcontact_admin
+POSTGRES_PASSWORD=SUA_SENHA_AQUI
+POSTGRES_PORT=5432
+
+# Backend & JWT
+BACKEND_PORT=3001
+NODE_ENV=production
+JWT_SECRET=SOLICITAR_AO_GESTOR
+JWT_EXPIRES_IN=1d
+
+# URLs (Importante para o Login)
+API_URL=https://smartcontact.tiweb.app.br/api
+```
+
+### 🐳 9.2. Rodando em Produção (VPS)
+
+Em produção, usamos apenas o arquivo `.prod.yml` para evitar mapeamentos de volume que quebram o código compilado.
+
+```bash
+# 1. Reset Total (Limpa volumes antigos/errados)
+docker compose -f docker-compose.prod.yml down -v
+
+# 2. Build e Start
+docker compose -f docker-compose.prod.yml up -d --build
+
+# 3. Executar o Seed (Obrigatório na primeira vez)
+# Nota: Em produção, usamos o comando que aponta para a pasta /dist
+docker compose exec api node dist/run-seed.js
+```
+
+**Porta de Acesso:** O sistema estará disponível em `https://smartcontact.tiweb.app.br` (via porta 8081 mapeada no host).
+
+### 💻 9.3. Rodando em Desenvolvimento (Local)
+
+Para desenvolvimento com Live Reload:
+
+```bash
+docker compose up -d --build
+docker compose exec api npm run seed
+```
+
+---
+
+## 🛠️ 10. Notas Técnicas Importantes
+
+*   **Prefixo de API:** Todas as rotas do backend estão sob o prefixo `/api`. O Nginx está configurado para rotear automaticamente.
+*   **Isolamento:** O projeto foi configurado com nomes de volumes exclusivos (`smartcontact_prod_pgdata`) para não colidir com o projeto `mas-ia` que roda na mesma máquina.
+*   **Responsividade:** O layout é **Mobile-First**. Tabelas foram substituídas por **Cards** para garantir que o dashboard seja utilizável em qualquer celular.
+*   **Login Padrão:** Após o seed, use `admin@smartcontact.com.br` / `Senha@123`.
