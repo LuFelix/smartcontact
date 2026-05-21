@@ -1,88 +1,87 @@
-/* Container da Tabela */
-.table-container {
+.users-grid-container {
   position: relative;
-  display: block;
-  overflow-x: auto;
   min-height: 200px;
-  border-radius: 4px;
 }
 
-/* Overlay de Loading */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.user-item-card {
+  background-color: var(--mat-sys-surface-container);
+  border-color: var(--mat-sys-outline-variant);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--mat-sys-level2);
+  }
+
+  .user-avatar {
+    background-color: var(--mat-sys-primary-container);
+    color: var(--mat-sys-on-primary-container);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    
+    mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+    }
+  }
+
+  mat-card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  mat-card-subtitle {
+    font-size: 0.9rem;
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  mat-card-actions {
+    padding: 8px;
+    border-top: 1px solid var(--mat-sys-outline-variant);
+  }
+}
+
 .spinner-overlay {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(var(--mat-sys-surface-rgb), 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 10;
+  z-index: 2;
+  border-radius: 8px;
 }
 
-.mat-elevation-z8 {
-  box-shadow: none !important;
-  width: 100%;
-}
-
-table {
-  width: 100%;
-}
-
-/* Colunas */
-.mat-column-actions {
-  width: 120px; /* Espaço fixo suficiente para os botões */
-  text-align: center; /* Centraliza o conteúdo da célula */
-}
-
-/* ESTILO DOS BOTÕES (Igual Certifications) 
-   Aplica o flexbox para alinhar os botões lado a lado
-*/
-.action-buttons-wrapper {
-  display: flex;
-  justify-content: center; /* Centraliza os botões na célula */
-  align-items: center;
-  gap: 6px;
-  
-  /* Aplica a todos os botões dentro do wrapper */
-  .mat-icon-button {
-    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
-    
-    &:hover {
-      transform: scale(1.15) translateY(-1px);
-      background-color: rgba(0,0,0,0.04);
-    }
-    &:active {
-      transform: scale(1.05);
-    }
-  }
-
-  /* Botão Editar (Azul) - Classe específica do HTML */
-  .action-button-edit {
-    mat-icon {
-      color: #3f51b5; 
-    }
-  }
-
-  /* Botão Excluir (Vermelho) - Pega pelo atributo color="warn" */
-  button[color="warn"] {
-    mat-icon {
-      color: #c9302c;
-    }
-  }
-}
-
-/* Linhas */
-tr.mat-row {
-  transition: background-color 0.2s;
-  &:hover {
-    background-color: #f9f9ff;
-  }
-}
-
-.mat-row .mat-cell[colspan] {
+.no-data {
+  grid-column: 1 / -1;
   text-align: center;
-  padding: 48px 0;
-  color: #777;
+  padding: 48px;
+  color: var(--mat-sys-on-surface-variant);
+  
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+}
+
+@media (max-width: 600px) {
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
 }

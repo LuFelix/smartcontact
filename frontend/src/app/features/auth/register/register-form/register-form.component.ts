@@ -36,24 +36,39 @@ export class RegisterFormComponent {
   private readonly snackBar = inject(MatSnackBar);
   private readonly fb = inject(FormBuilder);
   private router = inject(Router);
+  
   // Estados da interface
   readonly hidePassword = signal(true);
+  readonly hideConfirmPassword = signal(true);
   readonly isSubmitting = signal(false);
-  readonly isRegistered = signal(false); // Controla se mostra o form ou a tela de confirmação
+  readonly isRegistered = signal(false);
   readonly registeredEmail = signal('');
 
   readonly form = this.fb.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(3)]],
+    firstName: ['', [Validators.required, Validators.minLength(2)]],
+    lastName: ['', [Validators.required, Validators.minLength(2)]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [
       Validators.required,
       Validators.minLength(8),
       Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[#@$!%*?&])[A-Za-z\d#@$!%*?&]{8,}$/)
-    ]]
+    ]],
+    confirmPassword: ['', [Validators.required]]
+  }, {
+    validators: (group) => {
+      const password = group.get('password')?.value;
+      const confirmPassword = group.get('confirmPassword')?.value;
+      return password === confirmPassword ? null : { mismatch: true };
+    }
   });
 
   togglePasswordVisibility(event: MouseEvent): void {
     this.hidePassword.update(value => !value);
+    event.stopPropagation();
+  }
+
+  toggleConfirmPasswordVisibility(event: MouseEvent): void {
+    this.hideConfirmPassword.update(value => !value);
     event.stopPropagation();
   }
 
@@ -63,19 +78,18 @@ export class RegisterFormComponent {
     this.isSubmitting.set(true);
     const rawData = this.form.getRawValue();
 
-    // 2. Criamos o objeto garantindo que são strings (resolvendo o erro TS)
-  const registrationData: RegistrationData = {
-    name: rawData.name ?? '',
-    email: rawData.email ?? '',
-    password: rawData.password ?? ''
-  };
-    // Aqui chamamos o método de registro (ajuste conforme seu AuthService)
+    const registrationData: RegistrationData = {
+      name: `${rawData.firstName} ${rawData.lastName}`.trim(),
+      email: rawData.email,
+      password: rawData.password
+    };
+
     this.authService.register(registrationData)
       .pipe(finalize(() => this.isSubmitting.set(false)))
       .subscribe({
         next: () => {
-          this.registeredEmail.set(registrationData.email ?? '');
-          this.isRegistered.set(true); // Troca a tela para o aviso de e-mail
+          this.registeredEmail.set(registrationData.email);
+          this.isRegistered.set(true);
         },
         error: (err) => {
           console.error(err);

@@ -1,84 +1,110 @@
 .main-header {
-  // position: sticky; // Descomente se quiser o header fixo no topo
-  // top: 0;
-  // z-index: 1000;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: 64px;
+  background-color: var(--mat-sys-surface-container);
+  color: var(--mat-sys-on-surface);
+  box-shadow: var(--mat-sys-level1);
+  transition: all 0.3s ease;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
 }
 
-.logo { // Aplica-se à tag <img>
-  display: block; // Garante que a imagem se comporte como bloco para margens
-  height: 60px;   // <-- AUMENTE A ALTURA AQUI (ex: 50px, ajuste conforme necessário)
-  max-height: calc(100% - 16px); // Garante que não ultrapasse a altura do toolbar (menos um padding)
-  width: auto;    // Mantém a proporção
-  margin-left: 16px;
-  object-fit: contain; // Garante que a imagem inteira caiba sem distorcer (como em um 'quadro')
-}
-
-.spacer {
-  flex-grow: 1;
-}
-
-// ... (outros estilos) ...
-
-// --- RESPONSIVIDADE (Opcional) ---
-@media (max-width: 600px) {
-  .logo {
-    height: 40px; // <-- Reduz a altura em telas menores (ex: 40px)
-    margin-left: 8px; // Reduz a margem
-  }
-
-  .user-name {
-    display: none; // Já existia
-  }
-
-  .header-content {
-    padding: 0 8px; // Reduz padding geral do header
-  }
-}
 .header-content {
   display: flex;
   align-items: center;
   width: 100%;
-  padding: 0 16px; // Espaçamento interno
+  max-width: 100%;
+  padding: 0 12px;
+  box-sizing: border-box;
 }
 
-.logo {
-  margin-left: 16px;
-  font-size: 1.2rem;
-  font-weight: 500;
+.brand-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+  cursor: pointer;
+  
+  .logo {
+    height: 32px;
+  }
+
+  .brand-name {
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    
+    .smart {
+        color: #0078d4; // Azure Blue
+    }
+    
+    .contact {
+        color: #9c27b0; // Lilac
+    }
+  }
 }
 
 .spacer {
-  flex-grow: 1; // Empurra os itens seguintes para a direita
+  flex: 1 1 auto;
 }
 
-.notification-button {
-  margin-right: 8px;
+.hamburger-btn, .theme-toggle-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: var(--mat-sys-surface-container-high) !important;
+  box-shadow: var(--mat-sys-level1);
+  border-radius: 50%;
+  width: 40px !important;
+  height: 40px !important;
+  margin: 0 4px;
+
+  mat-icon {
+      margin: 0 !important;
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+  }
 }
 
 .user-menu-button {
-  border-radius: 20px; // Arredonda o botão do menu
-}
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  margin-left: 8px;
+  height: 44px;
+  border-radius: 22px;
+  color: var(--mat-sys-on-surface);
+  
+  &:hover {
+    background-color: var(--mat-sys-surface-container-highest);
+  }
+  
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+  }
 
-.user-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  margin-right: 8px;
-  object-fit: cover;
-}
-
-.user-name {
-  margin: 0 8px;
-  display: inline-block; // Garante que o span não quebre linha facilmente
-  max-width: 150px; // Limita largura do nome
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-// Esconde o nome em telas muito pequenas (opcional)
-@media (max-width: 600px) {
   .user-name {
+    margin: 0 8px;
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+}
+
+.notification-button {
+    margin: 0 2px;
+    color: var(--mat-sys-on-surface-variant);
+}
+
+@media (max-width: 768px) {
+  .brand-name {
     display: none;
+  }
+  
+  .header-content {
+      padding: 0 4px;
   }
 }

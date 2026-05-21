@@ -53,24 +53,31 @@
   .logo {
     height: 32px;
     width: auto;
-    // Azure theme adjustment for logo if needed
-    // filter: brightness(0) saturate(100%) invert(48%) sepia(79%) saturate(2476%) hue-rotate(186deg) brightness(118%) contrast(119%);
   }
 
   .brand-name {
     font: var(--mat-sys-title-large);
-    font-weight: 700;
-    color: var(--mat-sys-primary);
+    font-weight: 800;
     letter-spacing: -0.5px;
+    
+    .smart {
+        color: #0078d4;
+    }
+    
+    .contact {
+        color: #9c27b0;
+    }
   }
 }
 
 .hamburger {
   display: none;
-  background: none;
-  border: none;
   color: var(--mat-sys-on-surface);
-  cursor: pointer;
+  
+  // Centering and background
+  background-color: var(--mat-sys-surface-container-high) !important;
+  box-shadow: var(--mat-sys-level1);
+  border-radius: 50%;
 }
 
 .nav-links {
@@ -97,19 +104,43 @@
   }
 }
 
+.login-btn-nav {
+    background-color: var(--mat-sys-primary) !important;
+    color: var(--mat-sys-on-primary) !important;
+    padding: 0 1.5rem !important;
+    height: 40px !important;
+    border-radius: 20px !important;
+}
+
 .actions {
   margin-left: 2rem;
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 
-.theme-toggle {
+.theme-toggle-btn, .hamburger {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   color: var(--mat-sys-on-surface-variant);
+  background-color: var(--mat-sys-surface-container-high) !important;
+  box-shadow: var(--mat-sys-level1);
+  border-radius: 50%;
+  width: 40px !important;
+  height: 40px !important;
+
+  mat-icon {
+      margin: 0 !important;
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+  }
 }
 
 @media (max-width: 768px) {
   .hamburger {
-    display: block;
+    display: flex !important;
     margin-right: 1rem;
   }
 

@@ -1,23 +1,18 @@
-<!-- Container principal com Sidenav -->
 <mat-sidenav-container class="main-container">
 
-  <!-- Menu Lateral (Sidenav) -->
-  <mat-sidenav mode="side" [opened]="isSidenavOpen" class="sidenav">
-    <!-- Componente do Menu Lateral -->
+  <mat-sidenav #sidenav
+               [mode]="isMobile ? 'over' : 'side'" 
+               [(opened)]="isSidenavOpen" 
+               class="sidenav">
     <app-side-nav></app-side-nav>
   </mat-sidenav>
 
-  <!-- Conteúdo Principal (inclui Header e RouterOutlet) -->
   <mat-sidenav-content class="main-content">
-    <!-- Componente do Cabeçalho -->
-    <!-- Passa o estado do sidenav e recebe o evento para alternar -->
     <app-header [sidenavOpen]="isSidenavOpen" (toggleSidenav)="toggleSidenav()"></app-header>
 
-    <!-- Onde as páginas filhas (Dashboard, Users, Certs) serão renderizadas -->
     <div class="page-content">
       <router-outlet></router-outlet>
     </div>
-
   </mat-sidenav-content>
 
 </mat-sidenav-container>

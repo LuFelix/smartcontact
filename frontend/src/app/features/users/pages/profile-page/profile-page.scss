@@ -1,40 +1,49 @@
-/* src/app/pages/profile/profile.component.scss */
-
 .profile-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  min-height: calc(
-    100vh - 64px - 64px
-  ); /* Ajusta para considerar header e footer, se houver */
-  padding: 20px;
-  background-color: #f7f9fc; /* Um fundo mais suave */
-  box-sizing: border-box; /* Garante que padding não adicione largura extra */
+  padding: 40px 24px;
+  background-color: var(--mat-sys-surface-container-lowest);
+  min-height: 100%;
+  box-sizing: border-box;
 }
 
 .profile-card {
   width: 100%;
-  max-width: 600px; /* Largura máxima para a centralização */
-  padding: 24px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra mais suave */
-  border-radius: 8px; /* Cantos arredondados */
+  max-width: 800px;
+  background-color: var(--mat-sys-surface-container);
+  border-radius: 32px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  box-shadow: var(--mat-sys-level2);
+  overflow: hidden;
 }
 
 .profile-card-header {
-  padding-bottom: 20px;
-  text-align: center; /* Centraliza título e subtítulo */
-  justify-content: center;
+  background-color: var(--mat-sys-surface-container-high);
+  padding: 40px 24px;
+  display: flex;
+  justify-content: center; // Centraliza conteúdo
+  text-align: center; // Centraliza texto
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
 
-  .mat-card-title {
-    font-size: 2.2em;
-    color: #3f51b5; /* Cor primária do Material Design */
-    margin-bottom: 8px;
-    justify-content: center;
+  .header-text-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
   }
-  .mat-card-subtitle {
-    color: #616161;
-    font-size: 1.1em;
+
+  mat-card-title {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: var(--mat-sys-primary);
+    margin: 0;
+  }
+  
+  mat-card-subtitle {
+    font-size: 1.1rem;
+    color: var(--mat-sys-on-surface-variant);
+    margin: 0;
   }
 }
 
@@ -42,118 +51,141 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 30px; /* Espaço abaixo da foto */
+  padding: 40px 0 20px;
 
-  .profile-image {
-    width: 120px;
-    height: 120px;
+  .image-wrapper {
+    position: relative;
+    width: 160px;
+    height: 160px;
     border-radius: 50%;
-    object-fit: cover; /* Garante que a imagem preencha o círculo */
-    border: 3px solid #3f51b5; /* Borda primária */
-    margin-bottom: 15px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    display: block; // Garante comportamento de bloco
-  object-fit: cover; // Ou 'contain', dependendo do efeito desejado
-  background-color: #eee; // Um fundo cinza claro para o espaço da imagem
+    border: 4px solid var(--mat-sys-primary-container);
+    box-shadow: var(--mat-sys-level3);
+    overflow: hidden;
+    background-color: var(--mat-sys-surface-variant);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &.editable {
+      cursor: pointer;
+      &:hover {
+        transform: scale(1.02);
+        
+        .edit-overlay {
+            opacity: 1;
+        }
+      }
+    }
   }
 
   .profile-image {
-  // ... (seus estilos existentes para .profile-image: width, height, border-radius, etc.)
-  display: block; // Garante comportamento de bloco
-  object-fit: cover; // Ou 'contain', dependendo do efeito desejado
-  background-color: #eee; // Um fundo cinza claro para o espaço da imagem
-
-  // --- Truque para esconder o alt text visualmente ---
-  color: transparent; // Esconde a cor do texto
-  text-indent: 10000px; // Joga o texto para muito longe
-  font-size: 0; // Garante que o espaço ocupado pelo texto seja mínimo
-  line-height: 0; // Garante que o espaço ocupado pelo texto seja mínimo
-  overflow: hidden; // Garante que o texto jogado para longe não cause scroll
-  // --------------------------------------------------
-}
-
-// Estilo opcional para quando a imagem está quebrada (mostra um ícone genérico)
-.profile-image:error { // Pseudo-seletor (pode não funcionar em todos navegadores para :error em <img>)
-  // Como alternativa, você pode ter uma div container e mostrar um ícone dentro dela se a imagem falhar
-}
-
-// Classe para indicar clicabilidade no modo edição
-.profile-image.editable {
-  cursor: pointer;
-  border-color: #3f51b5;
-  &:hover {
-    opacity: 0.8;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
-}
 
-  button {
-    .mat-icon {
-      margin-right: 8px; /* Espaçamento entre o ícone e o texto do botão */
+  .profile-placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    color: var(--mat-sys-on-surface-variant);
+    
+    mat-icon {
+      font-size: 80px;
+      width: 80px;
+      height: 80px;
+      opacity: 0.5;
     }
+  }
+
+  .edit-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      
+      mat-icon {
+          font-size: 32px;
+          width: 32px;
+          height: 32px;
+      }
+  }
+
+  .upload-hint {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: var(--mat-sys-on-surface-variant);
   }
 }
 
 .profile-form {
   display: flex;
   flex-direction: column;
-  gap: 15px; /* Espaçamento entre os campos do formulário */
+  gap: 24px;
+  padding: 20px 40px 48px;
 
   mat-form-field {
-    width: 100%; /* Ocupa a largura total */
-  }
-
-  .profile-actions {
-    display: flex;
-    flex-wrap: wrap; /* Quebra linha em telas menores */
-    justify-content: center; /* Centraliza os botões */
-    gap: 10px; /* Espaçamento entre os botões */
-    margin-top: 25px; /* Espaço acima dos botões */
-
-    button {
-      padding: 10px 20px; /* Padding ajustado para botões do Material */
-      font-size: 1em;
-      .mat-icon {
-        margin-right: 8px;
-      }
-      mat-spinner {
-        margin-right: 8px;
-      }
-    }
+    width: 100%;
   }
 }
 
-/* Responsividade */
-@media (max-width: 768px) {
-  .profile-card {
-    padding: 16px; /* Reduz padding em telas menores */
-  }
+.city-state-row {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: 24px;
+}
 
+.profile-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center; // Centraliza botões
+  margin-top: 24px;
+  
+  .action-btn {
+      height: 52px;
+      padding: 0 32px;
+      border-radius: 26px;
+      font-weight: 600;
+  }
+}
+
+@media (max-width: 600px) {
+  .profile-container {
+    padding: 16px;
+  }
+  
   .profile-card-header {
-    .mat-card-title {
-      font-size: 1.8em;
-    }
-    .mat-card-subtitle {
-      font-size: 1em;
-    }
+      padding: 32px 16px;
+      
+      mat-card-title {
+          font-size: 1.75rem;
+      }
   }
-
-  .profile-avatar-section {
-    .profile-image {
-      width: 100px;
-      height: 100px;
-    }
-  }
-
+  
   .profile-form {
-    gap: 10px; /* Reduz espaçamento entre campos */
+      padding: 20px 24px 32px;
   }
-
+  
   .profile-actions {
-    flex-direction: column; /* Botões empilhados em telas menores */
-    align-items: stretch; /* Esticam para preencher a largura */
-
-    button {
-      width: 100%; /* Botões ocupam largura total */
+    flex-direction: column;
+    .action-btn {
+      width: 100%;
     }
+  }
+  
+  .city-state-row {
+      grid-template-columns: 1fr;
+      gap: 16px;
   }
 }
