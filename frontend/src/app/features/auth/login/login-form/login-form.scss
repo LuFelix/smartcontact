@@ -1,11 +1,14 @@
 .form-container {
   width: 100%;
-  max-width: 400px;
-  padding: 40px 32px;
-  border-radius: 24px;
+  min-width: 500px; // Standardized minimum width
+  max-width: 500px;
+  padding: 48px;
+  border-radius: 32px;
   background-color: var(--mat-sys-surface-container-high);
   box-shadow: var(--mat-sys-level3);
   border: 1px solid var(--mat-sys-outline-variant);
+  box-sizing: border-box;
+  margin: 24px;
 }
 
 .logo-container {
@@ -21,7 +24,7 @@
   }
 
   .brand-title {
-    font-size: 1.75rem;
+    font-size: 2rem;
     font-weight: 800;
     margin: 0;
     letter-spacing: -0.5px;
@@ -39,7 +42,7 @@
 form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 
   mat-form-field {
     width: 100%;
@@ -81,6 +84,7 @@ form {
 .google-button-wrapper {
     display: flex;
     justify-content: center;
+    width: 100%;
 }
 
 .auth-links {
@@ -89,7 +93,7 @@ form {
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  font-size: 0.9rem;
+  font-size: 1rem;
   
   a {
     text-decoration: none;
@@ -112,11 +116,20 @@ form {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 600px) {
   .form-container {
-    padding: 32px 20px;
+    min-width: 100%;
+    width: 100%;
+    padding: 32px 24px;
+    margin: 0;
+    max-width: 100%;
+    border-radius: 0;
     box-shadow: none;
     background-color: transparent;
     border: none;
+  }
+  
+  .brand-title {
+      font-size: 1.75rem !important;
   }
 }
