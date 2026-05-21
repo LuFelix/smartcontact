@@ -1,40 +1,37 @@
-/* src/app/pages/profile/profile.component.scss */
-
 .profile-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  min-height: calc(
-    100vh - 64px - 64px
-  ); /* Ajusta para considerar header e footer, se houver */
-  padding: 20px;
-  background-color: #f7f9fc; /* Um fundo mais suave */
-  box-sizing: border-box; /* Garante que padding não adicione largura extra */
+  padding: 24px;
+  background-color: var(--mat-sys-surface-container-lowest);
+  min-height: 100%;
+  box-sizing: border-box;
 }
 
 .profile-card {
   width: 100%;
-  max-width: 600px; /* Largura máxima para a centralização */
-  padding: 24px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra mais suave */
-  border-radius: 8px; /* Cantos arredondados */
+  max-width: 800px;
+  background-color: var(--mat-sys-surface-container);
+  border-radius: 24px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  box-shadow: var(--mat-sys-level1);
+  overflow: hidden;
 }
 
 .profile-card-header {
-  padding-bottom: 20px;
-  text-align: center; /* Centraliza título e subtítulo */
-  justify-content: center;
+  background-color: var(--mat-sys-surface-container-high);
+  padding: 32px 24px;
+  text-align: center;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
 
-  .mat-card-title {
-    font-size: 2.2em;
-    color: #3f51b5; /* Cor primária do Material Design */
-    margin-bottom: 8px;
-    justify-content: center;
+  mat-card-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--mat-sys-primary);
   }
-  .mat-card-subtitle {
-    color: #616161;
-    font-size: 1.1em;
+  
+  mat-card-subtitle {
+    color: var(--mat-sys-on-surface-variant);
   }
 }
 
@@ -42,53 +39,24 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 30px; /* Espaço abaixo da foto */
+  padding: 32px 0;
 
   .profile-image {
-    width: 120px;
-    height: 120px;
+    width: 150px;
+    height: 150px;
     border-radius: 50%;
-    object-fit: cover; /* Garante que a imagem preencha o círculo */
-    border: 3px solid #3f51b5; /* Borda primária */
-    margin-bottom: 15px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    display: block; // Garante comportamento de bloco
-  object-fit: cover; // Ou 'contain', dependendo do efeito desejado
-  background-color: #eee; // Um fundo cinza claro para o espaço da imagem
-  }
+    object-fit: cover;
+    border: 4px solid var(--mat-sys-primary-container);
+    box-shadow: var(--mat-sys-level2);
+    transition: all 0.3s ease;
+    background-color: var(--mat-sys-surface-variant);
 
-  .profile-image {
-  // ... (seus estilos existentes para .profile-image: width, height, border-radius, etc.)
-  display: block; // Garante comportamento de bloco
-  object-fit: cover; // Ou 'contain', dependendo do efeito desejado
-  background-color: #eee; // Um fundo cinza claro para o espaço da imagem
-
-  // --- Truque para esconder o alt text visualmente ---
-  color: transparent; // Esconde a cor do texto
-  text-indent: 10000px; // Joga o texto para muito longe
-  font-size: 0; // Garante que o espaço ocupado pelo texto seja mínimo
-  line-height: 0; // Garante que o espaço ocupado pelo texto seja mínimo
-  overflow: hidden; // Garante que o texto jogado para longe não cause scroll
-  // --------------------------------------------------
-}
-
-// Estilo opcional para quando a imagem está quebrada (mostra um ícone genérico)
-.profile-image:error { // Pseudo-seletor (pode não funcionar em todos navegadores para :error em <img>)
-  // Como alternativa, você pode ter uma div container e mostrar um ícone dentro dela se a imagem falhar
-}
-
-// Classe para indicar clicabilidade no modo edição
-.profile-image.editable {
-  cursor: pointer;
-  border-color: #3f51b5;
-  &:hover {
-    opacity: 0.8;
-  }
-}
-
-  button {
-    .mat-icon {
-      margin-right: 8px; /* Espaçamento entre o ícone e o texto do botão */
+    &.editable {
+      cursor: pointer;
+      &:hover {
+        opacity: 0.8;
+        transform: scale(1.05);
+      }
     }
   }
 }
@@ -96,64 +64,44 @@
 .profile-form {
   display: flex;
   flex-direction: column;
-  gap: 15px; /* Espaçamento entre os campos do formulário */
+  gap: 20px;
+  padding: 0 24px 32px;
 
   mat-form-field {
-    width: 100%; /* Ocupa a largura total */
-  }
-
-  .profile-actions {
-    display: flex;
-    flex-wrap: wrap; /* Quebra linha em telas menores */
-    justify-content: center; /* Centraliza os botões */
-    gap: 10px; /* Espaçamento entre os botões */
-    margin-top: 25px; /* Espaço acima dos botões */
-
-    button {
-      padding: 10px 20px; /* Padding ajustado para botões do Material */
-      font-size: 1em;
-      .mat-icon {
-        margin-right: 8px;
-      }
-      mat-spinner {
-        margin-right: 8px;
-      }
-    }
+    width: 100%;
   }
 }
 
-/* Responsividade */
-@media (max-width: 768px) {
-  .profile-card {
-    padding: 16px; /* Reduz padding em telas menores */
-  }
+.city-state-row {
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: 16px;
+}
 
+.profile-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+@media (max-width: 600px) {
+  .profile-container {
+    padding: 12px;
+  }
+  
   .profile-card-header {
-    .mat-card-title {
-      font-size: 1.8em;
-    }
-    .mat-card-subtitle {
-      font-size: 1em;
-    }
+      padding: 24px 16px;
   }
-
-  .profile-avatar-section {
-    .profile-image {
-      width: 100px;
-      height: 100px;
-    }
-  }
-
-  .profile-form {
-    gap: 10px; /* Reduz espaçamento entre campos */
-  }
-
+  
   .profile-actions {
-    flex-direction: column; /* Botões empilhados em telas menores */
-    align-items: stretch; /* Esticam para preencher a largura */
-
+    flex-direction: column;
     button {
-      width: 100%; /* Botões ocupam largura total */
+      width: 100%;
     }
+  }
+  
+  .city-state-row {
+      grid-template-columns: 1fr;
   }
 }

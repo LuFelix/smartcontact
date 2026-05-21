@@ -1,13 +1,17 @@
-<mat-toolbar color="primary" class="main-header">
+<mat-toolbar class="main-header">
   <div class="header-content">
     <!-- Botão Hamburger para alternar Sidenav -->
-    <button mat-icon-button (click)="emitToggleSidenav()" aria-label="Toggle sidenav">
+    <button mat-icon-button (click)="emitToggleSidenav()" aria-label="Toggle sidenav" class="hamburger-btn">
       <mat-icon>{{ sidenavOpen ? 'menu_open' : 'menu' }}</mat-icon>
     </button>
 
-    <!-- Logo ou Título (Opcional) -->
-    <!-- <span class="logo">Tech Solutions</span> -->
-    <img src="/mas-logo.svg" alt="Logo MOtor Avaliativo Smart" class="logo">
+    <div class="brand-container" (click)="navigateToProfile()">
+      <img src="/mas-logo.svg" alt="SmartContact Logo" class="logo">
+      <span class="brand-name">
+        <span class="smart">Smart</span><span class="contact">Contact</span>
+      </span>
+    </div>
+
     <!-- Espaçador para empurrar itens para a direita -->
     <span class="spacer"></span>
 

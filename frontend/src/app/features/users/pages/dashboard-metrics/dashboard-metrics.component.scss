@@ -1,22 +1,40 @@
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); // Cria colunas responsivas
-  gap: 20px; // Espaço entre os cards
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
 }
 
 .dashboard-card {
-    box-shadow: 12px 12px 20px rgba(0, 0, 0, 0.3);
-  // Adiciona um efeito "levantar" no hover
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    &:hover {
-    transform: translateY(-10px); // Levanta o card
-    box-shadow: 14px 14px 28px rgba(0, 0, 0, 0.7); // Sombra um pouco mais forte
+  background-color: var(--mat-sys-surface-container-high);
+  border-radius: 16px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.02);
+    box-shadow: var(--mat-sys-level2);
+  }
+
+  mat-card-header {
+    padding-bottom: 8px;
+    
+    mat-card-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--mat-sys-on-surface-variant);
+    }
+  }
+
+  .metric {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--mat-sys-primary);
+    margin: 16px 0;
   }
 }
 
-.metric {
-  font-size: 2.5rem; // Tamanho grande para o número
-  font-weight: bold;
-  text-align: center;
-  margin-top: 10px;
+@media (max-width: 600px) {
+    .dashboard-grid {
+        gap: 16px;
+    }
 }

@@ -1,35 +1,55 @@
 .main-container {
-  height: 100vh; // Ocupa toda a altura da tela
-  width: 100vw;  // Ocupa toda a largura da tela
-  display: flex;
+  height: 100vh;
+  width: 100%; // Use 100% instead of 100vw to avoid overflow
+  background-color: var(--mat-sys-surface);
+  overflow: hidden;
 }
 
 .sidenav {
-  width: 240px; // Largura do menu lateral (ajuste conforme necessário)
-  background-color: #f5f5f5; // Cor de fundo do menu (exemplo)
-  border-right: 1px solid rgba(0, 0, 0, 0.12);
-  padding-top: 10px; // Espaço acima do menu
+  width: 280px;
+  background-color: var(--mat-sys-surface-container-low);
+  border-right: 1px solid var(--mat-sys-outline-variant);
 }
 
 .main-content {
   display: flex;
-  flex-direction: column; // Header em cima, conteúdo embaixo
+  flex-direction: column;
   height: 100%;
   width: 100%;
-  overflow: hidden; // Evita barras de rolagem duplas
+  overflow: hidden;
+  background-color: var(--mat-sys-surface);
 }
 
 .page-content {
-  flex-grow: 1; // Faz o conteúdo ocupar o espaço restante
-  padding: 20px; // Espaçamento interno da área de conteúdo
-  overflow-y: auto; // Adiciona scroll vertical apenas se necessário
-  background-color: #e9eef6; // Um fundo leve para a área de conteúdo (opcional)
+  flex-grow: 1;
+  padding: 24px;
+  overflow-y: auto;
+  box-sizing: border-box; // Critical for responsiveness
+  background-color: var(--mat-sys-surface-container-lowest);
+  color: var(--mat-sys-on-surface);
 }
 
-// Estilos adicionais para transição suave (opcional)
-mat-sidenav {
-  transition: width 0.3s ease-in-out;
+@media (max-width: 959px) {
+    .sidenav {
+        width: 240px;
+    }
+    
+    .page-content {
+        padding: 16px;
+    }
 }
+
+@media (max-width: 599px) {
+    .page-content {
+        padding: 12px;
+    }
+}
+
+// Transitions
+mat-sidenav {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 mat-sidenav-content {
-  transition: margin-left 0.3s ease-in-out;
+  transition: margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
