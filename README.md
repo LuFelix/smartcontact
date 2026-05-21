@@ -171,4 +171,6 @@ docker compose exec api npm run seed
 *   **Prefixo de API:** Todas as rotas do backend estão sob o prefixo `/api`. O Nginx está configurado para rotear automaticamente.
 *   **Isolamento:** O projeto foi configurado com nomes de volumes exclusivos (`smartcontact_prod_pgdata`) para não colidir com o projeto `mas-ia` que roda na mesma máquina.
 *   **Responsividade:** O layout é **Mobile-First**. Tabelas foram substituídas por **Cards** para garantir que o dashboard seja utilizável em qualquer celular.
-*   **Login Padrão:** Após o seed, use `admin@smartcontact.com.br` / `Senha@123`.
+*   **Login Padrão:** Após o seed, use `pedir usuário` / `pedir senha` para acessar a área logada  ao admin do repositório.
+
+--- 

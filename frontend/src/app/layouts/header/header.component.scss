@@ -49,7 +49,26 @@
   flex: 1 1 auto;
 }
 
-.hamburger-btn, .theme-toggle-button {
+.hamburger-btn {
+  display: inline-flex; // Always visible in Admin area to toggle sidenav
+  align-items: center;
+  justify-content: center;
+  background-color: var(--mat-sys-surface-container-high) !important;
+  box-shadow: var(--mat-sys-level1);
+  border-radius: 50%;
+  width: 40px !important;
+  height: 40px !important;
+  margin: 0 4px;
+
+  mat-icon {
+      margin: 0 !important;
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+  }
+}
+
+.theme-toggle-button {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -63,8 +82,8 @@
   mat-icon {
       margin: 0 !important;
       display: flex !important;
-      align-items: center;
-      justify-content: center;
+      align-items: center !important;
+      justify-content: center !important;
   }
 }
 

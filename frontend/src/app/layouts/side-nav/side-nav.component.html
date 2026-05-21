@@ -15,14 +15,12 @@
   
   @if (authService.hasPermission('READ_USERS')) {
     <a mat-list-item (click)="layoutService.toggleLayout()" class="layout-toggle-button">
-      <div class="toggle-content-wrapper">
         <mat-icon matListItemIcon>
           {{ layoutService.layout() === 'moderno' ? 'view_list' : 'grid_view' }}
         </mat-icon>
         <span matListItemTitle>
           {{ layoutService.layout() === 'moderno' ? 'Layout Clássico' : 'Layout Moderno' }}
         </span>
-      </div>
     </a>
   }
 </mat-nav-list>

@@ -44,6 +44,7 @@
 
 .info-item {
   display: flex;
+  align-items: center; // Centraliza ícone com texto verticalmente
   gap: 1.5rem;
   
   mat-icon {
@@ -55,12 +56,13 @@
   h3 {
     font: var(--mat-sys-title-small);
     font-weight: 700;
-    margin-bottom: 0.25rem;
+    margin: 0; // Remove margem para alinhamento preciso
   }
 
   p {
     font: var(--mat-sys-body-medium);
     color: var(--mat-sys-on-surface-variant);
+    margin: 0;
   }
 }
 
@@ -96,14 +98,31 @@
   
   .info-side {
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   .badge {
-    margin: 0 auto 1.5rem;
+    margin-bottom: 1.5rem;
   }
 
   .contact-info {
-    align-items: center;
-    text-align: left;
+    width: 100%;
+    align-items: flex-start; // Mantém alinhamento à esquerda para os itens individuais
+    padding-left: 10%; // Leve recuo para centralizar o bloco no mobile
   }
+}
+
+@media (max-width: 600px) {
+    .contact-info {
+        padding-left: 0;
+        align-items: center; // Centraliza total em telas muito pequenas
+    }
+    
+    .info-item {
+        flex-direction: column; // Empilha ícone e texto
+        text-align: center;
+        gap: 0.5rem;
+    }
 }
