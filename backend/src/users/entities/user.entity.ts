@@ -1,6 +1,7 @@
 // users/entities/user.entity.ts
 import { Role } from 'src/roles/entities/role.entity';
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Profile } from '../../profiles/entities/profile.entity';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index, ManyToOne, JoinColumn, OneToMany, OneToOne } from 'typeorm';
 
 @Entity()
 export class User {
@@ -58,4 +59,7 @@ export class User {
 
     @Column({ type: 'timestamp', nullable: true })
     verificationExpires!: Date | null;
+
+    @OneToOne(() => Profile, (profile) => profile.user)
+    profile?: Profile;
 }
