@@ -1,59 +1,139 @@
-.container {
-    position: relative;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
-    overflow: hidden;
+.about-section {
+  padding: 100px 1.5rem;
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
 }
 
-.container::before {
-    content: '';
+.content-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.badge {
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font: var(--mat-sys-label-large);
+  font-weight: 700;
+  display: inline-block;
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  font: var(--mat-sys-display-medium);
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+  color: var(--mat-sys-primary);
+}
+
+.description {
+  font: var(--mat-sys-body-large);
+  color: var(--mat-sys-on-surface-variant);
+  line-height: 1.6;
+  margin-bottom: 3rem;
+  
+  strong {
+    color: var(--mat-sys-primary);
+  }
+}
+
+.features-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.feature-item {
+  display: flex;
+  gap: 1.5rem;
+  
+  mat-icon {
+    font-size: 32px;
+    height: 32px;
+    width: 32px;
+  }
+
+  h3 {
+    font: var(--mat-sys-title-medium);
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+  }
+
+  p {
+    font: var(--mat-sys-body-medium);
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+.image-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.nfc-card-mockup {
+  width: 400px;
+  height: 250px;
+  background: linear-gradient(135deg, var(--mat-sys-primary) 0%, var(--mat-sys-secondary) 100%);
+  border-radius: 20px;
+  position: relative;
+  box-shadow: var(--mat-sys-level5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.3s ease;
+  
+  &:hover {
+    transform: perspective(1000px) rotateY(-10deg) rotateX(5deg);
+  }
+
+  img {
+    width: 80px;
+    filter: brightness(0) invert(1);
+  }
+
+  .card-chip {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url('/background-tech.jpg');
-    background-size: cover;
-    background-position: center;
-    z-index: -1;
-    filter: blur(5px);
+    top: 40px;
+    left: 40px;
+    width: 50px;
+    height: 40px;
+    background: linear-gradient(45deg, #ffd700, #b8860b);
+    border-radius: 5px;
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+  }
 }
 
-img {
-    width: clamp(300px, 30vw, 500px);
-    padding: 1rem;
-    margin-top: 50px;
-    filter: invert(38%) sepia(65%) saturate(300%) hue-rotate(190deg);
-}
-
-mat-card {
-    box-shadow: var(--mat-sys-level5);
-    margin-left: 20px;
-    margin-right: 20px;
-    max-width: 800px;
-    padding: 15px;
-    background-color: var(--mat-sys-secondary-container);
+@media (max-width: 992px) {
+  .content-container {
+    grid-template-columns: 1fr;
     text-align: center;
+    gap: 3rem;
+  }
 
-    h1 {
-        font: var(--mat-sys-title-large);
-        color: var(--mat-sys-on-secondary-container);
-    }
+  .badge {
+    margin: 0 auto 1.5rem;
+  }
 
-    p {
-        font: var(--mat-sys-body-large);
-        color: var(--mat-sys-on-secondary-container-variant);
-        margin-top: 10px;
-    }
-}
+  .feature-item {
+    text-align: left;
+  }
 
-@media (min-width: 769px) {
-    .container {
-        flex-direction: row;
-        justify-content: space-around;
-    }
+  .nfc-card-mockup {
+    width: 320px;
+    height: 200px;
+  }
 }

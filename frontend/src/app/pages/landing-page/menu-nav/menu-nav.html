@@ -1,23 +1,28 @@
-<nav class="navbar">
-  <button class="hamburger" aria-label="Abrir menu" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen">
-    <mat-icon>{{ menuOpen ? 'close' : 'menu' }}</mat-icon>
-  </button>
+<nav class="navbar" [class.scrolled]="showButton">
+  <div class="nav-container">
+    <button class="hamburger" aria-label="Abrir menu" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen">
+      <mat-icon>{{ menuOpen ? 'close' : 'menu' }}</mat-icon>
+    </button>
 
-  <img src="logo2.png" alt="Logo" class="logo" />
+    <div class="logo-container" (click)="scrollToTop()">
+      <img src="mas-logo.svg" alt="SmartContact Logo" class="logo" />
+      <span class="brand-name">SmartContact</span>
+    </div>
 
-  <ul class="nav-links" [class.open]="menuOpen">
-    <li><a href="#about" (click)="closeMenu()">Sobre nós</a></li>
-    <li><a href="#jobs" (click)="closeMenu()">Vagas</a></li>
-    <li><a href="#contact" (click)="closeMenu()">Contato</a></li>
-    <li><a href="/login" (click)="closeMenu()">Login</a></li>
-  </ul>
+    <ul class="nav-links" [class.open]="menuOpen">
+      <li><a href="#about" (click)="closeMenu()">O Projeto</a></li>
+      <li><a href="#jobs" (click)="closeMenu()">Carreiras</a></li>
+      <li><a href="#contact" (click)="closeMenu()">Contato</a></li>
+      <li class="login-item"><a href="/login" mat-flat-button color="primary" (click)="closeMenu()">Acessar Painel</a></li>
+    </ul>
 
-  <mat-slide-toggle (change)="toggleDarkMode()" [checked]="darkMode" aria-label="Alternar modo escuro"
-    class="dark-mode-toggle">
-    <mat-icon>{{ darkMode ? 'dark_mode' : 'light_mode' }}</mat-icon>
-  </mat-slide-toggle>
+    <div class="actions">
+      <button mat-icon-button (click)="toggleDarkMode()" aria-label="Alternar modo escuro" class="theme-toggle">
+        <mat-icon>{{ darkMode ? 'light_mode' : 'dark_mode' }}</mat-icon>
+      </button>
+    </div>
+  </div>
 </nav>
-
 
 <button mat-fab class="btn-top" [class.show]="showButton" (click)="scrollToTop()"
   aria-label="Voltar ao topo">

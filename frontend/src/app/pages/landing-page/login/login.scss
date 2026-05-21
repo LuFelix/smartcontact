@@ -1,45 +1,78 @@
-.container {
-    background-image: url('/macbook-air-on-desk.jpg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+.login-cta-section {
+  padding: 80px 1.5rem;
+  background: var(--mat-sys-surface);
+}
+
+.cta-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.cta-card {
+  background: linear-gradient(135deg, var(--mat-sys-primary-container) 0%, var(--mat-sys-surface-container-highest) 100%);
+  border-radius: 32px;
+  overflow: hidden;
+  border: 1px solid var(--mat-sys-outline-variant);
+  box-shadow: var(--mat-sys-level2);
+}
+
+.cta-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3rem;
+  gap: 3rem;
+}
+
+.text-side {
+  flex: 1;
+  
+  .title {
+    font: var(--mat-sys-headline-medium);
+    font-weight: 800;
+    color: var(--mat-sys-on-primary-container);
+    margin-bottom: 1rem;
+  }
+
+  .description {
+    font: var(--mat-sys-body-large);
+    color: var(--mat-sys-on-surface-variant);
+    max-width: 600px;
+  }
+}
+
+.action-side {
+  .login-btn {
+    height: 64px;
+    padding: 0 2.5rem;
+    border-radius: 32px;
+    font: var(--mat-sys-label-large);
+    font-weight: 700;
+    font-size: 1.1rem;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
     align-items: center;
-    height: 100vh;
-    padding: 16px;
-
-    mat-card {
-        background-color: var(--mat-sys-primary-container);
-        box-shadow: var(--mat-sys-level5);
-        padding: 32px 24px;
-        max-width: 400px;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 24px;
-        margin: 16px;
-
-        mat-card-header {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            text-align: center;
-        }
-
-        .hero-text {
-            color: var(--mat-sys-on-primary-container-variant);
-            font: var(--mat-sys-title-large);
-        }
-
-        .login-button {
-            font: var(--mat-sys-display-small);
-            height: 5rem;
-            width: 15rem;
-            color: var(--mat-sys-on-primary-container-variant);
-        }
+    gap: 0.75rem;
+    
+    mat-icon {
+        margin-right: 8px;
     }
+  }
+}
+
+@media (max-width: 768px) {
+  .cta-content {
+    flex-direction: column;
+    text-align: center;
+    padding: 2rem;
+    gap: 2rem;
+  }
+
+  .text-side .title {
+    font: var(--mat-sys-headline-small);
+    font-weight: 800;
+  }
+  
+  .action-side .login-btn {
+      width: 100%;
+  }
 }
