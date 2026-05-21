@@ -2,7 +2,7 @@ services:
   # --- BANCO DE DADOS POSTGRES ---
   db:
     image: postgres:16-alpine
-    container_name: mvp_postgres_db
+    container_name: smartcontact_postgres_db
     restart: unless-stopped
     env_file:
       - ./.env
@@ -27,7 +27,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
-    container_name: mvp_nestjs_backend
+    container_name: smartcontact_nestjs_backend
     restart: unless-stopped
     env_file:
       - ./.env
@@ -59,7 +59,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
-    container_name: mvp_angular_frontend
+    container_name: smartcontact_angular_frontend
     restart: unless-stopped
     env_file:
       - ./.env
@@ -77,7 +77,7 @@ services:
 # --- BANCO DE DADOS MYSQL (WORDPRESS HEADLESS) ---
   wp_db:
     image: mysql:8.0
-    container_name: mvp_mysql_wp_db
+    container_name: smartcontact_mysql_wp_db
     restart: unless-stopped
     env_file:
       - ./.env
@@ -99,7 +99,7 @@ services:
   # --- HEADLESS WORDPRESS ---
   wordpress:
     image: wordpress:latest
-    container_name: mvp_wordpress
+    container_name: smartcontact_wordpress
     restart: unless-stopped
     env_file:
       - ./.env
