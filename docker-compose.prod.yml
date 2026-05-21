@@ -1,27 +1,27 @@
 services:
   db:
-    image: postgres:15-alpine
-    container_name: smartcontact_db
+    image: postgres:16-alpine
+    container_name: smartcontact_db_prod
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
-      POSTGRES_DB: ${POSTGRES_DB:-smartcontact}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: ${DB_NAME:-smartcontact}
     volumes:
-      - smartcontact_prod_data:/var/lib/postgresql/data
+      - smartcontact_prod_pgdata:/var/lib/postgresql/data
     networks:
       - smartcontact-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-smartcontact}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-smartcontact}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   api:
     build:
-      context: .
-      dockerfile: Dockerfile.api
-    container_name: smartcontact_api
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    container_name: smartcontact_api_prod
     restart: always
     depends_on:
       db:
@@ -30,20 +30,21 @@ services:
       DB_TYPE: postgres
       DB_HOST: db
       DB_PORT: 5432
-      DB_USERNAME: ${POSTGRES_USER:-postgres}
-      DB_PASSWORD: ${POSTGRES_PASSWORD:-password}
-      DB_DATABASE: ${POSTGRES_DB:-smartcontact}
+      DB_USERNAME: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      DB_DATABASE: ${DB_NAME:-smartcontact}
       JWT_SECRET: ${JWT_SECRET}
       NODE_ENV: production
       PORT: 3000
+    # NÃO mapeamos porta 3000 no host para evitar conflito com mas-ia
     networks:
       - smartcontact-network
 
   web:
     build:
-      context: .
-      dockerfile: Dockerfile.web
-    container_name: smartcontact_web
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: smartcontact_web_prod
     restart: always
     ports:
       - "8081:80"
@@ -57,4 +58,4 @@ networks:
     driver: bridge
 
 volumes:
-  smartcontact_prod_data:
+  smartcontact_prod_pgdata:
