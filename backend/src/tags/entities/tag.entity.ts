@@ -1,4 +1,5 @@
 import { User } from 'src/users/entities/user.entity';
+import { InteractionLog } from 'src/interaction-logs/entities/interaction-log.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -6,6 +7,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  OneToMany,
   JoinColumn,
   Index,
 } from 'typeorm';
@@ -50,6 +52,9 @@ export class Tag {
 
   @Column({ default: true, name: 'is_active' })
   isActive!: boolean;
+
+  @OneToMany(() => InteractionLog, (log) => log.tag)
+  interactionLogs!: InteractionLog[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
