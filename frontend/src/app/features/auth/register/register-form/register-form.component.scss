@@ -1,87 +1,100 @@
-:host {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.form-container {
   width: 100%;
+  min-width: 500px; // Mandatory minimum width on desktop
+  max-width: 500px;
+  padding: 48px;
+  border-radius: 32px;
+  background-color: var(--mat-sys-surface-container-high);
+  box-shadow: var(--mat-sys-level3);
+  border: 1px solid var(--mat-sys-outline-variant);
+  box-sizing: border-box;
+  margin: 24px;
 }
 
-.register-card {
-  width: 100%;
-  max-width: 420px;
-  margin: 20px auto;
-  padding: 32px;
-  border-radius: 16px;
-  background-color: var(--mat-sys-secondary-container);
-  box-shadow: var(--mat-sys-level3);
+.logo-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 32px;
+  gap: 12px;
+  text-align: center;
+
+  img {
+    height: 64px;
+    width: auto;
+  }
+
+  .brand-title {
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.5px;
+    
+    .smart {
+        color: #0078d4;
+    }
+    
+    .contact {
+        color: #9c27b0;
+    }
+  }
+  
+  .subtitle {
+      color: var(--mat-sys-on-surface-variant);
+      font-size: 1rem;
+      margin-top: 4px;
+  }
+}
+
+form {
   display: flex;
   flex-direction: column;
   gap: 16px;
 
-  .logo {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 8px;
-    
-    img {
-      width: 140px; // 🟢 Isso mata a "logo gigante"
-      height: auto;
-      filter: invert(38%) sepia(65%) saturate(300%) hue-rotate(190deg);
-    }
-  }
-
-  header {
-    text-align: center;
-    h2 { margin: 0; font-size: 24px; color: var(--mat-sys-on-secondary-container); }
-    p { margin: 4px 0 0; font-size: 14px; color: var(--mat-sys-outline); }
-  }
-
-  form {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+  mat-form-field {
     width: 100%;
-
-    mat-form-field { width: 100%; }
-    .submit-btn { height: 48px; margin-top: 8px; }
   }
+}
 
-  // Estilos da Verificação (Tela de Sucesso)
-  .success-message {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
+.send-button {
+  margin-top: 16px;
+  height: 56px;
+  border-radius: 28px;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
 
-    .main-icon { font-size: 64px; width: 64px; height: 64px; }
+.auth-links {
+  margin-top: 32px;
+  text-align: center;
+  font-size: 1rem;
+  color: var(--mat-sys-on-surface-variant);
+  
+  a {
+    text-decoration: none;
+    color: var(--mat-sys-primary);
+    font-weight: 600;
     
-    .code-container {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      
-      button { height: 48px; }
-    }
-
-    .divider {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      &::before, &::after { content: ''; flex: 1; border-bottom: 1px solid #ccc; }
-      span { padding: 0 10px; font-size: 12px; }
-    }
-
-    .actions {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      gap: 8px;
+    &:hover {
+      text-decoration: underline;
     }
   }
+}
 
-  footer {
-    text-align: center;
-    font-size: 14px;
-    a { color: var(--mat-sys-primary); font-weight: bold; text-decoration: none; }
+@media (max-width: 600px) {
+  .form-container {
+    min-width: 100%;
+    width: 100%;
+    padding: 32px 20px;
+    margin: 0;
+    max-width: 100%;
+    border-radius: 0;
+    box-shadow: none;
+    background-color: transparent;
+    border: none;
+  }
+  
+  .brand-title {
+      font-size: 1.75rem !important;
   }
 }

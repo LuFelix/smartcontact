@@ -1,0 +1,48 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: smartcontact_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: ${DB_NAME:-smartcontact}
+    volumes:
+      - smartcontact_data:/var/lib/postgresql/data
+    networks:
+      - smartcontact-network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: smartcontact_api
+    restart: always
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-password}@db:5432/${DB_NAME:-smartcontact}?schema=public
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 3000
+    networks:
+      - smartcontact-network
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: smartcontact_web
+    restart: always
+    ports:
+      - "8081:80"
+    depends_on:
+      - api
+    networks:
+      - smartcontact-network
+
+networks:
+  smartcontact-network:
+    driver: bridge
+
+volumes:
+  smartcontact_data:

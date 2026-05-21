@@ -1,19 +1,30 @@
 <div class="profile-container">
   <mat-card class="profile-card">
     <mat-card-header class="profile-card-header">
-      <mat-card-title>Meu Perfil</mat-card-title>
-      <mat-card-subtitle>Visualize e edite suas informações</mat-card-subtitle>
+      <div class="header-text-container">
+        <mat-card-title>Meu Perfil</mat-card-title>
+        <mat-card-subtitle>Visualize e edite suas informações</mat-card-subtitle>
+      </div>
     </mat-card-header>
 
     <mat-card-content>
       <div class="profile-avatar-section">
-        <img
-          [src]="profilePicturePreview"
-          alt="Foto de Perfil"
-          class="profile-image"
-          (click)="triggerImageUpload()" [class.editable]="isEditing" />
+        <div class="image-wrapper" (click)="triggerImageUpload()" [class.editable]="isEditing">
+          @if (profilePicturePreview) {
+            <img [src]="profilePicturePreview" alt="Foto de Perfil" class="profile-image" />
+          } @else {
+            <div class="profile-placeholder">
+              <mat-icon>person</mat-icon>
+            </div>
+          }
+          @if (isEditing) {
+            <div class="edit-overlay">
+              <mat-icon>photo_camera</mat-icon>
+            </div>
+          }
+        </div>
         @if (isEditing) {
-          <span class="text-sm text-gray-500 mt-2">(Upload de foto não implementado)</span>
+          <span class="upload-hint">(Upload de foto não implementado)</span>
         }
       </div>
 
@@ -26,27 +37,21 @@
           <mat-label>Nome</mat-label>
           <input matInput formControlName="firstName" />
           @if (profileForm.get('firstName')?.hasError('required') && profileForm.get('firstName')?.touched) {
-            <mat-error>
-              Nome é obrigatório.
-            </mat-error>
+            <mat-error>Nome é obrigatório.</mat-error>
           }
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Sobrenome</mat-label>
           <input matInput formControlName="lastName" />
           @if (profileForm.get('lastName')?.hasError('required') && profileForm.get('lastName')?.touched) {
-            <mat-error>
-              Sobrenome é obrigatório.
-            </mat-error>
+            <mat-error>Sobrenome é obrigatório.</mat-error>
           }
         </mat-form-field>
         <mat-form-field appearance="outline">
           <mat-label>Telefone</mat-label>
           <input matInput formControlName="phone" placeholder="(XX) XXXXX-XXXX" />
           @if (profileForm.get('phone')?.hasError('pattern') && profileForm.get('phone')?.touched) {
-            <mat-error>
-              Formato inválido. Ex: (11) 98765-4321
-            </mat-error>
+            <mat-error>Formato inválido. Ex: (11) 98765-4321</mat-error>
           }
         </mat-form-field>
 
@@ -55,16 +60,6 @@
           <input matInput formControlName="cep" placeholder="00000-000" maxlength="9" />
           @if (isFetchingCep) {
             <mat-icon matSuffix> <mat-spinner [diameter]="20"></mat-spinner> </mat-icon>
-          }
-          @if (profileForm.get('cep')?.hasError('pattern') && profileForm.get('cep')?.touched) {
-            <mat-error>
-              Formato inválido (00000-000 ou 00000000).
-            </mat-error>
-          }
-          @if (!isFetchingCep && profileForm.get('cep')?.valid && profileForm.get('cep')?.value) {
-            <mat-hint>
-              Digite o CEP para buscar o endereço.
-            </mat-hint>
           }
         </mat-form-field>
 
@@ -78,7 +73,7 @@
           <input matInput formControlName="neighborhood" />
         </mat-form-field>
 
-         <div class="city-state-row">
+        <div class="city-state-row">
             <mat-form-field appearance="outline" class="city-field">
               <mat-label>Cidade</mat-label>
               <input matInput formControlName="city" />
@@ -91,20 +86,19 @@
 
         <div class="profile-actions">
           @if (!isEditing) {
-            <button mat-flat-button color="primary" (click)="toggleEditMode()">
+            <button mat-flat-button color="primary" (click)="toggleEditMode()" class="action-btn">
               <mat-icon>edit</mat-icon> Editar Perfil
             </button>
           }
           @if (isEditing) {
-            <button mat-raised-button color="accent" (click)="onSave()" [disabled]="profileForm.invalid || isLoading || isFetchingCep">
+            <button mat-raised-button color="accent" (click)="onSave()" [disabled]="profileForm.invalid || isLoading || isFetchingCep" class="action-btn">
               @if (isLoading) {
                 <mat-spinner [diameter]="20"></mat-spinner>
-              }
-              @if (!isLoading) {
+              } @else {
                 <span>Salvar Alterações</span>
               }
             </button>
-            <button mat-stroked-button color="warn" (click)="onCancel()" [disabled]="isLoading">
+            <button mat-stroked-button color="warn" (click)="onCancel()" [disabled]="isLoading" class="action-btn">
               <mat-icon>cancel</mat-icon> Cancelar
             </button>
           }

@@ -1,13 +1,14 @@
 import { Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { MatFormFieldModule, MatLabel } from '@angular/material/form-field';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatCard } from "@angular/material/card";
+import { MatCardModule } from "@angular/material/card";
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-contact',
-  imports: [MatButtonModule, MatFormFieldModule, ReactiveFormsModule, MatInputModule, MatCard],
+  imports: [MatButtonModule, MatFormFieldModule, ReactiveFormsModule, MatInputModule, MatCardModule, MatIconModule],
   templateUrl: './contact.html',
   styleUrl: './contact.scss'
 })

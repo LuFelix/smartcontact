@@ -8,6 +8,7 @@ import { MatBadgeModule } from '@angular/material/badge'; // Para o sino de noti
 import { CommonModule } from '@angular/common'; // Para *ngIf
 import { AuthService, } from '../../core/services/auth.service'; // Import AuthService e UserData
 import { UserData } from '../../features/shared/models/users.models';
+import { ThemeService } from '../../core/services/theme.service';
 
 @Component({
   selector: 'app-header',
@@ -26,6 +27,8 @@ import { UserData } from '../../features/shared/models/users.models';
 export class HeaderComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
+  private themeService = inject(ThemeService);
+  darkMode = this.themeService.darkMode;
 
   // Recebe o estado do Sidenav do componente pai
   @Input() sidenavOpen: boolean = true;
@@ -41,6 +44,10 @@ export class HeaderComponent {
 
   emitToggleSidenav() {
     this.toggleSidenav.emit();
+  }
+
+  toggleDarkMode() {
+    this.themeService.toggleTheme();
   }
 
   navigateToProfile() {

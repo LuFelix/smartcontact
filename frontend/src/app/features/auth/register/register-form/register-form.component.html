@@ -1,99 +1,80 @@
-<mat-card class="register-card">
-  <div class="logo">
-    <img src="logo2.png" alt="Logo" />
+<mat-card class="form-container">
+  <div class="logo-container" routerLink="/" style="cursor: pointer">
+    <img src="mas-logo.svg" alt="SmartContact Logo" />
+    <h2 class="brand-title">
+      <span class="smart">Smart</span><span class="contact">Contact</span>
+    </h2>
+    <p class="subtitle">Construa seu networking inteligente</p>
   </div>
 
-  @if (!isRegistered()) {
-    <header>
-      <h2>Criar Conta</h2>
-      <p>Preencha os campos para se cadastrar</p>
-    </header>
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <mat-form-field appearance="outline">
+      <mat-label>Primeiro Nome</mat-label>
+      <input matInput formControlName="firstName" placeholder="Ex: João" />
+      @if (form.get('firstName')?.hasError('required')) {
+        <mat-error>O nome é obrigatório</mat-error>
+      }
+    </mat-form-field>
 
-    <form [formGroup]="form" (ngSubmit)="onSubmit()">
-      <mat-form-field appearance="outline">
-        <mat-label>Nome Completo</mat-label>
-        <input matInput formControlName="name" placeholder="Ex: Luciano Felix" />
-        @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
-          <mat-error>O nome é obrigatório</mat-error>
-        }
-      </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Sobrenome</mat-label>
+      <input matInput formControlName="lastName" placeholder="Ex: Silva" />
+      @if (form.get('lastName')?.hasError('required')) {
+        <mat-error>O sobrenome é obrigatório</mat-error>
+      }
+    </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>E-mail</mat-label>
-        <input matInput formControlName="email" type="email" placeholder="seu@email.com" />
-        @if (form.get('email')?.hasError('email') && form.get('email')?.touched) {
-          <mat-error>E-mail inválido</mat-error>
-        }
-      </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Email</mat-label>
+      <input matInput formControlName="email" type="email" placeholder="seu@email.com" />
+      @if (form.get('email')?.hasError('required')) {
+        <mat-error>O e-mail é obrigatório</mat-error>
+      } @else if (form.get('email')?.hasError('email')) {
+        <mat-error>E-mail inválido</mat-error>
+      }
+    </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Senha</mat-label>
-        <input matInput formControlName="password" [type]="hidePassword() ? 'password' : 'text'" />
-        <button mat-icon-button matSuffix type="button" (click)="togglePasswordVisibility($event)">
-          <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
-        </button>
-        <mat-hint>Mínimo 8 caracteres, maiúsculas, minúsculas e símbolos.</mat-hint>
-      </mat-form-field>
-
-      <button mat-flat-button color="primary" class="submit-btn" [disabled]="form.invalid || isSubmitting()">
-        @if (isSubmitting()) {
-          <mat-spinner [diameter]="24"></mat-spinner>
-        } @else {
-          Cadastrar
-        }
+    <mat-form-field appearance="outline">
+      <mat-label>Senha</mat-label>
+      <input matInput formControlName="password" [type]="hidePassword() ? 'password' : 'text'" />
+      <button mat-icon-button matSuffix type="button" (click)="togglePasswordVisibility($event)">
+        <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
       </button>
-    </form>
 
-    <footer>
-      <span>Já tem uma conta? <a routerLink="/login">Faça o Login</a></span>
-    </footer>
+      @if (form.get('password')?.hasError('required')) {
+        <mat-error>A senha é obrigatória</mat-error>
+      } @else if (form.get('password')?.hasError('pattern') || form.get('password')?.hasError('minlength')) {
+        <mat-error>
+          A senha deve ter mín. 8 caracteres, com maiúsculas, minúsculas, números e símbolos.
+        </mat-error>
+      }
+    </mat-form-field>
 
-  } @else {
-    <div class="success-message">
-      <mat-icon color="primary" class="main-icon">mark_email_unread</mat-icon>
-      <h3>Verifique seu e-mail</h3>
-      <p>Enviamos um código de confirmação para:<br><strong>{{ registeredEmail() }}</strong></p>
-      
-      <div class="code-container">
-        <mat-form-field appearance="outline">
-          <mat-label>Código de 6 dígitos</mat-label>
-          <input matInput 
-                 #codeInput
-                 placeholder="000000" 
-                 maxlength="6" 
-                 inputmode="numeric"
-                 style="text-align: center; letter-spacing: 8px; font-size: 20px; font-weight: bold;">
-          <mat-icon matSuffix>lock</mat-icon>
-        </mat-form-field>
-        
-        <button mat-flat-button color="accent" 
-                [disabled]="codeInput.value.length < 6 || isSubmitting()"
-                (click)="verifyCode(codeInput.value)">
-          @if (isSubmitting()) {
-            <mat-spinner [diameter]="20"></mat-spinner>
-          } @else {
-            Validar Conta
-          }
-        </button>
-      </div>
+    <mat-form-field appearance="outline">
+      <mat-label>Confirmar Senha</mat-label>
+      <input matInput formControlName="confirmPassword" [type]="hideConfirmPassword() ? 'password' : 'text'" />
+      <button mat-icon-button matSuffix type="button" (click)="toggleConfirmPasswordVisibility($event)">
+        <mat-icon>{{ hideConfirmPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+      </button>
 
-      <div class="divider">
-        <span>ou</span>
-      </div>
+      @if (form.get('confirmPassword')?.hasError('required')) {
+        <mat-error>Confirme sua senha</mat-error>
+      } @else if (form.hasError('mismatch')) {
+        <mat-error>As senhas não coincidem</mat-error>
+      }
+    </mat-form-field>
 
-      <div class="actions">
-        <button mat-button color="primary" (click)="resendConfirmationCode()" [disabled]="isSubmitting()">
-          @if (isSubmitting()) {
-            <mat-spinner [diameter]="18"></mat-spinner>
-          } @else {
-           <ng-container>
-            <mat-icon>refresh</mat-icon>
-              <span>Reenviar Código</span>
-            </ng-container>
-          }
-        </button>
-        
-        <button mat-button routerLink="/login">Voltar para o Login</button>
-      </div>
-    </div>
-  }
+    <button class="send-button" mat-flat-button color="primary" type="submit"
+      [disabled]="form.invalid || isSubmitting()">
+      @if (isSubmitting()) {
+        <mat-spinner [diameter]="24"></mat-spinner>
+      } @else {
+        Criar Conta
+      }
+    </button>
+  </form>
+
+  <div class="auth-links">
+    <span>Já tem uma conta? <a class="login-link" routerLink="/login">Entre agora</a></span>
+  </div>
+</mat-card>

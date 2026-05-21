@@ -1,137 +1,135 @@
-:host {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-}
-
 .form-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   width: 100%;
-  max-width: 400px;
-  padding: 24px;
-  background-color: var(--mat-sys-secondary-container);
-  box-shadow: var(--mat-sys-level5);
-  border-radius: 8px;
-  gap: 24px;
+  min-width: 500px; // Standardized minimum width
+  max-width: 500px;
+  padding: 48px;
+  border-radius: 32px;
+  background-color: var(--mat-sys-surface-container-high);
+  box-shadow: var(--mat-sys-level3);
+  border: 1px solid var(--mat-sys-outline-variant);
+  box-sizing: border-box;
+  margin: 24px;
 }
 
 .logo-container {
-  width: 100%;
   display: flex;
-  justify-content: center;
-}
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 32px;
+  gap: 12px;
 
-img {
-  width: 150px;
-  height: auto;
-  filter: invert(38%) sepia(65%) saturate(300%) hue-rotate(190deg);
+  img {
+    height: 64px;
+    width: auto;
+  }
+
+  .brand-title {
+    font-size: 2rem;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.5px;
+    
+    .smart {
+        color: #0078d4;
+    }
+    
+    .contact {
+        color: #9c27b0;
+    }
+  }
 }
 
 form {
   display: flex;
   flex-direction: column;
-  width: 100%;
   gap: 16px;
-}
 
-mat-form-field {
-  width: 100%;
+  mat-form-field {
+    width: 100%;
+  }
 }
 
 .send-button {
-  width: 100%;
-  height: 48px;
+  margin-top: 12px;
+  height: 56px;
+  border-radius: 28px;
+  font-size: 1.1rem;
+  font-weight: 700;
 }
-
-/* =========================================
-   NOVA SEÇÃO: DIVISOR E BOTÃO DO GOOGLE
-   ========================================= */
 
 .social-login-section {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  margin-top: 24px;
+  text-align: center;
 }
 
-/* Flexbox para alinhar as linhas e o "OU" perfeitamente no centro */
 .divider-container {
   display: flex;
   align-items: center;
-  width: 100%;
-}
-
-.divider-line {
-  flex-grow: 1; /* Faz a linha esticar e ocupar o espaço vazio */
-  height: 1px;
-  background-color: var(--mat-sys-outline-variant);
-}
-
-.divider-text {
-  margin: 0 16px;
-  color: var(--mat-sys-outline);
-  font-size: 14px;
-  font-weight: 500;
-}
-
-/* Envelopando o botão do Google */
-.google-button-wrapper {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 48px;
-
-  /* Centraliza a tag do Angular caso sobre algum pixel */
-  ::ng-deep asl-google-signin-button {
-    display: flex;
-    justify-content: left;
+  gap: 16px;
+  margin-bottom: 20px;
+  
+  .divider-line {
+    flex: 1;
+    height: 1px;
+    background-color: var(--mat-sys-outline-variant);
+  }
+  
+  .divider-text {
+    font-size: 0.8rem;
+    color: var(--mat-sys-on-surface-variant);
+    font-weight: 600;
   }
 }
 
-/* =========================================
-   LINKS INFERIORES
-   ========================================= */
+.google-button-wrapper {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
 
 .auth-links {
+  margin-top: 32px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 100%;
   gap: 12px;
-  margin-top: 8px;
-  font-size: 14px;
-  color: var(--mat-sys-on-secondary-container);
-
+  font-size: 1rem;
+  
   a {
-    cursor: pointer;
-    color: var(--mat-sys-primary); // Usa a cor primária para destacar os links
     text-decoration: none;
-    font-weight: 500;
-    transition: opacity 0.2s ease-in-out;
-
+    color: var(--mat-sys-primary);
+    font-weight: 600;
+    
     &:hover {
-      opacity: 0.8;
       text-decoration: underline;
     }
   }
-
-  span {
-    color: var(--mat-sys-outline); // Cor mais neutra para o texto normal
-  }
-
-  .register-link {
-    font-weight: 600;
-  }
-
+  
   .divider {
-    width: 80%;
-    height: 1px;
-    background-color: var(--mat-sys-outline-variant);
-    margin: 4px 0;
+      width: 40px;
+      height: 1px;
+      background-color: var(--mat-sys-outline-variant);
+  }
+  
+  span {
+      color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+@media (max-width: 600px) {
+  .form-container {
+    min-width: 100%;
+    width: 100%;
+    padding: 32px 24px;
+    margin: 0;
+    max-width: 100%;
+    border-radius: 0;
+    box-shadow: none;
+    background-color: transparent;
+    border: none;
+  }
+  
+  .brand-title {
+      font-size: 1.75rem !important;
   }
 }

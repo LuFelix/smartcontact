@@ -1,42 +1,55 @@
-// Remove padding padrão para controlar melhor
 mat-nav-list {
-  padding-top: 0;
+  padding: 16px 0;
+  background-color: var(--mat-sys-surface-container-low);
+  height: 100%;
 }
 
-// Estilo para o link ativo
-.active-link {
-  background-color: rgba(63, 81, 181, 0.1); // Cor primária com transparência (exemplo)
-  color: #3f51b5; // Cor primária (exemplo)
+a[mat-list-item] {
+  margin: 4px 12px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  color: var(--mat-sys-on-surface-variant);
+
+  &:hover {
+    background-color: var(--mat-sys-surface-container-high);
+  }
+
+  &.active-link {
+    background-color: var(--mat-sys-primary-container);
+    color: var(--mat-sys-on-primary-container);
+
+    mat-icon {
+      color: var(--mat-sys-on-primary-container);
+    }
+    
+    font-weight: 600;
+  }
 
   mat-icon {
-    color: #3f51b5; // Cor primária (exemplo)
+    color: var(--mat-sys-on-surface-variant);
   }
 }
 
-// Ajustes visuais opcionais
-a[mat-list-item] {
-  margin: 4px 8px;
-  border-radius: 4px;
-  // CORREÇÃO: Troca height por min-height para permitir expansão
-  min-height: 44px; // Altura MÍNIMA padrão
-  height: auto;     // Altura se ajusta ao conteúdo
+.toggle-content-wrapper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    
+    mat-icon {
+        margin-right: 12px;
+    }
+}
 
-  // Garante que o conteúdo interno use flex e permita quebra
-  // (::ng-deep pode ser necessário dependendo da versão do Angular/Material)
-  ::ng-deep .mat-list-item-content {
-    display: flex;       // Garante flexbox
-    align-items: center; // Alinha ícone e texto verticalmente
-    height: auto;        // Altura do conteúdo se ajusta
-    padding: 8px 0;      // Adiciona padding vertical interno
+.layout-toggle-button {
+  margin-top: 16px !important;
+  color: var(--mat-sys-secondary) !important;
+  
+  mat-icon {
+    color: var(--mat-sys-secondary) !important;
   }
 }
 
-// Estilo para o texto (span) - Mantém a quebra
-// Talvez precise aumentar a especificidade se não pegar
-// Ex: a[mat-list-item] ::ng-deep .mat-list-item-content span[matListItemTitle] { ... }
-.mat-list-item-content span[matListItemTitle] { // Ou use a classe específica do span se houver
-  white-space: normal; // Permite quebrar linha
-  line-height: 1.3;    // Leve ajuste no espaçamento entre linhas
-  // Se o texto parecer "colado" no ícone quando quebrar, adicione:
-  // margin-left: 8px; // Pequena margem à esquerda do texto
+mat-divider {
+    margin: 16px 12px;
+    border-color: var(--mat-sys-outline-variant);
 }

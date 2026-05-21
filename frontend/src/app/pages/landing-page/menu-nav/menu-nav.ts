@@ -1,9 +1,10 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { ThemeService } from '../../../core/services/theme.service';
 
 @Component({
   selector: 'app-menu-nav',
@@ -12,6 +13,9 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
   styleUrl: './menu-nav.scss'
 })
 export class MenuNav {
+  private themeService = inject(ThemeService);
+  darkMode = this.themeService.darkMode;
+
   scrollToTop(): void {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -39,26 +43,7 @@ export class MenuNav {
     this.menuOpen = false;
   }
 
-
-  darkMode = false;
-
-  ngOnInit() {
-    const saved = localStorage.getItem('darkMode');
-    this.darkMode = saved === 'true';
-    this.updateHTMLClass();
-  }
-
   toggleDarkMode() {
-    this.darkMode = !this.darkMode;
-    localStorage.setItem('darkMode', String(this.darkMode));
-    this.updateHTMLClass();
-  }
-
-  private updateHTMLClass() {
-    if (this.darkMode) {
-      document.documentElement.classList.add('dark-mode');
-    } else {
-      document.documentElement.classList.remove('dark-mode');
-    }
+    this.themeService.toggleTheme();
   }
 }

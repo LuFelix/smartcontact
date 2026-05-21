@@ -13,13 +13,13 @@ import { UnauthorizedComponent } from './core/pages/unauthorized-page/unauthoriz
 
 export const routes: Routes = [
     // Rotas Públicas
-    { path: 'login', component: LoginPage, title: 'TechSolutions - Login' },
+    { path: 'login', component: LoginPage, title: 'SmartContact - Login' },
     { path: '', component: LandingPage }, // Rota raiz pública
     // Rota para Acesso Negado
     { path: 'unauthorized', component: UnauthorizedComponent },
     {
         path: 'register',
-        title: 'Criar Conta | Educa-IA', // Título que aparece na aba do navegador
+        title: 'SmartContact - Criar Conta', // Título que aparece na aba do navegador
         loadComponent: () => 
         import('./features/auth/register/register-page/register-page.component')
             .then(m => m.RegisterPageComponent)
