@@ -8,9 +8,14 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
       POSTGRES_DB: ${DB_NAME:-smartcontact}
     volumes:
-      - smartcontact_data:/var/lib/postgresql/data
+      - smartcontact_prod_data:/var/lib/postgresql/data
     networks:
       - smartcontact-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-smartcontact}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   api:
     build:
@@ -19,11 +24,13 @@ services:
     container_name: smartcontact_api
     restart: always
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-password}@db:5432/${DB_NAME:-smartcontact}?schema=public
       JWT_SECRET: ${JWT_SECRET}
       PORT: 3000
+      NODE_ENV: production
     networks:
       - smartcontact-network
 
@@ -45,4 +52,4 @@ networks:
     driver: bridge
 
 volumes:
-  smartcontact_data:
+  smartcontact_prod_data:
