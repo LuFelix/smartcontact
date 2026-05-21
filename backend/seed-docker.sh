@@ -136,16 +136,16 @@ docker-compose ps | tail -n +3 | while read line; do
 done
 
 # Verificar se backend está rodando
-if ! docker-compose ps backend 2>/dev/null | grep -q "Up"; then
+if ! docker compose ps api 2>/dev/null | grep -q "Up"; then
     print_error "Backend não está rodando!"
-    print_info "Execute para iniciar: docker-compose up -d"
+    print_info "Execute para iniciar: docker compose up -d"
     exit 1
 fi
 
 print_success "Backend está rodando"
 
 # Verificar se db está rodando
-if ! docker-compose ps db 2>/dev/null | grep -q "Up"; then
+if ! docker compose ps db 2>/dev/null | grep -q "Up"; then
     print_warn "Banco de dados (db) pode não estar rodando"
     print_info "Aguarde alguns segundos e tente de novo..."
     sleep 3
@@ -161,7 +161,7 @@ print_attention "Conectando ao container backend..."
 echo ""
 
 # Rodar o seed e capturar saída
-docker-compose exec backend npm run seed:verbose
+docker compose exec api npm run seed:verbose
 
 SEED_EXIT_CODE=$?
 
@@ -201,7 +201,7 @@ if [ $SEED_EXIT_CODE -eq 0 ]; then
     echo -e "  ${BRIGHT}${CYAN}1. Abra seu frontend no navegador${NC}"
     echo -e "  ${BRIGHT}${CYAN}2. Faça login com:${NC}"
     echo ""
-    echo -e "    ${GREEN}Email:${NC}  ${BRIGHT}admin@meusistema.com${NC}"
+    echo -e "    ${GREEN}Email:${NC}  ${BRIGHT}admin@smartcontact.com.br${NC}"
     echo -e "    ${GREEN}Senha:${NC}  ${BRIGHT}Senha@123${NC}"
     echo ""
     echo -e "  ${BRIGHT}${CYAN}3. Comece a usar o sistema! 🎉${NC}"
