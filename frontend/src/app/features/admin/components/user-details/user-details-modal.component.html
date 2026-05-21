@@ -1,7 +1,7 @@
 <h2 mat-dialog-title>
     {{ data.isCreation ? 'Novo Usuário' : 'Detalhes do Usuário' }}
     @if (!data.isCreation && userForm.get('name')?.value) {
-        <span>: {{ userForm.get('name')?.value }}</span>
+        <span class="user-title-name">: {{ userForm.get('name')?.value }}</span>
     }
 </h2>
 
@@ -18,16 +18,16 @@
 
         <form [formGroup]="userForm" class="config-form">
             
-            <!-- ****** CARD 1: INFORMAÇÕES PESSOAIS (AGORA COMPLETO) ****** -->
+            <!-- CARD 1: INFORMAÇÕES PESSOAIS -->
             <mat-card>
                 <mat-card-header>
                     <mat-card-title>Informações Pessoais</mat-card-title>
                 </mat-card-header>
 
-                <mat-card-content class="config-fields grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                <mat-card-content class="config-fields">
                     
                     <!-- Campo Nome -->
-                    <mat-form-field appearance="outline" class="w-full md:col-span-2">
+                    <mat-form-field appearance="outline" class="md:col-span-2">
                         <mat-label>Nome Completo</mat-label>
                         <input matInput formControlName="name" placeholder="Ex: João da Silva">
                         @if (userForm.get('name')?.invalid && userForm.get('name')?.touched) {
@@ -36,7 +36,7 @@
                     </mat-form-field>
 
                     <!-- Campo CPF -->
-                    <mat-form-field appearance="outline" class="w-full">
+                    <mat-form-field appearance="outline">
                         <mat-label>CPF</mat-label>
                         <input matInput formControlName="cpf" placeholder="000.000.000-00">
                         @if (userForm.get('cpf')?.invalid && userForm.get('cpf')?.touched) {
@@ -45,7 +45,7 @@
                     </mat-form-field>
 
                     <!-- Campo E-mail -->
-                    <mat-form-field appearance="outline" class="w-full">
+                    <mat-form-field appearance="outline">
                         <mat-label>E-mail</mat-label>
                         <input matInput formControlName="email" type="email" placeholder="exemplo@email.com">
                         @if (userForm.get('email')?.invalid && userForm.get('email')?.touched) {
@@ -55,7 +55,7 @@
 
                     <!-- Campo Senha (Apenas na Criação) -->
                     @if (data.isCreation) {
-                        <mat-form-field appearance="outline" class="w-full md:col-span-2">
+                        <mat-form-field appearance="outline" class="md:col-span-2">
                             <mat-label>Senha Inicial</mat-label>
                             <input matInput formControlName="password" type="password">
                             <mat-hint>Mínimo de 6 caracteres</mat-hint>
@@ -69,49 +69,55 @@
             </mat-card>
             
             
-            <!-- ****** CARD 2: STATUS E PERMISSÕES (MOVIDO PARA DENTRO DO FORM) ****** -->
-            <mat-card class="mt-4">
+            <!-- CARD 2: STATUS E PERMISSÕES -->
+            <mat-card>
                 <mat-card-header>
                     <mat-card-title>Status e Permissões</mat-card-title>
                 </mat-card-header>
                 
-                <mat-card-content class="p-6 flex flex-col gap-4">
-                    
-                    <!-- 1. SELEÇÃO DE FUNÇÃO (ROLE) -->
-                    <mat-form-field appearance="outline" class="w-full">
-                        <mat-label>Definir Função (Role)</mat-label>
-                        <!-- Usa o formControl criado na classe -->
-                        <mat-select [formControl]="roleIdControl"> 
-                            @for (role of availableRoles$ | async; track role.id) {
-                                <mat-option [value]="role.id">{{ role.name }}</mat-option>
-                            }
-                        </mat-select>
-                        <mat-error *ngIf="roleIdControl.invalid && roleIdControl.touched">A função é obrigatória.</mat-error>
-                    </mat-form-field>
-                    
-                    <!-- 2. SLIDE TOGGLE PARA ACTIVATE E STATUS ATUAL -->
-                    <div class="status-toggle flex items-center justify-between border-t pt-4">
-                        <mat-slide-toggle formControlName="isActive" color="primary"> 
-                            Usuário Ativo
-                        </mat-slide-toggle>
+                <mat-card-content class="status-permissions-content">
+                    <div class="flex flex-col gap-6">
+                        <!-- 1. SELEÇÃO DE FUNÇÃO (ROLE) -->
+                        <div class="field-wrapper">
+                            <mat-form-field appearance="outline" class="w-full">
+                                <mat-label>Definir Função (Role)</mat-label>
+                                <mat-select [formControl]="roleIdControl"> 
+                                    @for (role of availableRoles$ | async; track role.id) {
+                                        <mat-option [value]="role.id">{{ role.name }}</mat-option>
+                                    }
+                                </mat-select>
+                                <mat-error *ngIf="roleIdControl.invalid && roleIdControl.touched">A função é obrigatória.</mat-error>
+                            </mat-form-field>
+                        </div>
                         
-                        <!-- Exibição da Role ATUAL (APENAS EDIÇÃO/LEITURA) -->
-                        @if (!data.isCreation) {
-                            <div class="flex items-center gap-2">
-                                <mat-icon color="accent">security</mat-icon>
-                                <span class="font-medium text-gray-700">Função Salva:</span>
-                                <span class="text-primary font-bold">{{ user?.role?.name || 'Não atribuída' }}</span> 
+                        <!-- 2. SLIDE TOGGLE PARA ACTIVATE E STATUS ATUAL -->
+                        <div class="status-container">
+                            <div class="toggle-row">
+                                <mat-slide-toggle formControlName="isActive" color="primary"> 
+                                    <span class="toggle-label">Usuário Ativo</span>
+                                </mat-slide-toggle>
+                                
+                                @if (!data.isCreation) {
+                                    <div class="role-saved-info">
+                                        <mat-icon color="accent">security</mat-icon>
+                                        <div class="role-text-info">
+                                            <span class="label">Função Salva</span>
+                                            <strong class="value">{{ user?.role?.name || 'Não atribuída' }}</strong>
+                                        </div>
+                                    </div>
+                                }
                             </div>
-                        }
+                            
+                            <div class="info-note">
+                                <mat-icon>info_outline</mat-icon>
+                                <span>Este campo define se o usuário tem permissão para acessar o sistema.</span>
+                            </div>
+                        </div>
                     </div>
-                    <mat-hint class="mt-2">[O campo acima define o status de login do usuário.]</mat-hint>
                 </mat-card-content>
             </mat-card>
             
         </form>
-        <!-- ****** FIM FORM ****** -->
-
-
     }
 </mat-dialog-content>
 
@@ -119,12 +125,12 @@
     
     @if (!data.isCreation) {
         <button mat-stroked-button color="warn"
-                class="mr-auto" (click)="deleteUser()"
+                class="delete-btn" (click)="deleteUser()"
                 [disabled]="isSaving || isDeleting">
             @if (isDeleting) {
                 <mat-progress-spinner diameter="20" mode="indeterminate" class="mr-2"></mat-progress-spinner> Excluindo...
             } @else {
-                <span class="button-content-wrapper"> <mat-icon>delete_forever</mat-icon> Excluir Usuário</span>
+                <span class="button-content-wrapper"> <mat-icon>delete_forever</mat-icon> Excluir</span>
             }
         </button>
     }
@@ -138,7 +144,7 @@
             </span>
         } @else {
             <span class="button-content-wrapper">
-                <mat-icon>save</mat-icon> {{ data.isCreation ? 'Criar Usuário' : 'Salvar Alterações' }}
+                <mat-icon>save</mat-icon> {{ data.isCreation ? 'Criar' : 'Salvar' }}
             </span>
         }
     </button>

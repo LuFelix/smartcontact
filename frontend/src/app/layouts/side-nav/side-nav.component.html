@@ -1,5 +1,4 @@
 <mat-nav-list>
-  <!-- O loop original (sem a chave extra) -->
   @for (item of navItems; track item.link) {
     @if (canView(item)) {
       <a mat-list-item
@@ -11,32 +10,19 @@
       </a>
     }
   }
-  <!-- Fim do loop -->
 
-  <!-- A "Engrenagem" (O Seletor de Layout) -->
   <mat-divider></mat-divider>
   
-  <!-- (Ajuste a permissão se 'READ_USERS' não for a correta para o Admin) -->
   @if (authService.hasPermission('READ_USERS')) {
-    
     <a mat-list-item (click)="layoutService.toggleLayout()" class="layout-toggle-button">
-      @if (layoutService.layout() === 'moderno') {
-        <ng-container matListItemIcon>
-          <mat-icon>view_list</mat-icon>
-        </ng-container>
-      } @else {
-        <ng-container matListItemIcon>
-          <mat-icon>grid_view</mat-icon>
-        </ng-container>
-      }
-
-      <span matListItemTitle>
-        @if (layoutService.layout() === 'moderno') {
-          Mudar p/ Layout Clássico
-        } @else {
-          Mudar p/ Layout Moderno
-        }
-      </span>
+      <div class="toggle-content-wrapper">
+        <mat-icon matListItemIcon>
+          {{ layoutService.layout() === 'moderno' ? 'view_list' : 'grid_view' }}
+        </mat-icon>
+        <span matListItemTitle>
+          {{ layoutService.layout() === 'moderno' ? 'Layout Clássico' : 'Layout Moderno' }}
+        </span>
+      </div>
     </a>
   }
 </mat-nav-list>

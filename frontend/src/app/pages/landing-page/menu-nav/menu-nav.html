@@ -1,6 +1,6 @@
 <nav class="navbar" [class.scrolled]="showButton">
   <div class="nav-container">
-    <button class="hamburger" aria-label="Abrir menu" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen">
+    <button mat-icon-button class="hamburger" aria-label="Abrir menu" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen">
       <mat-icon>{{ menuOpen ? 'close' : 'menu' }}</mat-icon>
     </button>
 
@@ -23,7 +23,7 @@
     </ul>
 
     <div class="actions">
-      <button mat-icon-button (click)="toggleDarkMode()" aria-label="Alternar modo escuro" class="theme-toggle-container">
+      <button mat-icon-button (click)="toggleDarkMode()" aria-label="Alternar modo escuro" class="theme-toggle-btn">
         <mat-icon>{{ darkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
       </button>
     </div>

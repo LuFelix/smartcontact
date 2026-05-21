@@ -59,7 +59,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   isSaving = false;
   isEditing = false;
   isFetchingCep = false;
-  profilePicturePreview: string | ArrayBuffer | null = 'assets/images/image-placeholder-user.jpg';
+  profilePicturePreview: string | ArrayBuffer | null = null;
 
   // --- Subscriptions ---
   private profileSubscription!: Subscription;
@@ -91,8 +91,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   loadInitialProfile(): void {
     this.isLoading = true;
-    // CORREÇÃO: Pega o ID como string (UUID) do AuthService
-    const currentUserId = this.authService.userId(); // Assume que retorna string | null
+    const currentUserId = this.authService.userId();
 
     if (!currentUserId) {
       console.error("ID do usuário logado (UUID) não encontrado no AuthService.");
@@ -101,8 +100,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // CORREÇÃO: Chama findById com a string UUID
-    // **IMPORTANTE**: Garanta que seu UserService.findById ACEITA string
     this.profileSubscription = this.userService.findById(currentUserId).pipe(
       catchError(err => {
         console.error('Erro ao carregar perfil:', err);
@@ -110,10 +107,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
         return EMPTY;
       }),
       finalize(() => this.isLoading = false)
-    ).subscribe((userProfile: FullUserResponse) => { // Mantém a tipagem
-      this.currentUserData = userProfile as UserData; // Cast pode ser necessário
+    ).subscribe((userProfile: FullUserResponse) => {
+      this.currentUserData = userProfile as UserData;
 
-      this.profileForm.patchValue({ /* ... (sem alteração aqui) ... */
+      this.profileForm.patchValue({
         email: userProfile.email,
         firstName: userProfile.name?.split(' ')[0] || '',
         lastName: userProfile.name?.split(' ').slice(1).join(' ') || '',
@@ -124,9 +121,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
         city: userProfile.city || '',
         uf: userProfile.uf || '',
       });
-      this.profilePicturePreview = (userProfile as any).profilePictureUrl // Use 'as any' ou ajuste a interface
+      this.profilePicturePreview = (userProfile as any).profilePictureUrl 
         ? 'http://localhost:3000/' + (userProfile as any).profilePictureUrl
-        : 'assets/images/image-placeholder-user.jpg';
+        : null;
 
       this.profileForm.disable();
       this.profileForm.get('email')?.disable();
@@ -134,7 +131,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   setupCepAutofill(): void {
-    // ... (lógica do CEP sem alterações) ...
      const cepControl = this.profileForm.get('cep');
     if (!cepControl) return;
 
@@ -167,7 +163,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   toggleEditMode(): void {
-    // ... (lógica sem alterações) ...
      this.isEditing = !this.isEditing;
     if (this.isEditing) {
       this.profileForm.enable();
@@ -177,7 +172,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
     }
   }
 
-  // --- STUBS PARA LÓGICA DE IMAGEM (NÃO IMPLEMENTADOS) ---
   triggerImageUpload(): void {
     if (!this.isEditing) return;
     alert("Funcionalidade de upload de imagem não implementada.");
@@ -186,14 +180,13 @@ export class ProfileComponent implements OnInit, OnDestroy {
   onFileSelected(event: Event): void {
      alert("Funcionalidade de upload de imagem não implementada.");
   }
-  // --- FIM DOS STUBS ---
 
   onSave(): void {
-    if (this.profileForm.invalid) { /* ... */ return; }
+    if (this.profileForm.invalid) { return; }
     this.isLoading = true;
 
     const formData = this.profileForm.getRawValue();
-    const updatedProfileData = { /* ... monta o payload ... */
+    const updatedProfileData = {
         name: `${formData.firstName} ${formData.lastName}`,
         email: formData.email,
         phonenumber: formData.phone,
@@ -208,8 +201,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     console.log("Payload a ser enviado:", updatedProfileData);
     alert("Funcionalidade de salvar perfil ainda não conectada ao backend.");
 
-    // Simulação
-    setTimeout(() => { /* ... (simulação de sucesso) ... */
+    setTimeout(() => {
         this.isLoading = false;
         this.isEditing = false;
         this.profileForm.disable();
@@ -217,26 +209,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.snackBar.open('Perfil atualizado (Simulado)!', 'Fechar', { duration: 3000 });
         this.currentUserData = { ...this.currentUserData, ...updatedProfileData } as UserData;
     }, 1500);
-
-    /*
-    // --- CÓDIGO REAL (Adaptar updateUserProfile no serviço) ---
-    // CORREÇÃO: Pega ID como string
-    const currentUserId = this.authService.userId();
-    if (!currentUserId) {
-        // ... (tratar erro de ID não encontrado) ...
-        this.isLoading = false;
-        return;
-    }
-
-    // **IMPORTANTE**: Garanta que seu UserService.updateUserProfile ACEITA string ID
-    this.userService.updateUserProfile(currentUserId, updatedProfileData, /* this.selectedFile * /)
-      .pipe(finalize(() => this.isSaving = false)) // CORREÇÃO: Use isSaving aqui
-      .subscribe({ // ... (next, error) ... });
-    */
   }
 
   onCancel(): void {
-    // ... (lógica de resetar o form, sem alterações na essência) ...
      this.isEditing = false;
     this.profileForm.disable();
     if (this.currentUserData) {
@@ -253,7 +228,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       });
        this.profilePicturePreview = this.currentUserData.profilePictureUrl
           ? 'http://localhost:3000/' + this.currentUserData.profilePictureUrl
-          : 'assets/images/image-placeholder-user.jpg';
+          : null;
     }
     this.profileForm.get('email')?.disable();
     this.snackBar.open('Edição cancelada.', 'Fechar', { duration: 1500 });

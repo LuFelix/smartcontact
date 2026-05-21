@@ -49,6 +49,25 @@
   flex: 1 1 auto;
 }
 
+.hamburger-btn, .theme-toggle-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: var(--mat-sys-surface-container-high) !important;
+  box-shadow: var(--mat-sys-level1);
+  border-radius: 50%;
+  width: 40px !important;
+  height: 40px !important;
+  margin: 0 4px;
+
+  mat-icon {
+      margin: 0 !important;
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+  }
+}
+
 .user-menu-button {
   display: flex;
   align-items: center;
@@ -75,7 +94,7 @@
   }
 }
 
-.notification-button, .theme-toggle-button {
+.notification-button {
     margin: 0 2px;
     color: var(--mat-sys-on-surface-variant);
 }
