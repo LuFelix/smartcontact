@@ -4,15 +4,16 @@ services:
     container_name: smartcontact_db_prod
     restart: always
     environment:
-      POSTGRES_USER: ${DB_USER:-postgres}
+      # Usa as mesmas variáveis do seu .env para evitar confusão
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
-      POSTGRES_DB: ${DB_NAME:-smartcontact}
+      POSTGRES_DB: ${DB_DATABASE:-smartcontact}
     volumes:
       - smartcontact_prod_pgdata:/var/lib/postgresql/data
     networks:
       - smartcontact-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-smartcontact}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_DATABASE:-smartcontact}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -30,13 +31,13 @@ services:
       DB_TYPE: postgres
       DB_HOST: db
       DB_PORT: 5432
-      DB_USERNAME: ${DB_USER:-postgres}
+      DB_USERNAME: ${DB_USERNAME:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-password}
-      DB_DATABASE: ${DB_NAME:-smartcontact}
+      DB_DATABASE: ${DB_DATABASE:-smartcontact}
       JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
       NODE_ENV: production
       PORT: 3000
-    # NÃO mapeamos porta 3000 no host para evitar conflito com mas-ia
     networks:
       - smartcontact-network
 
