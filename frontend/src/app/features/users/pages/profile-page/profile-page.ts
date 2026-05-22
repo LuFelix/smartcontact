@@ -24,7 +24,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { NgxMaskDirective } from 'ngx-mask';
 
 // Models e Serviços
-import { UserData, FullUserResponse, Phone, Address, AddressTag, SecondaryEmail } from '../../../shared/models/users.models';
+import { UserData, FullUserResponse, Phone, Address, AddressTag, SecondaryEmail, UserLink } from '../../../shared/models/users.models';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { CepService } from '../../../../core/utils/cep.service';
@@ -88,7 +88,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
       cpf: [{ value: '', disabled: true }],
       phones: this.fb.array([]),
       addresses: this.fb.array([]),
-      secondaryEmails: this.fb.array([])
+      secondaryEmails: this.fb.array([]),
+      links: this.fb.array([])
     });
   }
 
@@ -111,6 +112,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   get secondaryEmails(): FormArray {
     return this.profileForm.get('secondaryEmails') as FormArray;
+  }
+
+  get links(): FormArray {
+    return this.profileForm.get('links') as FormArray;
   }
 
   addPhone(phone?: any): void {
@@ -139,6 +144,20 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   removeSecondaryEmail(index: number): void {
     this.secondaryEmails.removeAt(index);
+  }
+
+  addLink(link?: any): void {
+    const linkGroup = this.fb.group({
+        id: [link?.id || null],
+        title: [link?.title || '', Validators.required],
+        url: [link?.url || '', [Validators.required, Validators.pattern(/https?:\/\/.+/)]]
+    });
+    this.links.push(linkGroup);
+    if (!this.isEditing) linkGroup.disable();
+  }
+
+  removeLink(index: number): void {
+    this.links.removeAt(index);
   }
 
   addAddress(address?: any): void {
@@ -243,6 +262,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.secondaryEmails.clear();
         if (userProfile.secondaryEmails) userProfile.secondaryEmails.forEach(e => this.addSecondaryEmail(e));
 
+        this.links.clear();
+        if (userProfile.links) userProfile.links.forEach(l => this.addLink(l));
+
         this.profilePicturePreview = userProfile.profilePictureUrl 
           ? 'http://localhost:3000/' + userProfile.profilePictureUrl
           : null;
@@ -263,6 +285,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       this.phones.controls.forEach(c => c.enable());
       this.addresses.controls.forEach(c => c.enable());
       this.secondaryEmails.controls.forEach(c => c.enable());
+      this.links.controls.forEach(c => c.enable());
     } else {
       this.onCancel();
     }
@@ -302,6 +325,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
         secondaryEmails: formData.secondaryEmails.map((e: any) => ({
             id: e.id,
             address: e.address
+        })),
+        links: formData.links.map((l: any) => ({
+            id: l.id,
+            title: l.title,
+            url: l.url
         }))
     };
 

@@ -136,6 +136,46 @@
                 </mat-card-content>
             </mat-card>
 
+            <!-- SEÇÃO 4: LINKS E REDES SOCIAIS (FormArray) -->
+            <mat-card class="section-card">
+                <mat-card-header class="header-with-action">
+                    <div class="header-inner">
+                        <mat-card-title>Links e Redes Sociais</mat-card-title>
+                        <button type="button" mat-stroked-button color="primary" (click)="addLink()" class="add-btn">
+                            <span class="button-content-wrapper">
+                                <mat-icon>link</mat-icon> Adicionar
+                            </span>
+                        </button>
+                    </div>
+                </mat-card-header>
+
+                <mat-card-content>
+                    <div formArrayName="links" class="array-container">
+                        @for (link of links.controls; track $index) {
+                            <div [formGroupName]="$index" class="array-item-row">
+                                <mat-form-field appearance="outline" style="width: 150px;">
+                                    <mat-label>Título</mat-label>
+                                    <input matInput formControlName="title" placeholder="Ex: Instagram">
+                                </mat-form-field>
+
+                                <mat-form-field appearance="outline" class="flex-grow">
+                                    <mat-label>URL</mat-label>
+                                    <input matInput formControlName="url" placeholder="https://...">
+                                </mat-form-field>
+
+                                <div class="item-actions">
+                                    <button type="button" mat-icon-button color="warn" class="icon-align-fix" (click)="removeLink($index)">
+                                        <mat-icon>delete_outline</mat-icon>
+                                    </button>
+                                </div>
+                            </div>
+                        } @empty {
+                            <p class="empty-msg">Nenhum link cadastrado.</p>
+                        }
+                    </div>
+                </mat-card-content>
+            </mat-card>
+
             <!-- SEÇÃO 3: ENDEREÇOS (FormArray) -->
             <mat-card class="section-card">
                 <mat-card-header class="header-with-action">
