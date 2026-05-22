@@ -112,7 +112,7 @@ export class UsersService {
    async update(id: string, updateUserDto: UpdateUserDto): Promise<User> { 
         const user = await this.usersRepository.findOne({
             where: { id },
-            relations: ['role', 'phones', 'addresses'],
+            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links'],
         });
 
         if (!user) {
@@ -138,22 +138,30 @@ export class UsersService {
         }
 
         // TypeORM cascade handles update if items have IDs, or creates new ones if they don't.
-        // For simpler logic, we'll merge the top level properties first.
         const { roleId, phones, addresses, secondaryEmails, links, ...userUpdateData } = updateUserDto;
         
         this.usersRepository.merge(user, userUpdateData);
 
+        // Função auxiliar para remover IDs nulos que quebram o cascade do TypeORM
+        const cleanItems = (items: any[]) => items.map(item => {
+            if (item.id === null || item.id === undefined) {
+                const { id, ...rest } = item;
+                return rest;
+            }
+            return item;
+        });
+
         if (phones) {
-            user.phones = phones as any;
+            user.phones = cleanItems(phones) as any;
         }
         if (addresses) {
-            user.addresses = addresses as any;
+            user.addresses = cleanItems(addresses) as any;
         }
         if (secondaryEmails) {
-            user.secondaryEmails = secondaryEmails as any;
+            user.secondaryEmails = cleanItems(secondaryEmails) as any;
         }
         if (links) {
-            user.links = links as any;
+            user.links = cleanItems(links) as any;
         }
 
         return this.usersRepository.save(user);
