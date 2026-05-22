@@ -141,6 +141,7 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
             isMain: [phone?.isMain ?? false]
         });
         this.phones.push(phoneGroup);
+        this.focusNewItem('.focus-target-phone');
     }
 
     removePhone(index: number): void {
@@ -153,6 +154,7 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
             address: [email?.address || '', [Validators.required, Validators.email]]
         });
         this.secondaryEmails.push(emailGroup);
+        this.focusNewItem('.focus-target-email');
     }
 
     removeSecondaryEmail(index: number): void {
@@ -166,6 +168,7 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
             url: [link?.url || '', [Validators.required, Validators.pattern(/https?:\/\/.+/)]]
         });
         this.links.push(linkGroup);
+        this.focusNewItem('.focus-target-link');
     }
 
     removeLink(index: number): void {
@@ -189,6 +192,16 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
         const index = this.addresses.length;
         this.addresses.push(addressGroup);
         this.setupAddressCepSubscription(index);
+        this.focusNewItem('.focus-target-address');
+    }
+
+    private focusNewItem(selector: string): void {
+        setTimeout(() => {
+            const elements = document.querySelectorAll(selector);
+            if (elements.length > 0) {
+                (elements[elements.length - 1] as HTMLElement).focus();
+            }
+        }, 100);
     }
 
     private setupAddressCepSubscription(index: number): void {
@@ -227,12 +240,32 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
         this.phones.controls.forEach((control, i) => {
             control.get('isMain')?.setValue(i === index);
         });
+        this.sortPhones();
+    }
+
+    setMainEmail(index: number): void {
+        const currentPrimary = this.userForm.get('email')?.value;
+        const selectedSecondaryGroup = this.secondaryEmails.at(index) as FormGroup;
+        const newPrimary = selectedSecondaryGroup.get('address')?.value;
+
+        if (!newPrimary) return;
+
+        // Swap
+        this.userForm.get('email')?.setValue(newPrimary);
+        selectedSecondaryGroup.get('address')?.setValue(currentPrimary);
     }
 
     setMainAddress(index: number): void {
         this.addresses.controls.forEach((control, i) => {
             control.get('isMain')?.setValue(i === index);
         });
+    }
+
+    private sortPhones(): void {
+        const controls = [...this.phones.controls];
+        controls.sort((a, b) => (b.get('isMain')?.value ? 1 : 0) - (a.get('isMain')?.value ? 1 : 0));
+        this.phones.clear({ emitEvent: false });
+        controls.forEach(c => this.phones.push(c, { emitEvent: false }));
     }
 
     private loadUser(id: string): void {
@@ -254,7 +287,8 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
 
                 this.phones.clear();
                 if (loadedUser.phones) {
-                    loadedUser.phones.forEach(p => this.addPhone(p));
+                    const sortedPhones = [...loadedUser.phones].sort((a, b) => (b.isMain ? 1 : 0) - (a.isMain ? 1 : 0));
+                    sortedPhones.forEach(p => this.addPhone(p));
                 }
 
                 this.addresses.clear();

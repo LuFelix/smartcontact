@@ -127,6 +127,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
     this.phones.push(phoneGroup);
     if (!this.isEditing) phoneGroup.disable();
+    this.focusNewItem('.focus-target-phone');
   }
 
   removePhone(index: number): void {
@@ -140,6 +141,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
     this.secondaryEmails.push(emailGroup);
     if (!this.isEditing) emailGroup.disable();
+    this.focusNewItem('.focus-target-email');
   }
 
   removeSecondaryEmail(index: number): void {
@@ -154,6 +156,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
     this.links.push(linkGroup);
     if (!this.isEditing) linkGroup.disable();
+    this.focusNewItem('.focus-target-link');
   }
 
   removeLink(index: number): void {
@@ -177,6 +180,16 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.addresses.push(addressGroup);
     if (!this.isEditing) addressGroup.disable();
     this.setupAddressCepSubscription(index);
+    this.focusNewItem('.focus-target-address');
+  }
+
+  private focusNewItem(selector: string): void {
+    setTimeout(() => {
+        const elements = document.querySelectorAll(selector);
+        if (elements.length > 0) {
+            (elements[elements.length - 1] as HTMLElement).focus();
+        }
+    }, 100);
   }
 
   private setupAddressCepSubscription(index: number): void {
@@ -221,6 +234,23 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.phones.controls.forEach((control, i) => {
         control.get('isMain')?.setValue(i === index);
     });
+    this.sortPhones();
+  }
+
+  setMainEmail(index: number): void {
+    if (!this.isEditing) return;
+    
+    const currentPrimary = this.profileForm.get('email')?.value;
+    const selectedSecondaryGroup = this.secondaryEmails.at(index) as FormGroup;
+    const newPrimary = selectedSecondaryGroup.get('address')?.value;
+
+    if (!newPrimary) return;
+
+    // Swap
+    this.profileForm.get('email')?.setValue(newPrimary);
+    selectedSecondaryGroup.get('address')?.setValue(currentPrimary);
+    
+    this.snackBar.open('E-mail principal alterado. Salve para confirmar.', 'OK', { duration: 3000 });
   }
 
   setMainAddress(index: number): void {
@@ -228,6 +258,13 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.addresses.controls.forEach((control, i) => {
         control.get('isMain')?.setValue(i === index);
     });
+  }
+
+  private sortPhones(): void {
+    const controls = [...this.phones.controls];
+    controls.sort((a, b) => (b.get('isMain')?.value ? 1 : 0) - (a.get('isMain')?.value ? 1 : 0));
+    this.phones.clear({ emitEvent: false });
+    controls.forEach(c => this.phones.push(c, { emitEvent: false }));
   }
 
   loadInitialProfile(): void {
@@ -254,7 +291,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
         });
 
         this.phones.clear();
-        if (userProfile.phones) userProfile.phones.forEach(p => this.addPhone(p));
+        if (userProfile.phones) {
+            const sortedPhones = [...userProfile.phones].sort((a, b) => (b.isMain ? 1 : 0) - (a.isMain ? 1 : 0));
+            sortedPhones.forEach(p => this.addPhone(p));
+        }
 
         this.addresses.clear();
         if (userProfile.addresses) userProfile.addresses.forEach(a => this.addAddress(a));
@@ -303,6 +343,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     const formData = this.profileForm.getRawValue();
     const payload = {
         name: `${formData.firstName} ${formData.lastName}`,
+        email: formData.email, // Novo email principal (se trocado)
         cpf: formData.cpf,
         phones: formData.phones.map((p: any) => ({
             id: p.id,

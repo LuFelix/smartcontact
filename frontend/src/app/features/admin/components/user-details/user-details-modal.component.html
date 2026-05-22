@@ -36,8 +36,9 @@
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
-                        <mat-label>E-mail</mat-label>
-                        <input matInput formControlName="email" type="email" autocomplete="off">
+                        <mat-label>E-mail de Login</mat-label>
+                        <input matInput formControlName="email" type="email" autocomplete="off" readonly>
+                        <mat-icon matSuffix matTooltip="E-mail principal de acesso.">lock</mat-icon>
                     </mat-form-field>
 
                     @if (data.isCreation) {
@@ -49,59 +50,7 @@
                 </mat-card-content>
             </mat-card>
 
-            <!-- SEÇÃO 2: TELEFONES (FormArray) -->
-            <mat-card class="section-card">
-                <mat-card-header class="header-with-action">
-                    <div class="header-inner">
-                        <mat-card-title>Contatos Telefônicos</mat-card-title>
-                        <button type="button" mat-stroked-button color="primary" (click)="addPhone()" class="add-btn">
-                            <span class="button-content-wrapper">
-                                <mat-icon>add</mat-icon> Adicionar
-                            </span>
-                        </button>
-                    </div>
-                </mat-card-header>
-
-                <mat-card-content>
-                    <div formArrayName="phones" class="array-container">
-                        @for (phone of phones.controls; track $index) {
-                            <div [formGroupName]="$index" class="array-item-row">
-                                <mat-form-field appearance="outline" class="flex-grow">
-                                    <mat-label>Telefone / Celular</mat-label>
-                                    <input matInput formControlName="phoneNumber" mask="(00) 00000-0000" [dropSpecialCharacters]="true" placeholder="(00) 00000-0000" autocomplete="off">
-                                </mat-form-field>
-
-                                <div class="item-actions">
-                                    <div class="toggle-with-label">
-                                        <mat-slide-toggle formControlName="isWhatsapp">
-                                            <mat-icon [color]="phone.get('isWhatsapp')?.value ? 'primary' : 'disabled'" class="whatsapp-status-icon">
-                                                {{ phone.get('isWhatsapp')?.value ? 'chat' : 'chat_bubble_outline' }}
-                                            </mat-icon>
-                                        </mat-slide-toggle>
-                                        <mat-icon class="help-icon" matTooltip="Este número possui WhatsApp?">help_outline</mat-icon>
-                                    </div>
-
-                                    <button type="button" mat-icon-button 
-                                            class="icon-align-fix"
-                                            [color]="phone.get('isMain')?.value ? 'warn' : 'default'"
-                                            (click)="setMainPhone($index)"
-                                            matTooltip="Marcar como Principal">
-                                        <mat-icon>{{ phone.get('isMain')?.value ? 'star' : 'star_outline' }}</mat-icon>
-                                    </button>
-
-                                    <button type="button" mat-icon-button color="warn" class="icon-align-fix" (click)="removePhone($index)">
-                                        <mat-icon>delete_outline</mat-icon>
-                                    </button>
-                                </div>
-                            </div>
-                        } @empty {
-                            <p class="empty-msg">Nenhum telefone cadastrado.</p>
-                        }
-                    </div>
-                </mat-card-content>
-            </mat-card>
-
-            <!-- SEÇÃO 3: E-MAILS ADICIONAIS (FormArray) -->
+            <!-- SEÇÃO 2: E-MAILS ADICIONAIS -->
             <mat-card class="section-card">
                 <mat-card-header class="header-with-action">
                     <div class="header-inner">
@@ -120,10 +69,17 @@
                             <div [formGroupName]="$index" class="array-item-row">
                                 <mat-form-field appearance="outline" class="flex-grow">
                                     <mat-label>E-mail Secundário</mat-label>
-                                    <input matInput formControlName="address" placeholder="outro@email.com" autocomplete="off">
+                                    <input matInput formControlName="address" placeholder="outro@email.com" autocomplete="off" class="focus-target-email">
                                 </mat-form-field>
 
                                 <div class="item-actions">
+                                    <button type="button" mat-icon-button 
+                                            class="icon-align-fix"
+                                            color="default"
+                                            (click)="setMainEmail($index)"
+                                            matTooltip="Tornar este o e-mail de login">
+                                        <mat-icon>swap_horiz</mat-icon>
+                                    </button>
                                     <button type="button" mat-icon-button color="warn" class="icon-align-fix" (click)="removeSecondaryEmail($index)">
                                         <mat-icon>delete_outline</mat-icon>
                                     </button>
@@ -131,6 +87,57 @@
                             </div>
                         } @empty {
                             <p class="empty-msg">Nenhum e-mail adicional cadastrado.</p>
+                        }
+                    </div>
+                </mat-card-content>
+            </mat-card>
+
+            <!-- SEÇÃO 3: TELEFONES (FormArray) -->
+            <mat-card class="section-card">
+                <mat-card-header class="header-with-action">
+                    <div class="header-inner">
+                        <mat-card-title>Contatos Telefônicos</mat-card-title>
+                        <button type="button" mat-stroked-button color="primary" (click)="addPhone()" class="add-btn">
+                            <span class="button-content-wrapper">
+                                <mat-icon>add</mat-icon> Adicionar
+                            </span>
+                        </button>
+                    </div>
+                </mat-card-header>
+
+                <mat-card-content>
+                    <div formArrayName="phones" class="array-container">
+                        @for (phone of phones.controls; track $index) {
+                            <div [formGroupName]="$index" class="array-item-row">
+                                <mat-form-field appearance="outline" class="flex-grow">
+                                    <mat-label>Telefone / Celular</mat-label>
+                                    <input matInput formControlName="phoneNumber" mask="(00) 00000-0000" [dropSpecialCharacters]="true" placeholder="(00) 00000-0000" autocomplete="off" class="focus-target-phone">
+                                </mat-form-field>
+
+                                <div class="item-actions">
+                                    <div class="toggle-with-label">
+                                        <mat-slide-toggle formControlName="isWhatsapp">
+                                            <mat-icon [color]="phone.get('isWhatsapp')?.value ? 'primary' : 'disabled'" class="whatsapp-status-icon">
+                                                {{ phone.get('isWhatsapp')?.value ? 'chat' : 'chat_bubble_outline' }}
+                                            </mat-icon>
+                                        </mat-slide-toggle>
+                                    </div>
+
+                                    <button type="button" mat-icon-button 
+                                            class="icon-align-fix"
+                                            [color]="phone.get('isMain')?.value ? 'warn' : 'default'"
+                                            (click)="setMainPhone($index)"
+                                            matTooltip="Marcar como Principal">
+                                        <mat-icon>{{ phone.get('isMain')?.value ? 'star' : 'star_outline' }}</mat-icon>
+                                    </button>
+
+                                    <button type="button" mat-icon-button color="warn" class="icon-align-fix" (click)="removePhone($index)">
+                                        <mat-icon>delete_outline</mat-icon>
+                                    </button>
+                                </div>
+                            </div>
+                        } @empty {
+                            <p class="empty-msg">Nenhum telefone cadastrado.</p>
                         }
                     </div>
                 </mat-card-content>
@@ -155,7 +162,7 @@
                             <div [formGroupName]="$index" class="array-item-row">
                                 <mat-form-field appearance="outline" style="width: 150px;">
                                     <mat-label>Título</mat-label>
-                                    <input matInput formControlName="title" placeholder="Ex: Instagram">
+                                    <input matInput formControlName="title" placeholder="Ex: Instagram" class="focus-target-link">
                                 </mat-form-field>
 
                                 <mat-form-field appearance="outline" class="flex-grow">
@@ -176,7 +183,7 @@
                 </mat-card-content>
             </mat-card>
 
-            <!-- SEÇÃO 3: ENDEREÇOS (FormArray) -->
+            <!-- SEÇÃO 5: ENDEREÇOS (FormArray) -->
             <mat-card class="section-card">
                 <mat-card-header class="header-with-action">
                     <div class="header-inner">
@@ -220,7 +227,7 @@
                                 <div class="address-grid">
                                     <mat-form-field appearance="outline">
                                         <mat-label>CEP</mat-label>
-                                        <input matInput formControlName="zipCode" mask="00000-000" [dropSpecialCharacters]="true" placeholder="00000-000" autocomplete="off">
+                                        <input matInput formControlName="zipCode" mask="00000-000" [dropSpecialCharacters]="true" placeholder="00000-000" class="focus-target-address">
                                         @if (isFetchingCep[$index]) {
                                             <mat-spinner matSuffix [diameter]="18"></mat-spinner>
                                         }
@@ -265,14 +272,14 @@
                 </mat-card-content>
             </mat-card>
             
-            <!-- SEÇÃO 4: STATUS E PERMISSÕES -->
+            <!-- SEÇÃO 6: STATUS E PERMISSÕES -->
             <mat-card class="section-card">
                 <mat-card-header>
                     <mat-card-title>Configurações de Acesso</mat-card-title>
                 </mat-card-header>
                 
                 <mat-card-content class="status-permissions-content">
-                    <div class="flex flex-col gap-6">
+                    <div class="flex flex-col gap-6" style="padding: 0 20px 20px;">
                         <mat-form-field appearance="outline" class="w-full">
                             <mat-label>Função (Role)</mat-label>
                             <mat-select [formControl]="roleIdControl"> 
@@ -297,7 +304,7 @@
     }
 </mat-dialog-content>
 
-<mat-dialog-actions align="end">
+<mat-dialog-actions align="end" style="padding: 8px 24px;">
     @if (!data.isCreation) {
         <button mat-stroked-button color="warn" class="delete-btn" (click)="deleteUser()" [disabled]="isSaving || isDeleting">
             <span class="button-content-wrapper">

@@ -31,8 +31,9 @@
             <h3 class="section-title">Dados Pessoais</h3>
             <div class="grid-2-cols">
                 <mat-form-field appearance="outline" class="col-span-2">
-                    <mat-label>Email de Login (Protegido)</mat-label>
+                    <mat-label>Email de Login (Ativo)</mat-label>
                     <input matInput formControlName="email" readonly autocomplete="off" />
+                    <mat-icon matSuffix matTooltip="Este é o seu e-mail principal usado para acessar o sistema.">lock</mat-icon>
                 </mat-form-field>
                 
                 <mat-form-field appearance="outline">
@@ -53,38 +54,42 @@
 
         <mat-divider></mat-divider>
 
-        <!-- LINKS E REDES SOCIAIS -->
+        <!-- E-MAILS ADICIONAIS -->
         <div class="form-section">
             <div class="section-header">
-                <h3 class="section-title">Links e Redes Sociais</h3>
-                <button type="button" mat-button color="primary" (click)="addLink()" *ngIf="isEditing">
+                <h3 class="section-title">E-mails de Contato</h3>
+                <button type="button" mat-button color="primary" (click)="addSecondaryEmail()" *ngIf="isEditing">
                     <span class="button-content-wrapper">
-                        <mat-icon>link</mat-icon> Adicionar
+                        <mat-icon>add</mat-icon> Adicionar E-mail
                     </span>
                 </button>
             </div>
 
-            <div formArrayName="links" class="array-list">
-                @for (link of links.controls; track $index) {
+            <div formArrayName="secondaryEmails" class="array-list">
+                @for (email of secondaryEmails.controls; track $index) {
                     <div [formGroupName]="$index" class="array-item-row">
-                        <mat-form-field appearance="outline" style="width: 150px;">
-                            <mat-label>Título</mat-label>
-                            <input matInput formControlName="title" placeholder="Ex: Instagram">
-                        </mat-form-field>
-
                         <mat-form-field appearance="outline" class="flex-grow">
-                            <mat-label>URL</mat-label>
-                            <input matInput formControlName="url" placeholder="https://...">
+                            <mat-label>E-mail Secundário</mat-label>
+                            <input matInput formControlName="address" placeholder="outro@email.com" autocomplete="off" class="focus-target-email">
                         </mat-form-field>
 
                         <div class="item-actions">
-                            <button type="button" mat-icon-button color="warn" class="icon-align-fix" (click)="removeLink($index)" *ngIf="isEditing">
+                            <button type="button" mat-icon-button 
+                                    class="icon-align-fix"
+                                    color="default"
+                                    (click)="setMainEmail($index)"
+                                    *ngIf="isEditing"
+                                    matTooltip="Tornar este o e-mail de login">
+                                <mat-icon>swap_horiz</mat-icon>
+                            </button>
+
+                            <button type="button" mat-icon-button color="warn" class="icon-align-fix" (click)="removeSecondaryEmail($index)" *ngIf="isEditing">
                                 <mat-icon>delete_outline</mat-icon>
                             </button>
                         </div>
                     </div>
                 } @empty {
-                    <p class="empty-msg">Nenhum link cadastrado.</p>
+                    <p class="empty-msg">Nenhum e-mail adicional cadastrado.</p>
                 }
             </div>
         </div>
@@ -97,7 +102,7 @@
                 <h3 class="section-title">Meus Telefones</h3>
                 <button type="button" mat-button color="primary" (click)="addPhone()" *ngIf="isEditing">
                     <span class="button-content-wrapper">
-                        <mat-icon>add</mat-icon> Adicionar
+                        <mat-icon>add</mat-icon> Adicionar Telefone
                     </span>
                 </button>
             </div>
@@ -107,7 +112,7 @@
                     <div [formGroupName]="$index" class="array-item-row">
                         <mat-form-field appearance="outline" class="flex-grow">
                             <mat-label>Telefone / Celular</mat-label>
-                            <input matInput formControlName="phoneNumber" mask="(00) 00000-0000" [dropSpecialCharacters]="true" placeholder="(00) 00000-0000" autocomplete="off">
+                            <input matInput formControlName="phoneNumber" mask="(00) 00000-0000" [dropSpecialCharacters]="true" placeholder="(00) 00000-0000" autocomplete="off" class="focus-target-phone">
                         </mat-form-field>
 
                         <div class="item-actions">
@@ -141,13 +146,51 @@
 
         <mat-divider></mat-divider>
 
+        <!-- LINKS E REDES SOCIAIS -->
+        <div class="form-section">
+            <div class="section-header">
+                <h3 class="section-title">Links e Redes Sociais</h3>
+                <button type="button" mat-button color="primary" (click)="addLink()" *ngIf="isEditing">
+                    <span class="button-content-wrapper">
+                        <mat-icon>link</mat-icon> Adicionar Link
+                    </span>
+                </button>
+            </div>
+
+            <div formArrayName="links" class="array-list">
+                @for (link of links.controls; track $index) {
+                    <div [formGroupName]="$index" class="array-item-row">
+                        <mat-form-field appearance="outline" style="width: 150px;">
+                            <mat-label>Título</mat-label>
+                            <input matInput formControlName="title" placeholder="Ex: Instagram" class="focus-target-link">
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="flex-grow">
+                            <mat-label>URL</mat-label>
+                            <input matInput formControlName="url" placeholder="https://...">
+                        </mat-form-field>
+
+                        <div class="item-actions">
+                            <button type="button" mat-icon-button color="warn" class="icon-align-fix" (click)="removeLink($index)" *ngIf="isEditing">
+                                <mat-icon>delete_outline</mat-icon>
+                            </button>
+                        </div>
+                    </div>
+                } @empty {
+                    <p class="empty-msg">Nenhum link cadastrado.</p>
+                }
+            </div>
+        </div>
+
+        <mat-divider></mat-divider>
+
         <!-- ENDEREÇOS -->
         <div class="form-section">
             <div class="section-header">
                 <h3 class="section-title">Meus Endereços</h3>
                 <button type="button" mat-button color="primary" (click)="addAddress()" *ngIf="isEditing">
                     <span class="button-content-wrapper">
-                        <mat-icon>add_location</mat-icon> Adicionar
+                        <mat-icon>add_location</mat-icon> Adicionar Endereço
                     </span>
                 </button>
             </div>
@@ -184,7 +227,7 @@
                             <!-- ORDEM CORRIGIDA: CEP -> Nº -> RUA -> BAIRRO -> COMPLEMENTO -> CIDADE -> UF -->
                             <mat-form-field appearance="outline">
                                 <mat-label>CEP</mat-label>
-                                <input matInput formControlName="zipCode" mask="00000-000" [dropSpecialCharacters]="true" placeholder="00000-000" autocomplete="off">
+                                <input matInput formControlName="zipCode" mask="00000-000" [dropSpecialCharacters]="true" placeholder="00000-000" class="focus-target-address">
                                 @if (isFetchingCep[$index]) {
                                     <mat-spinner matSuffix [diameter]="18"></mat-spinner>
                                 }
@@ -234,14 +277,14 @@
             </button>
           }
           @if (isEditing) {
-            <button mat-raised-button color="accent" (click)="onSave()" [disabled]="profileForm.invalid || isLoading" class="action-btn">
+            <button mat-raised-button color="accent" (click)="$event.preventDefault(); onSave()" [disabled]="profileForm.invalid || isLoading" class="action-btn">
               @if (isLoading) {
                 <mat-spinner [diameter]="20"></mat-spinner>
               } @else {
                 <span>Salvar Alterações</span>
               }
             </button>
-            <button mat-stroked-button color="warn" (click)="onCancel()" [disabled]="isLoading" class="action-btn">
+            <button mat-stroked-button color="warn" (click)="$event.preventDefault(); onCancel()" [disabled]="isLoading" class="action-btn">
               <mat-icon>cancel</mat-icon> Cancelar
             </button>
           }
