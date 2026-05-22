@@ -139,7 +139,7 @@ export class UpdateUserDto {
   @ApiPropertyOptional({ description: 'Nova senha (será hasheada)' })
   @IsOptional()
   @IsString()
-  @Length(6, 100)
+  @Length(8, 100)
   password?: string;
 
   @ApiPropertyOptional({ description: 'UUID da role' })

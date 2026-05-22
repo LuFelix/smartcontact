@@ -371,7 +371,9 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
                 next: () => this.dialogRef.close(true),
                 error: (err) => {
                     console.error('Erro ao salvar', err);
-                    alert("Erro ao salvar usuário. Verifique se os dados já existem.");
+                    const msg = err.error?.message;
+                    const errorDetails = Array.isArray(msg) ? msg.join('\n') : msg || "Verifique os dados e tente novamente.";
+                    alert("Erro ao salvar usuário:\n" + errorDetails);
                 }
             });
     }

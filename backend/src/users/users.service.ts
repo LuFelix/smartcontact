@@ -22,7 +22,7 @@ export class UsersService {
     ) { }
 
     async create(createUserDto: CreateUserDto): Promise<User> {
-        let { email, cpf, password, roleId, phones, addresses, secondaryEmails, links } = createUserDto as any; 
+        let { email, cpf, password, roleId, phones, addresses, secondaryEmails, links, ...rest } = createUserDto as any; 
 
         const emailExists = await this.usersRepository.findOne({ where: { email } });
         if (emailExists) {
@@ -56,13 +56,14 @@ export class UsersService {
 
         // Limpeza de IDs nulos
         const cleanItems = (items: any[]) => items ? items.map(item => {
-            const { id, ...rest } = item;
-            return rest;
+            const { id, ...restItem } = item;
+            return restItem;
         }) : [];
 
         const user = this.usersRepository.create({
-            ...createUserDto,
-            cpf, // Usa o valor tratado (null ou string válida)
+            ...rest,
+            email,
+            cpf, 
             password: hashedPassword,
             role: assignedRole,
             phones: cleanItems(phones),
