@@ -32,7 +32,7 @@
 
                     <mat-form-field appearance="outline">
                         <mat-label>CPF</mat-label>
-                        <input matInput formControlName="cpf" placeholder="000.000.000-00">
+                        <input matInput formControlName="cpf" mask="000.000.000-00" placeholder="000.000.000-00">
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
@@ -52,11 +52,12 @@
             <!-- SEÇÃO 2: TELEFONES (FormArray) -->
             <mat-card class="section-card">
                 <mat-card-header class="header-with-action">
-                    <mat-card-title>Contatos Telefônicos</mat-card-title>
-                    <span class="spacer"></span>
-                    <button type="button" mat-stroked-button color="primary" (click)="addPhone()">
-                        <mat-icon>add</mat-icon> Adicionar
-                    </button>
+                    <div class="header-inner">
+                        <mat-card-title>Contatos Telefônicos</mat-card-title>
+                        <button type="button" mat-stroked-button color="primary" (click)="addPhone()" class="add-btn">
+                            <mat-icon>add</mat-icon> Adicionar
+                        </button>
+                    </div>
                 </mat-card-header>
 
                 <mat-card-content>
@@ -65,13 +66,18 @@
                             <div [formGroupName]="$index" class="array-item-row">
                                 <mat-form-field appearance="outline" class="flex-grow">
                                     <mat-label>Número</mat-label>
-                                    <input matInput formControlName="number" placeholder="(00) 00000-0000">
+                                    <input matInput formControlName="number" mask="(00) 00000-0000" [dropSpecialCharacters]="true" placeholder="(00) 00000-0000">
                                 </mat-form-field>
 
                                 <div class="item-actions">
-                                    <mat-slide-toggle formControlName="isWhatsapp" matTooltip="É WhatsApp?">
-                                        <mat-icon [color]="phone.get('isWhatsapp')?.value ? 'primary' : 'disabled'">chat</mat-icon>
-                                    </mat-slide-toggle>
+                                    <div class="toggle-with-label">
+                                        <mat-slide-toggle formControlName="isWhatsapp">
+                                            <mat-icon [color]="phone.get('isWhatsapp')?.value ? 'primary' : 'disabled'" class="whatsapp-status-icon">
+                                                {{ phone.get('isWhatsapp')?.value ? 'chat' : 'chat_bubble_outline' }}
+                                            </mat-icon>
+                                        </mat-slide-toggle>
+                                        <mat-icon class="help-icon" matTooltip="Este número possui WhatsApp?">help_outline</mat-icon>
+                                    </div>
 
                                     <button type="button" mat-icon-button 
                                             class="icon-align-btn"
@@ -96,11 +102,12 @@
             <!-- SEÇÃO 3: ENDEREÇOS (FormArray) -->
             <mat-card class="section-card">
                 <mat-card-header class="header-with-action">
-                    <mat-card-title>Endereços</mat-card-title>
-                    <span class="spacer"></span>
-                    <button type="button" mat-stroked-button color="primary" (click)="addAddress()">
-                        <mat-icon>add_location</mat-icon> Adicionar
-                    </button>
+                    <div class="header-inner">
+                        <mat-card-title>Endereços</mat-card-title>
+                        <button type="button" mat-stroked-button color="primary" (click)="addAddress()" class="add-btn">
+                            <mat-icon>add_location</mat-icon> Adicionar
+                        </button>
+                    </div>
                 </mat-card-header>
 
                 <mat-card-content>
@@ -135,7 +142,7 @@
                                     <!-- ORDEM CORRIGIDA: CEP -> Nº -> RUA -> CIDADE -> UF -->
                                     <mat-form-field appearance="outline">
                                         <mat-label>CEP</mat-label>
-                                        <input matInput formControlName="zipCode" placeholder="00000-000">
+                                        <input matInput formControlName="zipCode" mask="00000-000" [dropSpecialCharacters]="true" placeholder="00000-000">
                                         @if (isFetchingCep[$index]) {
                                             <mat-spinner matSuffix [diameter]="18"></mat-spinner>
                                         }

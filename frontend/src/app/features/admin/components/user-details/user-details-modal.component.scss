@@ -2,7 +2,7 @@
 
 .dialog-content {
     padding: 24px;
-    min-width: 600px; // Aumentado para acomodar melhor os grids
+    min-width: 600px;
     display: flex;
     flex-direction: column;
     max-height: 85vh;
@@ -21,73 +21,96 @@
     border-radius: 20px;
     box-shadow: none;
     margin-bottom: 24px;
+    overflow: hidden; // Garante que nada saia do card
     
     mat-card-header {
-        padding: 16px 24px;
+        padding: 12px 20px;
+        background-color: var(--mat-sys-surface-container-high);
         border-bottom: 1px solid var(--mat-sys-outline-variant);
         
         mat-card-title {
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: 700;
             color: var(--mat-sys-primary);
             margin: 0;
         }
 
         &.header-with-action {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-
-            // Garante que o botão tenha margem à esquerda
-            button {
-                margin-left: auto;
+            .header-inner {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                width: 100%;
+                gap: 16px;
+            }
+            
+            .add-btn {
+                height: 36px;
+                line-height: 36px;
+                padding: 0 12px;
+                font-size: 0.85rem;
             }
         }
     }
 }
 
 .config-fields {
-    padding: 24px;
+    padding: 20px;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    gap: 16px;
 }
 
 .array-container {
-    padding: 16px 24px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
 }
 
 .array-item-row {
     display: flex;
-    align-items: center; // Centraliza tudo na linha
+    align-items: flex-start; // Alinha pelo topo do input
     gap: 16px;
     width: 100%;
     
     .flex-grow {
         flex: 1;
     }
-
-    mat-form-field {
-        margin-bottom: 0; // Remove margens extras que causam degraus
-    }
 }
 
 .item-actions {
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 4px;
+    margin-top: 4px; // Alinha visualmente com o centro do input
+}
+
+.toggle-with-label {
+    display: flex;
+    align-items: center;
     gap: 8px;
-    height: 56px; // Alinha com a altura padrão do mat-form-field
+    padding: 0 8px;
+    background-color: var(--mat-sys-surface-container-highest);
+    border-radius: 20px;
+    height: 48px;
+
+    .help-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: var(--mat-sys-on-surface-variant);
+        cursor: help;
+        opacity: 0.7;
+    }
 }
 
 .icon-align-btn {
-    display: flex !important;
+    display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
+    width: 40px !important;
+    height: 40px !important;
     
     mat-icon {
         margin: 0 !important;
@@ -97,25 +120,25 @@
 .address-item-block {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    padding: 20px 0;
+    gap: 12px;
+    padding: 12px 0;
 }
 
 .address-header {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     width: 100%;
     
     .tag-select {
-        width: 160px;
+        width: 140px;
     }
 }
 
 .address-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    gap: 12px;
     padding: 8px 0;
 }
 
@@ -124,11 +147,11 @@
 }
 
 .status-permissions-content {
-    padding: 24px;
+    padding: 20px;
 }
 
 .toggle-row {
-    padding: 12px 0;
+    padding: 8px 0;
     .toggle-label {
         font-weight: 600;
         margin-left: 8px;
@@ -143,13 +166,13 @@
     text-align: center;
     color: var(--mat-sys-on-surface-variant);
     font-style: italic;
-    padding: 24px;
+    padding: 12px;
 }
 
 @media (max-width: 768px) {
     .dialog-content {
         min-width: 100%;
-        padding: 16px;
+        padding: 12px;
     }
     
     .config-fields, .address-grid {
@@ -163,17 +186,14 @@
     .array-item-row {
         flex-direction: column;
         align-items: stretch;
-        gap: 8px;
     }
 
     .item-actions {
         justify-content: flex-end;
-        height: auto;
-        padding-bottom: 16px;
+        padding-bottom: 12px;
     }
     
     .address-header {
         flex-wrap: wrap;
-        gap: 8px;
     }
 }

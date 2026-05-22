@@ -21,6 +21,7 @@ import { RoleService } from '../../../users/services/role.service';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { CepService } from '../../../../core/utils/cep.service';
+import { NgxMaskDirective } from 'ngx-mask';
 
 // Interface para os dados recebidos
 export interface UserModalData {
@@ -45,7 +46,8 @@ export interface UserModalData {
         MatSelectModule, 
         MatOptionModule,
         MatDividerModule,
-        MatTooltipModule
+        MatTooltipModule,
+        NgxMaskDirective
     ],
     templateUrl: './user-details-modal.component.html',
     styleUrls: ['./user-details-modal.component.scss']
