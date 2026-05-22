@@ -20,6 +20,8 @@ import { MatSpinner } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { NgxMaskDirective } from 'ngx-mask';
 
 // Models e Serviços
 import { UserData, FullUserResponse, Phone, Address, AddressTag } from '../../../shared/models/users.models';
@@ -43,7 +45,9 @@ import { CepService } from '../../../../core/utils/cep.service';
     MatSpinner,
     MatDividerModule,
     MatTooltipModule,
-    MatSelectModule
+    MatSelectModule,
+    MatSlideToggleModule,
+    NgxMaskDirective
   ],
   templateUrl: './profile-page.html',
   styleUrls: ['./profile-page.scss'],
@@ -61,11 +65,19 @@ export class ProfileComponent implements OnInit, OnDestroy {
   isLoading = true;
   isSaving = false;
   isEditing = false;
-  isFetchingCep = false;
+  isFetchingCep: { [key: number]: boolean } = {};
   profilePicturePreview: string | ArrayBuffer | null = null;
   
+  addressTagLabels = {
+    [AddressTag.HOME]: 'Casa',
+    [AddressTag.WORK]: 'Trabalho',
+    [AddressTag.BILLING]: 'Cobrança',
+    [AddressTag.DELIVERY]: 'Entrega',
+    [AddressTag.OTHER]: 'Outro'
+  };
   addressTags = Object.values(AddressTag);
 
+  private cepSubscriptions: Subscription[] = [];
   private profileSubscription!: Subscription;
 
   constructor() {
@@ -84,6 +96,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.profileSubscription?.unsubscribe();
+    this.cepSubscriptions.forEach(s => s.unsubscribe());
   }
 
   get phones(): FormArray {
@@ -97,7 +110,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   addPhone(phone?: any): void {
     const phoneGroup = this.fb.group({
         id: [phone?.id || null],
-        number: [phone?.number || '', Validators.required],
+        phoneNumber: [phone?.number || '', Validators.required],
         isWhatsapp: [phone?.isWhatsapp ?? false],
         isMain: [phone?.isMain ?? false]
     });
@@ -113,20 +126,56 @@ export class ProfileComponent implements OnInit, OnDestroy {
     const addressGroup = this.fb.group({
         id: [address?.id || null],
         street: [address?.street || '', Validators.required],
-        number: [address?.number || '', Validators.required],
+        streetNumber: [address?.number || '', Validators.required],
         zipCode: [address?.zipCode || '', Validators.required],
         neighborhood: [address?.neighborhood || '', Validators.required],
+        complement: [address?.complement || ''],
         city: [address?.city || '', Validators.required],
         state: [address?.state || '', [Validators.required, Validators.maxLength(2)]],
         tag: [address?.tag || AddressTag.OTHER],
         isMain: [address?.isMain ?? false]
     });
+    const index = this.addresses.length;
     this.addresses.push(addressGroup);
     if (!this.isEditing) addressGroup.disable();
+    this.setupAddressCepSubscription(index);
+  }
+
+  private setupAddressCepSubscription(index: number): void {
+    const addressGroup = this.addresses.at(index) as FormGroup;
+    const cepControl = addressGroup.get('zipCode');
+    
+    if (!cepControl) return;
+
+    const sub = cepControl.valueChanges.pipe(
+        debounceTime(500),
+        distinctUntilChanged(),
+        filter(val => this.isEditing && !!val && /^\d{5}-?\d{3}$/.test(val)),
+        tap(() => {
+            this.isFetchingCep[index] = true;
+            addressGroup.patchValue({ street: '', neighborhood: '', city: '', state: '' }, { emitEvent: false });
+        }),
+        switchMap(cep => this.cepService.fetchAddressFromCep(cep).pipe(
+            catchError(() => of(null))
+        )),
+        tap(() => this.isFetchingCep[index] = false)
+    ).subscribe(data => {
+        if (data) {
+            addressGroup.patchValue({
+                street: data.logradouro || '',
+                neighborhood: data.bairro || '',
+                city: data.localidade || '',
+                state: data.uf || ''
+            });
+        }
+    });
+
+    this.cepSubscriptions.push(sub);
   }
 
   removeAddress(index: number): void {
     this.addresses.removeAt(index);
+    delete this.isFetchingCep[index];
   }
 
   setMainPhone(index: number): void {
@@ -207,8 +256,24 @@ export class ProfileComponent implements OnInit, OnDestroy {
     const formData = this.profileForm.getRawValue();
     const payload = {
         name: `${formData.firstName} ${formData.lastName}`,
-        phones: formData.phones,
-        addresses: formData.addresses
+        phones: formData.phones.map((p: any) => ({
+            id: p.id,
+            number: p.phoneNumber,
+            isWhatsapp: p.isWhatsapp,
+            isMain: p.isMain
+        })),
+        addresses: formData.addresses.map((a: any) => ({
+            id: a.id,
+            street: a.street,
+            number: a.streetNumber,
+            zipCode: a.zipCode,
+            neighborhood: a.neighborhood,
+            complement: a.complement,
+            city: a.city,
+            state: a.state,
+            tag: a.tag,
+            isMain: a.isMain
+        }))
     };
 
     this.userService.updateUser(this.currentUserData!.id, payload).pipe(
