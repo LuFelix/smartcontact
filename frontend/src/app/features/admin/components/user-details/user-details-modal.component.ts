@@ -126,7 +126,8 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
     addPhone(phone?: any): void {
         const phoneGroup = this.fb.group({
             id: [phone?.id || null],
-            number: [phone?.number || '', Validators.required],
+            // Renomeado para evitar colisão com 'number' do endereço no patchValue global
+            phoneNumber: [phone?.number || '', Validators.required],
             isWhatsapp: [phone?.isWhatsapp ?? false],
             isMain: [phone?.isMain ?? false]
         });
@@ -141,7 +142,8 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
         const addressGroup = this.fb.group({
             id: [address?.id || null],
             street: [address?.street || '', Validators.required],
-            number: [address?.number || '', Validators.required],
+            // Renomeado para 'streetNumber' para evitar colisão
+            streetNumber: [address?.number || '', Validators.required],
             complement: [address?.complement || ''],
             neighborhood: [address?.neighborhood || '', Validators.required],
             city: [address?.city || '', Validators.required],
@@ -173,12 +175,11 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
             tap(() => this.isFetchingCep[index] = false)
         ).subscribe(data => {
             if (data) {
-                addressGroup.patchValue({
-                    street: data.logradouro,
-                    neighborhood: data.bairro,
-                    city: data.localidade,
-                    state: data.uf
-                });
+                // Preenchimento explícito e isolado por grupo
+                addressGroup.get('street')?.setValue(data.logradouro);
+                addressGroup.get('neighborhood')?.setValue(data.bairro);
+                addressGroup.get('city')?.setValue(data.localidade);
+                addressGroup.get('state')?.setValue(data.uf);
             }
         });
 
@@ -187,8 +188,7 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
 
     removeAddress(index: number): void {
         this.addresses.removeAt(index);
-        // Nota: As assinaturas antigas continuam no array mas o control morre. 
-        // Em um app real, idealmente limparíamos a sub específica.
+        delete this.isFetchingCep[index];
     }
 
     setMainPhone(index: number): void {
@@ -242,17 +242,40 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
         }
 
         this.isSaving = true;
-        const formData = this.userForm.getRawValue();
+        const rawData = this.userForm.getRawValue();
 
-        if (!this.data.isCreation && !formData.password) {
-            delete formData.password;
+        // Mapeamento de volta para os nomes esperados pelo backend
+        const payload = {
+            ...rawData,
+            phones: rawData.phones.map((p: any) => ({
+                id: p.id,
+                number: p.phoneNumber,
+                isWhatsapp: p.isWhatsapp,
+                isMain: p.isMain
+            })),
+            addresses: rawData.addresses.map((a: any) => ({
+                id: a.id,
+                street: a.street,
+                number: a.streetNumber,
+                complement: a.complement,
+                neighborhood: a.neighborhood,
+                city: a.city,
+                state: a.state,
+                zipCode: a.zipCode,
+                tag: a.tag,
+                isMain: a.isMain
+            }))
+        };
+
+        if (!this.data.isCreation && !payload.password) {
+            delete payload.password;
         }
 
         let request$;
         if (this.data.isCreation) {
-            request$ = this.userService.createUser(formData);
+            request$ = this.userService.createUser(payload);
         } else {
-            request$ = this.userService.updateUser(this.data.userId!, formData);
+            request$ = this.userService.updateUser(this.data.userId!, payload);
         }
 
         request$.pipe(finalize(() => this.isSaving = false))

@@ -67,8 +67,8 @@
                         @for (phone of phones.controls; track $index) {
                             <div [formGroupName]="$index" class="array-item-row">
                                 <mat-form-field appearance="outline" class="flex-grow">
-                                    <mat-label>Número</mat-label>
-                                    <input matInput formControlName="number" mask="(00) 00000-0000" [dropSpecialCharacters]="true" placeholder="(00) 00000-0000">
+                                    <mat-label>Telefone / Celular</mat-label>
+                                    <input matInput formControlName="phoneNumber" mask="(00) 00000-0000" [dropSpecialCharacters]="true" placeholder="(00) 00000-0000">
                                 </mat-form-field>
 
                                 <div class="item-actions">
@@ -153,8 +153,8 @@
                                     </mat-form-field>
 
                                     <mat-form-field appearance="outline">
-                                        <mat-label>Nº Residencia</mat-label>
-                                        <input matInput formControlName="number">
+                                        <mat-label>Nº Residência</mat-label>
+                                        <input matInput formControlName="streetNumber">
                                     </mat-form-field>
 
                                     <mat-form-field appearance="outline" class="col-span-2">
