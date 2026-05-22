@@ -22,11 +22,16 @@ export class UsersService {
     ) { }
 
     async create(createUserDto: CreateUserDto): Promise<User> {
-        const { email, cpf, password, roleId, phones, addresses } = createUserDto; 
+        let { email, cpf, password, roleId, phones, addresses, secondaryEmails, links } = createUserDto as any; 
 
         const emailExists = await this.usersRepository.findOne({ where: { email } });
         if (emailExists) {
             throw new BadRequestException('Usuário com este e-mail já existe');
+        }
+
+        // Tratamento do CPF opcional
+        if (cpf === "" || cpf === undefined) {
+            cpf = null;
         }
 
         if (cpf) {
@@ -49,14 +54,21 @@ export class UsersService {
             throw new BadRequestException('Role especificada não existe');
         }
 
+        // Limpeza de IDs nulos
+        const cleanItems = (items: any[]) => items ? items.map(item => {
+            const { id, ...rest } = item;
+            return rest;
+        }) : [];
+
         const user = this.usersRepository.create({
             ...createUserDto,
+            cpf, // Usa o valor tratado (null ou string válida)
             password: hashedPassword,
             role: assignedRole,
-            phones: phones ? phones.map(p => ({ ...p })) : [],
-            addresses: addresses ? addresses.map(a => ({ ...a })) : [],
-            secondaryEmails: (createUserDto as any).secondaryEmails ? (createUserDto as any).secondaryEmails.map((e: any) => ({ ...e })) : [],
-            links: (createUserDto as any).links ? (createUserDto as any).links.map((l: any) => ({ ...l })) : [],
+            phones: cleanItems(phones),
+            addresses: cleanItems(addresses),
+            secondaryEmails: cleanItems(secondaryEmails),
+            links: cleanItems(links),
         });
 
         return this.usersRepository.save(user);

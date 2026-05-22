@@ -99,7 +99,6 @@ export class CreateUserDto {
   @ApiProperty({ example: '12345678900' })
   @IsOptional() 
   @IsString()
-  @Length(11, 11)
   cpf?: string;
 
   @ApiProperty({ required: false, example: 'uuid-here' })
