@@ -1,9 +1,11 @@
+// Caminho: src/app/features/admin/components/user-details/user-details-modal.component.scss
+
 .dialog-content {
     padding: 24px;
-    min-width: 580px;
+    min-width: 600px; // Aumentado para acomodar melhor os grids
     display: flex;
     flex-direction: column;
-    max-height: 80vh;
+    max-height: 85vh;
     box-sizing: border-box;
     overflow-x: hidden;
 }
@@ -13,46 +15,34 @@
     font-weight: 400;
 }
 
-.spinner-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(var(--mat-sys-surface-rgb), 0.8);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 10;
-    border-radius: 12px;
-    
-    p {
-        margin-top: 16px;
-        color: var(--mat-sys-on-surface-variant);
-        font-weight: 500;
-    }
-}
-
-.config-form {
-    display: flex;
-    flex-direction: column;
-    gap: 32px; // Espaçamento generoso entre os cards
-}
-
-mat-card {
+.section-card {
     background-color: var(--mat-sys-surface-container-low);
     border: 1px solid var(--mat-sys-outline-variant);
     border-radius: 20px;
     box-shadow: none;
+    margin-bottom: 24px;
     
     mat-card-header {
-        padding: 24px 24px 0;
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--mat-sys-outline-variant);
         
         mat-card-title {
-            font-size: 1.15rem;
+            font-size: 1rem;
             font-weight: 700;
             color: var(--mat-sys-primary);
+            margin: 0;
+        }
+
+        &.header-with-action {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+
+            // Garante que o botão tenha margem à esquerda
+            button {
+                margin-left: auto;
+            }
         }
     }
 }
@@ -60,133 +50,130 @@ mat-card {
 .config-fields {
     padding: 24px;
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 20px; // Espaçamento entre campos dentro do grid
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.array-container {
+    padding: 16px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.array-item-row {
+    display: flex;
+    align-items: center; // Centraliza tudo na linha
+    gap: 16px;
+    width: 100%;
+    
+    .flex-grow {
+        flex: 1;
+    }
+
+    mat-form-field {
+        margin-bottom: 0; // Remove margens extras que causam degraus
+    }
+}
+
+.item-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 56px; // Alinha com a altura padrão do mat-form-field
+}
+
+.icon-align-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    
+    mat-icon {
+        margin: 0 !important;
+    }
+}
+
+.address-item-block {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px 0;
+}
+
+.address-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    
+    .tag-select {
+        width: 160px;
+    }
+}
+
+.address-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding: 8px 0;
+}
+
+.col-span-2 {
+    grid-column: span 2;
 }
 
 .status-permissions-content {
     padding: 24px;
 }
 
-.status-container {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    border-top: 1px solid var(--mat-sys-outline-variant);
-    padding-top: 24px;
-}
-
 .toggle-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-    
+    padding: 12px 0;
     .toggle-label {
         font-weight: 600;
         margin-left: 8px;
     }
 }
 
-.role-saved-info {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background-color: var(--mat-sys-secondary-container);
-    color: var(--mat-sys-on-secondary-container);
-    padding: 12px 16px;
-    border-radius: 12px;
-    
-    mat-icon {
-        font-size: 24px;
-        width: 24px;
-        height: 24px;
-    }
+.spacer {
+    flex: 1;
 }
 
-.role-text-info {
-    display: flex;
-    flex-direction: column;
-    
-    .label {
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        opacity: 0.8;
-    }
-    
-    .value {
-        font-size: 1rem;
-        font-weight: 700;
-    }
-}
-
-.info-note {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 0.85rem;
+.empty-msg {
+    text-align: center;
     color: var(--mat-sys-on-surface-variant);
-    background-color: var(--mat-sys-surface-container-high);
-    padding: 12px;
-    border-radius: 8px;
-    
-    mat-icon {
-        font-size: 18px;
-        width: 18px;
-        height: 18px;
-        opacity: 0.7;
-    }
+    font-style: italic;
+    padding: 24px;
 }
 
-mat-dialog-actions {
-    padding: 20px 24px !important;
-    gap: 16px;
-    border-top: 1px solid var(--mat-sys-outline-variant);
-}
-
-.button-content-wrapper {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-}
-
-@media (min-width: 768px) {
-    .config-fields {
-        grid-template-columns: 1fr 1fr;
-    }
-    .md\:col-span-2 {
-        grid-column: span 2;
-    }
-}
-
-@media (max-width: 600px) {
+@media (max-width: 768px) {
     .dialog-content {
         min-width: 100%;
         padding: 16px;
     }
     
-    mat-dialog-actions {
-        flex-direction: column-reverse;
-        gap: 12px;
-        align-items: stretch;
-        padding: 16px !important;
-        
-        button {
-            margin: 0 !important;
-            height: 52px;
-            border-radius: 26px;
-        }
+    .config-fields, .address-grid {
+        grid-template-columns: 1fr;
     }
     
-    .toggle-row {
+    .col-span-2 {
+        grid-column: span 1;
+    }
+
+    .array-item-row {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 20px;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    .item-actions {
+        justify-content: flex-end;
+        height: auto;
+        padding-bottom: 16px;
     }
     
-    .role-saved-info {
-        width: 100%;
-        box-sizing: border-box;
+    .address-header {
+        flex-wrap: wrap;
+        gap: 8px;
     }
 }

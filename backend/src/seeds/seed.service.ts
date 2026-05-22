@@ -20,14 +20,12 @@ export class SeedService {
   async run() {
     this.logger.log('Iniciando o processo de seeding...');
 
-    // 1. Criar as Roles
     const adminRole = await this.seedRoles();
 
-    // 2. Criar o usuário Admin com a role de Administrador
     if (adminRole) {
       await this.seedAdminUser(adminRole);
     } else {
-      this.logger.error('A role "administrador" não foi encontrada ou criada. O usuário admin não será populado.');
+      this.logger.error('A role "administrador" não foi encontrada ou criada.');
     }
 
     this.logger.log('Seeding concluído com sucesso.');
@@ -44,14 +42,9 @@ export class SeedService {
         const newRole = this.roleRepository.create({ name: roleName });
         const savedRole = await this.roleRepository.save(newRole);
         this.logger.log(`Role '${savedRole.name}' criada.`);
-        if (savedRole.name === 'administrador') {
-          adminRole = savedRole;
-        }
+        if (savedRole.name === 'administrador') adminRole = savedRole;
       } else {
-        this.logger.log(`Role '${roleName}' já existe.`);
-        if (roleName === 'administrador') {
-          adminRole = existingRole;
-        }
+        if (roleName === 'administrador') adminRole = existingRole;
       }
     }
     return adminRole;
@@ -61,18 +54,22 @@ export class SeedService {
     const adminEmail = 'admin@smartcontact.com.br';
     const adminPassword = 'Senha@123';
 
-    const existingAdmin = await this.userRepository.findOne({ where: { email: adminEmail } });
+    let admin = await this.userRepository.findOne({ 
+        where: { email: adminEmail },
+        relations: ['phones', 'addresses']
+    });
 
-    if (!existingAdmin) {
-      const salt = await bcrypt.genSalt();
-      const hashedPassword = await bcrypt.hash(adminPassword, salt);
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(adminPassword, salt);
 
-      const adminUser = this.userRepository.create({
+    const adminData = {
         name: 'Usuário Administrador',
         email: adminEmail,
         cpf: '00000000000',
         password: hashedPassword,
         isVerified: true,
+        role: adminRole,
+        // Garante que o admin tenha ao menos um telefone e endereço no formato novo
         phones: [
             { number: '00000000000', isWhatsapp: true, isMain: true }
         ],
@@ -84,15 +81,21 @@ export class SeedService {
                 city: 'Maceió', 
                 state: 'AL', 
                 zipCode: '00000000', 
-                isMain: true 
+                isMain: true,
+                tag: 'WORK' as any
             }
         ]
-      });
-      adminUser.role = adminRole;
-      await this.userRepository.save(adminUser);
-      this.logger.log(`Usuário administrador com Email ${adminEmail} criado com sucesso.`);
+    };
+
+    if (!admin) {
+      admin = this.userRepository.create(adminData);
+      await this.userRepository.save(admin);
+      this.logger.log(`Usuário administrador criado com sucesso.`);
     } else {
-      this.logger.log(`Usuário administrador com Email ${adminEmail} já existe.`);
+      // Atualiza o administrador existente com os novos dados (Importante para migração de estrutura)
+      this.userRepository.merge(admin, adminData);
+      await this.userRepository.save(admin);
+      this.logger.log(`Usuário administrador atualizado para a nova estrutura.`);
     }
   }
 }
