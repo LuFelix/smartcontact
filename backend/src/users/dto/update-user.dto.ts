@@ -1,5 +1,5 @@
 // update-user.dto.ts
-import { IsOptional, IsString, IsEmail, Length, Matches, IsArray, ValidateNested, IsBoolean, IsEnum, IsUUID } from 'class-validator';
+import { IsOptional, IsString, IsEmail, Length, IsArray, ValidateNested, IsBoolean, IsEnum, IsUUID } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { AddressTag } from '../entities/address.entity';
@@ -81,6 +81,18 @@ export class UpdateAddressDto {
   isMain?: boolean;
 }
 
+export class UpdateEmailDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
+  @ApiPropertyOptional({ example: 'secondary@email.com' })
+  @IsOptional()
+  @IsEmail()
+  address?: string;
+}
+
 export class UpdateUserDto {
   
   @ApiPropertyOptional({ description: 'Nome completo do usuário' })
@@ -89,54 +101,23 @@ export class UpdateUserDto {
   @Length(1, 100)
   name?: string;
 
-  @ApiPropertyOptional({ description: 'Email do usuário' })
+  @ApiPropertyOptional({ description: 'Email principal do usuário (Login)' })
   @IsOptional()
   @IsEmail()
   @Length(1, 100)
   email?: string;
 
-  @ApiPropertyOptional({ description: 'Telefone com DDD (apenas números)' })
+  @ApiPropertyOptional({ type: [UpdateEmailDto] })
   @IsOptional()
-  @IsString()
-  @Length(10, 11)
-  @Matches(/^\d{10,11}$/, { message: 'Telefone deve ter 10 ou 11 dígitos' })
-  phonenumber?: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => UpdateEmailDto)
+  secondaryEmails?: UpdateEmailDto[];
 
   @ApiPropertyOptional({ description: 'CPF do usuário' })
   @IsOptional()
   @IsString()
   cpf?: string;
-
-
-  @ApiPropertyOptional({ description: 'CEP (apenas números)' })
-  @IsOptional()
-  @IsString()
-  @Length(1, 10) // Ajustado para aceitar com ou sem máscara
-  cep?: string;
-
-  @ApiPropertyOptional({ description: 'Sigla do estado (ex: SP, RJ)' })
-  @IsOptional()
-  @IsString()
-  @Length(2, 2)
-  uf?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  @Length(1, 100) // Aumentado para consistência
-  city?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  @Length(1, 100)
-  neighborhood?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  @Length(1, 100)
-  street?: string;
 
   @ApiPropertyOptional({ description: 'Nova senha (será hasheada)' })
   @IsOptional()

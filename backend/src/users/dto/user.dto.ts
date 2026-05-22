@@ -64,6 +64,12 @@ export class CreateAddressDto {
   isMain?: boolean;
 }
 
+export class CreateEmailDto {
+  @ApiProperty({ example: 'secondary@email.com' })
+  @IsEmail()
+  address!: string;
+}
+
 export class CreateUserDto {
  
   @ApiProperty({ example: 'João Silva' })
@@ -73,6 +79,13 @@ export class CreateUserDto {
   @ApiProperty({ example: 'joao@email.com' })
   @IsEmail()
   email!: string;
+
+  @ApiProperty({ type: [CreateEmailDto], required: false })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateEmailDto)
+  secondaryEmails?: CreateEmailDto[];
 
   @ApiProperty({ example: '12345678900' })
   @IsOptional() 
@@ -84,39 +97,6 @@ export class CreateUserDto {
   @IsOptional()
   @IsUUID()
   role_id?: string;
-
-  @ApiProperty({ example: '11987654321' })
-  @IsOptional()
-  @IsString()
-  @Length(10, 11)
-  phonenumber?: string;
-
-  @ApiProperty({ example: '12345678' })
-  @IsOptional()
-  @IsString()
-  @Length(8, 8)
-  cep?: string;
-
-  @ApiProperty({ example: 'SP' })
-  @IsOptional()
-  @IsString()
-  @Length(2, 2)
-  uf?: string;
-
-  @ApiProperty({ example: 'São Paulo' })
-  @IsOptional()
-  @IsString()
-  city?: string;
-
-  @ApiProperty({ example: 'Centro' })
-  @IsOptional()
-  @IsString()
-  neighborhood?: string;
-
-  @ApiProperty({ example: 'Rua das Flores' })
-  @IsOptional()
-  @IsString()
-  street?: string;
 
   @ApiProperty({
     example: 'Senha@123',
