@@ -17,6 +17,15 @@
         </mat-card-header>
         
         <mat-card-actions align="end">
+          @if (getMainWhatsapp(user); as whatsappNumber) {
+            <button mat-icon-button 
+                    class="action-button-whatsapp"
+                    (click)="openWhatsapp(whatsappNumber)" 
+                    matTooltip="Abrir WhatsApp">
+                <mat-icon class="whatsapp-icon">chat</mat-icon>
+            </button>
+          }
+
           <button mat-icon-button 
                   class="action-button-edit"
                   (click)="viewDetails.emit(user.id)" 

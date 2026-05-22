@@ -23,24 +23,6 @@ export class User {
     @Column({ type: 'varchar', length: 11, unique: true, nullable: true }) 
     cpf!: string | null;
 
-    @Column({ type: 'varchar', length: 11, nullable: true })
-    phonenumber!: string | null;
-
-    @Column({ type: 'varchar', length: 8, nullable: true })
-    cep!: string | null;
-
-    @Column({ type: 'varchar', length: 2, nullable: true })
-    uf!: string | null;
-
-    @Column({ type: 'varchar',length: 30, nullable: true })
-    city!: string | null;
-
-    @Column({type: 'varchar', length: 40, nullable: true })
-    neighborhood!: string | null;
-
-    @Column({ type: 'varchar',length: 100, nullable: true })
-    street!: string | null;
-
     @Column({ type: 'varchar', length: 100, nullable: false })
     password!: string;
 
