@@ -5,19 +5,23 @@
 
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
-  padding: 8px 0;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  padding: 16px 0;
 }
 
 .user-item-card {
   background-color: var(--mat-sys-surface-container);
   border-color: var(--mat-sys-outline-variant);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  border-radius: 20px;
   
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--mat-sys-level2);
+    transform: translateY(-8px);
+    box-shadow: var(--mat-sys-level3);
+    background-color: var(--mat-sys-surface-container-high);
+    border-color: var(--mat-sys-primary);
   }
 
   .user-avatar {
@@ -36,8 +40,9 @@
   }
 
   mat-card-title {
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     font-weight: 700;
+    color: var(--mat-sys-on-surface);
   }
 
   mat-card-subtitle {
@@ -46,14 +51,35 @@
   }
 
   mat-card-actions {
-    padding: 8px;
+    padding: 8px 16px;
     border-top: 1px solid var(--mat-sys-outline-variant);
-    gap: 8px;
+    gap: 12px;
+    display: flex;
+    align-items: center;
   }
 }
 
+.icon-align-fix {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 40px !important;
+    height: 40px !important;
+    
+    mat-icon {
+        margin: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+}
+
 .whatsapp-icon {
-    color: #25D366; // Cor oficial do WhatsApp
+    color: #25D366; 
+}
+
+.favorite-icon {
+    color: var(--mat-sys-secondary);
 }
 
 .spinner-overlay {

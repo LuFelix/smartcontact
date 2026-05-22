@@ -7,7 +7,7 @@
 
   <div class="cards-grid">
     @for (user of dataSource.data; track user.id) {
-      <mat-card class="user-item-card" appearance="outlined">
+      <mat-card class="user-item-card" appearance="outlined" (click)="viewDetails.emit(user.id)">
         <mat-card-header>
           <div mat-card-avatar class="user-avatar">
             <mat-icon>account_circle</mat-icon>
@@ -16,10 +16,10 @@
           <mat-card-subtitle>{{ user.email }}</mat-card-subtitle>
         </mat-card-header>
         
-        <mat-card-actions align="end">
+        <mat-card-actions align="end" (click)="$event.stopPropagation()">
           @if (getMainWhatsapp(user); as whatsappNumber) {
             <button mat-icon-button 
-                    class="action-button-whatsapp"
+                    class="action-button-whatsapp icon-align-fix"
                     (click)="openWhatsapp(whatsappNumber)" 
                     matTooltip="Abrir WhatsApp">
                 <mat-icon class="whatsapp-icon">chat</mat-icon>
@@ -27,13 +27,14 @@
           }
 
           <button mat-icon-button 
-                  class="action-button-edit"
-                  (click)="viewDetails.emit(user.id)" 
-                  matTooltip="Editar Usuário">
-              <mat-icon>edit</mat-icon>
+                  class="action-button-favorite icon-align-fix"
+                  (click)="toggleFavorite(user)" 
+                  matTooltip="Favoritar">
+              <mat-icon class="favorite-icon">star_outline</mat-icon>
           </button>
 
           <button mat-icon-button color="warn" 
+                  class="icon-align-fix"
                   (click)="deleteUser.emit(user)" 
                   matTooltip="Excluir Usuário">
               <mat-icon>delete</mat-icon>

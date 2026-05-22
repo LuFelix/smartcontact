@@ -36,6 +36,7 @@ export class UsersListComponent {
   // --- Outputs (Envia ações para o Pai) ---
   @Output() viewDetails = new EventEmitter<string>(); // Envia o ID como string (UUID)
   @Output() deleteUser = new EventEmitter<User>();
+  @Output() toggleFavoriteAction = new EventEmitter<User>();
 
   getMainWhatsapp(user: User): string | null {
     if (!user.phones || user.phones.length === 0) return null;
@@ -54,5 +55,9 @@ export class UsersListComponent {
     const cleanNumber = phoneNumber.replace(/\D/g, '');
     const url = `https://wa.me/${cleanNumber}`;
     window.open(url, '_blank');
+  }
+
+  toggleFavorite(user: User): void {
+      this.toggleFavoriteAction.emit(user);
   }
 }

@@ -55,7 +55,9 @@
                     <div class="header-inner">
                         <mat-card-title>Contatos Telefônicos</mat-card-title>
                         <button type="button" mat-stroked-button color="primary" (click)="addPhone()" class="add-btn">
-                            <mat-icon>add</mat-icon> Adicionar
+                            <span class="button-content-wrapper">
+                                <mat-icon>add</mat-icon> Adicionar
+                            </span>
                         </button>
                     </div>
                 </mat-card-header>
@@ -80,14 +82,14 @@
                                     </div>
 
                                     <button type="button" mat-icon-button 
-                                            class="icon-align-btn"
+                                            class="icon-align-fix"
                                             [color]="phone.get('isMain')?.value ? 'warn' : 'default'"
                                             (click)="setMainPhone($index)"
                                             matTooltip="Marcar como Principal">
                                         <mat-icon>{{ phone.get('isMain')?.value ? 'star' : 'star_outline' }}</mat-icon>
                                     </button>
 
-                                    <button type="button" mat-icon-button color="warn" class="icon-align-btn" (click)="removePhone($index)">
+                                    <button type="button" mat-icon-button color="warn" class="icon-align-fix" (click)="removePhone($index)">
                                         <mat-icon>delete_outline</mat-icon>
                                     </button>
                                 </div>
@@ -105,7 +107,9 @@
                     <div class="header-inner">
                         <mat-card-title>Endereços</mat-card-title>
                         <button type="button" mat-stroked-button color="primary" (click)="addAddress()" class="add-btn">
-                            <mat-icon>add_location</mat-icon> Adicionar
+                            <span class="button-content-wrapper">
+                                <mat-icon>add_location</mat-icon> Adicionar
+                            </span>
                         </button>
                     </div>
                 </mat-card-header>
@@ -126,14 +130,14 @@
                                     <span class="spacer"></span>
 
                                     <button type="button" mat-icon-button 
-                                            class="icon-align-btn"
+                                            class="icon-align-fix"
                                             [color]="address.get('isMain')?.value ? 'warn' : 'default'"
                                             (click)="setMainAddress($index)"
                                             matTooltip="Endereço Principal">
                                         <mat-icon>{{ address.get('isMain')?.value ? 'home' : 'home_outline' }}</mat-icon>
                                     </button>
 
-                                    <button type="button" mat-icon-button color="warn" class="icon-align-btn" (click)="removeAddress($index)">
+                                    <button type="button" mat-icon-button color="warn" class="icon-align-fix" (click)="removeAddress($index)">
                                         <mat-icon>delete_outline</mat-icon>
                                     </button>
                                 </div>
@@ -217,13 +221,17 @@
 <mat-dialog-actions align="end">
     @if (!data.isCreation) {
         <button mat-stroked-button color="warn" class="delete-btn" (click)="deleteUser()" [disabled]="isSaving || isDeleting">
-            <mat-icon>delete_forever</mat-icon> Excluir Usuário
+            <span class="button-content-wrapper">
+                <mat-icon>delete_forever</mat-icon> Excluir Usuário
+            </span>
         </button>
     }
     
     <button mat-button (click)="dialogRef.close(false)" [disabled]="isSaving || isDeleting">Cancelar</button>
 
     <button mat-raised-button color="primary" (click)="saveUser()" [disabled]="userForm.invalid || isSaving || isDeleting">
-        <mat-icon>save</mat-icon> {{ data.isCreation ? 'Criar Usuário' : 'Salvar Alterações' }}
+        <span class="button-content-wrapper">
+            <mat-icon>save</mat-icon> {{ data.isCreation ? 'Criar Usuário' : 'Salvar Alterações' }}
+        </span>
     </button>
 </mat-dialog-actions>
