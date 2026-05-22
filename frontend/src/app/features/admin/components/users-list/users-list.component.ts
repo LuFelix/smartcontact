@@ -8,7 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
 
 // Importe seu modelo de User e AuthService
-import { User } from '../../../shared/models/users.models'; 
+import { User, Phone } from '../../../shared/models/users.models'; 
 import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
@@ -34,6 +34,25 @@ export class UsersListComponent {
   @Input() displayedColumns: string[] = ['name', 'email', 'actions'];
 
   // --- Outputs (Envia ações para o Pai) ---
-  @Output() viewDetails = new EventEmitter<number>(); // Envia o ID
+  @Output() viewDetails = new EventEmitter<string>(); // Envia o ID como string (UUID)
   @Output() deleteUser = new EventEmitter<User>();
+
+  getMainWhatsapp(user: User): string | null {
+    if (!user.phones || user.phones.length === 0) return null;
+    
+    // Procura o telefone principal que é WhatsApp
+    const mainWhatsapp = user.phones.find(p => p.isMain && p.isWhatsapp);
+    if (mainWhatsapp) return mainWhatsapp.number;
+
+    // Fallback: se não tiver principal, pega o primeiro WhatsApp
+    const firstWhatsapp = user.phones.find(p => p.isWhatsapp);
+    return firstWhatsapp ? firstWhatsapp.number : null;
+  }
+
+  openWhatsapp(phoneNumber: string): void {
+    // Remove caracteres não numéricos
+    const cleanNumber = phoneNumber.replace(/\D/g, '');
+    const url = `https://wa.me/${cleanNumber}`;
+    window.open(url, '_blank');
+  }
 }

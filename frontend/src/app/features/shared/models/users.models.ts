@@ -1,13 +1,5 @@
-// Caminho: src/app/pages/users-page/models/user-models.ts (ou onde preferir)
-// v1.0 - Centraliza as interfaces de Usuário e Registro
-export interface JwtPayload {
-  sub: string; // User ID
-  name: string;
-  email: string;
-  role: string;
-  // iat?: number; // Issued at
-  // exp?: number; // Expiration time
-}
+// Caminho: src/app/features/shared/models/users.models.ts
+
 // --- Interface para Payload JWT (Usada pelo AuthService) ---
 export interface JwtPayload {
     sub: string; // User ID (geralmente string UUID ou número como string)
@@ -32,62 +24,77 @@ export interface UserApiResponse {
   total: number;
 }
 
+export interface Phone {
+    id: string;
+    number: string;
+    isWhatsapp: boolean;
+    isMain: boolean;
+}
+
+export enum AddressTag {
+  HOME = 'HOME',
+  WORK = 'WORK',
+  BILLING = 'BILLING',
+  DELIVERY = 'DELIVERY',
+  OTHER = 'OTHER',
+}
+
+export interface Address {
+    id: string;
+    street: string;
+    number: string;
+    complement?: string | null;
+    neighborhood: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    tag: AddressTag;
+    isMain: boolean;
+}
+
 // --- Interface Básica do Usuário (Listagem) ---
 export interface User {
-  id: number;
+  id: string; // Mudado para string (UUID)
   name: string;
   email: string;
   cpf?: string;
   isActive?: boolean;
-  role?: { id: number, name: string };
+  role?: { id: string, name: string };
+  phones?: Phone[];
+  addresses?: Address[];
 }
 
 // --- Interface para Registro (Usada pelo AuthService) ---
 export interface RegistrationData {
-  token?: string; // Token pode ser de convite, opcional dependendo do fluxo
+  token?: string; 
   cpf?: string;
   name: string;
   email: string;
-  phonenumber?: string;
-  cep?: string;
-  uf?: string;
-  city?: string;
-  neighborhood?: string;
-  street?: string;
   password: string;
 }
 
 // --- Interface para Dados do Usuário no LocalStorage/Componentes ---
 export interface UserData {
-    id: string;         // Do token 'sub'
-    email: string;      // Do token 'email'
-    name: string;       // <- MUDANÇA: Usar 'name' como principal (do token 'name')
-    role: string;       // Do token 'role'
-    // Tornar estes opcionais, pois não vêm diretamente do token
+    id: string;         
+    email: string;      
+    name: string;       
+    role: string;       
     firstName?: string;
     lastName?: string;
-    // Manter outros campos opcionais que podem vir do perfil completo
     profilePictureUrl?: string;
-    phone?: string;
-    cep?: string;
-    street?: string;
-    neighborhood?: string;
-    city?: string;
-    uf?: string;
+    phones?: Phone[];
+    addresses?: Address[];
 }
 
-// Garanta que FullUserResponse TENHA a propriedade 'name'
+// Interface completa retornada pelo backend
 export interface FullUserResponse {
-  id: string; // ID do usuário como string
-  name: string; //  Nome completo do usuário
+  id: string; 
+  name: string; 
   email: string;
-  cpf?: string; // CPF pode ser opcional dependendo da API
-  phonenumber?: string;
-  cep?: string;
-  street?: string;
-  neighborhood?: string;
-  city?: string;
-  uf?: string;
+  cpf?: string; 
+  isVerified: boolean;
+  role: { id: string, name: string };
+  phones?: Phone[];
+  addresses?: Address[];
   profilePictureUrl?: string; 
-  role: string;
 }

@@ -33,10 +33,6 @@ export class SeedService {
     this.logger.log('Seeding concluído com sucesso.');
   }
 
-  /**
-   * Cria as roles especificadas se elas não existirem no banco.
-   * Retorna a role de "administrador".
-   */
   private async seedRoles(): Promise<Role | undefined> {
     const rolesToCreate = ['administrador', 'colaborador', 'usuario'];
     let adminRole: Role | undefined;
@@ -61,12 +57,9 @@ export class SeedService {
     return adminRole;
   }
 
-  /**
-   * Cria o usuário administrador com o Email e senha fornecidos.
-   */
   private async seedAdminUser(adminRole: Role) {
-    const adminEmail = 'admin@smartcontact.com.br'; // Email padrão do admin
-    const adminPassword = 'Senha@123'; // Senha do admin
+    const adminEmail = 'admin@smartcontact.com.br';
+    const adminPassword = 'Senha@123';
 
     const existingAdmin = await this.userRepository.findOne({ where: { email: adminEmail } });
 
@@ -80,12 +73,20 @@ export class SeedService {
         cpf: '00000000000',
         password: hashedPassword,
         isVerified: true,
-        phonenumber: '00000000000',
-        cep: '00000000',
-        uf: 'AL',
-        city: 'Maceió',
-        neighborhood: 'Centro',
-        street: 'Rua do Admin',
+        phones: [
+            { number: '00000000000', isWhatsapp: true, isMain: true }
+        ],
+        addresses: [
+            { 
+                street: 'Rua do Admin', 
+                number: '1', 
+                neighborhood: 'Centro', 
+                city: 'Maceió', 
+                state: 'AL', 
+                zipCode: '00000000', 
+                isMain: true 
+            }
+        ]
       });
       adminUser.role = adminRole;
       await this.userRepository.save(adminUser);

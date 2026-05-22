@@ -48,7 +48,12 @@
   mat-card-actions {
     padding: 8px;
     border-top: 1px solid var(--mat-sys-outline-variant);
+    gap: 8px;
   }
+}
+
+.whatsapp-icon {
+    color: #25D366; // Cor oficial do WhatsApp
 }
 
 .spinner-overlay {

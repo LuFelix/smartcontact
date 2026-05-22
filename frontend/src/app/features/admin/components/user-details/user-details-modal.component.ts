@@ -1,3 +1,5 @@
+// Caminho: src/app/features/admin/components/user-details/user-details-modal.component.ts
+
 import { Component, Inject, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormControl} from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
@@ -19,7 +21,7 @@ import { RoleService } from '../../../users/services/role.service';
 
 // Interface para os dados recebidos
 export interface UserModalData {
-    userId: number | null; 
+    userId: string | null; // Mudado para string
     isCreation: boolean;
 }
 
@@ -51,7 +53,7 @@ export class UserDetailsModalComponent implements OnInit {
 
     user: User | null = null;
     userForm!: FormGroup;
-    roleIdControl = new FormControl<number | null>(null, Validators.required);
+    roleIdControl = new FormControl<string | null>(null, Validators.required); // Mudado para string
     availableRoles$!: Observable<Role[]>;
     
     // Estados de Loading
@@ -68,19 +70,14 @@ export class UserDetailsModalComponent implements OnInit {
         
         if (!this.data.isCreation && this.data.userId) {
             this.loadUser(this.data.userId);
-        } else if (this.data.isCreation) {
-            // Define a role padrão (ex: 1) apenas na criação se nenhuma estiver selecionada
-            this.roleIdControl.setValue(1); 
         }
     }
-
-      
 
     private initForm(): void {
         this.userForm = this.fb.group({
             name: ['', Validators.required],
             email: ['', [Validators.required, Validators.email]],
-            cpf: ['', Validators.required], // Adicione validadores de CPF se tiver
+            cpf: ['', Validators.required],
             password: [
                 '', 
                 this.data.isCreation ? [Validators.required, Validators.minLength(6)] : []
@@ -90,20 +87,17 @@ export class UserDetailsModalComponent implements OnInit {
         });
     }
 
-    private loadUser(id: number): void {
+    private loadUser(id: string): void { // Mudado para string
         this.isLoadingDetails = true;
         this.userService.getUserById(id)
             .pipe(finalize(() => this.isLoadingDetails = false))
             .subscribe(loadedUser => {
-                // 2. SALVE O USUÁRIO NA PROPRIEDADE
                 this.user = loadedUser;
-                // Preenche o formulário
                 this.userForm.patchValue({
                     name: loadedUser.name,
                     email: loadedUser.email,
                     cpf: loadedUser.cpf,
                     isActive: loadedUser.isActive
-                     
                 });
                 if (loadedUser.role && loadedUser.role.id) {
                   this.roleIdControl.setValue(loadedUser.role.id);
@@ -111,13 +105,8 @@ export class UserDetailsModalComponent implements OnInit {
                 this.userForm.get('password')?.clearValidators();
                 this.userForm.get('password')?.updateValueAndValidity();
             });
-            
     }
-    
 
-    /**
-     * Salvar Usuário (Criação ou Edição)
-     */
     saveUser(): void {
         if (this.userForm.invalid) return;
 
@@ -128,7 +117,6 @@ export class UserDetailsModalComponent implements OnInit {
         if (this.data.isCreation) {
             request$ = this.userService.createUser(formData);
         } else {
-            // Na edição, removemos a senha se estiver vazia para não sobrescrever
             if (!formData.password) {
                 delete formData.password;
             }
@@ -137,10 +125,9 @@ export class UserDetailsModalComponent implements OnInit {
 
         request$.pipe(finalize(() => this.isSaving = false))
             .subscribe({
-                next: () => this.dialogRef.close(true), // Fecha com sucesso (true)
+                next: () => this.dialogRef.close(true),
                 error: (err) => {
                     console.error('Erro ao salvar', err);
-                    alert("Erro ao salvar usuário. Verifique os dados.");
                 }
             });
     }
@@ -150,7 +137,7 @@ export class UserDetailsModalComponent implements OnInit {
         if(!confirm('Tem certeza que deseja excluir este usuário?')) return;
 
         this.isDeleting = true;
-        this.userService.deleteUser(this.data.userId) // Passa o objeto user se necessário, ou ID
+        this.userService.deleteUser(this.data.userId)
             .pipe(finalize(() => this.isDeleting = false))
             .subscribe({
                 next: () => this.dialogRef.close(true),

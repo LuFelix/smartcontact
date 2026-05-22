@@ -2,10 +2,10 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subscription, EMPTY, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap, tap, catchError, filter, map, finalize } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, switchMap, tap, catchError, filter, finalize } from 'rxjs/operators';
 
 // Imports do Angular Material
 import { MatCardModule } from '@angular/material/card';
@@ -17,12 +17,11 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSpinner } from '@angular/material/progress-spinner';
 
-// Models e Serviços (Ajuste os caminhos)
-// GARANTA QUE ESTAS INTERFACES USEM 'id: string'
-import { UserData, FullUserResponse } from '../../../shared/models/users.models';
+// Models e Serviços
+import { UserData, FullUserResponse, Phone, Address } from '../../../shared/models/users.models';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import { CepService, ViaCepResponse } from '../../../../core/utils/cep.service';
+import { CepService } from '../../../../core/utils/cep.service';
 
 @Component({
   selector: 'app-profile',
@@ -38,7 +37,6 @@ import { CepService, ViaCepResponse } from '../../../../core/utils/cep.service';
     MatProgressSpinnerModule,
     MatIconModule,
     MatSpinner,
-    
   ],
   templateUrl: './profile-page.html',
   styleUrls: ['./profile-page.scss'],
@@ -108,26 +106,39 @@ export class ProfileComponent implements OnInit, OnDestroy {
       }),
       finalize(() => this.isLoading = false)
     ).subscribe((userProfile: FullUserResponse) => {
-      this.currentUserData = userProfile as UserData;
+      this.currentUserData = userProfile as any; // Cast temporário para UserData
+
+      const mainPhone = this.getMainPhone(userProfile.phones);
+      const mainAddress = this.getMainAddress(userProfile.addresses);
 
       this.profileForm.patchValue({
         email: userProfile.email,
         firstName: userProfile.name?.split(' ')[0] || '',
         lastName: userProfile.name?.split(' ').slice(1).join(' ') || '',
-        phone: userProfile.phonenumber || '',
-        cep: userProfile.cep || '',
-        street: userProfile.street || '',
-        neighborhood: userProfile.neighborhood || '',
-        city: userProfile.city || '',
-        uf: userProfile.uf || '',
+        phone: mainPhone?.number || '',
+        cep: mainAddress?.zipCode || '',
+        street: mainAddress?.street || '',
+        neighborhood: mainAddress?.neighborhood || '',
+        city: mainAddress?.city || '',
+        uf: mainAddress?.state || '',
       });
-      this.profilePicturePreview = (userProfile as any).profilePictureUrl 
-        ? 'http://localhost:3000/' + (userProfile as any).profilePictureUrl
+
+      this.profilePicturePreview = userProfile.profilePictureUrl 
+        ? 'http://localhost:3000/' + userProfile.profilePictureUrl
         : null;
 
       this.profileForm.disable();
-      this.profileForm.get('email')?.disable();
     });
+  }
+
+  private getMainPhone(phones?: Phone[]): Phone | null {
+    if (!phones || phones.length === 0) return null;
+    return phones.find(p => p.isMain) || phones[0];
+  }
+
+  private getMainAddress(addresses?: Address[]): Address | null {
+    if (!addresses || addresses.length === 0) return null;
+    return addresses.find(a => a.isMain) || addresses[0];
   }
 
   setupCepAutofill(): void {
@@ -177,37 +188,20 @@ export class ProfileComponent implements OnInit, OnDestroy {
     alert("Funcionalidade de upload de imagem não implementada.");
   }
 
-  onFileSelected(event: Event): void {
-     alert("Funcionalidade de upload de imagem não implementada.");
-  }
-
   onSave(): void {
     if (this.profileForm.invalid) { return; }
     this.isLoading = true;
 
     const formData = this.profileForm.getRawValue();
-    const updatedProfileData = {
-        name: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
-        phonenumber: formData.phone,
-        cep: formData.cep,
-        street: formData.street,
-        neighborhood: formData.neighborhood,
-        city: formData.city,
-        uf: formData.uf,
-    };
-
-    console.log("--- SALVAR PERFIL (NÃO IMPLEMENTADO) ---");
-    console.log("Payload a ser enviado:", updatedProfileData);
-    alert("Funcionalidade de salvar perfil ainda não conectada ao backend.");
+    
+    console.log("--- SALVAR PERFIL (SIMULADO) ---");
+    alert("Funcionalidade de salvar perfil ainda não conectada ao backend para nova estrutura.");
 
     setTimeout(() => {
         this.isLoading = false;
         this.isEditing = false;
         this.profileForm.disable();
-        this.profileForm.get('email')?.disable();
         this.snackBar.open('Perfil atualizado (Simulado)!', 'Fechar', { duration: 3000 });
-        this.currentUserData = { ...this.currentUserData, ...updatedProfileData } as UserData;
     }, 1500);
   }
 
@@ -215,16 +209,19 @@ export class ProfileComponent implements OnInit, OnDestroy {
      this.isEditing = false;
     this.profileForm.disable();
     if (this.currentUserData) {
+      const mainPhone = this.getMainPhone(this.currentUserData.phones);
+      const mainAddress = this.getMainAddress(this.currentUserData.addresses);
+
       this.profileForm.reset({
         email: this.currentUserData.email,
         firstName: this.currentUserData.firstName || this.currentUserData.name?.split(' ')[0],
         lastName: this.currentUserData.lastName || this.currentUserData.name?.split(' ').slice(1).join(' '),
-        phone: this.currentUserData.phone || '',
-        cep: this.currentUserData.cep || '',
-        street: this.currentUserData.street || '',
-        neighborhood: this.currentUserData.neighborhood || '',
-        city: this.currentUserData.city || '',
-        uf: this.currentUserData.uf || '',
+        phone: mainPhone?.number || '',
+        cep: mainAddress?.zipCode || '',
+        street: mainAddress?.street || '',
+        neighborhood: mainAddress?.neighborhood || '',
+        city: mainAddress?.city || '',
+        uf: mainAddress?.state || '',
       });
        this.profilePicturePreview = this.currentUserData.profilePictureUrl
           ? 'http://localhost:3000/' + this.currentUserData.profilePictureUrl

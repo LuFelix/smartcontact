@@ -20,7 +20,7 @@ export class Address {
   @Column({ length: 20 })
   number!: string;
 
-  @Column({ length: 100, nullable: true })
+  @Column({ type: 'varchar', length: 100, nullable: true })
   complement!: string | null;
 
   @Column({ length: 100 })
