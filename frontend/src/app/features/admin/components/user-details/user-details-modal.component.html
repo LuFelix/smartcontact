@@ -16,7 +16,7 @@
 
     @if (!isLoadingDetails) {
 
-        <form [formGroup]="userForm" class="config-form">
+        <form [formGroup]="userForm" class="config-form" autocomplete="off">
             
             <!-- SEÇÃO 1: INFORMAÇÕES BÁSICAS -->
             <mat-card class="section-card">
@@ -27,23 +27,23 @@
                 <mat-card-content class="config-fields">
                     <mat-form-field appearance="outline" class="md:col-span-2">
                         <mat-label>Nome Completo</mat-label>
-                        <input matInput formControlName="name" placeholder="Ex: João da Silva">
+                        <input matInput formControlName="name" placeholder="Ex: João da Silva" autocomplete="off">
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
                         <mat-label>CPF</mat-label>
-                        <input matInput formControlName="cpf" mask="000.000.000-00" placeholder="000.000.000-00">
+                        <input matInput formControlName="cpf" mask="000.000.000-00" placeholder="000.000.000-00" autocomplete="off">
                     </mat-form-field>
 
                     <mat-form-field appearance="outline">
                         <mat-label>E-mail</mat-label>
-                        <input matInput formControlName="email" type="email">
+                        <input matInput formControlName="email" type="email" autocomplete="off">
                     </mat-form-field>
 
                     @if (data.isCreation) {
                         <mat-form-field appearance="outline" class="md:col-span-2">
                             <mat-label>Senha Inicial</mat-label>
-                            <input matInput formControlName="password" type="password">
+                            <input matInput formControlName="password" type="password" autocomplete="new-password">
                         </mat-form-field>
                     }
                 </mat-card-content>
@@ -68,7 +68,7 @@
                             <div [formGroupName]="$index" class="array-item-row">
                                 <mat-form-field appearance="outline" class="flex-grow">
                                     <mat-label>Telefone / Celular</mat-label>
-                                    <input matInput formControlName="phoneNumber" mask="(00) 00000-0000" [dropSpecialCharacters]="true" placeholder="(00) 00000-0000">
+                                    <input matInput formControlName="phoneNumber" mask="(00) 00000-0000" [dropSpecialCharacters]="true" placeholder="(00) 00000-0000" autocomplete="off">
                                 </mat-form-field>
 
                                 <div class="item-actions">
@@ -143,10 +143,9 @@
                                 </div>
 
                                 <div class="address-grid">
-                                    <!-- ORDEM CORRIGIDA: CEP -> Nº -> RUA -> CIDADE -> UF -->
                                     <mat-form-field appearance="outline">
                                         <mat-label>CEP</mat-label>
-                                        <input matInput formControlName="zipCode" mask="00000-000" [dropSpecialCharacters]="true" placeholder="00000-000">
+                                        <input matInput formControlName="zipCode" mask="00000-000" [dropSpecialCharacters]="true" placeholder="00000-000" autocomplete="off">
                                         @if (isFetchingCep[$index]) {
                                             <mat-spinner matSuffix [diameter]="18"></mat-spinner>
                                         }
@@ -154,27 +153,32 @@
 
                                     <mat-form-field appearance="outline">
                                         <mat-label>Nº Residência</mat-label>
-                                        <input matInput formControlName="streetNumber">
+                                        <input matInput formControlName="streetNumber" autocomplete="off">
                                     </mat-form-field>
 
                                     <mat-form-field appearance="outline" class="col-span-2">
                                         <mat-label>Logradouro/Rua</mat-label>
-                                        <input matInput formControlName="street">
+                                        <input matInput formControlName="street" autocomplete="off">
                                     </mat-form-field>
                                     
                                     <mat-form-field appearance="outline">
+                                        <mat-label>Bairro</mat-label>
+                                        <input matInput formControlName="neighborhood" autocomplete="off">
+                                    </mat-form-field>
+
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Complemento</mat-label>
+                                        <input matInput formControlName="complement" autocomplete="off">
+                                    </mat-form-field>
+
+                                    <mat-form-field appearance="outline">
                                         <mat-label>Cidade</mat-label>
-                                        <input matInput formControlName="city">
+                                        <input matInput formControlName="city" autocomplete="off">
                                     </mat-form-field>
                                     
                                     <mat-form-field appearance="outline">
                                         <mat-label>UF</mat-label>
-                                        <input matInput formControlName="state" maxlength="2">
-                                    </mat-form-field>
-
-                                    <mat-form-field appearance="outline" class="col-span-2">
-                                        <mat-label>Complemento</mat-label>
-                                        <input matInput formControlName="complement">
+                                        <input matInput formControlName="state" maxlength="2" autocomplete="off">
                                     </mat-form-field>
                                 </div>
                                 <mat-divider *ngIf="!$last"></mat-divider>
@@ -227,7 +231,7 @@
         </button>
     }
     
-    <button mat-button (click)="dialogRef.close(false)" [disabled]="isSaving || isDeleting">Cancelar</button>
+    <button mat-button (click)="$event.stopPropagation(); dialogRef.close(false)" [disabled]="isSaving || isDeleting">Cancelar</button>
 
     <button mat-raised-button color="primary" (click)="saveUser()" [disabled]="userForm.invalid || isSaving || isDeleting">
         <span class="button-content-wrapper">
