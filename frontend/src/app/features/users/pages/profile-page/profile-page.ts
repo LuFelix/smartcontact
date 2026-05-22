@@ -24,7 +24,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { NgxMaskDirective } from 'ngx-mask';
 
 // Models e Serviços
-import { UserData, FullUserResponse, Phone, Address, AddressTag } from '../../../shared/models/users.models';
+import { UserData, FullUserResponse, Phone, Address, AddressTag, SecondaryEmail } from '../../../shared/models/users.models';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { CepService } from '../../../../core/utils/cep.service';
@@ -85,8 +85,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
       email: [{ value: '', disabled: true }, [Validators.required, Validators.email]],
       firstName: [{ value: '', disabled: true }, Validators.required],
       lastName: [{ value: '', disabled: true }, Validators.required],
+      cpf: [{ value: '', disabled: true }],
       phones: this.fb.array([]),
-      addresses: this.fb.array([])
+      addresses: this.fb.array([]),
+      secondaryEmails: this.fb.array([])
     });
   }
 
@@ -107,6 +109,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
     return this.profileForm.get('addresses') as FormArray;
   }
 
+  get secondaryEmails(): FormArray {
+    return this.profileForm.get('secondaryEmails') as FormArray;
+  }
+
   addPhone(phone?: any): void {
     const phoneGroup = this.fb.group({
         id: [phone?.id || null],
@@ -120,6 +126,19 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   removePhone(index: number): void {
     this.phones.removeAt(index);
+  }
+
+  addSecondaryEmail(email?: any): void {
+    const emailGroup = this.fb.group({
+        id: [email?.id || null],
+        address: [email?.address || '', [Validators.required, Validators.email]]
+    });
+    this.secondaryEmails.push(emailGroup);
+    if (!this.isEditing) emailGroup.disable();
+  }
+
+  removeSecondaryEmail(index: number): void {
+    this.secondaryEmails.removeAt(index);
   }
 
   addAddress(address?: any): void {
@@ -212,6 +231,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
           email: userProfile.email,
           firstName: userProfile.name?.split(' ')[0] || '',
           lastName: userProfile.name?.split(' ').slice(1).join(' ') || '',
+          cpf: userProfile.cpf || ''
         });
 
         this.phones.clear();
@@ -219,6 +239,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
         this.addresses.clear();
         if (userProfile.addresses) userProfile.addresses.forEach(a => this.addAddress(a));
+
+        this.secondaryEmails.clear();
+        if (userProfile.secondaryEmails) userProfile.secondaryEmails.forEach(e => this.addSecondaryEmail(e));
 
         this.profilePicturePreview = userProfile.profilePictureUrl 
           ? 'http://localhost:3000/' + userProfile.profilePictureUrl
@@ -239,6 +262,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       this.profileForm.get('email')?.disable();
       this.phones.controls.forEach(c => c.enable());
       this.addresses.controls.forEach(c => c.enable());
+      this.secondaryEmails.controls.forEach(c => c.enable());
     } else {
       this.onCancel();
     }
@@ -256,6 +280,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     const formData = this.profileForm.getRawValue();
     const payload = {
         name: `${formData.firstName} ${formData.lastName}`,
+        cpf: formData.cpf,
         phones: formData.phones.map((p: any) => ({
             id: p.id,
             number: p.phoneNumber,
@@ -273,6 +298,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
             state: a.state,
             tag: a.tag,
             isMain: a.isMain
+        })),
+        secondaryEmails: formData.secondaryEmails.map((e: any) => ({
+            id: e.id,
+            address: e.address
         }))
     };
 

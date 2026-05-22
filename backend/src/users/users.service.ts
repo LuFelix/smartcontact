@@ -55,6 +55,7 @@ export class UsersService {
             role: assignedRole,
             phones: phones ? phones.map(p => ({ ...p })) : [],
             addresses: addresses ? addresses.map(a => ({ ...a })) : [],
+            secondaryEmails: (createUserDto as any).secondaryEmails ? (createUserDto as any).secondaryEmails.map((e: any) => ({ ...e })) : [],
         });
 
         return this.usersRepository.save(user);
@@ -138,7 +139,7 @@ export class UsersService {
 
         // TypeORM cascade handles update if items have IDs, or creates new ones if they don't.
         // For simpler logic, we'll merge the top level properties first.
-        const { roleId, phones, addresses, ...userUpdateData } = updateUserDto;
+        const { roleId, phones, addresses, secondaryEmails, ...userUpdateData } = updateUserDto;
         
         this.usersRepository.merge(user, userUpdateData);
 
@@ -147,6 +148,9 @@ export class UsersService {
         }
         if (addresses) {
             user.addresses = addresses as any;
+        }
+        if (secondaryEmails) {
+            user.secondaryEmails = secondaryEmails as any;
         }
 
         return this.usersRepository.save(user);
