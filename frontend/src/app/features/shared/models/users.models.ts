@@ -31,6 +31,12 @@ export interface Phone {
     isMain: boolean;
 }
 
+export interface SecondaryEmail {
+    id: string;
+    address: string;
+    isVerified: boolean;
+}
+
 export enum AddressTag {
   HOME = 'HOME',
   WORK = 'WORK',
@@ -62,6 +68,7 @@ export interface User {
   role?: { id: string, name: string };
   phones?: Phone[];
   addresses?: Address[];
+  secondaryEmails?: SecondaryEmail[];
 }
 
 // --- Interface para Registro (Usada pelo AuthService) ---
@@ -96,5 +103,6 @@ export interface FullUserResponse {
   role: { id: string, name: string };
   phones?: Phone[];
   addresses?: Address[];
+  secondaryEmails?: SecondaryEmail[];
   profilePictureUrl?: string; 
 }
