@@ -37,8 +37,10 @@
 
                     <mat-form-field appearance="outline">
                         <mat-label>E-mail de Login</mat-label>
-                        <input matInput formControlName="email" type="email" autocomplete="off" readonly>
-                        <mat-icon matSuffix matTooltip="E-mail principal de acesso.">lock</mat-icon>
+                        <input matInput formControlName="email" type="email" autocomplete="off" [readonly]="!data.isCreation">
+                        @if (!data.isCreation) {
+                            <mat-icon matSuffix matTooltip="E-mail principal de acesso (Protegido).">lock</mat-icon>
+                        }
                     </mat-form-field>
 
                     @if (data.isCreation) {

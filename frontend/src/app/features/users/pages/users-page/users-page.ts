@@ -15,7 +15,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { finalize } from 'rxjs';
+import { finalize, debounceTime, distinctUntilChanged } from 'rxjs';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { User } from '../../../shared/models/users.models';
 import { UsersListComponent } from '../../../admin/components/users-list/users-list.component';
@@ -69,6 +69,15 @@ export class UsersPage implements OnInit {
       cpf: ['']
     });
 
+    // Escutar mudanças nos filtros com debounce
+    this.filterForm.valueChanges.pipe(
+      debounceTime(500),
+      distinctUntilChanged()
+    ).subscribe(() => {
+      if (this.paginator) this.paginator.pageIndex = 0; 
+      this.loadUsers();
+    });
+
     this.loadUsers();
   }
 
@@ -79,7 +88,7 @@ export class UsersPage implements OnInit {
     };
 
     const dialogRef = this.dialog.open(UserDetailsModalComponent, {
-      width: '600px',
+      width: '850px',
       maxWidth: '95vw',
       data: data,
     });
@@ -98,7 +107,7 @@ export class UsersPage implements OnInit {
     const filters = {
       page: this.paginator ? this.paginator.pageIndex + 1 : 1,
       limit: this.paginator ? this.paginator.pageSize : 10,
-      ...this.filterForm.value 
+      ...this.filterForm.getRawValue() 
     };
 
     this.userService.findAllUsers(filters)
@@ -130,6 +139,7 @@ export class UsersPage implements OnInit {
 
   resetFilters() {
     this.filterForm.reset({ name: '', email: '', cpf: '' });
+    // O reset vai disparar o valueChanges automaticamente
   }
 
   export(): void {
@@ -139,13 +149,14 @@ export class UsersPage implements OnInit {
 
   openUserDetails(userId: string): void { 
     const dialogRef = this.dialog.open(UserDetailsModalComponent, {
-      width: '600px',
+      width: '850px',
       maxWidth: '95vw',
       data: { 
         userId: userId, 
         isCreation: false 
       }
     });
+
 
     dialogRef.afterClosed().subscribe(result => {
       if (result === true) {

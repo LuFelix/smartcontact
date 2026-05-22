@@ -22,7 +22,7 @@ export class UsersService {
     ) { }
 
     async create(createUserDto: CreateUserDto): Promise<User> {
-        const { email, cpf, password, role_id, phones, addresses } = createUserDto; 
+        const { email, cpf, password, roleId, phones, addresses } = createUserDto; 
 
         const emailExists = await this.usersRepository.findOne({ where: { email } });
         if (emailExists) {
@@ -39,8 +39,8 @@ export class UsersService {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         let assignedRole;
-        if (role_id) {
-            assignedRole = await this.rolesRepository.findOne({ where: { id: role_id } });
+        if (roleId) {
+            assignedRole = await this.rolesRepository.findOne({ where: { id: roleId } });
         } else {
             assignedRole = await this.rolesRepository.findOne({ where: { name: 'colaborador' } });
         }

@@ -1,7 +1,6 @@
 // users/dto/user.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEmail, Length, Matches, IsOptional, IsArray, IsBoolean, IsEnum, ValidateNested } from 'class-validator';
-import { IsUUID } from 'class-validator';
+import { IsString, IsEmail, Length, Matches, IsOptional, IsArray, IsBoolean, IsEnum, ValidateNested, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 import { AddressTag } from '../entities/address.entity';
 
@@ -106,7 +105,7 @@ export class CreateUserDto {
   @ApiProperty({ required: false, example: 'uuid-here' })
   @IsOptional()
   @IsUUID()
-  role_id?: string;
+  roleId?: string;
 
   @ApiProperty({
     example: 'Senha@123',
