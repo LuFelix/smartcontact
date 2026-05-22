@@ -85,6 +85,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       email: [{ value: '', disabled: true }, [Validators.required, Validators.email]],
       firstName: [{ value: '', disabled: true }, Validators.required],
       lastName: [{ value: '', disabled: true }, Validators.required],
+      cpf: [{ value: '', disabled: true }],
       phones: this.fb.array([]),
       addresses: this.fb.array([])
     });
@@ -212,6 +213,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
           email: userProfile.email,
           firstName: userProfile.name?.split(' ')[0] || '',
           lastName: userProfile.name?.split(' ').slice(1).join(' ') || '',
+          cpf: userProfile.cpf || ''
         });
 
         this.phones.clear();
@@ -256,6 +258,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     const formData = this.profileForm.getRawValue();
     const payload = {
         name: `${formData.firstName} ${formData.lastName}`,
+        cpf: formData.cpf,
         phones: formData.phones.map((p: any) => ({
             id: p.id,
             number: p.phoneNumber,

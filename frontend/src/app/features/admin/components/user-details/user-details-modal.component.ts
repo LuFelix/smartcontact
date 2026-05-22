@@ -102,7 +102,7 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
         this.userForm = this.fb.group({
             name: ['', Validators.required],
             email: ['', [Validators.required, Validators.email]],
-            cpf: ['', Validators.required],
+            cpf: [''],
             password: [
                 '', 
                 this.data.isCreation ? [Validators.required, Validators.minLength(6)] : []

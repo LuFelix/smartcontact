@@ -30,11 +30,10 @@
         <div class="form-section">
             <h3 class="section-title">Dados Pessoais</h3>
             <div class="grid-2-cols">
-                <mat-form-field appearance="outline">
+                <mat-form-field appearance="outline" class="col-span-2">
                     <mat-label>Email</mat-label>
                     <input matInput formControlName="email" readonly autocomplete="off" />
                 </mat-form-field>
-                <div></div> <!-- Spacer -->
                 
                 <mat-form-field appearance="outline">
                     <mat-label>Nome</mat-label>
@@ -44,8 +43,14 @@
                     <mat-label>Sobrenome</mat-label>
                     <input matInput formControlName="lastName" autocomplete="off" />
                 </mat-form-field>
+
+                <mat-form-field appearance="outline" class="col-span-2">
+                    <mat-label>CPF</mat-label>
+                    <input matInput formControlName="cpf" mask="000.000.000-00" [dropSpecialCharacters]="true" placeholder="000.000.000-00" autocomplete="off" />
+                </mat-form-field>
             </div>
         </div>
+
 
         <mat-divider></mat-divider>
 
