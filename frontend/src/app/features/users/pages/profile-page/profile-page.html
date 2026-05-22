@@ -23,65 +23,138 @@
             </div>
           }
         </div>
-        @if (isEditing) {
-          <span class="upload-hint">(Upload de foto não implementado)</span>
-        }
       </div>
 
       <form [formGroup]="profileForm" class="profile-form">
-        <mat-form-field appearance="outline">
-          <mat-label>Email</mat-label>
-          <input matInput formControlName="email" readonly />
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Nome</mat-label>
-          <input matInput formControlName="firstName" />
-          @if (profileForm.get('firstName')?.hasError('required') && profileForm.get('firstName')?.touched) {
-            <mat-error>Nome é obrigatório.</mat-error>
-          }
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Sobrenome</mat-label>
-          <input matInput formControlName="lastName" />
-          @if (profileForm.get('lastName')?.hasError('required') && profileForm.get('lastName')?.touched) {
-            <mat-error>Sobrenome é obrigatório.</mat-error>
-          }
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Telefone</mat-label>
-          <input matInput formControlName="phone" placeholder="(XX) XXXXX-XXXX" />
-          @if (profileForm.get('phone')?.hasError('pattern') && profileForm.get('phone')?.touched) {
-            <mat-error>Formato inválido. Ex: (11) 98765-4321</mat-error>
-          }
-        </mat-form-field>
+        <!-- INFORMAÇÕES BÁSICAS -->
+        <div class="form-section">
+            <h3 class="section-title">Dados Pessoais</h3>
+            <div class="grid-2-cols">
+                <mat-form-field appearance="outline">
+                    <mat-label>Email</mat-label>
+                    <input matInput formControlName="email" readonly />
+                </mat-form-field>
+                <div></div> <!-- Spacer -->
+                
+                <mat-form-field appearance="outline">
+                    <mat-label>Nome</mat-label>
+                    <input matInput formControlName="firstName" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                    <mat-label>Sobrenome</mat-label>
+                    <input matInput formControlName="lastName" />
+                </mat-form-field>
+            </div>
+        </div>
 
-        <mat-form-field appearance="outline">
-          <mat-label>CEP</mat-label>
-          <input matInput formControlName="cep" placeholder="00000-000" maxlength="9" />
-          @if (isFetchingCep) {
-            <mat-icon matSuffix> <mat-spinner [diameter]="20"></mat-spinner> </mat-icon>
-          }
-        </mat-form-field>
+        <mat-divider></mat-divider>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Rua (Logradouro)</mat-label>
-          <input matInput formControlName="street" />
-        </mat-form-field>
+        <!-- TELEFONES -->
+        <div class="form-section">
+            <div class="section-header">
+                <h3 class="section-title">Meus Telefones</h3>
+                <button type="button" mat-button color="primary" (click)="addPhone()" *ngIf="isEditing">
+                    <mat-icon>add</mat-icon> Adicionar
+                </button>
+            </div>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Bairro</mat-label>
-          <input matInput formControlName="neighborhood" />
-        </mat-form-field>
+            <div formArrayName="phones" class="array-list">
+                @for (phone of phones.controls; track $index) {
+                    <div [formGroupName]="$index" class="array-item-row">
+                        <mat-form-field appearance="outline" class="flex-grow">
+                            <mat-label>Número</mat-label>
+                            <input matInput formControlName="number" placeholder="(00) 00000-0000">
+                        </mat-form-field>
 
-        <div class="city-state-row">
-            <mat-form-field appearance="outline" class="city-field">
-              <mat-label>Cidade</mat-label>
-              <input matInput formControlName="city" />
-            </mat-form-field>
-            <mat-form-field appearance="outline" class="uf-field">
-              <mat-label>UF</mat-label>
-              <input matInput formControlName="uf" maxlength="2" />
-            </mat-form-field>
+                        <div class="item-actions">
+                            <mat-slide-toggle formControlName="isWhatsapp" matTooltip="É WhatsApp?">
+                                <mat-icon [color]="phone.get('isWhatsapp')?.value ? 'primary' : 'disabled'">chat</mat-icon>
+                            </mat-slide-toggle>
+
+                            <button type="button" mat-icon-button 
+                                    [color]="phone.get('isMain')?.value ? 'warn' : 'default'"
+                                    (click)="setMainPhone($index)"
+                                    [disabled]="!isEditing"
+                                    matTooltip="Principal">
+                                <mat-icon>{{ phone.get('isMain')?.value ? 'star' : 'star_outline' }}</mat-icon>
+                            </button>
+
+                            <button type="button" mat-icon-button color="warn" (click)="removePhone($index)" *ngIf="isEditing">
+                                <mat-icon>delete_outline</mat-icon>
+                            </button>
+                        </div>
+                    </div>
+                } @empty {
+                    <p class="empty-msg">Nenhum telefone cadastrado.</p>
+                }
+            </div>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <!-- ENDEREÇOS -->
+        <div class="form-section">
+            <div class="section-header">
+                <h3 class="section-title">Meus Endereços</h3>
+                <button type="button" mat-button color="primary" (click)="addAddress()" *ngIf="isEditing">
+                    <mat-icon>add_location</mat-icon> Adicionar
+                </button>
+            </div>
+
+            <div formArrayName="addresses" class="array-list">
+                @for (address of addresses.controls; track $index) {
+                    <div [formGroupName]="$index" class="address-item-block">
+                        <div class="address-item-header">
+                            <mat-form-field appearance="outline" class="tag-select">
+                                <mat-select formControlName="tag">
+                                    @for (tag of addressTags; track tag) {
+                                        <mat-option [value]="tag">{{ tag }}</mat-option>
+                                    }
+                                </mat-select>
+                            </mat-form-field>
+                            
+                            <span class="spacer"></span>
+
+                            <button type="button" mat-icon-button 
+                                    [color]="address.get('isMain')?.value ? 'warn' : 'default'"
+                                    (click)="setMainAddress($index)"
+                                    [disabled]="!isEditing"
+                                    matTooltip="Principal">
+                                <mat-icon>{{ address.get('isMain')?.value ? 'home' : 'home_outline' }}</mat-icon>
+                            </button>
+
+                            <button type="button" mat-icon-button color="warn" (click)="removeAddress($index)" *ngIf="isEditing">
+                                <mat-icon>delete_outline</mat-icon>
+                            </button>
+                        </div>
+
+                        <div class="address-grid">
+                            <mat-form-field appearance="outline" class="col-span-2">
+                                <mat-label>Rua</mat-label>
+                                <input matInput formControlName="street">
+                            </mat-form-field>
+                            <mat-form-field appearance="outline">
+                                <mat-label>Nº</mat-label>
+                                <input matInput formControlName="number">
+                            </mat-form-field>
+                            <mat-form-field appearance="outline">
+                                <mat-label>CEP</mat-label>
+                                <input matInput formControlName="zipCode">
+                            </mat-form-field>
+                            <mat-form-field appearance="outline">
+                                <mat-label>Cidade</mat-label>
+                                <input matInput formControlName="city">
+                            </mat-form-field>
+                            <mat-form-field appearance="outline">
+                                <mat-label>UF</mat-label>
+                                <input matInput formControlName="state" maxlength="2">
+                            </mat-form-field>
+                        </div>
+                    </div>
+                } @empty {
+                    <p class="empty-msg">Nenhum endereço cadastrado.</p>
+                }
+            </div>
         </div>
 
         <div class="profile-actions">
@@ -91,7 +164,7 @@
             </button>
           }
           @if (isEditing) {
-            <button mat-raised-button color="accent" (click)="onSave()" [disabled]="profileForm.invalid || isLoading || isFetchingCep" class="action-btn">
+            <button mat-raised-button color="accent" (click)="onSave()" [disabled]="profileForm.invalid || isLoading" class="action-btn">
               @if (isLoading) {
                 <mat-spinner [diameter]="20"></mat-spinner>
               } @else {

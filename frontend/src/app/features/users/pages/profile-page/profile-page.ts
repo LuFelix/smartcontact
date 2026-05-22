@@ -1,8 +1,9 @@
-// Caminho: src/app/pages/profile-page/profile.component.ts (Reconstruído com ID UUID)
+// Caminho: src/app/features/users/pages/profile-page/profile-page.ts
+
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subscription, EMPTY, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError, filter, finalize } from 'rxjs/operators';
@@ -16,9 +17,12 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSpinner } from '@angular/material/progress-spinner';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSelectModule } from '@angular/material/select';
 
 // Models e Serviços
-import { UserData, FullUserResponse, Phone, Address } from '../../../shared/models/users.models';
+import { UserData, FullUserResponse, Phone, Address, AddressTag } from '../../../shared/models/users.models';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { CepService } from '../../../../core/utils/cep.service';
@@ -37,12 +41,14 @@ import { CepService } from '../../../../core/utils/cep.service';
     MatProgressSpinnerModule,
     MatIconModule,
     MatSpinner,
+    MatDividerModule,
+    MatTooltipModule,
+    MatSelectModule
   ],
   templateUrl: './profile-page.html',
   styleUrls: ['./profile-page.scss'],
 })
 export class ProfileComponent implements OnInit, OnDestroy {
-  // --- Injeções ---
   private fb = inject(FormBuilder);
   private userService = inject(UserService);
   private authService = inject(AuthService);
@@ -50,41 +56,91 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private cepService = inject(CepService);
 
-  // --- Estado do Componente ---
   profileForm: FormGroup;
-  currentUserData: UserData | null = null;
+  currentUserData: FullUserResponse | null = null;
   isLoading = true;
   isSaving = false;
   isEditing = false;
   isFetchingCep = false;
   profilePicturePreview: string | ArrayBuffer | null = null;
+  
+  addressTags = Object.values(AddressTag);
 
-  // --- Subscriptions ---
   private profileSubscription!: Subscription;
-  private cepSubscription!: Subscription;
 
   constructor() {
     this.profileForm = this.fb.group({
       email: [{ value: '', disabled: true }, [Validators.required, Validators.email]],
       firstName: [{ value: '', disabled: true }, Validators.required],
       lastName: [{ value: '', disabled: true }, Validators.required],
-      phone: [{ value: '', disabled: true }, [Validators.pattern(/^\(\d{2}\)\s\d{4,5}-\d{4}$/)]],
-      cep: [{ value: '', disabled: true }, [Validators.pattern(/^\d{5}-?\d{3}$/)]],
-      street: [{ value: '', disabled: true }],
-      neighborhood: [{ value: '', disabled: true }],
-      city: [{ value: '', disabled: true }],
-      uf: [{ value: '', disabled: true }],
+      phones: this.fb.array([]),
+      addresses: this.fb.array([])
     });
   }
 
   ngOnInit(): void {
     this.loadInitialProfile();
-    this.setupCepAutofill();
   }
 
   ngOnDestroy(): void {
     this.profileSubscription?.unsubscribe();
-    this.cepSubscription?.unsubscribe();
+  }
+
+  get phones(): FormArray {
+    return this.profileForm.get('phones') as FormArray;
+  }
+
+  get addresses(): FormArray {
+    return this.profileForm.get('addresses') as FormArray;
+  }
+
+  addPhone(phone?: any): void {
+    const phoneGroup = this.fb.group({
+        id: [phone?.id || null],
+        number: [phone?.number || '', Validators.required],
+        isWhatsapp: [phone?.isWhatsapp ?? false],
+        isMain: [phone?.isMain ?? false]
+    });
+    this.phones.push(phoneGroup);
+    if (!this.isEditing) phoneGroup.disable();
+  }
+
+  removePhone(index: number): void {
+    this.phones.removeAt(index);
+  }
+
+  addAddress(address?: any): void {
+    const addressGroup = this.fb.group({
+        id: [address?.id || null],
+        street: [address?.street || '', Validators.required],
+        number: [address?.number || '', Validators.required],
+        zipCode: [address?.zipCode || '', Validators.required],
+        neighborhood: [address?.neighborhood || '', Validators.required],
+        city: [address?.city || '', Validators.required],
+        state: [address?.state || '', [Validators.required, Validators.maxLength(2)]],
+        tag: [address?.tag || AddressTag.OTHER],
+        isMain: [address?.isMain ?? false]
+    });
+    this.addresses.push(addressGroup);
+    if (!this.isEditing) addressGroup.disable();
+  }
+
+  removeAddress(index: number): void {
+    this.addresses.removeAt(index);
+  }
+
+  setMainPhone(index: number): void {
+    if (!this.isEditing) return;
+    this.phones.controls.forEach((control, i) => {
+        control.get('isMain')?.setValue(i === index);
+    });
+  }
+
+  setMainAddress(index: number): void {
+    if (!this.isEditing) return;
+    this.addresses.controls.forEach((control, i) => {
+        control.get('isMain')?.setValue(i === index);
+    });
   }
 
   loadInitialProfile(): void {
@@ -92,92 +148,48 @@ export class ProfileComponent implements OnInit, OnDestroy {
     const currentUserId = this.authService.userId();
 
     if (!currentUserId) {
-      console.error("ID do usuário logado (UUID) não encontrado no AuthService.");
       this.snackBar.open('Erro ao identificar usuário.', 'Fechar', { duration: 3000 });
       this.isLoading = false;
       return;
     }
 
     this.profileSubscription = this.userService.findById(currentUserId).pipe(
-      catchError(err => {
-        console.error('Erro ao carregar perfil:', err);
-        this.snackBar.open('Erro ao carregar seu perfil.', 'Fechar', { duration: 5000 });
-        return EMPTY;
-      }),
       finalize(() => this.isLoading = false)
-    ).subscribe((userProfile: FullUserResponse) => {
-      this.currentUserData = userProfile as any; // Cast temporário para UserData
-
-      const mainPhone = this.getMainPhone(userProfile.phones);
-      const mainAddress = this.getMainAddress(userProfile.addresses);
-
-      this.profileForm.patchValue({
-        email: userProfile.email,
-        firstName: userProfile.name?.split(' ')[0] || '',
-        lastName: userProfile.name?.split(' ').slice(1).join(' ') || '',
-        phone: mainPhone?.number || '',
-        cep: mainAddress?.zipCode || '',
-        street: mainAddress?.street || '',
-        neighborhood: mainAddress?.neighborhood || '',
-        city: mainAddress?.city || '',
-        uf: mainAddress?.state || '',
-      });
-
-      this.profilePicturePreview = userProfile.profilePictureUrl 
-        ? 'http://localhost:3000/' + userProfile.profilePictureUrl
-        : null;
-
-      this.profileForm.disable();
-    });
-  }
-
-  private getMainPhone(phones?: Phone[]): Phone | null {
-    if (!phones || phones.length === 0) return null;
-    return phones.find(p => p.isMain) || phones[0];
-  }
-
-  private getMainAddress(addresses?: Address[]): Address | null {
-    if (!addresses || addresses.length === 0) return null;
-    return addresses.find(a => a.isMain) || addresses[0];
-  }
-
-  setupCepAutofill(): void {
-     const cepControl = this.profileForm.get('cep');
-    if (!cepControl) return;
-
-    this.cepSubscription = cepControl.valueChanges.pipe(
-      debounceTime(500),
-      distinctUntilChanged(),
-      filter((cep): cep is string => this.isEditing && !!cep && /^\d{5}-?\d{3}$/.test(cep)),
-      tap(() => {
-          this.isFetchingCep = true;
-          this.profileForm.patchValue({ street: '', neighborhood: '', city: '', uf: '' }, { emitEvent: false });
-      }),
-      switchMap(cep => this.cepService.fetchAddressFromCep(cep)),
-      finalize(() => this.isFetchingCep = false),
-      catchError(err => {
-          console.error("Erro no fluxo de busca de CEP:", err);
-          return of(null);
-      })
-    ).subscribe(address => {
-      if (address) {
+    ).subscribe({
+      next: (userProfile: FullUserResponse) => {
+        this.currentUserData = userProfile;
+        
         this.profileForm.patchValue({
-          street: address.logradouro,
-          neighborhood: address.bairro,
-          city: address.localidade,
-          uf: address.uf,
+          email: userProfile.email,
+          firstName: userProfile.name?.split(' ')[0] || '',
+          lastName: userProfile.name?.split(' ').slice(1).join(' ') || '',
         });
-      } else if (cepControl.value) {
-        this.snackBar.open('CEP não encontrado ou inválido.', 'Fechar', { duration: 2500 });
+
+        this.phones.clear();
+        if (userProfile.phones) userProfile.phones.forEach(p => this.addPhone(p));
+
+        this.addresses.clear();
+        if (userProfile.addresses) userProfile.addresses.forEach(a => this.addAddress(a));
+
+        this.profilePicturePreview = userProfile.profilePictureUrl 
+          ? 'http://localhost:3000/' + userProfile.profilePictureUrl
+          : null;
+
+        this.profileForm.disable();
+      },
+      error: () => {
+        this.snackBar.open('Erro ao carregar seu perfil.', 'Fechar', { duration: 5000 });
       }
     });
   }
 
   toggleEditMode(): void {
-     this.isEditing = !this.isEditing;
+    this.isEditing = !this.isEditing;
     if (this.isEditing) {
       this.profileForm.enable();
       this.profileForm.get('email')?.disable();
+      this.phones.controls.forEach(c => c.enable());
+      this.addresses.controls.forEach(c => c.enable());
     } else {
       this.onCancel();
     }
@@ -189,49 +201,39 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   onSave(): void {
-    if (this.profileForm.invalid) { return; }
+    if (this.profileForm.invalid) return;
     this.isLoading = true;
 
     const formData = this.profileForm.getRawValue();
-    
-    console.log("--- SALVAR PERFIL (SIMULADO) ---");
-    alert("Funcionalidade de salvar perfil ainda não conectada ao backend para nova estrutura.");
+    const payload = {
+        name: `${formData.firstName} ${formData.lastName}`,
+        phones: formData.phones,
+        addresses: formData.addresses
+    };
 
-    setTimeout(() => {
-        this.isLoading = false;
-        this.isEditing = false;
-        this.profileForm.disable();
-        this.snackBar.open('Perfil atualizado (Simulado)!', 'Fechar', { duration: 3000 });
-    }, 1500);
+    this.userService.updateUser(this.currentUserData!.id, payload).pipe(
+        finalize(() => this.isLoading = false)
+    ).subscribe({
+        next: () => {
+            this.isEditing = false;
+            this.profileForm.disable();
+            this.snackBar.open('Perfil atualizado com sucesso!', 'OK', { duration: 3000 });
+            this.loadInitialProfile();
+        },
+        error: (err) => {
+            console.error(err);
+            this.snackBar.open('Erro ao atualizar perfil.', 'Fechar', { duration: 3000 });
+        }
+    });
   }
 
   onCancel(): void {
-     this.isEditing = false;
-    this.profileForm.disable();
-    if (this.currentUserData) {
-      const mainPhone = this.getMainPhone(this.currentUserData.phones);
-      const mainAddress = this.getMainAddress(this.currentUserData.addresses);
-
-      this.profileForm.reset({
-        email: this.currentUserData.email,
-        firstName: this.currentUserData.firstName || this.currentUserData.name?.split(' ')[0],
-        lastName: this.currentUserData.lastName || this.currentUserData.name?.split(' ').slice(1).join(' '),
-        phone: mainPhone?.number || '',
-        cep: mainAddress?.zipCode || '',
-        street: mainAddress?.street || '',
-        neighborhood: mainAddress?.neighborhood || '',
-        city: mainAddress?.city || '',
-        uf: mainAddress?.state || '',
-      });
-       this.profilePicturePreview = this.currentUserData.profilePictureUrl
-          ? 'http://localhost:3000/' + this.currentUserData.profilePictureUrl
-          : null;
-    }
-    this.profileForm.get('email')?.disable();
+    this.isEditing = false;
+    this.loadInitialProfile();
     this.snackBar.open('Edição cancelada.', 'Fechar', { duration: 1500 });
   }
 
-   navigateToDashboard(): void {
-     this.router.navigate(['/app/dashboard']);
-   }
+  navigateToDashboard(): void {
+    this.router.navigate(['/app/dashboard']);
+  }
 }
