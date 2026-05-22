@@ -93,6 +93,23 @@ export class UpdateEmailDto {
   address?: string;
 }
 
+export class UpdateLinkDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
+  @ApiPropertyOptional({ example: 'Instagram' })
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @ApiPropertyOptional({ example: 'https://instagram.com/user' })
+  @IsOptional()
+  @IsString()
+  url?: string;
+}
+
 export class UpdateUserDto {
   
   @ApiPropertyOptional({ description: 'Nome completo do usuário' })
@@ -143,4 +160,11 @@ export class UpdateUserDto {
   @ValidateNested({ each: true })
   @Type(() => UpdateAddressDto)
   addresses?: UpdateAddressDto[];
+
+  @ApiPropertyOptional({ type: [UpdateLinkDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => UpdateLinkDto)
+  links?: UpdateLinkDto[];
 }

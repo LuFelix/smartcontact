@@ -70,6 +70,16 @@ export class CreateEmailDto {
   address!: string;
 }
 
+export class CreateLinkDto {
+  @ApiProperty({ example: 'Instagram' })
+  @IsString()
+  title!: string;
+
+  @ApiProperty({ example: 'https://instagram.com/user' })
+  @IsString()
+  url!: string;
+}
+
 export class CreateUserDto {
  
   @ApiProperty({ example: 'João Silva' })
@@ -123,4 +133,11 @@ export class CreateUserDto {
   @ValidateNested({ each: true })
   @Type(() => CreateAddressDto)
   addresses?: CreateAddressDto[];
+
+  @ApiProperty({ type: [CreateLinkDto], required: false })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateLinkDto)
+  links?: CreateLinkDto[];
 }

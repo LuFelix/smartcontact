@@ -56,6 +56,7 @@ export class UsersService {
             phones: phones ? phones.map(p => ({ ...p })) : [],
             addresses: addresses ? addresses.map(a => ({ ...a })) : [],
             secondaryEmails: (createUserDto as any).secondaryEmails ? (createUserDto as any).secondaryEmails.map((e: any) => ({ ...e })) : [],
+            links: (createUserDto as any).links ? (createUserDto as any).links.map((l: any) => ({ ...l })) : [],
         });
 
         return this.usersRepository.save(user);
@@ -71,7 +72,7 @@ export class UsersService {
     async findById(userId: string): Promise<User | null> {
         return this.usersRepository.findOne({ 
             where: { id: userId }, 
-            relations: ['role', 'phones', 'addresses'] 
+            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links'] 
         });
     }
 
@@ -97,8 +98,7 @@ export class UsersService {
             skip: skip,
             take: limit ?? undefined,
             where: where,
-            relations: ['role', 'phones', 'addresses'],
-            // Removi o 'select' restritivo para garantir que as relações venham completas
+            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links'],
         };
 
         const [data, total] = await this.usersRepository.findAndCount(findOptions);
@@ -139,7 +139,7 @@ export class UsersService {
 
         // TypeORM cascade handles update if items have IDs, or creates new ones if they don't.
         // For simpler logic, we'll merge the top level properties first.
-        const { roleId, phones, addresses, secondaryEmails, ...userUpdateData } = updateUserDto;
+        const { roleId, phones, addresses, secondaryEmails, links, ...userUpdateData } = updateUserDto;
         
         this.usersRepository.merge(user, userUpdateData);
 
@@ -151,6 +151,9 @@ export class UsersService {
         }
         if (secondaryEmails) {
             user.secondaryEmails = secondaryEmails as any;
+        }
+        if (links) {
+            user.links = links as any;
         }
 
         return this.usersRepository.save(user);
