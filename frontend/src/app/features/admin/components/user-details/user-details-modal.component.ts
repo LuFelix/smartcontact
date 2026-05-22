@@ -105,7 +105,7 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
             cpf: [''],
             password: [
                 '', 
-                this.data.isCreation ? [Validators.required, Validators.minLength(6)] : []
+                this.data.isCreation ? [Validators.required, Validators.minLength(8)] : []
             ],
             isActive: [true],
             roleId: this.roleIdControl,

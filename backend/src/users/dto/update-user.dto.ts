@@ -87,7 +87,7 @@ export class UpdateEmailDto {
   @IsUUID()
   id?: string;
 
-  @ApiPropertyOptional({ example: 'secondary@email.com' })
+  @ApiProperty({ example: 'secondary@email.com' })
   @IsOptional()
   @IsEmail()
   address?: string;
@@ -146,6 +146,11 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   roleId?: string;
+
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 
   @ApiPropertyOptional({ type: [UpdatePhoneDto] })
   @IsOptional()

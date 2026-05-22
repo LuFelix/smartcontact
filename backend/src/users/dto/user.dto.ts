@@ -1,10 +1,15 @@
 // users/dto/user.dto.ts
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsEmail, Length, Matches, IsOptional, IsArray, IsBoolean, IsEnum, ValidateNested, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 import { AddressTag } from '../entities/address.entity';
 
 export class CreatePhoneDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
   @ApiProperty({ example: '11987654321' })
   @IsString()
   @Length(8, 20)
@@ -22,6 +27,11 @@ export class CreatePhoneDto {
 }
 
 export class CreateAddressDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
   @ApiProperty({ example: 'Rua das Flores' })
   @IsString()
   street!: string;
@@ -64,12 +74,22 @@ export class CreateAddressDto {
 }
 
 export class CreateEmailDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
   @ApiProperty({ example: 'secondary@email.com' })
   @IsEmail()
   address!: string;
 }
 
 export class CreateLinkDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
   @ApiProperty({ example: 'Instagram' })
   @IsString()
   title!: string;
@@ -105,6 +125,11 @@ export class CreateUserDto {
   @IsOptional()
   @IsUUID()
   roleId?: string;
+
+  @ApiProperty({ example: true, required: false })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 
   @ApiProperty({
     example: 'Senha@123',
