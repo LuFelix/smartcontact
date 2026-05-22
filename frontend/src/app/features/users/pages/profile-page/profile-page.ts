@@ -246,11 +246,15 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
     if (!newPrimary) return;
 
+    if (!confirm('Atenção: Ao trocar o e-mail de login, o acesso via Google (se ativo) pode ser desativado para este e-mail. Você precisará usar sua senha local. Deseja continuar?')) {
+        return;
+    }
+
     // Swap
     this.profileForm.get('email')?.setValue(newPrimary);
     selectedSecondaryGroup.get('address')?.setValue(currentPrimary);
     
-    this.snackBar.open('E-mail principal alterado. Salve para confirmar.', 'OK', { duration: 3000 });
+    this.snackBar.open('E-mail de login alterado. Salve para confirmar.', 'OK', { duration: 5000 });
   }
 
   setMainAddress(index: number): void {

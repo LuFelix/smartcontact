@@ -250,6 +250,10 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
 
         if (!newPrimary) return;
 
+        if (!confirm('Atenção: Ao trocar o e-mail de login, este usuário precisará usar o novo e-mail para acessar o sistema. Se ele usava login via Google, o acesso pode ser perdido. Deseja continuar?')) {
+            return;
+        }
+
         // Swap
         this.userForm.get('email')?.setValue(newPrimary);
         selectedSecondaryGroup.get('address')?.setValue(currentPrimary);
