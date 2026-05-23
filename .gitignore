@@ -11,7 +11,9 @@
 .DS_Store
 COMANDOS_UTEIS.md
 issues-enviar.smartcontact.js
+issues-ler.smartcontact.js
 issues-editar.smartcontact.js
+issues-todo.json
 issues-fechar.smartcontact.js
 issues-ler.smartcontact.js
 issues-todo.json
