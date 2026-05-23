@@ -1,11 +1,12 @@
-// Caminho: src/app/pages/profile-page/profile.component.ts (Reconstruído com ID UUID)
+// Caminho: src/app/features/users/pages/profile-page/profile-page.ts
+
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subscription, EMPTY, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap, tap, catchError, filter, map, finalize } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, switchMap, tap, catchError, filter, finalize } from 'rxjs/operators';
 
 // Imports do Angular Material
 import { MatCardModule } from '@angular/material/card';
@@ -16,13 +17,17 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSpinner } from '@angular/material/progress-spinner';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { NgxMaskDirective } from 'ngx-mask';
 
-// Models e Serviços (Ajuste os caminhos)
-// GARANTA QUE ESTAS INTERFACES USEM 'id: string'
-import { UserData, FullUserResponse } from '../../../shared/models/users.models';
+// Models e Serviços
+import { UserData, FullUserResponse, Phone, Address, AddressTag, SecondaryEmail, UserLink } from '../../../shared/models/users.models';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
-import { CepService, ViaCepResponse } from '../../../../core/utils/cep.service';
+import { CepService } from '../../../../core/utils/cep.service';
 
 @Component({
   selector: 'app-profile',
@@ -38,13 +43,16 @@ import { CepService, ViaCepResponse } from '../../../../core/utils/cep.service';
     MatProgressSpinnerModule,
     MatIconModule,
     MatSpinner,
-    
+    MatDividerModule,
+    MatTooltipModule,
+    MatSelectModule,
+    MatSlideToggleModule,
+    NgxMaskDirective
   ],
   templateUrl: './profile-page.html',
   styleUrls: ['./profile-page.scss'],
 })
 export class ProfileComponent implements OnInit, OnDestroy {
-  // --- Injeções ---
   private fb = inject(FormBuilder);
   private userService = inject(UserService);
   private authService = inject(AuthService);
@@ -52,41 +60,215 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private cepService = inject(CepService);
 
-  // --- Estado do Componente ---
   profileForm: FormGroup;
-  currentUserData: UserData | null = null;
+  currentUserData: FullUserResponse | null = null;
   isLoading = true;
   isSaving = false;
   isEditing = false;
-  isFetchingCep = false;
+  isFetchingCep: { [key: number]: boolean } = {};
   profilePicturePreview: string | ArrayBuffer | null = null;
+  
+  addressTagLabels = {
+    [AddressTag.HOME]: 'Casa',
+    [AddressTag.WORK]: 'Trabalho',
+    [AddressTag.BILLING]: 'Cobrança',
+    [AddressTag.DELIVERY]: 'Entrega',
+    [AddressTag.OTHER]: 'Outro'
+  };
+  addressTags = Object.values(AddressTag);
 
-  // --- Subscriptions ---
+  private cepSubscriptions: Subscription[] = [];
   private profileSubscription!: Subscription;
-  private cepSubscription!: Subscription;
 
   constructor() {
     this.profileForm = this.fb.group({
       email: [{ value: '', disabled: true }, [Validators.required, Validators.email]],
       firstName: [{ value: '', disabled: true }, Validators.required],
       lastName: [{ value: '', disabled: true }, Validators.required],
-      phone: [{ value: '', disabled: true }, [Validators.pattern(/^\(\d{2}\)\s\d{4,5}-\d{4}$/)]],
-      cep: [{ value: '', disabled: true }, [Validators.pattern(/^\d{5}-?\d{3}$/)]],
-      street: [{ value: '', disabled: true }],
-      neighborhood: [{ value: '', disabled: true }],
-      city: [{ value: '', disabled: true }],
-      uf: [{ value: '', disabled: true }],
+      cpf: [{ value: '', disabled: true }],
+      phones: this.fb.array([]),
+      addresses: this.fb.array([]),
+      secondaryEmails: this.fb.array([]),
+      links: this.fb.array([])
     });
   }
 
   ngOnInit(): void {
     this.loadInitialProfile();
-    this.setupCepAutofill();
   }
 
   ngOnDestroy(): void {
     this.profileSubscription?.unsubscribe();
-    this.cepSubscription?.unsubscribe();
+    this.cepSubscriptions.forEach(s => s.unsubscribe());
+  }
+
+  get phones(): FormArray {
+    return this.profileForm.get('phones') as FormArray;
+  }
+
+  get addresses(): FormArray {
+    return this.profileForm.get('addresses') as FormArray;
+  }
+
+  get secondaryEmails(): FormArray {
+    return this.profileForm.get('secondaryEmails') as FormArray;
+  }
+
+  get links(): FormArray {
+    return this.profileForm.get('links') as FormArray;
+  }
+
+  addPhone(phone?: any): void {
+    const phoneGroup = this.fb.group({
+        id: [phone?.id || null],
+        phoneNumber: [phone?.number || '', Validators.required],
+        isWhatsapp: [phone?.isWhatsapp ?? false],
+        isMain: [phone?.isMain ?? false]
+    });
+    this.phones.push(phoneGroup);
+    if (!this.isEditing) phoneGroup.disable();
+    this.focusNewItem('.focus-target-phone');
+  }
+
+  removePhone(index: number): void {
+    this.phones.removeAt(index);
+  }
+
+  addSecondaryEmail(email?: any): void {
+    const emailGroup = this.fb.group({
+        id: [email?.id || null],
+        address: [email?.address || '', [Validators.required, Validators.email]]
+    });
+    this.secondaryEmails.push(emailGroup);
+    if (!this.isEditing) emailGroup.disable();
+    this.focusNewItem('.focus-target-email');
+  }
+
+  removeSecondaryEmail(index: number): void {
+    this.secondaryEmails.removeAt(index);
+  }
+
+  addLink(link?: any): void {
+    const linkGroup = this.fb.group({
+        id: [link?.id || null],
+        title: [link?.title || '', Validators.required],
+        url: [link?.url || '', [Validators.required, Validators.pattern(/https?:\/\/.+/)]]
+    });
+    this.links.push(linkGroup);
+    if (!this.isEditing) linkGroup.disable();
+    this.focusNewItem('.focus-target-link');
+  }
+
+  removeLink(index: number): void {
+    this.links.removeAt(index);
+  }
+
+  addAddress(address?: any): void {
+    const addressGroup = this.fb.group({
+        id: [address?.id || null],
+        street: [address?.street || '', Validators.required],
+        streetNumber: [address?.number || '', Validators.required],
+        zipCode: [address?.zipCode || '', Validators.required],
+        neighborhood: [address?.neighborhood || '', Validators.required],
+        complement: [address?.complement || ''],
+        city: [address?.city || '', Validators.required],
+        state: [address?.state || '', [Validators.required, Validators.maxLength(2)]],
+        tag: [address?.tag || AddressTag.OTHER],
+        isMain: [address?.isMain ?? false]
+    });
+    const index = this.addresses.length;
+    this.addresses.push(addressGroup);
+    if (!this.isEditing) addressGroup.disable();
+    this.setupAddressCepSubscription(index);
+    this.focusNewItem('.focus-target-address');
+  }
+
+  private focusNewItem(selector: string): void {
+    setTimeout(() => {
+        const elements = document.querySelectorAll(selector);
+        if (elements.length > 0) {
+            (elements[elements.length - 1] as HTMLElement).focus();
+        }
+    }, 100);
+  }
+
+  private setupAddressCepSubscription(index: number): void {
+    const addressGroup = this.addresses.at(index) as FormGroup;
+    const cepControl = addressGroup.get('zipCode');
+    
+    if (!cepControl) return;
+
+    const sub = cepControl.valueChanges.pipe(
+        debounceTime(500),
+        distinctUntilChanged(),
+        filter(val => this.isEditing && !!val && /^\d{5}-?\d{3}$/.test(val)),
+        tap(() => {
+            this.isFetchingCep[index] = true;
+            addressGroup.patchValue({ street: '', neighborhood: '', city: '', state: '' }, { emitEvent: false });
+        }),
+        switchMap(cep => this.cepService.fetchAddressFromCep(cep).pipe(
+            catchError(() => of(null))
+        )),
+        tap(() => this.isFetchingCep[index] = false)
+    ).subscribe(data => {
+        if (data) {
+            addressGroup.patchValue({
+                street: data.logradouro || '',
+                neighborhood: data.bairro || '',
+                city: data.localidade || '',
+                state: data.uf || ''
+            });
+        }
+    });
+
+    this.cepSubscriptions.push(sub);
+  }
+
+  removeAddress(index: number): void {
+    this.addresses.removeAt(index);
+    delete this.isFetchingCep[index];
+  }
+
+  setMainPhone(index: number): void {
+    if (!this.isEditing) return;
+    this.phones.controls.forEach((control, i) => {
+        control.get('isMain')?.setValue(i === index);
+    });
+    this.sortPhones();
+  }
+
+  setMainEmail(index: number): void {
+    if (!this.isEditing) return;
+    
+    const currentPrimary = this.profileForm.get('email')?.value;
+    const selectedSecondaryGroup = this.secondaryEmails.at(index) as FormGroup;
+    const newPrimary = selectedSecondaryGroup.get('address')?.value;
+
+    if (!newPrimary) return;
+
+    if (!confirm('Atenção: Ao trocar o e-mail de login, o acesso via Google (se ativo) pode ser desativado para este e-mail. Você precisará usar sua senha local. Deseja continuar?')) {
+        return;
+    }
+
+    // Swap
+    this.profileForm.get('email')?.setValue(newPrimary);
+    selectedSecondaryGroup.get('address')?.setValue(currentPrimary);
+    
+    this.snackBar.open('E-mail de login alterado. Salve para confirmar.', 'OK', { duration: 5000 });
+  }
+
+  setMainAddress(index: number): void {
+    if (!this.isEditing) return;
+    this.addresses.controls.forEach((control, i) => {
+        control.get('isMain')?.setValue(i === index);
+    });
+  }
+
+  private sortPhones(): void {
+    const controls = [...this.phones.controls];
+    controls.sort((a, b) => (b.get('isMain')?.value ? 1 : 0) - (a.get('isMain')?.value ? 1 : 0));
+    this.phones.clear({ emitEvent: false });
+    controls.forEach(c => this.phones.push(c, { emitEvent: false }));
   }
 
   loadInitialProfile(): void {
@@ -94,79 +276,60 @@ export class ProfileComponent implements OnInit, OnDestroy {
     const currentUserId = this.authService.userId();
 
     if (!currentUserId) {
-      console.error("ID do usuário logado (UUID) não encontrado no AuthService.");
       this.snackBar.open('Erro ao identificar usuário.', 'Fechar', { duration: 3000 });
       this.isLoading = false;
       return;
     }
 
     this.profileSubscription = this.userService.findById(currentUserId).pipe(
-      catchError(err => {
-        console.error('Erro ao carregar perfil:', err);
-        this.snackBar.open('Erro ao carregar seu perfil.', 'Fechar', { duration: 5000 });
-        return EMPTY;
-      }),
       finalize(() => this.isLoading = false)
-    ).subscribe((userProfile: FullUserResponse) => {
-      this.currentUserData = userProfile as UserData;
-
-      this.profileForm.patchValue({
-        email: userProfile.email,
-        firstName: userProfile.name?.split(' ')[0] || '',
-        lastName: userProfile.name?.split(' ').slice(1).join(' ') || '',
-        phone: userProfile.phonenumber || '',
-        cep: userProfile.cep || '',
-        street: userProfile.street || '',
-        neighborhood: userProfile.neighborhood || '',
-        city: userProfile.city || '',
-        uf: userProfile.uf || '',
-      });
-      this.profilePicturePreview = (userProfile as any).profilePictureUrl 
-        ? 'http://localhost:3000/' + (userProfile as any).profilePictureUrl
-        : null;
-
-      this.profileForm.disable();
-      this.profileForm.get('email')?.disable();
-    });
-  }
-
-  setupCepAutofill(): void {
-     const cepControl = this.profileForm.get('cep');
-    if (!cepControl) return;
-
-    this.cepSubscription = cepControl.valueChanges.pipe(
-      debounceTime(500),
-      distinctUntilChanged(),
-      filter((cep): cep is string => this.isEditing && !!cep && /^\d{5}-?\d{3}$/.test(cep)),
-      tap(() => {
-          this.isFetchingCep = true;
-          this.profileForm.patchValue({ street: '', neighborhood: '', city: '', uf: '' }, { emitEvent: false });
-      }),
-      switchMap(cep => this.cepService.fetchAddressFromCep(cep)),
-      finalize(() => this.isFetchingCep = false),
-      catchError(err => {
-          console.error("Erro no fluxo de busca de CEP:", err);
-          return of(null);
-      })
-    ).subscribe(address => {
-      if (address) {
+    ).subscribe({
+      next: (userProfile: FullUserResponse) => {
+        this.currentUserData = userProfile;
+        
         this.profileForm.patchValue({
-          street: address.logradouro,
-          neighborhood: address.bairro,
-          city: address.localidade,
-          uf: address.uf,
+          email: userProfile.email,
+          firstName: userProfile.name?.split(' ')[0] || '',
+          lastName: userProfile.name?.split(' ').slice(1).join(' ') || '',
+          cpf: userProfile.cpf || ''
         });
-      } else if (cepControl.value) {
-        this.snackBar.open('CEP não encontrado ou inválido.', 'Fechar', { duration: 2500 });
+
+        this.phones.clear();
+        if (userProfile.phones) {
+            const sortedPhones = [...userProfile.phones].sort((a, b) => (b.isMain ? 1 : 0) - (a.isMain ? 1 : 0));
+            sortedPhones.forEach(p => this.addPhone(p));
+        }
+
+        this.addresses.clear();
+        if (userProfile.addresses) userProfile.addresses.forEach(a => this.addAddress(a));
+
+        this.secondaryEmails.clear();
+        if (userProfile.secondaryEmails) userProfile.secondaryEmails.forEach(e => this.addSecondaryEmail(e));
+
+        this.links.clear();
+        if (userProfile.links) userProfile.links.forEach(l => this.addLink(l));
+
+        this.profilePicturePreview = userProfile.profilePictureUrl 
+          ? 'http://localhost:3000/' + userProfile.profilePictureUrl
+          : null;
+
+        this.profileForm.disable();
+      },
+      error: () => {
+        this.snackBar.open('Erro ao carregar seu perfil.', 'Fechar', { duration: 5000 });
       }
     });
   }
 
   toggleEditMode(): void {
-     this.isEditing = !this.isEditing;
+    this.isEditing = !this.isEditing;
     if (this.isEditing) {
       this.profileForm.enable();
       this.profileForm.get('email')?.disable();
+      this.phones.controls.forEach(c => c.enable());
+      this.addresses.controls.forEach(c => c.enable());
+      this.secondaryEmails.controls.forEach(c => c.enable());
+      this.links.controls.forEach(c => c.enable());
     } else {
       this.onCancel();
     }
@@ -177,64 +340,67 @@ export class ProfileComponent implements OnInit, OnDestroy {
     alert("Funcionalidade de upload de imagem não implementada.");
   }
 
-  onFileSelected(event: Event): void {
-     alert("Funcionalidade de upload de imagem não implementada.");
-  }
-
   onSave(): void {
-    if (this.profileForm.invalid) { return; }
+    if (this.profileForm.invalid) return;
     this.isLoading = true;
 
     const formData = this.profileForm.getRawValue();
-    const updatedProfileData = {
+    const payload = {
         name: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
-        phonenumber: formData.phone,
-        cep: formData.cep,
-        street: formData.street,
-        neighborhood: formData.neighborhood,
-        city: formData.city,
-        uf: formData.uf,
+        email: formData.email, // Novo email principal (se trocado)
+        cpf: formData.cpf,
+        phones: formData.phones.map((p: any) => ({
+            id: p.id,
+            number: p.phoneNumber,
+            isWhatsapp: p.isWhatsapp,
+            isMain: p.isMain
+        })),
+        addresses: formData.addresses.map((a: any) => ({
+            id: a.id,
+            street: a.street,
+            number: a.streetNumber,
+            zipCode: a.zipCode,
+            neighborhood: a.neighborhood,
+            complement: a.complement,
+            city: a.city,
+            state: a.state,
+            tag: a.tag,
+            isMain: a.isMain
+        })),
+        secondaryEmails: formData.secondaryEmails.map((e: any) => ({
+            id: e.id,
+            address: e.address
+        })),
+        links: formData.links.map((l: any) => ({
+            id: l.id,
+            title: l.title,
+            url: l.url
+        }))
     };
 
-    console.log("--- SALVAR PERFIL (NÃO IMPLEMENTADO) ---");
-    console.log("Payload a ser enviado:", updatedProfileData);
-    alert("Funcionalidade de salvar perfil ainda não conectada ao backend.");
-
-    setTimeout(() => {
-        this.isLoading = false;
-        this.isEditing = false;
-        this.profileForm.disable();
-        this.profileForm.get('email')?.disable();
-        this.snackBar.open('Perfil atualizado (Simulado)!', 'Fechar', { duration: 3000 });
-        this.currentUserData = { ...this.currentUserData, ...updatedProfileData } as UserData;
-    }, 1500);
+    this.userService.updateUser(this.currentUserData!.id, payload).pipe(
+        finalize(() => this.isLoading = false)
+    ).subscribe({
+        next: () => {
+            this.isEditing = false;
+            this.profileForm.disable();
+            this.snackBar.open('Perfil atualizado com sucesso!', 'OK', { duration: 3000 });
+            this.loadInitialProfile();
+        },
+        error: (err) => {
+            console.error(err);
+            this.snackBar.open('Erro ao atualizar perfil.', 'Fechar', { duration: 3000 });
+        }
+    });
   }
 
   onCancel(): void {
-     this.isEditing = false;
-    this.profileForm.disable();
-    if (this.currentUserData) {
-      this.profileForm.reset({
-        email: this.currentUserData.email,
-        firstName: this.currentUserData.firstName || this.currentUserData.name?.split(' ')[0],
-        lastName: this.currentUserData.lastName || this.currentUserData.name?.split(' ').slice(1).join(' '),
-        phone: this.currentUserData.phone || '',
-        cep: this.currentUserData.cep || '',
-        street: this.currentUserData.street || '',
-        neighborhood: this.currentUserData.neighborhood || '',
-        city: this.currentUserData.city || '',
-        uf: this.currentUserData.uf || '',
-      });
-       this.profilePicturePreview = this.currentUserData.profilePictureUrl
-          ? 'http://localhost:3000/' + this.currentUserData.profilePictureUrl
-          : null;
-    }
-    this.profileForm.get('email')?.disable();
+    this.isEditing = false;
+    this.loadInitialProfile();
     this.snackBar.open('Edição cancelada.', 'Fechar', { duration: 1500 });
   }
 
-   navigateToDashboard(): void {
-     this.router.navigate(['/app/dashboard']);
-   }
+  navigateToDashboard(): void {
+    this.router.navigate(['/app/dashboard']);
+  }
 }

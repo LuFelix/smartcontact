@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/roles/entities/role.entity';
 import { User } from 'src/users/entities/user.entity';
+import { UserSeedService } from './users/user-seed.service';
 
 @Injectable()
 export class SeedService {
@@ -15,28 +16,29 @@ export class SeedService {
     private readonly roleRepository: Repository<Role>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly userSeedService: UserSeedService,
   ) {}
 
   async run() {
     this.logger.log('Iniciando o processo de seeding...');
 
-    // 1. Criar as Roles
     const adminRole = await this.seedRoles();
 
-    // 2. Criar o usuário Admin com a role de Administrador
     if (adminRole) {
       await this.seedAdminUser(adminRole);
+      
+      // Busca a role de colaborador para o seed de 50 usuários
+      const colaboradorRole = await this.roleRepository.findOne({ where: { name: 'colaborador' } });
+      if (colaboradorRole) {
+          await this.userSeedService.run(colaboradorRole);
+      }
     } else {
-      this.logger.error('A role "administrador" não foi encontrada ou criada. O usuário admin não será populado.');
+      this.logger.error('A role "administrador" não foi encontrada ou criada.');
     }
 
     this.logger.log('Seeding concluído com sucesso.');
   }
 
-  /**
-   * Cria as roles especificadas se elas não existirem no banco.
-   * Retorna a role de "administrador".
-   */
   private async seedRoles(): Promise<Role | undefined> {
     const rolesToCreate = ['administrador', 'colaborador', 'usuario'];
     let adminRole: Role | undefined;
@@ -48,50 +50,60 @@ export class SeedService {
         const newRole = this.roleRepository.create({ name: roleName });
         const savedRole = await this.roleRepository.save(newRole);
         this.logger.log(`Role '${savedRole.name}' criada.`);
-        if (savedRole.name === 'administrador') {
-          adminRole = savedRole;
-        }
+        if (savedRole.name === 'administrador') adminRole = savedRole;
       } else {
-        this.logger.log(`Role '${roleName}' já existe.`);
-        if (roleName === 'administrador') {
-          adminRole = existingRole;
-        }
+        if (roleName === 'administrador') adminRole = existingRole;
       }
     }
     return adminRole;
   }
 
-  /**
-   * Cria o usuário administrador com o Email e senha fornecidos.
-   */
   private async seedAdminUser(adminRole: Role) {
-    const adminEmail = 'admin@smartcontact.com.br'; // Email padrão do admin
-    const adminPassword = 'Senha@123'; // Senha do admin
+    const adminEmail = 'admin@smartcontact.com.br';
+    const adminPassword = 'Senha@123';
 
-    const existingAdmin = await this.userRepository.findOne({ where: { email: adminEmail } });
+    let admin = await this.userRepository.findOne({ 
+        where: { email: adminEmail },
+        relations: ['phones', 'addresses']
+    });
 
-    if (!existingAdmin) {
-      const salt = await bcrypt.genSalt();
-      const hashedPassword = await bcrypt.hash(adminPassword, salt);
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(adminPassword, salt);
 
-      const adminUser = this.userRepository.create({
+    const adminData = {
         name: 'Usuário Administrador',
         email: adminEmail,
         cpf: '00000000000',
         password: hashedPassword,
         isVerified: true,
-        phonenumber: '00000000000',
-        cep: '00000000',
-        uf: 'AL',
-        city: 'Maceió',
-        neighborhood: 'Centro',
-        street: 'Rua do Admin',
-      });
-      adminUser.role = adminRole;
-      await this.userRepository.save(adminUser);
-      this.logger.log(`Usuário administrador com Email ${adminEmail} criado com sucesso.`);
+        role: adminRole,
+        // Garante que o admin tenha ao menos um telefone e endereço no formato novo
+        phones: [
+            { number: '00000000000', isWhatsapp: true, isMain: true }
+        ],
+        addresses: [
+            { 
+                street: 'Rua do Admin', 
+                number: '1', 
+                neighborhood: 'Centro', 
+                city: 'Maceió', 
+                state: 'AL', 
+                zipCode: '00000000', 
+                isMain: true,
+                tag: 'WORK' as any
+            }
+        ]
+    };
+
+    if (!admin) {
+      admin = this.userRepository.create(adminData);
+      await this.userRepository.save(admin);
+      this.logger.log(`Usuário administrador criado com sucesso.`);
     } else {
-      this.logger.log(`Usuário administrador com Email ${adminEmail} já existe.`);
+      // Atualiza o administrador existente com os novos dados (Importante para migração de estrutura)
+      this.userRepository.merge(admin, adminData);
+      await this.userRepository.save(admin);
+      this.logger.log(`Usuário administrador atualizado para a nova estrutura.`);
     }
   }
 }

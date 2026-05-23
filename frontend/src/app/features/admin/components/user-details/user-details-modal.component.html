@@ -16,101 +16,286 @@
 
     @if (!isLoadingDetails) {
 
-        <form [formGroup]="userForm" class="config-form">
+        <form [formGroup]="userForm" class="config-form" autocomplete="off">
             
-            <!-- CARD 1: INFORMAÇÕES PESSOAIS -->
-            <mat-card>
+            <!-- SEÇÃO 1: INFORMAÇÕES BÁSICAS -->
+            <mat-card class="section-card">
                 <mat-card-header>
                     <mat-card-title>Informações Pessoais</mat-card-title>
                 </mat-card-header>
 
                 <mat-card-content class="config-fields">
-                    
-                    <!-- Campo Nome -->
                     <mat-form-field appearance="outline" class="md:col-span-2">
                         <mat-label>Nome Completo</mat-label>
-                        <input matInput formControlName="name" placeholder="Ex: João da Silva">
-                        @if (userForm.get('name')?.invalid && userForm.get('name')?.touched) {
-                            <mat-error>O nome é obrigatório.</mat-error>
-                        }
+                        <input matInput formControlName="name" placeholder="Ex: João da Silva" autocomplete="off">
                     </mat-form-field>
 
-                    <!-- Campo CPF -->
                     <mat-form-field appearance="outline">
                         <mat-label>CPF</mat-label>
-                        <input matInput formControlName="cpf" placeholder="000.000.000-00">
-                        @if (userForm.get('cpf')?.invalid && userForm.get('cpf')?.touched) {
-                            <mat-error>CPF inválido ou obrigatório.</mat-error>
-                        }
+                        <input matInput formControlName="cpf" mask="000.000.000-00" placeholder="000.000.000-00" autocomplete="off">
                     </mat-form-field>
 
-                    <!-- Campo E-mail -->
                     <mat-form-field appearance="outline">
-                        <mat-label>E-mail</mat-label>
-                        <input matInput formControlName="email" type="email" placeholder="exemplo@email.com">
-                        @if (userForm.get('email')?.invalid && userForm.get('email')?.touched) {
-                            <mat-error>E-mail inválido.</mat-error>
+                        <mat-label>E-mail de Login</mat-label>
+                        <input matInput formControlName="email" type="email" autocomplete="off" [readonly]="!data.isCreation">
+                        @if (!data.isCreation) {
+                            <mat-icon matSuffix matTooltip="E-mail principal de acesso (Protegido).">lock</mat-icon>
                         }
                     </mat-form-field>
 
-                    <!-- Campo Senha (Apenas na Criação) -->
                     @if (data.isCreation) {
                         <mat-form-field appearance="outline" class="md:col-span-2">
                             <mat-label>Senha Inicial</mat-label>
-                            <input matInput formControlName="password" type="password">
-                            <mat-hint>Mínimo de 6 caracteres</mat-hint>
-                            @if (userForm.get('password')?.invalid && userForm.get('password')?.touched) {
-                                <mat-error>Senha é obrigatória.</mat-error>
-                            }
+                            <input matInput formControlName="password" type="password" autocomplete="new-password">
                         </mat-form-field>
                     }
-                    
+                </mat-card-content>
+            </mat-card>
+
+            <!-- SEÇÃO 2: E-MAILS ADICIONAIS -->
+            <mat-card class="section-card">
+                <mat-card-header class="header-with-action">
+                    <div class="header-inner">
+                        <mat-card-title>E-mails Adicionais</mat-card-title>
+                        <button type="button" mat-stroked-button color="primary" (click)="addSecondaryEmail()" class="add-btn">
+                            <span class="button-content-wrapper">
+                                <mat-icon>add</mat-icon> Adicionar
+                            </span>
+                        </button>
+                    </div>
+                </mat-card-header>
+
+                <mat-card-content>
+                    <div formArrayName="secondaryEmails" class="array-container">
+                        @for (email of secondaryEmails.controls; track $index) {
+                            <div [formGroupName]="$index" class="array-item-row">
+                                <mat-form-field appearance="outline" class="flex-grow">
+                                    <mat-label>E-mail Secundário</mat-label>
+                                    <input matInput formControlName="address" placeholder="outro@email.com" autocomplete="off" class="focus-target-email">
+                                </mat-form-field>
+
+                                <div class="item-actions">
+                                    <button type="button" mat-icon-button 
+                                            class="icon-align-fix"
+                                            color="default"
+                                            (click)="setMainEmail($index)"
+                                            matTooltip="Tornar este o e-mail de login">
+                                        <mat-icon>swap_horiz</mat-icon>
+                                    </button>
+                                    <button type="button" mat-icon-button color="warn" class="icon-align-fix" (click)="removeSecondaryEmail($index)">
+                                        <mat-icon>delete_outline</mat-icon>
+                                    </button>
+                                </div>
+                            </div>
+                        } @empty {
+                            <p class="empty-msg">Nenhum e-mail adicional cadastrado.</p>
+                        }
+                    </div>
+                </mat-card-content>
+            </mat-card>
+
+            <!-- SEÇÃO 3: TELEFONES (FormArray) -->
+            <mat-card class="section-card">
+                <mat-card-header class="header-with-action">
+                    <div class="header-inner">
+                        <mat-card-title>Contatos Telefônicos</mat-card-title>
+                        <button type="button" mat-stroked-button color="primary" (click)="addPhone()" class="add-btn">
+                            <span class="button-content-wrapper">
+                                <mat-icon>add</mat-icon> Adicionar
+                            </span>
+                        </button>
+                    </div>
+                </mat-card-header>
+
+                <mat-card-content>
+                    <div formArrayName="phones" class="array-container">
+                        @for (phone of phones.controls; track $index) {
+                            <div [formGroupName]="$index" class="array-item-row">
+                                <mat-form-field appearance="outline" class="flex-grow">
+                                    <mat-label>Telefone / Celular</mat-label>
+                                    <input matInput formControlName="phoneNumber" mask="(00) 00000-0000" [dropSpecialCharacters]="true" placeholder="(00) 00000-0000" autocomplete="off" class="focus-target-phone">
+                                </mat-form-field>
+
+                                <div class="item-actions">
+                                    <div class="toggle-with-label">
+                                        <mat-slide-toggle formControlName="isWhatsapp">
+                                            <mat-icon [color]="phone.get('isWhatsapp')?.value ? 'primary' : 'disabled'" class="whatsapp-status-icon">
+                                                {{ phone.get('isWhatsapp')?.value ? 'chat' : 'chat_bubble_outline' }}
+                                            </mat-icon>
+                                        </mat-slide-toggle>
+                                    </div>
+
+                                    <button type="button" mat-icon-button 
+                                            class="icon-align-fix"
+                                            [color]="phone.get('isMain')?.value ? 'warn' : 'default'"
+                                            (click)="setMainPhone($index)"
+                                            matTooltip="Marcar como Principal">
+                                        <mat-icon>{{ phone.get('isMain')?.value ? 'star' : 'star_outline' }}</mat-icon>
+                                    </button>
+
+                                    <button type="button" mat-icon-button color="warn" class="icon-align-fix" (click)="removePhone($index)">
+                                        <mat-icon>delete_outline</mat-icon>
+                                    </button>
+                                </div>
+                            </div>
+                        } @empty {
+                            <p class="empty-msg">Nenhum telefone cadastrado.</p>
+                        }
+                    </div>
+                </mat-card-content>
+            </mat-card>
+
+            <!-- SEÇÃO 4: LINKS E REDES SOCIAIS (FormArray) -->
+            <mat-card class="section-card">
+                <mat-card-header class="header-with-action">
+                    <div class="header-inner">
+                        <mat-card-title>Links e Redes Sociais</mat-card-title>
+                        <button type="button" mat-stroked-button color="primary" (click)="addLink()" class="add-btn">
+                            <span class="button-content-wrapper">
+                                <mat-icon>link</mat-icon> Adicionar
+                            </span>
+                        </button>
+                    </div>
+                </mat-card-header>
+
+                <mat-card-content>
+                    <div formArrayName="links" class="array-container">
+                        @for (link of links.controls; track $index) {
+                            <div [formGroupName]="$index" class="array-item-row">
+                                <mat-form-field appearance="outline" style="width: 150px;">
+                                    <mat-label>Título</mat-label>
+                                    <input matInput formControlName="title" placeholder="Ex: Instagram" class="focus-target-link">
+                                </mat-form-field>
+
+                                <mat-form-field appearance="outline" class="flex-grow">
+                                    <mat-label>URL</mat-label>
+                                    <input matInput formControlName="url" placeholder="https://...">
+                                </mat-form-field>
+
+                                <div class="item-actions">
+                                    <button type="button" mat-icon-button color="warn" class="icon-align-fix" (click)="removeLink($index)">
+                                        <mat-icon>delete_outline</mat-icon>
+                                    </button>
+                                </div>
+                            </div>
+                        } @empty {
+                            <p class="empty-msg">Nenhum link cadastrado.</p>
+                        }
+                    </div>
+                </mat-card-content>
+            </mat-card>
+
+            <!-- SEÇÃO 5: ENDEREÇOS (FormArray) -->
+            <mat-card class="section-card">
+                <mat-card-header class="header-with-action">
+                    <div class="header-inner">
+                        <mat-card-title>Endereços</mat-card-title>
+                        <button type="button" mat-stroked-button color="primary" (click)="addAddress()" class="add-btn">
+                            <span class="button-content-wrapper">
+                                <mat-icon>add_location</mat-icon> Adicionar
+                            </span>
+                        </button>
+                    </div>
+                </mat-card-header>
+
+                <mat-card-content>
+                    <div formArrayName="addresses" class="array-container">
+                        @for (address of addresses.controls; track $index) {
+                            <div [formGroupName]="$index" class="address-item-block">
+                                <div class="address-header">
+                                    <mat-form-field appearance="outline" class="tag-select">
+                                        <mat-select formControlName="tag">
+                                            @for (tag of addressTags; track tag) {
+                                                <mat-option [value]="tag">{{ addressTagLabels[tag] }}</mat-option>
+                                            }
+                                        </mat-select>
+                                    </mat-form-field>
+                                    
+                                    <span class="spacer"></span>
+
+                                    <button type="button" mat-icon-button 
+                                            class="icon-align-fix"
+                                            [color]="address.get('isMain')?.value ? 'warn' : 'default'"
+                                            (click)="setMainAddress($index)"
+                                            matTooltip="Endereço Principal">
+                                        <mat-icon>{{ address.get('isMain')?.value ? 'home' : 'home_outline' }}</mat-icon>
+                                    </button>
+
+                                    <button type="button" mat-icon-button color="warn" class="icon-align-fix" (click)="removeAddress($index)">
+                                        <mat-icon>delete_outline</mat-icon>
+                                    </button>
+                                </div>
+
+                                <div class="address-grid">
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>CEP</mat-label>
+                                        <input matInput formControlName="zipCode" mask="00000-000" [dropSpecialCharacters]="true" placeholder="00000-000" class="focus-target-address">
+                                        @if (isFetchingCep[$index]) {
+                                            <mat-spinner matSuffix [diameter]="18"></mat-spinner>
+                                        }
+                                    </mat-form-field>
+
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Nº Residência</mat-label>
+                                        <input matInput formControlName="streetNumber" autocomplete="off">
+                                    </mat-form-field>
+
+                                    <mat-form-field appearance="outline" class="col-span-2">
+                                        <mat-label>Logradouro/Rua</mat-label>
+                                        <input matInput formControlName="street" autocomplete="off">
+                                    </mat-form-field>
+                                    
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Bairro</mat-label>
+                                        <input matInput formControlName="neighborhood" autocomplete="off">
+                                    </mat-form-field>
+
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Complemento</mat-label>
+                                        <input matInput formControlName="complement" autocomplete="off">
+                                    </mat-form-field>
+
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Cidade</mat-label>
+                                        <input matInput formControlName="city" autocomplete="off">
+                                    </mat-form-field>
+                                    
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>UF</mat-label>
+                                        <input matInput formControlName="state" maxlength="2" autocomplete="off">
+                                    </mat-form-field>
+                                </div>
+                                <mat-divider *ngIf="!$last"></mat-divider>
+                            </div>
+                        } @empty {
+                            <p class="empty-msg">Nenhum endereço cadastrado.</p>
+                        }
+                    </div>
                 </mat-card-content>
             </mat-card>
             
-            
-            <!-- CARD 2: STATUS E PERMISSÕES -->
-            <mat-card>
+            <!-- SEÇÃO 6: STATUS E PERMISSÕES -->
+            <mat-card class="section-card">
                 <mat-card-header>
-                    <mat-card-title>Status e Permissões</mat-card-title>
+                    <mat-card-title>Configurações de Acesso</mat-card-title>
                 </mat-card-header>
                 
                 <mat-card-content class="status-permissions-content">
-                    <div class="flex flex-col gap-6">
-                        <!-- 1. SELEÇÃO DE FUNÇÃO (ROLE) -->
-                        <div class="field-wrapper">
-                            <mat-form-field appearance="outline" class="w-full">
-                                <mat-label>Definir Função (Role)</mat-label>
-                                <mat-select [formControl]="roleIdControl"> 
-                                    @for (role of availableRoles$ | async; track role.id) {
-                                        <mat-option [value]="role.id">{{ role.name }}</mat-option>
-                                    }
-                                </mat-select>
-                                <mat-error *ngIf="roleIdControl.invalid && roleIdControl.touched">A função é obrigatória.</mat-error>
-                            </mat-form-field>
-                        </div>
+                    <div class="flex flex-col gap-6" style="padding: 0 20px 20px;">
+                        <mat-form-field appearance="outline" class="w-full">
+                            <mat-label>Função (Role)</mat-label>
+                            <mat-select [formControl]="roleIdControl"> 
+                                @for (role of availableRoles$ | async; track role.id) {
+                                    <mat-option [value]="role.id">{{ role.name }}</mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
                         
-                        <!-- 2. SLIDE TOGGLE PARA ACTIVATE E STATUS ATUAL -->
                         <div class="status-container">
                             <div class="toggle-row">
                                 <mat-slide-toggle formControlName="isActive" color="primary"> 
                                     <span class="toggle-label">Usuário Ativo</span>
                                 </mat-slide-toggle>
-                                
-                                @if (!data.isCreation) {
-                                    <div class="role-saved-info">
-                                        <mat-icon color="accent">security</mat-icon>
-                                        <div class="role-text-info">
-                                            <span class="label">Função Salva</span>
-                                            <strong class="value">{{ user?.role?.name || 'Não atribuída' }}</strong>
-                                        </div>
-                                    </div>
-                                }
-                            </div>
-                            
-                            <div class="info-note">
-                                <mat-icon>info_outline</mat-icon>
-                                <span>Este campo define se o usuário tem permissão para acessar o sistema.</span>
                             </div>
                         </div>
                     </div>
@@ -121,32 +306,20 @@
     }
 </mat-dialog-content>
 
-<mat-dialog-actions align="end">
-    
+<mat-dialog-actions align="end" style="padding: 8px 24px;">
     @if (!data.isCreation) {
-        <button mat-stroked-button color="warn"
-                class="delete-btn" (click)="deleteUser()"
-                [disabled]="isSaving || isDeleting">
-            @if (isDeleting) {
-                <mat-progress-spinner diameter="20" mode="indeterminate" class="mr-2"></mat-progress-spinner> Excluindo...
-            } @else {
-                <span class="button-content-wrapper"> <mat-icon>delete_forever</mat-icon> Excluir</span>
-            }
+        <button mat-stroked-button color="warn" class="delete-btn" (click)="deleteUser()" [disabled]="isSaving || isDeleting">
+            <span class="button-content-wrapper">
+                <mat-icon>delete_forever</mat-icon> Excluir Usuário
+            </span>
         </button>
     }
     
-    <button mat-button (click)="dialogRef.close(false)" [disabled]="isSaving || isDeleting">Cancelar</button>
+    <button mat-button (click)="$event.stopPropagation(); dialogRef.close(false)" [disabled]="isSaving || isDeleting">Cancelar</button>
 
     <button mat-raised-button color="primary" (click)="saveUser()" [disabled]="userForm.invalid || isSaving || isDeleting">
-        @if (isSaving) {
-            <span class="button-content-wrapper">
-                <mat-progress-spinner diameter="20" mode="indeterminate" class="mr-2"></mat-progress-spinner> Salvando...
-            </span>
-        } @else {
-            <span class="button-content-wrapper">
-                <mat-icon>save</mat-icon> {{ data.isCreation ? 'Criar' : 'Salvar' }}
-            </span>
-        }
+        <span class="button-content-wrapper">
+            <mat-icon>save</mat-icon> {{ data.isCreation ? 'Criar Usuário' : 'Salvar Alterações' }}
+        </span>
     </button>
-
 </mat-dialog-actions>

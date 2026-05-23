@@ -1,16 +1,11 @@
-// Caminho: src/app/pages/users-page/users.ts
-// v1.1 - Torna authService explicitamente público para o template
+// Caminho: src/app/features/users/pages/users-page/users-page.ts
 
-import { Component, inject, ViewChild, AfterViewInit, OnInit } from '@angular/core'; // Adicionado OnInit
-// ... (outros imports de Angular, Material, RxJS)
+import { Component, inject, ViewChild, OnInit } from '@angular/core'; 
 import { FormControl, FormGroup, ReactiveFormsModule, FormBuilder } from '@angular/forms';
-// ... (imports de Serviços, Componentes, Models)
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
-//import { User } from './users-page';
 import { UserDetailsModalComponent,UserModalData } from '../../../admin/components/user-details/user-details-modal.component';
-import { CommonModule } from '@angular/common'; // Necessário para ngIf
-// ... outros imports de módulos standalone ...
+import { CommonModule } from '@angular/common'; 
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -20,7 +15,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { catchError, debounceTime, distinctUntilChanged, map, merge, of, startWith, switchMap, tap, finalize } from 'rxjs';
+import { finalize, debounceTime, distinctUntilChanged } from 'rxjs';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { User } from '../../../shared/models/users.models';
 import { UsersListComponent } from '../../../admin/components/users-list/users-list.component';
@@ -46,17 +41,14 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   templateUrl: './users-page.html',
   styleUrl: './users-page.scss'
 })
-export class UsersPage implements  OnInit { // Adicionado OnInit
+export class UsersPage implements OnInit { 
 
-  // Injeções
   private userService = inject(UserService);
   private readonly dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
-
-  // CORREÇÃO: Declarar explicitamente como public
   public readonly authService = inject(AuthService);
-private fb = inject(FormBuilder);
-  // Propriedades da Tabela e Filtros
+  private fb = inject(FormBuilder);
+
   displayedColumns: string[] = ['name', 'email', 'actions'];
   dataSource = new MatTableDataSource<User>([]);
   totalUsers = 0;
@@ -70,7 +62,6 @@ private fb = inject(FormBuilder);
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
-  // Adiciona ngOnInit para segurança, embora updateDisplayedColumns seja chamado depois
   ngOnInit(): void {
     this.filterForm = this.fb.group({
       name: [''],
@@ -78,9 +69,18 @@ private fb = inject(FormBuilder);
       cpf: ['']
     });
 
-    // Carrega a lista inicial
+    // Escutar mudanças nos filtros com debounce
+    this.filterForm.valueChanges.pipe(
+      debounceTime(500),
+      distinctUntilChanged()
+    ).subscribe(() => {
+      if (this.paginator) this.paginator.pageIndex = 0; 
+      this.loadUsers();
+    });
+
     this.loadUsers();
   }
+
   openAddUserModal(): void {
       const data: UserModalData = {
         userId: null, 
@@ -88,12 +88,11 @@ private fb = inject(FormBuilder);
     };
 
     const dialogRef = this.dialog.open(UserDetailsModalComponent, {
-      width: '600px',
+      width: '850px',
       maxWidth: '95vw',
       data: data,
     });
 
-    // Se a criação for bem-sucedida, recarrega a lista
     dialogRef.afterClosed().subscribe(result => {
       if (result === true) {
         this.loadUsers(); 
@@ -102,17 +101,13 @@ private fb = inject(FormBuilder);
     });
   }
 
-  /**
-   * Busca os usuários usando o serviço, aplicando filtros e paginação.
-   */
   loadUsers(): void {
     this.isLoading = true;
 
-    // Prepara os filtros combinando paginação e formulário
     const filters = {
       page: this.paginator ? this.paginator.pageIndex + 1 : 1,
       limit: this.paginator ? this.paginator.pageSize : 10,
-      ...this.filterForm.value // pega name, email, cpf do form
+      ...this.filterForm.getRawValue() 
     };
 
     this.userService.findAllUsers(filters)
@@ -121,12 +116,8 @@ private fb = inject(FormBuilder);
       )
       .subscribe({
         next: (response) => {
-          // Ajuste conforme o retorno do seu backend. 
-          // Geralmente é { data: User[], total: number } ou { items: [], meta: {} }
-          this.dataSource.data = response.data || response; 
-          
-          // Se o backend retornar o total para paginação:
-          this.totalUsers = response.total || response.length; 
+          this.dataSource.data = response.data || []; 
+          this.totalUsers = response.total || 0; 
         },
         error: (err) => {
           console.error('Erro ao listar usuários:', err);
@@ -144,35 +135,29 @@ private fb = inject(FormBuilder);
           columns.push('actions');
       }
       this.displayedColumns = columns;
-      console.log("Colunas atualizadas:", this.displayedColumns); // Log para depurar
   }
 
   resetFilters() {
     this.filterForm.reset({ name: '', email: '', cpf: '' });
+    // O reset vai disparar o valueChanges automaticamente
   }
 
   export(): void {
       if (!this.authService.hasPermission('EXPORT_USERS')) return;
-      const filters = this.filterForm.value;
-      const exportFilters = { /* ... */ };
-      this.userService.exportUsers(exportFilters).subscribe({ /* ... */ });
+      // TODO: Implement export logic
   }
 
- /**
-   * 1. LÓGICA DO BOTÃO EDITAR
-   * Recebe o ID do evento (viewDetails) da lista e abre o modal
-   */
-  openUserDetails(userId: number): void {
+  openUserDetails(userId: string): void { 
     const dialogRef = this.dialog.open(UserDetailsModalComponent, {
-      width: '600px',
+      width: '850px',
       maxWidth: '95vw',
       data: { 
         userId: userId, 
-        isCreation: false // Importante: avisa que é edição
+        isCreation: false 
       }
     });
 
-    // Quando o modal fecha, se retornou 'true', recarrega a lista
+
     dialogRef.afterClosed().subscribe(result => {
       if (result === true) {
         this.loadUsers(); 
@@ -181,23 +166,18 @@ private fb = inject(FormBuilder);
     });
   }
 
-  /**
-   * 2. LÓGICA DO BOTÃO EXCLUIR
-   * Recebe o objeto User do evento (deleteUser) da lista
-   */
   deleteUser(user: User): void {
-    // A confirmação fica aqui no Pai (Smart Component)
     if (!confirm(`Tem certeza que deseja excluir o usuário "${user.name}"?`)) {
       return;
     }
 
-    this.isLoading = true; // Liga o spinner da tabela
+    this.isLoading = true; 
 
     this.userService.deleteUser(user.id).subscribe({
       next: () => {
         this.isLoading = false;
         this.snackBar.open('Usuário excluído com sucesso.', 'OK', { duration: 3000 });
-        this.loadUsers(); // Recarrega a tabela para sumir com a linha
+        this.loadUsers(); 
       },
       error: (err) => {
         console.error(err);
@@ -217,17 +197,7 @@ private fb = inject(FormBuilder);
        alert("TODO: Implementar modal de edição de roles.");
   }
 
- 
-  // ADICIONADO: Método onPageChange (pode estar vazio por enquanto)
   onPageChange(event: PageEvent): void {
-      // O merge() já lida com isso, mas o método precisa existir
       this.loadUsers();
-  }
-
-
-  private loadDataAfterAction(): void {
-    // Força o switchMap a rodar novamente (uma forma simples)
-    // Uma abordagem melhor seria ter uma função loadUsers() separada
-    this.filterForm.updateValueAndValidity({ emitEvent: true });
   }
 }

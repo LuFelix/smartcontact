@@ -1,6 +1,12 @@
 // users/entities/user.entity.ts
 import { Role } from 'src/roles/entities/role.entity';
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Profile } from '../../profiles/entities/profile.entity';
+import { Tag } from '../../tags/entities/tag.entity';
+import { Phone } from './phone.entity';
+import { Address } from './address.entity';
+import { UserEmail } from './user-email.entity';
+import { UserLink } from './user-link.entity';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index, ManyToOne, JoinColumn, OneToMany, OneToOne } from 'typeorm';
 
 @Entity()
 export class User {
@@ -19,24 +25,6 @@ export class User {
     @Column({ type: 'varchar', length: 11, unique: true, nullable: true }) 
     cpf!: string | null;
 
-    @Column({ type: 'varchar', length: 11, nullable: true })
-    phonenumber!: string | null;
-
-    @Column({ type: 'varchar', length: 8, nullable: true })
-    cep!: string | null;
-
-    @Column({ type: 'varchar', length: 2, nullable: true })
-    uf!: string | null;
-
-    @Column({ type: 'varchar',length: 30, nullable: true })
-    city!: string | null;
-
-    @Column({type: 'varchar', length: 40, nullable: true })
-    neighborhood!: string | null;
-
-    @Column({ type: 'varchar',length: 100, nullable: true })
-    street!: string | null;
-
     @Column({ type: 'varchar', length: 100, nullable: false })
     password!: string;
 
@@ -53,9 +41,30 @@ export class User {
     @Column({ default: false })
     isVerified!: boolean;
 
+    @Column({ default: true })
+    isActive!: boolean;
+
     @Column({ type: 'varchar', nullable: true })
     verificationCode!: string | null;
 
     @Column({ type: 'timestamp', nullable: true })
     verificationExpires!: Date | null;
+
+    @OneToOne(() => Profile, (profile) => profile.user)
+    profile?: Profile;
+
+    @OneToMany(() => Tag, (tag) => tag.user)
+    tags?: Tag[];
+
+    @OneToMany(() => Phone, (phone) => phone.user, { cascade: true })
+    phones?: Phone[];
+
+    @OneToMany(() => Address, (address) => address.user, { cascade: true })
+    addresses?: Address[];
+
+    @OneToMany(() => UserEmail, (email) => email.user, { cascade: true })
+    secondaryEmails?: UserEmail[];
+
+    @OneToMany(() => UserLink, (link) => link.user, { cascade: true })
+    links?: UserLink[];
 }

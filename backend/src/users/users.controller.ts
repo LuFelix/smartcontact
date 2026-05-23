@@ -1,7 +1,8 @@
-import { Body, Controller, Get, NotFoundException, Param, Patch, UseGuards, Delete, Query, ParseUUIDPipe } from '@nestjs/common';
+import { Body, Controller, Get, NotFoundException, Param, Patch, UseGuards, Delete, Query, ParseUUIDPipe, Post } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateUserDto } from './dto/user.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -18,14 +19,26 @@ export class UsersController {
 // 🔴 ROTAS DE ADMINISTRAÇÃO E GESTÃO
 // =======================================================
 
+    @Post()
+    @Roles('administrador')
+    @ApiOperation({ summary: 'Criar um novo usuário (Apenas Admin)' })
+    @ApiBody({ type: CreateUserDto })
+    @ApiResponse({ status: 201, description: 'Usuário criado com sucesso' })
+    async create(@Body() createUserDto: CreateUserDto) {
+        return this.usersService.create(createUserDto);
+    }
+
     @Get()
     @Roles('administrador') 
     @ApiOperation({ summary: 'Listar todos os usuários (Apenas Admin)' })
     async listAll(
         @Query('page') page: number = 1,
         @Query('limit') limit: number = 10,
+        @Query('name') name?: string,
+        @Query('email') email?: string,
+        @Query('cpf') cpf?: string,
     ) {
-        return this.usersService.findAll(page, limit);
+        return this.usersService.findAll(page, limit, name, email, cpf);
     }
     
     @Delete(':id')

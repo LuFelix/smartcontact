@@ -10,6 +10,9 @@ import { UsersModule } from './users/users.module';
 import { GlobalJwtModule } from './shared/global-jwt.module';
 import { SeedModule } from './seeds/seed.module';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { ProfilesModule } from './profiles/profiles.module';
+import { TagsModule } from './tags/tags.module';
+import { InteractionLogsModule } from './interaction-logs/interaction-logs.module';
 
 @Module({
   imports: [
@@ -49,6 +52,9 @@ import { MailerModule } from '@nestjs-modules/mailer';
     AuthModule,
     RolesModule,
     UsersModule,
+    ProfilesModule,
+    TagsModule,
+    InteractionLogsModule,
     GlobalJwtModule,
     SeedModule,
   ],
