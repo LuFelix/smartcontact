@@ -37,6 +37,12 @@ export interface SecondaryEmail {
     isVerified: boolean;
 }
 
+export interface UserLink {
+    id: string;
+    title: string;
+    url: string;
+}
+
 export enum AddressTag {
   HOME = 'HOME',
   WORK = 'WORK',
@@ -69,6 +75,7 @@ export interface User {
   phones?: Phone[];
   addresses?: Address[];
   secondaryEmails?: SecondaryEmail[];
+  links?: UserLink[];
 }
 
 // --- Interface para Registro (Usada pelo AuthService) ---
@@ -104,5 +111,6 @@ export interface FullUserResponse {
   phones?: Phone[];
   addresses?: Address[];
   secondaryEmails?: SecondaryEmail[];
+  links?: UserLink[];
   profilePictureUrl?: string; 
 }

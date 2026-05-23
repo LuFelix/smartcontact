@@ -22,11 +22,16 @@ export class UsersService {
     ) { }
 
     async create(createUserDto: CreateUserDto): Promise<User> {
-        const { email, cpf, password, role_id, phones, addresses } = createUserDto; 
+        let { email, cpf, password, roleId, phones, addresses, secondaryEmails, links } = createUserDto; 
 
         const emailExists = await this.usersRepository.findOne({ where: { email } });
         if (emailExists) {
             throw new BadRequestException('Usuário com este e-mail já existe');
+        }
+
+        // Tratamento do CPF opcional
+        if (cpf === "" || cpf === undefined) {
+            cpf = null as any;
         }
 
         if (cpf) {
@@ -39,8 +44,8 @@ export class UsersService {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         let assignedRole;
-        if (role_id) {
-            assignedRole = await this.rolesRepository.findOne({ where: { id: role_id } });
+        if (roleId) {
+            assignedRole = await this.rolesRepository.findOne({ where: { id: roleId } });
         } else {
             assignedRole = await this.rolesRepository.findOne({ where: { name: 'colaborador' } });
         }
@@ -49,13 +54,23 @@ export class UsersService {
             throw new BadRequestException('Role especificada não existe');
         }
 
+        // Limpeza de IDs nulos
+        const cleanItems = (items: any[] | undefined) => items ? items.map(item => {
+            const { id, ...restItem } = item;
+            return restItem;
+        }) : [];
+
         const user = this.usersRepository.create({
-            ...createUserDto,
+            name: createUserDto.name,
+            email: createUserDto.email,
+            cpf: cpf as any, 
             password: hashedPassword,
+            isActive: createUserDto.isActive ?? true,
             role: assignedRole,
-            phones: phones ? phones.map(p => ({ ...p })) : [],
-            addresses: addresses ? addresses.map(a => ({ ...a })) : [],
-            secondaryEmails: (createUserDto as any).secondaryEmails ? (createUserDto as any).secondaryEmails.map((e: any) => ({ ...e })) : [],
+            phones: cleanItems(phones),
+            addresses: cleanItems(addresses),
+            secondaryEmails: cleanItems(secondaryEmails),
+            links: cleanItems(links),
         });
 
         return this.usersRepository.save(user);
@@ -71,7 +86,7 @@ export class UsersService {
     async findById(userId: string): Promise<User | null> {
         return this.usersRepository.findOne({ 
             where: { id: userId }, 
-            relations: ['role', 'phones', 'addresses'] 
+            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links'] 
         });
     }
 
@@ -97,8 +112,7 @@ export class UsersService {
             skip: skip,
             take: limit ?? undefined,
             where: where,
-            relations: ['role', 'phones', 'addresses'],
-            // Removi o 'select' restritivo para garantir que as relações venham completas
+            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links'],
         };
 
         const [data, total] = await this.usersRepository.findAndCount(findOptions);
@@ -112,7 +126,7 @@ export class UsersService {
    async update(id: string, updateUserDto: UpdateUserDto): Promise<User> { 
         const user = await this.usersRepository.findOne({
             where: { id },
-            relations: ['role', 'phones', 'addresses'],
+            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links'],
         });
 
         if (!user) {
@@ -155,18 +169,31 @@ export class UsersService {
             user.role = role;
         }
 
-        const { roleId, phones, addresses, ...userUpdateData } = updateUserDto;
+        // TypeORM cascade handles update if items have IDs, or creates new ones if they don't.
+        const { roleId, phones, addresses, secondaryEmails, links, ...userUpdateData } = updateUserDto;
         
         this.usersRepository.merge(user, userUpdateData);
 
+        // Função auxiliar para remover IDs nulos que quebram o cascade do TypeORM
+        const cleanItems = (items: any[]) => items.map(item => {
+            if (item.id === null || item.id === undefined) {
+                const { id, ...rest } = item;
+                return rest;
+            }
+            return item;
+        });
+
         if (phones) {
-            user.phones = phones as any;
+            user.phones = cleanItems(phones) as any;
         }
         if (addresses) {
-            user.addresses = addresses as any;
+            user.addresses = cleanItems(addresses) as any;
         }
         if (secondaryEmails) {
-            user.secondaryEmails = secondaryEmails as any;
+            user.secondaryEmails = cleanItems(secondaryEmails) as any;
+        }
+        if (links) {
+            user.links = cleanItems(links) as any;
         }
 
         return this.usersRepository.save(user);

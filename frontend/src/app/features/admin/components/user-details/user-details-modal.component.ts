@@ -105,13 +105,14 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
             cpf: [''],
             password: [
                 '', 
-                this.data.isCreation ? [Validators.required, Validators.minLength(6)] : []
+                this.data.isCreation ? [Validators.required, Validators.minLength(8)] : []
             ],
             isActive: [true],
             roleId: this.roleIdControl,
             phones: this.fb.array([]),
             addresses: this.fb.array([]),
-            secondaryEmails: this.fb.array([])
+            secondaryEmails: this.fb.array([]),
+            links: this.fb.array([])
         });
     }
 
@@ -128,6 +129,10 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
         return this.userForm.get('secondaryEmails') as FormArray;
     }
 
+    get links(): FormArray {
+        return this.userForm.get('links') as FormArray;
+    }
+
     addPhone(phone?: any): void {
         const phoneGroup = this.fb.group({
             id: [phone?.id || null],
@@ -136,6 +141,7 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
             isMain: [phone?.isMain ?? false]
         });
         this.phones.push(phoneGroup);
+        this.focusNewItem('.focus-target-phone');
     }
 
     removePhone(index: number): void {
@@ -148,10 +154,25 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
             address: [email?.address || '', [Validators.required, Validators.email]]
         });
         this.secondaryEmails.push(emailGroup);
+        this.focusNewItem('.focus-target-email');
     }
 
     removeSecondaryEmail(index: number): void {
         this.secondaryEmails.removeAt(index);
+    }
+
+    addLink(link?: any): void {
+        const linkGroup = this.fb.group({
+            id: [link?.id || null],
+            title: [link?.title || '', Validators.required],
+            url: [link?.url || '', [Validators.required, Validators.pattern(/https?:\/\/.+/)]]
+        });
+        this.links.push(linkGroup);
+        this.focusNewItem('.focus-target-link');
+    }
+
+    removeLink(index: number): void {
+        this.links.removeAt(index);
     }
 
     addAddress(address?: any): void {
@@ -171,6 +192,16 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
         const index = this.addresses.length;
         this.addresses.push(addressGroup);
         this.setupAddressCepSubscription(index);
+        this.focusNewItem('.focus-target-address');
+    }
+
+    private focusNewItem(selector: string): void {
+        setTimeout(() => {
+            const elements = document.querySelectorAll(selector);
+            if (elements.length > 0) {
+                (elements[elements.length - 1] as HTMLElement).focus();
+            }
+        }, 100);
     }
 
     private setupAddressCepSubscription(index: number): void {
@@ -209,12 +240,36 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
         this.phones.controls.forEach((control, i) => {
             control.get('isMain')?.setValue(i === index);
         });
+        this.sortPhones();
+    }
+
+    setMainEmail(index: number): void {
+        const currentPrimary = this.userForm.get('email')?.value;
+        const selectedSecondaryGroup = this.secondaryEmails.at(index) as FormGroup;
+        const newPrimary = selectedSecondaryGroup.get('address')?.value;
+
+        if (!newPrimary) return;
+
+        if (!confirm('Atenção: Ao trocar o e-mail de login, este usuário precisará usar o novo e-mail para acessar o sistema. Se ele usava login via Google, o acesso pode ser perdido. Deseja continuar?')) {
+            return;
+        }
+
+        // Swap
+        this.userForm.get('email')?.setValue(newPrimary);
+        selectedSecondaryGroup.get('address')?.setValue(currentPrimary);
     }
 
     setMainAddress(index: number): void {
         this.addresses.controls.forEach((control, i) => {
             control.get('isMain')?.setValue(i === index);
         });
+    }
+
+    private sortPhones(): void {
+        const controls = [...this.phones.controls];
+        controls.sort((a, b) => (b.get('isMain')?.value ? 1 : 0) - (a.get('isMain')?.value ? 1 : 0));
+        this.phones.clear({ emitEvent: false });
+        controls.forEach(c => this.phones.push(c, { emitEvent: false }));
     }
 
     private loadUser(id: string): void {
@@ -236,7 +291,8 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
 
                 this.phones.clear();
                 if (loadedUser.phones) {
-                    loadedUser.phones.forEach(p => this.addPhone(p));
+                    const sortedPhones = [...loadedUser.phones].sort((a, b) => (b.isMain ? 1 : 0) - (a.isMain ? 1 : 0));
+                    sortedPhones.forEach(p => this.addPhone(p));
                 }
 
                 this.addresses.clear();
@@ -247,6 +303,11 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
                 this.secondaryEmails.clear();
                 if (loadedUser.secondaryEmails) {
                     loadedUser.secondaryEmails.forEach(e => this.addSecondaryEmail(e));
+                }
+
+                this.links.clear();
+                if (loadedUser.links) {
+                    loadedUser.links.forEach(l => this.addLink(l));
                 }
 
                 this.userForm.get('password')?.clearValidators();
@@ -263,7 +324,6 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
         this.isSaving = true;
         const rawData = this.userForm.getRawValue();
 
-        // Mapeamento de volta para os nomes esperados pelo backend
         const payload = {
             ...rawData,
             phones: rawData.phones.map((p: any) => ({
@@ -287,6 +347,11 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
             secondaryEmails: rawData.secondaryEmails.map((e: any) => ({
                 id: e.id,
                 address: e.address
+            })),
+            links: rawData.links.map((l: any) => ({
+                id: l.id,
+                title: l.title,
+                url: l.url
             }))
         };
 
@@ -306,7 +371,9 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
                 next: () => this.dialogRef.close(true),
                 error: (err) => {
                     console.error('Erro ao salvar', err);
-                    alert("Erro ao salvar usuário. Verifique se os dados já existem.");
+                    const msg = err.error?.message;
+                    const errorDetails = Array.isArray(msg) ? msg.join('\n') : msg || "Verifique os dados e tente novamente.";
+                    alert("Erro ao salvar usuário:\n" + errorDetails);
                 }
             });
     }

@@ -15,6 +15,21 @@
           <mat-card-title>{{ user.name }}</mat-card-title>
           <mat-card-subtitle>{{ user.email }}</mat-card-subtitle>
         </mat-card-header>
+
+        <mat-card-content class="card-summary-content">
+            @if (getMainPhone(user); as phone) {
+                <div class="info-row">
+                    <mat-icon>phone</mat-icon>
+                    <span>{{ phone }}</span>
+                </div>
+            }
+            @if (getMainAddressInfo(user); as addr) {
+                <div class="info-row">
+                    <mat-icon>location_on</mat-icon>
+                    <span>{{ addr.neighborhood }} • {{ addr.cityState }}</span>
+                </div>
+            }
+        </mat-card-content>
         
         <mat-card-actions align="end" (click)="$event.stopPropagation()">
           @if (getMainWhatsapp(user); as whatsappNumber) {

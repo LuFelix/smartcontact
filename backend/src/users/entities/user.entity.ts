@@ -5,6 +5,7 @@ import { Tag } from '../../tags/entities/tag.entity';
 import { Phone } from './phone.entity';
 import { Address } from './address.entity';
 import { UserEmail } from './user-email.entity';
+import { UserLink } from './user-link.entity';
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index, ManyToOne, JoinColumn, OneToMany, OneToOne } from 'typeorm';
 
 @Entity()
@@ -40,6 +41,9 @@ export class User {
     @Column({ default: false })
     isVerified!: boolean;
 
+    @Column({ default: true })
+    isActive!: boolean;
+
     @Column({ type: 'varchar', nullable: true })
     verificationCode!: string | null;
 
@@ -60,4 +64,7 @@ export class User {
 
     @OneToMany(() => UserEmail, (email) => email.user, { cascade: true })
     secondaryEmails?: UserEmail[];
+
+    @OneToMany(() => UserLink, (link) => link.user, { cascade: true })
+    links?: UserLink[];
 }

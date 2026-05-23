@@ -1,6 +1,6 @@
 // update-user.dto.ts
 import { IsOptional, IsString, IsEmail, Length, IsArray, ValidateNested, IsBoolean, IsEnum, IsUUID } from 'class-validator';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { AddressTag } from '../entities/address.entity';
 
@@ -87,10 +87,27 @@ export class UpdateEmailDto {
   @IsUUID()
   id?: string;
 
-  @ApiPropertyOptional({ example: 'secondary@email.com' })
+  @ApiProperty({ example: 'secondary@email.com' })
   @IsOptional()
   @IsEmail()
   address?: string;
+}
+
+export class UpdateLinkDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
+  @ApiPropertyOptional({ example: 'Instagram' })
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @ApiPropertyOptional({ example: 'https://instagram.com/user' })
+  @IsOptional()
+  @IsString()
+  url?: string;
 }
 
 export class UpdateUserDto {
@@ -115,13 +132,18 @@ export class UpdateUserDto {
   @ApiPropertyOptional({ description: 'Nova senha (será hasheada)' })
   @IsOptional()
   @IsString()
-  @Length(6, 100)
+  @Length(8, 100)
   password?: string;
 
   @ApiPropertyOptional({ description: 'UUID da role' })
   @IsOptional()
   @IsString()
   roleId?: string;
+
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 
   @ApiPropertyOptional({ type: [UpdatePhoneDto] })
   @IsOptional()
@@ -136,4 +158,11 @@ export class UpdateUserDto {
   @ValidateNested({ each: true })
   @Type(() => UpdateAddressDto)
   addresses?: UpdateAddressDto[];
+
+  @ApiPropertyOptional({ type: [UpdateLinkDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => UpdateLinkDto)
+  links?: UpdateLinkDto[];
 }

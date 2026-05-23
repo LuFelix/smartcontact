@@ -50,6 +50,21 @@ export class UsersListComponent {
     return firstWhatsapp ? firstWhatsapp.number : null;
   }
 
+  getMainPhone(user: User): string | null {
+    if (!user.phones || user.phones.length === 0) return null;
+    const mainPhone = user.phones.find(p => p.isMain);
+    return mainPhone ? mainPhone.number : user.phones[0].number;
+  }
+
+  getMainAddressInfo(user: User): { neighborhood: string, cityState: string } | null {
+    if (!user.addresses || user.addresses.length === 0) return null;
+    const addr = user.addresses.find(a => a.isMain) || user.addresses[0];
+    return {
+      neighborhood: addr.neighborhood || '',
+      cityState: addr.city && addr.state ? `${addr.city} - ${addr.state}` : addr.city || addr.state || ''
+    };
+  }
+
   openWhatsapp(phoneNumber: string): void {
     // Remove caracteres não numéricos
     const cleanNumber = phoneNumber.replace(/\D/g, '');
