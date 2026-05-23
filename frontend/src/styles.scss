@@ -68,11 +68,10 @@ a:focus-visible,
     box-shadow: 0 0 0 4px rgba(255, 152, 0, 0.2) !important;
 }
 
-// Destaque SUTIL para campos de preenchimento (Inputs)
+// Para campos de preenchimento, removemos o retângulo extra para não poluir
 input:focus-visible,
 textarea:focus-visible,
 .mat-mdc-input-element:focus-visible {
-    outline: 1.5px solid var(--app-focus-color) !important;
-    outline-offset: 1px !important;
+    outline: none !important;
     box-shadow: none !important;
 }
