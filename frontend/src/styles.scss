@@ -57,14 +57,22 @@ mat-icon {
     --app-focus-color: #FFB74D; // Laranja Suave para Escuro
 }
 
-// Aplicar em botões e links para destaque visual ao navegar por teclado ou clique
+// Destaque FORTE para botões e links (Navegação principal)
 button:focus-visible, 
 a:focus-visible,
-input:focus-visible,
 .mat-mdc-button:focus-visible,
 .mat-mdc-raised-button:focus-visible,
 .mat-mdc-icon-button:focus-visible {
     outline: 3px solid var(--app-focus-color) !important;
     outline-offset: 2px !important;
     box-shadow: 0 0 0 4px rgba(255, 152, 0, 0.2) !important;
+}
+
+// Destaque SUTIL para campos de preenchimento (Inputs)
+input:focus-visible,
+textarea:focus-visible,
+.mat-mdc-input-element:focus-visible {
+    outline: 1.5px solid var(--app-focus-color) !important;
+    outline-offset: 1px !important;
+    box-shadow: none !important;
 }
