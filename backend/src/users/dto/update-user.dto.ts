@@ -1,6 +1,6 @@
 // update-user.dto.ts
 import { IsOptional, IsString, IsEmail, Length, IsArray, ValidateNested, IsBoolean, IsEnum, IsUUID } from 'class-validator';
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { AddressTag } from '../entities/address.entity';
 

@@ -22,7 +22,7 @@ export class UsersService {
     ) { }
 
     async create(createUserDto: CreateUserDto): Promise<User> {
-        let { email, cpf, password, roleId, phones, addresses, secondaryEmails, links, ...rest } = createUserDto as any; 
+        let { email, cpf, password, roleId, phones, addresses, secondaryEmails, links } = createUserDto; 
 
         const emailExists = await this.usersRepository.findOne({ where: { email } });
         if (emailExists) {
@@ -31,7 +31,7 @@ export class UsersService {
 
         // Tratamento do CPF opcional
         if (cpf === "" || cpf === undefined) {
-            cpf = null;
+            cpf = null as any;
         }
 
         if (cpf) {
@@ -55,16 +55,17 @@ export class UsersService {
         }
 
         // Limpeza de IDs nulos
-        const cleanItems = (items: any[]) => items ? items.map(item => {
+        const cleanItems = (items: any[] | undefined) => items ? items.map(item => {
             const { id, ...restItem } = item;
             return restItem;
         }) : [];
 
         const user = this.usersRepository.create({
-            ...rest,
-            email,
-            cpf, 
+            name: createUserDto.name,
+            email: createUserDto.email,
+            cpf: cpf as any, 
             password: hashedPassword,
+            isActive: createUserDto.isActive ?? true,
             role: assignedRole,
             phones: cleanItems(phones),
             addresses: cleanItems(addresses),
