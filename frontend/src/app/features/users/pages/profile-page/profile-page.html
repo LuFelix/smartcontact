@@ -31,7 +31,7 @@
             <h3 class="section-title">Dados Pessoais</h3>
             <div class="grid-2-cols">
                 <mat-form-field appearance="outline" class="col-span-2">
-                    <mat-label>Email de Login (Protegido)</mat-label>
+                    <mat-label>Email</mat-label>
                     <input matInput formControlName="email" readonly autocomplete="off" />
                 </mat-form-field>
                 
@@ -51,38 +51,6 @@
             </div>
         </div>
 
-        <mat-divider></mat-divider>
-
-        <!-- E-MAILS ADICIONAIS -->
-        <div class="form-section">
-            <div class="section-header">
-                <h3 class="section-title">E-mails Adicionais</h3>
-                <button type="button" mat-button color="primary" (click)="addSecondaryEmail()" *ngIf="isEditing">
-                    <span class="button-content-wrapper">
-                        <mat-icon>add</mat-icon> Adicionar
-                    </span>
-                </button>
-            </div>
-
-            <div formArrayName="secondaryEmails" class="array-list">
-                @for (email of secondaryEmails.controls; track $index) {
-                    <div [formGroupName]="$index" class="array-item-row">
-                        <mat-form-field appearance="outline" class="flex-grow">
-                            <mat-label>E-mail Secundário</mat-label>
-                            <input matInput formControlName="address" placeholder="outro@email.com" autocomplete="off">
-                        </mat-form-field>
-
-                        <div class="item-actions">
-                            <button type="button" mat-icon-button color="warn" class="icon-align-fix" (click)="removeSecondaryEmail($index)" *ngIf="isEditing">
-                                <mat-icon>delete_outline</mat-icon>
-                            </button>
-                        </div>
-                    </div>
-                } @empty {
-                    <p class="empty-msg">Nenhum e-mail adicional cadastrado.</p>
-                }
-            </div>
-        </div>
 
         <mat-divider></mat-divider>
 

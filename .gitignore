@@ -10,10 +10,10 @@
 *.log
 .DS_Store
 COMANDOS_UTEIS.md
-issues-importar.smartcontact.js
+issues-enviar.smartcontact.js
 issues-ler.smartcontact.js
 issues-editar.smartcontact.js
-importar-issues.json
+issues-todo.json
 issues-fechar.smartcontact.js
 /.docs/generated_plans
 
