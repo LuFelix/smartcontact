@@ -55,6 +55,7 @@ export class UsersService {
             role: assignedRole,
             phones: phones ? phones.map(p => ({ ...p })) : [],
             addresses: addresses ? addresses.map(a => ({ ...a })) : [],
+            secondaryEmails: (createUserDto as any).secondaryEmails ? (createUserDto as any).secondaryEmails.map((e: any) => ({ ...e })) : [],
         });
 
         return this.usersRepository.save(user);
@@ -163,6 +164,9 @@ export class UsersService {
         }
         if (addresses) {
             user.addresses = addresses as any;
+        }
+        if (secondaryEmails) {
+            user.secondaryEmails = secondaryEmails as any;
         }
 
         return this.usersRepository.save(user);

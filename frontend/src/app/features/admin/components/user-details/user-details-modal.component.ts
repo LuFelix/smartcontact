@@ -110,7 +110,8 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
             isActive: [true],
             roleId: this.roleIdControl,
             phones: this.fb.array([]),
-            addresses: this.fb.array([])
+            addresses: this.fb.array([]),
+            secondaryEmails: this.fb.array([])
         });
     }
 
@@ -123,10 +124,13 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
         return this.userForm.get('addresses') as FormArray;
     }
 
+    get secondaryEmails(): FormArray {
+        return this.userForm.get('secondaryEmails') as FormArray;
+    }
+
     addPhone(phone?: any): void {
         const phoneGroup = this.fb.group({
             id: [phone?.id || null],
-            // Renomeado para evitar colisão com 'number' do endereço no patchValue global
             phoneNumber: [phone?.number || '', Validators.required],
             isWhatsapp: [phone?.isWhatsapp ?? false],
             isMain: [phone?.isMain ?? false]
@@ -138,11 +142,22 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
         this.phones.removeAt(index);
     }
 
+    addSecondaryEmail(email?: any): void {
+        const emailGroup = this.fb.group({
+            id: [email?.id || null],
+            address: [email?.address || '', [Validators.required, Validators.email]]
+        });
+        this.secondaryEmails.push(emailGroup);
+    }
+
+    removeSecondaryEmail(index: number): void {
+        this.secondaryEmails.removeAt(index);
+    }
+
     addAddress(address?: any): void {
         const addressGroup = this.fb.group({
             id: [address?.id || null],
             street: [address?.street || '', Validators.required],
-            // Renomeado para 'streetNumber' para evitar colisão
             streetNumber: [address?.number || '', Validators.required],
             complement: [address?.complement || ''],
             neighborhood: [address?.neighborhood || '', Validators.required],
@@ -175,7 +190,6 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
             tap(() => this.isFetchingCep[index] = false)
         ).subscribe(data => {
             if (data) {
-                // Preenchimento explícito e isolado por grupo
                 addressGroup.get('street')?.setValue(data.logradouro);
                 addressGroup.get('neighborhood')?.setValue(data.bairro);
                 addressGroup.get('city')?.setValue(data.localidade);
@@ -230,6 +244,11 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
                     loadedUser.addresses.forEach(a => this.addAddress(a));
                 }
 
+                this.secondaryEmails.clear();
+                if (loadedUser.secondaryEmails) {
+                    loadedUser.secondaryEmails.forEach(e => this.addSecondaryEmail(e));
+                }
+
                 this.userForm.get('password')?.clearValidators();
                 this.userForm.get('password')?.updateValueAndValidity();
             });
@@ -264,6 +283,10 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
                 zipCode: a.zipCode,
                 tag: a.tag,
                 isMain: a.isMain
+            })),
+            secondaryEmails: rawData.secondaryEmails.map((e: any) => ({
+                id: e.id,
+                address: e.address
             }))
         };
 

@@ -81,6 +81,18 @@ export class UpdateAddressDto {
   isMain?: boolean;
 }
 
+export class UpdateEmailDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  id?: string;
+
+  @ApiPropertyOptional({ example: 'secondary@email.com' })
+  @IsOptional()
+  @IsEmail()
+  address?: string;
+}
+
 export class UpdateUserDto {
   
   @ApiPropertyOptional({ description: 'Nome completo do usuário' })
@@ -89,7 +101,7 @@ export class UpdateUserDto {
   @Length(1, 100)
   name?: string;
 
-  @ApiPropertyOptional({ description: 'Email do usuário' })
+  @ApiPropertyOptional({ description: 'Email principal do usuário (Login)' })
   @IsOptional()
   @IsEmail()
   @Length(1, 100)

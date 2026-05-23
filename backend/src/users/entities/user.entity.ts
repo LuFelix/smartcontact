@@ -4,6 +4,7 @@ import { Profile } from '../../profiles/entities/profile.entity';
 import { Tag } from '../../tags/entities/tag.entity';
 import { Phone } from './phone.entity';
 import { Address } from './address.entity';
+import { UserEmail } from './user-email.entity';
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index, ManyToOne, JoinColumn, OneToMany, OneToOne } from 'typeorm';
 
 @Entity()
@@ -56,4 +57,7 @@ export class User {
 
     @OneToMany(() => Address, (address) => address.user, { cascade: true })
     addresses?: Address[];
+
+    @OneToMany(() => UserEmail, (email) => email.user, { cascade: true })
+    secondaryEmails?: UserEmail[];
 }
