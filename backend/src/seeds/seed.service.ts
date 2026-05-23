@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/roles/entities/role.entity';
 import { User } from 'src/users/entities/user.entity';
+import { UserSeedService } from './users/user-seed.service';
 
 @Injectable()
 export class SeedService {
@@ -15,6 +16,7 @@ export class SeedService {
     private readonly roleRepository: Repository<Role>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly userSeedService: UserSeedService,
   ) {}
 
   async run() {
@@ -24,6 +26,12 @@ export class SeedService {
 
     if (adminRole) {
       await this.seedAdminUser(adminRole);
+      
+      // Busca a role de colaborador para o seed de 50 usuários
+      const colaboradorRole = await this.roleRepository.findOne({ where: { name: 'colaborador' } });
+      if (colaboradorRole) {
+          await this.userSeedService.run(colaboradorRole);
+      }
     } else {
       this.logger.error('A role "administrador" não foi encontrada ou criada.');
     }

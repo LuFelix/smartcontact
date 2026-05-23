@@ -45,3 +45,26 @@ section {
 mat-icon {
     vertical-align: middle;
 }
+
+// ==========================================
+// UX & ACCESSIBILITY: HIGH CONTRAST FOCUS
+// ==========================================
+:root {
+    --app-focus-color: #FF9800; // Laranja Material
+}
+
+.dark-mode {
+    --app-focus-color: #FFB74D; // Laranja Suave para Escuro
+}
+
+// Aplicar em botões e links para destaque visual ao navegar por teclado ou clique
+button:focus-visible, 
+a:focus-visible,
+input:focus-visible,
+.mat-mdc-button:focus-visible,
+.mat-mdc-raised-button:focus-visible,
+.mat-mdc-icon-button:focus-visible {
+    outline: 3px solid var(--app-focus-color) !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 4px rgba(255, 152, 0, 0.2) !important;
+}

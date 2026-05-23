@@ -5,13 +5,14 @@ import { ConfigModule } from '@nestjs/config';
 import { User } from 'src/users/entities/user.entity';
 import { Role } from 'src/roles/entities/role.entity';
 import { SeedService } from './seed.service';
+import { UserSeedService } from './users/user-seed.service';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
     TypeOrmModule.forFeature([Role, User]),
   ],
-  providers: [SeedService],
+  providers: [SeedService, UserSeedService],
   exports: [SeedService],
 })
 export class SeedModule {}

@@ -34,8 +34,11 @@ export class UsersController {
     async listAll(
         @Query('page') page: number = 1,
         @Query('limit') limit: number = 10,
+        @Query('name') name?: string,
+        @Query('email') email?: string,
+        @Query('cpf') cpf?: string,
     ) {
-        return this.usersService.findAll(page, limit);
+        return this.usersService.findAll(page, limit, name, email, cpf);
     }
     
     @Delete(':id')
