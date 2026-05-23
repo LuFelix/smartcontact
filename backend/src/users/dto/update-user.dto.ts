@@ -124,13 +124,6 @@ export class UpdateUserDto {
   @Length(1, 100)
   email?: string;
 
-  @ApiPropertyOptional({ type: [UpdateEmailDto] })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => UpdateEmailDto)
-  secondaryEmails?: UpdateEmailDto[];
-
   @ApiPropertyOptional({ description: 'CPF do usuário' })
   @IsOptional()
   @IsString()

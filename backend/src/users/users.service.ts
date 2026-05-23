@@ -142,6 +142,24 @@ export class UsersService {
             }
         }
 
+        // Tratamento do CPF opcional: se vier string vazia, salva como null
+        if (updateUserDto.cpf === "" || updateUserDto.cpf === undefined) {
+            // Se for explicitamente vazio ou não enviado, mantemos ou limpamos conforme a lógica desejada.
+            // Para "opcional", se vier "", limpamos.
+            if (updateUserDto.cpf === "") {
+                updateUserDto.cpf = null as any;
+            }
+        }
+
+        if (updateUserDto.cpf && updateUserDto.cpf !== user.cpf) {
+            const cpfExists = await this.usersRepository.findOne({
+                where: { cpf: updateUserDto.cpf },
+            });
+            if (cpfExists) {
+                throw new BadRequestException('CPF já está em uso por outro usuário');
+            }
+        }
+
         if (updateUserDto.password) {
             updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
         }
