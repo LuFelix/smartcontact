@@ -6,9 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { User } from 'src/users/entities/user.entity';
 import { Role } from 'src/roles/entities/role.entity';
 import { Tag, RedirectMode } from 'src/tags/entities/tag.entity';
-
-// Importação direta usando CommonJS require para evitar problemas de iterabilidade com import *
-const usersData = require('./users-data.json');
+import { usersData } from './users-data';
 
 @Injectable()
 export class UserSeedService {
