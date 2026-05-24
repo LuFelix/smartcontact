@@ -58,6 +58,9 @@ export class User {
     @Index()
     ownerId!: string | null;
 
+    @Column({ default: false })
+    isSuperAdmin!: boolean;
+
     @OneToOne(() => Profile, (profile) => profile.user)
     profile?: Profile;
 

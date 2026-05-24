@@ -97,8 +97,11 @@ export class UsersService {
         const baseUser = await this.usersRepository.findOne({ where: { id: userId } });
         if (!baseUser) return null;
 
-        // Regra Multi-Tenant: Bloqueio total cross-tenant
-        if (currentUser?.tenantId && baseUser.tenantId !== currentUser?.tenantId) {
+        // Regra Super Admin: Ele ignora as travas de tenant e owner para fins gerenciais
+        const isSuperAdmin = currentUser?.isSuperAdmin;
+
+        // Regra Multi-Tenant: Bloqueio total cross-tenant (Ignorado se for Super Admin)
+        if (!isSuperAdmin && currentUser?.tenantId && baseUser.tenantId !== currentUser?.tenantId) {
              throw new BadRequestException('Acesso negado: Este usuário pertence a outra organização.');
         }
 
@@ -108,7 +111,8 @@ export class UsersService {
         const isTenantAdmin = currentUser?.role === 'administrador';
 
         // LGPD: Só liberamos as relações de contato se houver permissão
-        const showContacts = isOwnProfile || isOwner || isTenantAdmin;
+        // Super Admin vê tudo em todos os tenants
+        const showContacts = isSuperAdmin || isOwnProfile || isOwner || isTenantAdmin;
 
         const relations = showContacts
             ? ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags']
@@ -123,8 +127,13 @@ export class UsersService {
     async findAll(page?: number, limit?: number, name?: string, email?: string, cpf?: string, currentUser?: any): Promise<{ data: User[], total: number }> {
         const skip = page && limit ? (page - 1) * limit : 0;
         const tenantId = currentUser?.tenantId || this.TIWEB_ID;
+        const isSuperAdmin = currentUser?.isSuperAdmin;
 
-        const where: any = { tenantId }; // Filtro de empresa obrigatório
+        const where: any = {};
+        // Filtro Multi-Tenant: Só vê quem é da mesma empresa (Ignorado se for Super Admin)
+        if (!isSuperAdmin && tenantId) {
+            where.tenantId = tenantId;
+        }
 
         if (name) where.name = ILike(`%${name}%`);
         if (email) where.email = Like(`%${email}%`);
@@ -143,9 +152,10 @@ export class UsersService {
         const data = users.map(user => {
             const isOwner = user.ownerId === currentUser?.sub;
             const isOwnProfile = user.id === currentUser?.sub;
-            const isTenantAdmin = currentUser?.role === 'administrador';
+            const isTenantAdmin = user.tenantId === currentUser?.tenantId && currentUser?.role === 'administrador';
 
-            if (isOwnProfile || isOwner || isTenantAdmin) {
+            // Super Admin do Sistema OU Admin do Tenant OU Dono OU O Próprio
+            if (isSuperAdmin || isOwnProfile || isOwner || isTenantAdmin) {
                 return user; 
             }
 
