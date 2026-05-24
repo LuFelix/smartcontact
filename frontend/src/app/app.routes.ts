@@ -17,6 +17,15 @@ export const routes: Routes = [
     { path: '', component: LandingPage }, // Rota raiz pública
     // Rota para Acesso Negado
     { path: 'unauthorized', component: UnauthorizedComponent },
+    
+    // Rota para Perfil Público (Mini-site via Tag)
+    {
+        path: 't/:uuid',
+        loadComponent: () => 
+        import('./features/users/pages/public-profile/public-profile.component')
+            .then(m => m.PublicProfileComponent),
+        title: 'SmartContact - Perfil Inteligente'
+    },
     {
         path: 'register',
         title: 'SmartContact - Criar Conta', // Título que aparece na aba do navegador
