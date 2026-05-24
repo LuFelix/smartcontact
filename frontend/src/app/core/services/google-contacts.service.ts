@@ -18,4 +18,8 @@ export class GoogleContactsService {
   syncContacts(accessToken: string): Observable<SyncResponse> {
     return this.http.post<SyncResponse>(`${this.API_URL}/sync`, { accessToken });
   }
+
+  saveLead(accessToken: string, lead: { name: string, email: string, phone?: string }): Observable<any> {
+    return this.http.post<any>(`${this.API_URL}/save-lead`, { accessToken, lead });
+  }
 }

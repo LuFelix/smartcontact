@@ -32,8 +32,8 @@ export const appConfig: ApplicationConfig = {
             provider: new GoogleLoginProvider(environment.googleClientId, {
               // Força o Google a perguntar qual conta usar, ótimo para desenvolvimento/testes
               prompt: 'select_account',
-              // Solicita acesso à API de contatos
-              scopes: 'https://www.googleapis.com/auth/contacts.readonly'
+              // Solicita acesso à API de contatos (Leitura e Escrita)
+              scopes: 'https://www.googleapis.com/auth/contacts'
             })
           }
         ],
