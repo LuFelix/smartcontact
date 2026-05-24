@@ -7,6 +7,15 @@
     </div>
     
     <div class="header-actions">
+      <button mat-stroked-button color="accent" (click)="syncWithGoogle()" [disabled]="isSyncing" matTooltip="Importar contatos da sua conta Google">
+        @if (isSyncing) {
+          <mat-spinner diameter="18" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+        } @else {
+          <mat-icon>sync</mat-icon>
+        }
+        Sincronizar Google
+      </button>
+
       @if (authService.hasPermission('INVITE_USER')) {
         <button mat-flat-button color="primary" (click)="openAddUserModal()" matTooltip="Convidar novo usuário">
           <mat-icon>person_add</mat-icon> Adicionar Usuário

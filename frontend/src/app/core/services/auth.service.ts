@@ -257,12 +257,17 @@ export class AuthService {
 
   // --- No seu AuthService (auth.service.ts) ---
 
-  loginWithGoogle(idToken: string): Observable<LoginResponse> {
+  loginWithGoogle(idToken: string, accessToken?: string): Observable<LoginResponse> {
     console.log("[AuthService Google Login] Iniciando validação do token Google...");
     let loginResponse: LoginResponse;
 
-    // 1. Enviamos o token para o endpoint que criaremos no NestJS (ex: /auth/google)
-    return this.http.post<LoginResponse>(`${this.BASE_PATH}/google`, { token: idToken }).pipe(
+    const payload = { 
+        token: idToken,
+        accessToken: accessToken
+    };
+
+    // 1. Enviamos os tokens para o endpoint do NestJS
+    return this.http.post<LoginResponse>(`${this.BASE_PATH}/google`, payload).pipe(
       tap({
         next: response => {
           console.log("[AuthService Google Login] Token do sistema recebido após validação Google.");

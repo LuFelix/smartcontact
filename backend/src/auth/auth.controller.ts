@@ -45,9 +45,11 @@ export class AuthController {
 
   @Public() // Garante que essa rota não exige JWT para ser acessada
   @Post('google')
+  @ApiOperation({ summary: 'Login com conta do Google' })
+  @ApiBody({ type: GoogleLoginDto })
   async googleLogin(@Body() data: GoogleLoginDto) {
-     return this.authService.loginWithGoogle(data.token);
-}
+     return this.authService.loginWithGoogle(data);
+  }
 
   @Post('login')
   @ApiOperation({ summary: 'Fazer login do usuário' })

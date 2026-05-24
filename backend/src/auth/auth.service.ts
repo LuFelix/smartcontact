@@ -134,8 +134,10 @@ export class AuthService {
     }
   }
 
-  async loginWithGoogle(token: string): Promise<{ access_token: string }> {
+  async loginWithGoogle(loginDto: GoogleLoginDto): Promise<{ access_token: string }> {
     try {
+      const { token, accessToken } = loginDto;
+      
       // Valida o token com o servidor do Google
       const ticket = await this.googleClient.verifyIdToken({
         idToken: token,
