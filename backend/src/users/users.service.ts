@@ -158,11 +158,12 @@ export class UsersService {
 
         // Função auxiliar para remover IDs nulos que quebram o cascade do TypeORM
         const cleanItems = (items: any[]) => items.map(item => {
+            const userIdString = id; 
             if (item.id === null || item.id === undefined) {
-                const { id, ...rest } = item;
-                return { ...rest, userId: id };
+                const { id: itemId, ...rest } = item;
+                return { ...rest, userId: userIdString, user: { id: userIdString } };
             }
-            return { ...item, userId: id };
+            return { ...item, userId: userIdString, user: { id: userIdString } };
         });
 
         if (phones) {

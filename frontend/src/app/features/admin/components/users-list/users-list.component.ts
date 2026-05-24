@@ -31,6 +31,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 export class UsersListComponent {
   @Input() dataSource = new MatTableDataSource<User>([]);
   @Input() isLoading = false;
+  @Output() viewDetails = new EventEmitter<string>();
   @Output() editUser = new EventEmitter<User>();
   @Output() deleteUser = new EventEmitter<User>();
   @Output() toggleFavoriteAction = new EventEmitter<User>();
