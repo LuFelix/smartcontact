@@ -25,31 +25,40 @@
           <img [src]="profileImage" alt="Avatar" class="avatar-img">
         </div>
         <h1 class="user-name">{{ tagData.user.name }}</h1>
-        <p class="job-title" *ngIf="tagData.user.profile?.jobTitle">
-            {{ tagData.user.profile?.jobTitle }} 
-            <span *ngIf="tagData.user.profile?.company"> &#64; {{ tagData.user.profile?.company }}</span>
-        </p>
+        
+        @if (tagData.user.profile?.jobTitle) {
+            <p class="job-title">
+                {{ tagData.user.profile?.jobTitle }} 
+                @if (tagData.user.profile?.company) {
+                    <span> &#64; {{ tagData.user.profile?.company }}</span>
+                }
+            </p>
+        }
       </header>
 
       <!-- BIO -->
-      <section class="bio-section" *ngIf="tagData.user.profile?.bio">
-          <p class="bio-text">{{ tagData.user.profile?.bio }}</p>
-      </section>
+      @if (tagData.user.profile?.bio) {
+          <section class="bio-section">
+              <p class="bio-text">{{ tagData.user.profile?.bio }}</p>
+          </section>
+      }
 
       <!-- SOCIAL LINKS (Ação Principal) -->
-      <section class="links-section" *ngIf="tagData.user.links && tagData.user.links.length > 0">
-          <div class="section-divider">
-              <span>Redes e Links</span>
-          </div>
-          <div class="links-grid">
-              @for (link of tagData.user.links; track link.id) {
-                <button mat-flat-button class="link-btn" (click)="openLink(link.url)">
-                    <mat-icon>link</mat-icon>
-                    {{ link.title }}
-                </button>
-              }
-          </div>
-      </section>
+      @if (tagData.user.links && tagData.user.links.length > 0) {
+          <section class="links-section">
+              <div class="section-divider">
+                  <span>Redes e Links</span>
+              </div>
+              <div class="links-grid">
+                  @for (link of tagData.user.links; track link.id) {
+                    <button mat-flat-button class="link-btn" (click)="openLink(link.url)">
+                        <mat-icon>link</mat-icon>
+                        {{ link.title }}
+                    </button>
+                  }
+              </div>
+          </section>
+      }
 
       <!-- CONTACT INFO -->
       <section class="contact-section">
@@ -80,7 +89,9 @@
                     </mat-icon>
                     <div matListItemTitle>{{ phone.isWhatsapp ? 'WhatsApp' : 'Telefone' }}</div>
                     <div matListItemLine>{{ phone.number }}</div>
-                    <mat-icon matListIcon *ngIf="phone.isWhatsapp" class="wa-indicator">open_in_new</mat-icon>
+                    @if (phone.isWhatsapp) {
+                        <mat-icon matListIcon class="wa-indicator">open_in_new</mat-icon>
+                    }
                 </mat-list-item>
               }
           </mat-list>
