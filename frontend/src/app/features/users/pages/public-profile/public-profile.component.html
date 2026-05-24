@@ -99,9 +99,37 @@
 
       <!-- ACTION FOOTER -->
       <footer class="profile-footer">
-          <button mat-raised-button color="primary" class="save-contact-btn" (click)="saveVCard()">
-              <mat-icon>person_add</mat-icon> Salvar Contato
-          </button>
+          <div class="footer-actions">
+              <button mat-raised-button color="primary" class="save-contact-btn" (click)="saveVCard()">
+                  <mat-icon>person_add</mat-icon> Salvar Contato
+              </button>
+              <button mat-stroked-button color="primary" class="connect-btn" (click)="toggleLeadForm()">
+                  <mat-icon>handshake</mat-icon> Conectar
+              </button>
+          </div>
+
+          @if (showLeadForm) {
+            <div class="lead-form-container fade-in">
+                <h3>Deixe seu contato</h3>
+                <form [formGroup]="leadForm" (ngSubmit)="submitLead()">
+                    <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>Nome</mat-label>
+                        <input matInput formControlName="name" placeholder="Seu nome">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>E-mail</mat-label>
+                        <input matInput formControlName="email" placeholder="Seu e-mail">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>Telefone</mat-label>
+                        <input matInput formControlName="phone" placeholder="Seu telefone">
+                    </mat-form-field>
+                    <button mat-flat-button color="primary" type="submit" [disabled]="leadForm.invalid || isSubmittingLead">
+                        {{ isSubmittingLead ? 'Enviando...' : 'Enviar meu contato' }}
+                    </button>
+                </form>
+            </div>
+          }
           
           <p class="branding">Powered by <span>SmartContact</span></p>
       </footer>

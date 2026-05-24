@@ -165,13 +165,48 @@
     align-items: center;
     gap: 32px;
 
-    .save-contact-btn {
+    .footer-actions {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .save-contact-btn, .connect-btn {
         width: 100%;
         height: 60px;
         border-radius: 30px;
         font-size: 1.1rem;
         font-weight: 700;
+    }
+
+    .save-contact-btn {
         box-shadow: var(--mat-sys-level3);
+    }
+
+    .lead-form-container {
+        width: 100%;
+        background: var(--mat-sys-surface-container-high);
+        padding: 24px;
+        border-radius: 24px;
+        text-align: left;
+        box-sizing: border-box;
+    
+        h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--mat-sys-primary);
+        }
+    
+        .w-full { width: 100%; }
+        button { 
+            width: 100%; 
+            height: 50px;
+            border-radius: 25px;
+            margin-top: 8px;
+        }
     }
 
     .branding {

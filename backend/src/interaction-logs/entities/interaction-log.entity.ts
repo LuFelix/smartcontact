@@ -9,6 +9,11 @@ import {
   Index,
 } from 'typeorm';
 
+export enum InteractionType {
+  VISIT = 'VISIT',
+  LEAD = 'LEAD',
+}
+
 @Entity('interaction_logs')
 export class InteractionLog {
   @PrimaryGeneratedColumn('uuid')
@@ -20,6 +25,23 @@ export class InteractionLog {
 
   @Column({ type: 'uuid', name: 'tag_id' })
   tagId!: string;
+
+  @Column({
+      type: 'enum',
+      enum: InteractionType,
+      default: InteractionType.VISIT,
+      name: 'interaction_type'
+  })
+  interactionType!: InteractionType;
+
+  @Column({ type: 'varchar', name: 'lead_name', nullable: true })
+  leadName!: string | null;
+
+  @Column({ type: 'varchar', name: 'lead_email', nullable: true })
+  leadEmail!: string | null;
+
+  @Column({ type: 'varchar', name: 'lead_phone', nullable: true })
+  leadPhone!: string | null;
 
   @Column({ type: 'varchar', name: 'ip_address', nullable: true })
   ipAddress!: string | null;

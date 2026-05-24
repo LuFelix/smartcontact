@@ -142,3 +142,12 @@ export interface FullUserResponse {
   tags?: Tag[];
   profilePictureUrl?: string; 
 }
+
+export interface Lead {
+  id: string;
+  leadName: string;
+  leadEmail: string;
+  leadPhone?: string;
+  accessedAt: string;
+  tagId: string;
+}

@@ -70,6 +70,12 @@ export const routes: Routes = [
                 data: { roles: ['administrador'] },
                 title: 'SmartContact - Gestão de Roles'
             },
+            {
+                path: 'leads',
+                loadComponent: () => import('./features/users/pages/leads-page/leads-page').then(m => m.LeadsPage),
+                canActivate: [authGuard],
+                title: 'SmartContact - Meus Leads'
+            },
             
             //outras rotas filhas aqui
         ]

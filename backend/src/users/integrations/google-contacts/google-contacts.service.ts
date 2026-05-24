@@ -5,10 +5,14 @@ import { CreateUserDto } from '../../dto/user.dto';
 @Injectable()
 export class GoogleContactsService {
   private readonly logger = new Logger(GoogleContactsService.name);
-  private readonly PEOPLE_API_URL = 'https://people.googleapis.com/v1/people/me/connections';
+  private readonly PEOPLE_API_LIST_URL = 'https://people.googleapis.com/v1/people/me/connections';
+  private readonly PEOPLE_API_CREATE_URL = 'https://people.googleapis.com/v1/people:createContact';
 
   constructor(private readonly usersService: UsersService) {}
 
+  /**
+   * Importa contatos em massa do Google para o banco local (Multi-Tenant)
+   */
   async importContacts(accessToken: string, currentUser: any): Promise<{ imported: number, total: number }> {
     if (!accessToken) {
       throw new UnauthorizedException('Access Token do Google não fornecido.');
@@ -20,7 +24,7 @@ export class GoogleContactsService {
 
     try {
       do {
-        const url = new URL(this.PEOPLE_API_URL);
+        const url = new URL(this.PEOPLE_API_LIST_URL);
         url.searchParams.append('personFields', 'names,emailAddresses,phoneNumbers,organizations');
         url.searchParams.append('pageSize', '100');
         if (nextPageToken) {
@@ -36,7 +40,7 @@ export class GoogleContactsService {
 
         if (!response.ok) {
             const errorBody = await response.json().catch(() => ({}));
-            this.logger.error(`Erro na People API: ${response.status} - ${JSON.stringify(errorBody)}`);
+            this.logger.error(`Erro na People API (List): ${response.status} - ${JSON.stringify(errorBody)}`);
             if (response.status === 401) {
                 throw new UnauthorizedException('Token do Google expirado ou inválido.');
             }
@@ -85,6 +89,52 @@ export class GoogleContactsService {
     } catch (error: any) {
       if (error instanceof UnauthorizedException) throw error;
       this.logger.error(`Erro ao consumir People API: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Salva um contato individual diretamente na conta Google do usuário
+   */
+  async saveLeadToGoogle(accessToken: string, leadData: { name: string, email: string, phone?: string }): Promise<any> {
+    if (!accessToken) {
+      throw new UnauthorizedException('Access Token do Google não fornecido.');
+    }
+
+    this.logger.log(`Salvando lead ${leadData.email} no Google Contacts...`);
+
+    const payload = {
+      names: [{ givenName: leadData.name }],
+      emailAddresses: [{ value: leadData.email }],
+      phoneNumbers: leadData.phone ? [{ value: leadData.phone }] : []
+    };
+
+    try {
+      const response = await fetch(this.PEOPLE_API_CREATE_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        this.logger.error(`Erro na People API (Create): ${response.status} - ${JSON.stringify(errorBody)}`);
+        if (response.status === 401) {
+          throw new UnauthorizedException('Token do Google expirado ou inválido.');
+        }
+        throw new Error(`Google API returned ${response.status}`);
+      }
+
+      const result = await response.json();
+      this.logger.log(`Lead salvo com sucesso no Google: ${result.resourceName}`);
+      return result;
+
+    } catch (error: any) {
+      if (error instanceof UnauthorizedException) throw error;
+      this.logger.error(`Erro ao salvar contato no Google: ${error.message}`);
       throw error;
     }
   }

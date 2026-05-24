@@ -24,4 +24,26 @@ export class GoogleContactsController {
   async sync(@Body('accessToken') accessToken: string, @GetUser() currentUser: any) {
     return this.googleContactsService.importContacts(accessToken, currentUser);
   }
+
+  @Post('save-lead')
+  @ApiOperation({ summary: 'Salva um lead capturado direto no Google Contatos do usuário' })
+  @ApiBody({
+      schema: {
+          type: 'object',
+          properties: {
+              accessToken: { type: 'string' },
+              lead: {
+                  type: 'object',
+                  properties: {
+                      name: { type: 'string' },
+                      email: { type: 'string' },
+                      phone: { type: 'string' }
+                  }
+              }
+          }
+      }
+  })
+  async saveLead(@Body() data: { accessToken: string, lead: any }) {
+    return this.googleContactsService.saveLeadToGoogle(data.accessToken, data.lead);
+  }
 }
