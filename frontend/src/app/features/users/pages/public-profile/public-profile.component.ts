@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, RouterModule, RouterLink } from '@angular/router';
 import { TagService, TagResolutionResponse } from '../../../../core/services/tag.service';
 import { finalize } from 'rxjs';
 import { RedirectMode } from '../../../shared/models/users.models';
@@ -20,6 +20,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   imports: [
     CommonModule,
     RouterModule,
+    RouterLink,
     MatCardModule,
     MatButtonModule,
     MatIconModule,

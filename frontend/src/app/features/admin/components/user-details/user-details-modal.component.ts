@@ -3,7 +3,7 @@
 import { Component, Inject, OnInit, inject, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormControl, FormArray} from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
-import { RouterModule } from '@angular/router';
+import { RouterModule, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -38,6 +38,9 @@ export interface UserModalData {
         ReactiveFormsModule,
         MatDialogModule,
         RouterModule,
+        RouterLink,
+        MatButtonModule,
+
         MatButtonModule,
         MatInputModule,
         MatFormFieldModule,

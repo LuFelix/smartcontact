@@ -37,6 +37,7 @@ import { CepService } from '../../../../core/utils/cep.service';
     HttpClientModule,
     ReactiveFormsModule,
     RouterModule,
+    RouterLink,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,

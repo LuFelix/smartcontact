@@ -152,7 +152,7 @@ export class UsersService {
         }
 
         // TypeORM cascade handles update if items have IDs, or creates new ones if they don't.
-        const { roleId, phones, addresses, secondaryEmails, links, ...userUpdateData } = updateUserDto;
+        const { roleId, phones, addresses, secondaryEmails, links, tags, ...userUpdateData } = updateUserDto;
         
         this.usersRepository.merge(user, userUpdateData);
 
@@ -160,22 +160,28 @@ export class UsersService {
         const cleanItems = (items: any[]) => items.map(item => {
             if (item.id === null || item.id === undefined) {
                 const { id, ...rest } = item;
-                return rest;
+                return { ...rest, userId: id };
             }
-            return item;
+            return { ...item, userId: id };
         });
 
         if (phones) {
-            user.phones = cleanItems(phones).map(p => ({ ...p, user: { id } })) as any;
+            user.phones = cleanItems(phones) as any;
         }
         if (addresses) {
-            user.addresses = cleanItems(addresses).map(a => ({ ...a, user: { id } })) as any;
+            user.addresses = cleanItems(addresses) as any;
         }
         if (secondaryEmails) {
-            user.secondaryEmails = cleanItems(secondaryEmails).map(e => ({ ...e, user: { id } })) as any;
+            user.secondaryEmails = cleanItems(secondaryEmails) as any;
         }
         if (links) {
-            user.links = cleanItems(links).map(l => ({ ...l, user: { id } })) as any;
+            user.links = cleanItems(links) as any;
+        }
+
+        if (tags && tags.length > 0) {
+            if (user.tags && user.tags.length > 0) {
+                Object.assign(user.tags[0], tags[0]);
+            }
         }
 
         return this.usersRepository.save(user);
