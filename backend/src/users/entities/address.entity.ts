@@ -49,6 +49,10 @@ export class Address {
   @Index()
   tenantId!: string | null;
 
+  @Column({ type: 'uuid', name: 'owner_id', nullable: true })
+  @Index()
+  ownerId!: string | null;
+
   @ManyToOne(() => User, (user) => user.addresses, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: User;

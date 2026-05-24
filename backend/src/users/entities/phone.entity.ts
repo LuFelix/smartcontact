@@ -19,6 +19,10 @@ export class Phone {
   @Index()
   tenantId!: string | null;
 
+  @Column({ type: 'uuid', name: 'owner_id', nullable: true })
+  @Index()
+  ownerId!: string | null;
+
   @ManyToOne(() => User, (user) => user.phones, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: User;
