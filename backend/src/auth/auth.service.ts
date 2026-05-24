@@ -6,6 +6,7 @@ import { UsersService } from 'src/users/users.service';
 import { LoginDto, MinimalRegisterDto } from './dto/auth.dto';
 import { MailerService } from '@nestjs-modules/mailer';
 import { OAuth2Client } from 'google-auth-library';
+import { v4 as uuidv4 } from 'uuid';
 
 
 @Injectable()
@@ -34,10 +35,15 @@ export class AuthService {
         name: registerDto.name,
         email: registerDto.email,
         password: registerDto.password,
-        
     };
 
-    const user = await this.usersService.create(createUserDto);
+    // Novo usuário ganha um tenant próprio (empresa de um homem só)
+    const newTenantContext = {
+        tenantId: uuidv4(),
+        sub: null // Indica que é um registro público, o UsersService cuidará do owner
+    };
+
+    const user = await this.usersService.create(createUserDto, newTenantContext);
 
     await this.usersService.setVerificationData(user.id, code, expires);
 
@@ -110,7 +116,9 @@ export class AuthService {
           name: user.name, 
           email: user.email, 
           role: user.role?.name || 'usuario',
-          tenantId: user.tenantId 
+          ownerId: user.ownerId,
+          tenantId: user.tenantId,
+          isSuperAdmin: user.isSuperAdmin
       };
       
       const token = await this.jwtService.signAsync(payload);
@@ -144,11 +152,16 @@ export class AuthService {
 
       // Se o usuário não existe, faz o "Silent Registration"
       if (!user) {
+        const newUserContext = {
+            tenantId: uuidv4(),
+            sub: null
+        };
+        
         user = await this.usersService.create({
           email: payloadGoogle.email,
           name: payloadGoogle.name || 'Usuário Google',
           password: Math.random().toString(36).slice(-10), // Senha aleatória "dummy"
-        });
+        }, newUserContext);
 
         // Como o Google já validou o e-mail, marcamos como verificado direto
         await this.usersService.markEmailAsVerified(user.id);
@@ -165,7 +178,9 @@ export class AuthService {
         name: user.name, 
         email: user.email, 
         role: user.role?.name || 'USER', // Fallback caso a role demore a carregar
-        tenantId: user.tenantId
+        ownerId: user.ownerId,
+        tenantId: user.tenantId,
+        isSuperAdmin: user.isSuperAdmin
       };
 
       return {

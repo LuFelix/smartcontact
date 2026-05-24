@@ -28,6 +28,10 @@ export class Profile {
   @Index()
   tenantId!: string;
 
+  @Column({ type: 'uuid', name: 'owner_id' })
+  @Index()
+  ownerId!: string;
+
   @OneToOne(() => User)
   @JoinColumn({ name: 'user_id' })
   user!: User;
