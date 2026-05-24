@@ -126,7 +126,7 @@ export class UsersService {
    async update(id: string, updateUserDto: UpdateUserDto): Promise<User> { 
         const user = await this.usersRepository.findOne({
             where: { id },
-            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links'],
+            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags'],
         });
 
         if (!user) {
@@ -156,14 +156,11 @@ export class UsersService {
         
         this.usersRepository.merge(user, userUpdateData);
 
-        // Função auxiliar para remover IDs nulos que quebram o cascade do TypeORM
+        // Função auxiliar para remover IDs nulos e estabelecer vínculo
         const cleanItems = (items: any[]) => items.map(item => {
-            const userIdString = id; 
-            if (item.id === null || item.id === undefined) {
-                const { id: itemId, ...rest } = item;
-                return { ...rest, userId: userIdString, user: { id: userIdString } };
-            }
-            return { ...item, userId: userIdString, user: { id: userIdString } };
+            const { id: itemId, ...rest } = item;
+            const newItem = (itemId === null || itemId === undefined) ? rest : item;
+            return { ...newItem, user: { id } };
         });
 
         if (phones) {

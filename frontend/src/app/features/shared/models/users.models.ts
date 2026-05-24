@@ -88,6 +88,11 @@ export interface User {
   cpf?: string;
   isActive?: boolean;
   role?: { id: string, name: string };
+  profile?: {
+    bio?: string;
+    jobTitle?: string;
+    company?: string;
+  };
   phones?: Phone[];
   addresses?: Address[];
   secondaryEmails?: SecondaryEmail[];
@@ -125,6 +130,11 @@ export interface FullUserResponse {
   cpf?: string; 
   isVerified: boolean;
   role: { id: string, name: string };
+  profile?: {
+    bio?: string;
+    jobTitle?: string;
+    company?: string;
+  };
   phones?: Phone[];
   addresses?: Address[];
   secondaryEmails?: SecondaryEmail[];

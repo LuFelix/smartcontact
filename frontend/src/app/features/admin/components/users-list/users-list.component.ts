@@ -31,6 +31,8 @@ import { AuthService } from '../../../../core/services/auth.service';
 export class UsersListComponent {
   @Input() dataSource = new MatTableDataSource<User>([]);
   @Input() isLoading = false;
+  @Input() displayedColumns: string[] = []; // Adicionado para compatibilidade com o componente pai
+  
   @Output() viewDetails = new EventEmitter<string>();
   @Output() editUser = new EventEmitter<User>();
   @Output() deleteUser = new EventEmitter<User>();

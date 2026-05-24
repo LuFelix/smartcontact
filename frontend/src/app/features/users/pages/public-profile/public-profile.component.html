@@ -27,7 +27,7 @@
         <h1 class="user-name">{{ tagData.user.name }}</h1>
         <p class="job-title" *ngIf="tagData.user.profile?.jobTitle">
             {{ tagData.user.profile?.jobTitle }} 
-            <span *ngIf="tagData.user.profile?.company"> &#64; {{ tagData.user.profile?.company }}</span>
+            <span *ngIf="tagData.user.profile?.company"> @@ {{ tagData.user.profile?.company }}</span>
         </p>
       </header>
 
