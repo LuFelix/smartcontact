@@ -369,7 +369,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     if (this.profileForm.invalid) return;
     this.isLoading = true;
 
-    const formData = this.profileForm.getRawValue();
+    const { tagSettings, ...formData } = this.profileForm.getRawValue();
     const payload = {
         name: `${formData.firstName} ${formData.lastName}`,
         email: formData.email, // Novo email principal (se trocado)
@@ -401,10 +401,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
             title: l.title,
             url: l.url
         })),
-        tags: formData.tagSettings.id ? [{
-            id: formData.tagSettings.id,
-            redirectMode: formData.tagSettings.redirectMode,
-            customUrl: formData.tagSettings.customUrl
+        tags: tagSettings.id ? [{
+            id: tagSettings.id,
+            redirectMode: tagSettings.redirectMode,
+            customUrl: tagSettings.customUrl
         }] : []
     };
 

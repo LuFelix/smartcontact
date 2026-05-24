@@ -346,7 +346,7 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
         }
 
         this.isSaving = true;
-        const rawData = this.userForm.getRawValue();
+        const { tagSettings, ...rawData } = this.userForm.getRawValue();
 
         const payload = {
             ...rawData,
@@ -377,10 +377,10 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
                 title: l.title,
                 url: l.url
             })),
-            tags: rawData.tagSettings.id ? [{
-                id: rawData.tagSettings.id,
-                redirectMode: rawData.tagSettings.redirectMode,
-                customUrl: rawData.tagSettings.customUrl
+            tags: tagSettings.id ? [{
+                id: tagSettings.id,
+                redirectMode: tagSettings.redirectMode,
+                customUrl: tagSettings.customUrl
             }] : []
         };
 
