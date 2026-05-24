@@ -50,7 +50,9 @@ export class RolesPageComponent implements OnInit {
     this.rolesService.findAll()
       .pipe(finalize(() => this.isLoading = false))
       .subscribe({
-        next: (data) => this.roles = data,
+        next: (response) => {
+            this.roles = response.data || [];
+        },
         error: (err) => {
           console.error('Erro ao carregar roles:', err);
           this.snackBar.open('Não foi possível carregar as funções.', 'Fechar', { duration: 3000 });

@@ -14,6 +14,14 @@ export interface Role {
     isActive?: boolean; 
 }
 
+export interface RolesApiResponse {
+  data: Role[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 // DTOs para Criação e Edição (Data Transfer Objects)
 export interface CreateRoleDTO {
     name: string;
