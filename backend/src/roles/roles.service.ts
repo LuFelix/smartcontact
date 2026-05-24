@@ -11,6 +11,8 @@ import { UpdateRoleDto } from './dto/update-role.dto';
  */
 @Injectable()
 export class RolesService {
+    private readonly PROTECTED_ROLES = ['administrador', 'usuario'];
+
     constructor(
         @InjectRepository(Role)
         private readonly rolesRepository: Repository<Role>,
@@ -131,6 +133,13 @@ export class RolesService {
     async update(id: string, updateRoleDto: UpdateRoleDto): Promise<Role> {
         const existingRole = await this.findOne(id);
 
+        // Proteção contra renomeação de roles do sistema
+        if (this.PROTECTED_ROLES.includes(existingRole.name)) {
+            if (updateRoleDto.name && updateRoleDto.name.trim().toLowerCase().replace(/\s+/g, '_') !== existingRole.name) {
+                throw new BadRequestException('As funções estruturais do sistema não podem ser renomeadas.');
+            }
+        }
+
         // Verificar se o novo nome já existe (excluindo a role atual)
         if (updateRoleDto.name) {
             const nameNormalized = updateRoleDto.name.trim().toLowerCase().replace(/\s+/g, '_');
@@ -175,8 +184,8 @@ export class RolesService {
         }
 
         // Proteção de roles do sistema
-        if (role.name === 'administrador' || role.name === 'usuario') {
-            throw new BadRequestException('As funções protegidas do sistema não podem ser excluídas.');
+        if (this.PROTECTED_ROLES.includes(role.name)) {
+            throw new BadRequestException('As funções estruturais do sistema não podem ser excluídas.');
         }
 
         // 1. Localizar a role de fallback ("usuario")
