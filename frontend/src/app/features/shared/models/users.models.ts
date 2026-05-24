@@ -82,7 +82,7 @@ export interface Address {
 
 // --- Interface Básica do Usuário (Listagem) ---
 export interface User {
-  id: string; // Mudado para string (UUID)
+  id: string; 
   name: string;
   email: string;
   cpf?: string;

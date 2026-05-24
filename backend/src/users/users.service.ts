@@ -16,13 +16,13 @@ export class UsersService {
         private readonly usersRepository: Repository<User>,
 
         @InjectRepository(Role)
-        private readonly rolesRepository: Repository<Role>,
+        private readonly rolesRepository: Repository<Repository<Role>>,
 
         private readonly rolesService: RolesService,
     ) { }
 
     async create(createUserDto: CreateUserDto): Promise<User> {
-        let { email, cpf, password, roleId, phones, addresses, secondaryEmails, links } = createUserDto; 
+        let { email, cpf, password, roleId, phones, addresses, secondaryEmails, links } = createUserDto as any; 
 
         const emailExists = await this.usersRepository.findOne({ where: { email } });
         if (emailExists) {
@@ -151,13 +151,17 @@ export class UsersService {
             user.role = role;
         }
 
+        // TypeORM cascade handles update if items have IDs, or creates new ones if they don't.
         const { roleId, phones, addresses, secondaryEmails, links, tags, ...userUpdateData } = updateUserDto;
         
         this.usersRepository.merge(user, userUpdateData);
 
+        // Função auxiliar para remover IDs nulos e estabelecer vínculo
         const cleanItems = (items: any[]) => items.map(item => {
             const { id: itemId, ...rest } = item;
+            // Se itemId for nulo/undefined, estamos criando. Senão, estamos atualizando.
             const itemData = (itemId === null || itemId === undefined) ? rest : item;
+            // Retorna um objeto que o TypeORM reconhece como vinculado
             return { ...itemData, user: { id } };
         });
 

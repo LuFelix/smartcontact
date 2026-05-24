@@ -4,7 +4,7 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
-import { Router, RouterModule, RouterLink } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { Subscription, EMPTY, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError, filter, finalize } from 'rxjs/operators';
 
@@ -37,7 +37,6 @@ import { CepService } from '../../../../core/utils/cep.service';
     HttpClientModule,
     ReactiveFormsModule,
     RouterModule,
-    RouterLink,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
