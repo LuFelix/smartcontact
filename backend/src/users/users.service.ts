@@ -79,7 +79,7 @@ export class UsersService {
     async findByCpf(cpf: string): Promise<User | null> {
         return this.usersRepository.findOne({ 
             where: { cpf }, 
-            relations: ['role', 'phones', 'addresses'] 
+            relations: ['role', 'phones', 'addresses', 'tags'] 
         });
     }
 
@@ -151,16 +151,14 @@ export class UsersService {
             user.role = role;
         }
 
-        // TypeORM cascade handles update if items have IDs, or creates new ones if they don't.
         const { roleId, phones, addresses, secondaryEmails, links, tags, ...userUpdateData } = updateUserDto;
         
         this.usersRepository.merge(user, userUpdateData);
 
-        // Função auxiliar para remover IDs nulos e estabelecer vínculo
         const cleanItems = (items: any[]) => items.map(item => {
             const { id: itemId, ...rest } = item;
-            const newItem = (itemId === null || itemId === undefined) ? rest : item;
-            return { ...newItem, user: { id } };
+            const itemData = (itemId === null || itemId === undefined) ? rest : item;
+            return { ...itemData, user: { id } };
         });
 
         if (phones) {
@@ -203,7 +201,7 @@ export class UsersService {
     async findByEmail(email: string): Promise<User | null> {
         return this.usersRepository.findOne({ 
             where: { email }, 
-            relations: ['role', 'phones', 'addresses'] 
+            relations: ['role', 'phones', 'addresses', 'tags'] 
         });
     }
 

@@ -40,8 +40,6 @@ export interface UserModalData {
         RouterModule,
         RouterLink,
         MatButtonModule,
-
-        MatButtonModule,
         MatInputModule,
         MatFormFieldModule,
         MatIconModule,

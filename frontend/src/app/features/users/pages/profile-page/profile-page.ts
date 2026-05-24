@@ -4,7 +4,7 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, RouterLink } from '@angular/router';
 import { Subscription, EMPTY, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError, filter, finalize } from 'rxjs/operators';
 
@@ -311,7 +311,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         });
 
         if (userProfile.tags && userProfile.tags.length > 0) {
-            this.activeTag = userProfile.tags.find(t => t.isActive) || userProfile.tags[0];
+            this.activeTag = userProfile.tags.find((t: Tag) => t.isActive) || userProfile.tags[0];
             this.profileForm.get('tagSettings')?.patchValue({
                 id: this.activeTag.id,
                 redirectMode: this.activeTag.redirectMode,
