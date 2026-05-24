@@ -92,10 +92,12 @@ export class UsersService {
         if (tenantId) where.tenantId = tenantId;
 
         // LGPD / Privacy by Design: Bloqueio de contatos sensíveis para Super Admin
-        // Se o usuário for 'administrador' (Super Admin), removemos as relações de contato.
+        // EXCETO se ele estiver visualizando o PRÓPRIO perfil.
         const isSuperAdmin = currentUser?.role === 'administrador';
-        const relations = isSuperAdmin 
-            ? ['role', 'tags'] // Super Admin vê apenas o básico e tags
+        const isOwnProfile = currentUser?.sub === userId;
+
+        const relations = (isSuperAdmin && !isOwnProfile)
+            ? ['role', 'tags'] // Bloqueio sumário para o Admin vendo terceiros
             : ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags'];
 
         return this.usersRepository.findOne({ 
