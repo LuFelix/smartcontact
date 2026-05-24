@@ -21,9 +21,10 @@ export class UsersService {
         private readonly rolesService: RolesService,
     ) { }
 
-    async create(createUserDto: CreateUserDto, currentUser: any): Promise<User> {
+    async create(createUserDto: CreateUserDto, currentUser?: any): Promise<User> {
         let { email, cpf, password, roleId, phones, addresses, secondaryEmails, links } = createUserDto as any; 
-        const tenantId = currentUser.tenantId;
+        const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000000';
+        const tenantId = currentUser?.tenantId || DEFAULT_TENANT_ID;
 
         const emailExists = await this.usersRepository.findOne({ where: { email } });
         if (emailExists) {
@@ -232,8 +233,12 @@ export class UsersService {
         });
     }
 
-    async remove(id: string): Promise<{ message: string }> { 
-        const user = await this.usersRepository.findOneBy({ id });
+    async remove(id: string, currentUser?: any): Promise<{ message: string }> { 
+        const tenantId = currentUser?.tenantId;
+        const where: any = { id };
+        if (tenantId) where.tenantId = tenantId;
+
+        const user = await this.usersRepository.findOne({ where });
         
         if (!user) {
             throw new NotFoundException(`Usuário com ID ${id} não encontrado.`);
