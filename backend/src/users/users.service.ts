@@ -102,12 +102,13 @@ export class UsersService {
              throw new BadRequestException('Acesso negado: Este usuário pertence a outra organização.');
         }
 
-        // Regra Owner-Data: Ver contatos apenas se for o dono ou o próprio
+        // Regra Owner-Data: Ver contatos apenas se for o dono, o próprio ou um Admin do Tenant
         const isOwner = baseUser.ownerId === currentUser?.sub;
         const isOwnProfile = baseUser.id === currentUser?.sub;
+        const isTenantAdmin = currentUser?.role === 'administrador';
 
-        // LGPD: Só liberamos as relações de contato para o proprietário ou para o próprio
-        const showContacts = isOwnProfile || isOwner;
+        // LGPD: Só liberamos as relações de contato se houver permissão
+        const showContacts = isOwnProfile || isOwner || isTenantAdmin;
 
         const relations = showContacts
             ? ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags']
@@ -142,12 +143,13 @@ export class UsersService {
         const data = users.map(user => {
             const isOwner = user.ownerId === currentUser?.sub;
             const isOwnProfile = user.id === currentUser?.sub;
+            const isTenantAdmin = currentUser?.role === 'administrador';
 
-            if (isOwnProfile || isOwner) {
+            if (isOwnProfile || isOwner || isTenantAdmin) {
                 return user; 
             }
 
-            // LGPD: Strip sensitive data for users we don't own
+            // LGPD: Strip sensitive data for users we don't own/manage
             const { phones, addresses, secondaryEmails, links, ...basicInfo } = user;
             return basicInfo as User;
         });
@@ -170,11 +172,12 @@ export class UsersService {
              throw new BadRequestException('Acesso negado: Este usuário pertence a outra organização.');
         }
 
-        // Regra Owner-Data: Apenas o dono ou o próprio pode editar
+        // Regra Owner-Data: Apenas o dono, o próprio ou um Admin do Tenant pode editar
         const isOwner = user.ownerId === currentUser?.sub;
         const isOwnProfile = user.id === currentUser?.sub;
+        const isTenantAdmin = currentUser?.role === 'administrador';
 
-        if (!isOwner && !isOwnProfile) {
+        if (!isOwner && !isOwnProfile && !isTenantAdmin) {
              throw new BadRequestException('Você não tem permissão para editar este usuário.');
         }
 
