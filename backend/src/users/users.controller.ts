@@ -21,8 +21,7 @@ export class UsersController {
 // =======================================================
 
     @Post()
-    @Roles('administrador')
-    @ApiOperation({ summary: 'Criar um novo usuário (Apenas Admin)' })
+    @ApiOperation({ summary: 'Criar um novo usuário/contato' })
     @ApiBody({ type: CreateUserDto })
     @ApiResponse({ status: 201, description: 'Usuário criado com sucesso' })
     async create(@Body() createUserDto: CreateUserDto, @GetUser() currentUser: any) {
@@ -30,8 +29,7 @@ export class UsersController {
     }
 
     @Get()
-    @Roles('administrador') 
-    @ApiOperation({ summary: 'Listar todos os usuários (Apenas Admin)' })
+    @ApiOperation({ summary: 'Listar todos os usuários do seu tenant' })
     async listAll(
         @Query('page') page: number = 1,
         @Query('limit') limit: number = 10,
