@@ -26,9 +26,9 @@ export interface RolesApiResponse {
 export interface CreateRoleDTO {
     name: string;
     description: string;
-    permissionIds: number[]; // IDs das permissões a serem associadas
+    permissionIds?: number[]; // Tornando opcional para evitar erros de compilação até implementação do RBAC completo
 }
 
 export interface UpdateRoleDTO extends CreateRoleDTO {
-    isActive: boolean;
+    isActive?: boolean;
 }
