@@ -50,6 +50,10 @@ export class User {
     @Column({ type: 'timestamp', nullable: true })
     verificationExpires!: Date | null;
 
+    @Column({ type: 'uuid', name: 'tenant_id', nullable: true })
+    @Index()
+    tenantId!: string | null;
+
     @OneToOne(() => Profile, (profile) => profile.user)
     profile?: Profile;
 

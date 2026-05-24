@@ -14,6 +14,10 @@ export class UserEmail {
   @Column({ default: false })
   isVerified!: boolean;
 
+  @Column({ type: 'uuid', name: 'tenant_id', nullable: true })
+  @Index()
+  tenantId!: string | null;
+
   @ManyToOne(() => User, (user) => user.secondaryEmails, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: User;

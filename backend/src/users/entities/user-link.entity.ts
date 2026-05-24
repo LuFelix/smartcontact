@@ -13,6 +13,9 @@ export class UserLink {
   @Column({ length: 255, nullable: false })
   url!: string;
 
+  @Column({ type: 'uuid', name: 'tenant_id', nullable: true })
+  tenantId!: string | null;
+
   @ManyToOne(() => User, (user) => user.links, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: User;

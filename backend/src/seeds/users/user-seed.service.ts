@@ -30,6 +30,8 @@ export class UserSeedService {
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000000';
+
     for (const [index, userData] of usersData.entries()) {
       const emailBase = userData.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-');
       const email = `${emailBase}@smartcontact.tiweb.app.br`;
@@ -49,8 +51,9 @@ export class UserSeedService {
         isVerified: true,
         isActive: true,
         role: defaultRole,
+        tenantId: DEFAULT_TENANT_ID,
         phones: [
-            { number: randomPhone, isWhatsapp: Math.random() > 0.3, isMain: true }
+            { number: randomPhone, isWhatsapp: Math.random() > 0.3, isMain: true, tenantId: DEFAULT_TENANT_ID }
         ],
         addresses: [
             {
@@ -61,7 +64,8 @@ export class UserSeedService {
                 state: 'AL',
                 zipCode: randomCep,
                 tag: 'HOME' as any,
-                isMain: true
+                isMain: true,
+                tenantId: DEFAULT_TENANT_ID
             }
         ]
       };

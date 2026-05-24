@@ -21,8 +21,9 @@ export class UsersService {
         private readonly rolesService: RolesService,
     ) { }
 
-    async create(createUserDto: CreateUserDto): Promise<User> {
+    async create(createUserDto: CreateUserDto, currentUser: any): Promise<User> {
         let { email, cpf, password, roleId, phones, addresses, secondaryEmails, links } = createUserDto as any; 
+        const tenantId = currentUser.tenantId;
 
         const emailExists = await this.usersRepository.findOne({ where: { email } });
         if (emailExists) {
@@ -54,10 +55,10 @@ export class UsersService {
             throw new BadRequestException('Role especificada não existe');
         }
 
-        // Limpeza de IDs nulos
+        // Limpeza de IDs nulos e atribuição de tenantId
         const cleanItems = (items: any[] | undefined) => items ? items.map(item => {
             const { id, ...restItem } = item;
-            return restItem;
+            return { ...restItem, tenantId };
         }) : [];
 
         const user = this.usersRepository.create({
@@ -67,6 +68,7 @@ export class UsersService {
             password: hashedPassword,
             isActive: createUserDto.isActive ?? true,
             role: assignedRole,
+            tenantId,
             phones: cleanItems(phones),
             addresses: cleanItems(addresses),
             secondaryEmails: cleanItems(secondaryEmails),
@@ -83,17 +85,30 @@ export class UsersService {
         });
     }
 
-    async findById(userId: string): Promise<User | null> {
+    async findById(userId: string, currentUser?: any): Promise<User | null> {
+        const tenantId = currentUser?.tenantId;
+        const where: any = { id: userId };
+        if (tenantId) where.tenantId = tenantId;
+
+        // LGPD / Privacy by Design: Bloqueio de contatos sensíveis para Super Admin
+        // Se o usuário for 'administrador' (Super Admin), removemos as relações de contato.
+        const isSuperAdmin = currentUser?.role === 'administrador';
+        const relations = isSuperAdmin 
+            ? ['role', 'tags'] // Super Admin vê apenas o básico e tags
+            : ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags'];
+
         return this.usersRepository.findOne({ 
-            where: { id: userId }, 
-            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags'] 
+            where, 
+            relations 
         });
     }
 
-    async findAll(page?: number, limit?: number, name?: string, email?: string, cpf?: string): Promise<{ data: User[], total: number }> {
+    async findAll(page?: number, limit?: number, name?: string, email?: string, cpf?: string, currentUser?: any): Promise<{ data: User[], total: number }> {
         const skip = page && limit ? (page - 1) * limit : 0;
+        const tenantId = currentUser?.tenantId;
 
         const where: any = {};
+        if (tenantId) where.tenantId = tenantId;
 
         if (name) {
             where.name = ILike(`%${name}%`);
@@ -105,6 +120,12 @@ export class UsersService {
             where.cpf = Like(`%${cpf}%`);
         }
 
+        // LGPD: Super Admin não vê contatos sensíveis na listagem
+        const isSuperAdmin = currentUser?.role === 'administrador';
+        const relations = isSuperAdmin 
+            ? ['role', 'tags'] 
+            : ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags'];
+
         const findOptions: FindManyOptions<User> = {
             order: {
                 name: 'ASC',
@@ -112,7 +133,7 @@ export class UsersService {
             skip: skip,
             take: limit ?? undefined,
             where: where,
-            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags'],
+            relations: relations,
         };
 
         const [data, total] = await this.usersRepository.findAndCount(findOptions);
@@ -123,9 +144,13 @@ export class UsersService {
         };
     }
 
-   async update(id: string, updateUserDto: UpdateUserDto): Promise<User> { 
+   async update(id: string, updateUserDto: UpdateUserDto, currentUser?: any): Promise<User> { 
+        const tenantId = currentUser?.tenantId;
+        const where: any = { id };
+        if (tenantId) where.tenantId = tenantId;
+
         const user = await this.usersRepository.findOne({
-            where: { id },
+            where,
             relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags'],
         });
 
@@ -156,13 +181,11 @@ export class UsersService {
         
         this.usersRepository.merge(user, userUpdateData);
 
-        // Função auxiliar para remover IDs nulos e estabelecer vínculo
+        // Função auxiliar para remover IDs nulos e estabelecer vínculo + tenantId
         const cleanItems = (items: any[]) => items.map(item => {
             const { id: itemId, ...rest } = item;
-            // Se itemId for nulo/undefined, estamos criando. Senão, estamos atualizando.
             const itemData = (itemId === null || itemId === undefined) ? rest : item;
-            // Retorna um objeto que o TypeORM reconhece como vinculado
-            return { ...itemData, user: { id } };
+            return { ...itemData, user: { id }, tenantId: user.tenantId };
         });
 
         if (phones) {
@@ -180,7 +203,7 @@ export class UsersService {
 
         if (tags && tags.length > 0) {
             if (user.tags && user.tags.length > 0) {
-                Object.assign(user.tags[0], tags[0]);
+                Object.assign(user.tags[0], { ...tags[0], tenantId: user.tenantId });
             }
         }
 

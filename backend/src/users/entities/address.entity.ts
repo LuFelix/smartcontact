@@ -45,6 +45,10 @@ export class Address {
   @Column({ default: false, name: 'is_main' })
   isMain!: boolean;
 
+  @Column({ type: 'uuid', name: 'tenant_id', nullable: true })
+  @Index()
+  tenantId!: string | null;
+
   @ManyToOne(() => User, (user) => user.addresses, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: User;

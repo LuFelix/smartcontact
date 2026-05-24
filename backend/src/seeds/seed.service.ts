@@ -64,6 +64,7 @@ export class SeedService {
   private async seedAdminUser(adminRole: Role) {
     const adminEmail = 'admin@smartcontact.com.br';
     const adminPassword = 'Senha@123';
+    const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000000';
 
     let admin = await this.userRepository.findOne({ 
         where: { email: adminEmail },
@@ -80,9 +81,10 @@ export class SeedService {
         password: hashedPassword,
         isVerified: true,
         role: adminRole,
+        tenantId: DEFAULT_TENANT_ID,
         // Garante que o admin tenha ao menos um telefone e endereço no formato novo
         phones: [
-            { number: '00000000000', isWhatsapp: true, isMain: true }
+            { number: '00000000000', isWhatsapp: true, isMain: true, tenantId: DEFAULT_TENANT_ID }
         ],
         addresses: [
             { 
@@ -93,7 +95,8 @@ export class SeedService {
                 state: 'AL', 
                 zipCode: '00000000', 
                 isMain: true,
-                tag: 'WORK' as any
+                tag: 'WORK' as any,
+                tenantId: DEFAULT_TENANT_ID
             }
         ]
     };
