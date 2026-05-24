@@ -11,6 +11,9 @@ import { RolesService } from 'src/roles/roles.service';
 
 @Injectable()
 export class UsersService {
+    // ID do Admin/Empresa padrão para isolamento inicial
+    private readonly TIWEB_ID = 'aebfbdfa-0088-4bf1-9bee-36529cfc3866';
+
     constructor(
         @InjectRepository(User)
         private readonly usersRepository: Repository<User>,
@@ -22,14 +25,13 @@ export class UsersService {
     ) { }
 
     async create(createUserDto: CreateUserDto, currentUser?: any): Promise<User> {
-        let { email, cpf, password, roleId, phones, addresses, secondaryEmails, links } = createUserDto as any; 
-        const TIWEB_TENANT_ID = '00000000-0000-0000-0000-000000000000'; // Empresa Padrão
+        let { email, cpf, password, roleId, phones, addresses, secondaryEmails, links, tags } = createUserDto as any; 
         
-        // 1. Identificar o Tenant (Empresa)
-        const tenantId = currentUser?.tenantId || TIWEB_TENANT_ID;
-
-        // 2. Identificar o Owner (Dono/Criador)
-        const ownerId = currentUser?.sub || TIWEB_TENANT_ID;
+        // 1. Identificar o Tenant (Empresa) e o Owner (Dono)
+        // Se o criador tem um tenantId, usamos. Senão, usamos Tiweb.
+        const tenantId = currentUser?.tenantId || this.TIWEB_ID;
+        // O dono é quem está criando (currentUser.sub)
+        const ownerId = currentUser?.sub || this.TIWEB_ID;
 
         const emailExists = await this.usersRepository.findOne({ where: { email } });
         if (emailExists) {
@@ -60,7 +62,6 @@ export class UsersService {
             throw new BadRequestException('Role especificada não existe');
         }
 
-        // Limpeza de IDs nulos e atribuição de ownerId/tenantId
         const cleanItems = (items: any[] | undefined) => items ? items.map(item => {
             const { id, ...restItem } = item;
             return { ...restItem, ownerId, tenantId };
@@ -93,26 +94,24 @@ export class UsersService {
     }
 
     async findById(userId: string, currentUser?: any): Promise<User | null> {
-        // Busca básica para checar owner, tenant e role
         const baseUser = await this.usersRepository.findOne({ where: { id: userId } });
         if (!baseUser) return null;
 
-        // Regra Multi-Tenant: Usuário de uma empresa não vê a outra
-        if (baseUser.tenantId !== currentUser?.tenantId) {
+        // Regra Multi-Tenant: Bloqueio total cross-tenant
+        if (currentUser?.tenantId && baseUser.tenantId !== currentUser?.tenantId) {
              throw new BadRequestException('Acesso negado: Este usuário pertence a outra organização.');
         }
 
-        // Regra de Negócio: Ver contatos apenas se for o dono ou o próprio
+        // Regra Owner-Data: Ver contatos apenas se for o dono ou o próprio
         const isOwner = baseUser.ownerId === currentUser?.sub;
         const isOwnProfile = baseUser.id === currentUser?.sub;
-        const isSuperAdmin = currentUser?.role === 'administrador';
 
-        // LGPD: Super Admin só vê contatos se ele for o dono ou for o próprio perfil
+        // LGPD: Só liberamos as relações de contato para o proprietário ou para o próprio
         const showContacts = isOwnProfile || isOwner;
 
-        const relations = (!showContacts && isSuperAdmin)
-            ? ['role', 'tags']
-            : ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags'];
+        const relations = showContacts
+            ? ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags']
+            : ['role', 'tags']; 
 
         return this.usersRepository.findOne({ 
             where: { id: userId }, 
@@ -122,34 +121,37 @@ export class UsersService {
 
     async findAll(page?: number, limit?: number, name?: string, email?: string, cpf?: string, currentUser?: any): Promise<{ data: User[], total: number }> {
         const skip = page && limit ? (page - 1) * limit : 0;
-        const tenantId = currentUser?.tenantId;
+        const tenantId = currentUser?.tenantId || this.TIWEB_ID;
 
-        const where: any = {};
-        // Filtro estrito Multi-Tenant: Só vê quem é da mesma empresa
-        if (tenantId) {
-            where.tenantId = tenantId;
-        }
+        const where: any = { tenantId }; // Filtro de empresa obrigatório
 
         if (name) where.name = ILike(`%${name}%`);
         if (email) where.email = Like(`%${email}%`);
         if (cpf) where.cpf = Like(`%${cpf}%`);
-
-        // LGPD: Super Admin não vê contatos sensíveis na listagem de outros
-        // (A menos que seja ele mesmo, mas listagem geralmente oculta o próprio ou mostra o básico)
-        const isSuperAdmin = currentUser?.role === 'administrador';
-        const relations = isSuperAdmin 
-            ? ['role', 'tags'] 
-            : ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags'];
 
         const findOptions: FindManyOptions<User> = {
             order: { name: 'ASC' },
             skip,
             take: limit ?? undefined,
             where,
-            relations,
+            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags'],
         };
 
-        const [data, total] = await this.usersRepository.findAndCount(findOptions);
+        const [users, total] = await this.usersRepository.findAndCount(findOptions);
+
+        const data = users.map(user => {
+            const isOwner = user.ownerId === currentUser?.sub;
+            const isOwnProfile = user.id === currentUser?.sub;
+
+            if (isOwnProfile || isOwner) {
+                return user; 
+            }
+
+            // LGPD: Strip sensitive data for users we don't own
+            const { phones, addresses, secondaryEmails, links, ...basicInfo } = user;
+            return basicInfo as User;
+        });
+
         return { data, total };
     }
 
@@ -164,7 +166,7 @@ export class UsersService {
         }
 
         // Regra Multi-Tenant: Bloqueia edição cross-tenant
-        if (user.tenantId !== currentUser?.tenantId) {
+        if (currentUser?.tenantId && user.tenantId !== currentUser?.tenantId) {
              throw new BadRequestException('Acesso negado: Este usuário pertence a outra organização.');
         }
 
@@ -173,7 +175,7 @@ export class UsersService {
         const isOwnProfile = user.id === currentUser?.sub;
 
         if (!isOwner && !isOwnProfile) {
-             throw new BadRequestException('Você não tem permissão para editar este usuário (você não é o proprietário).');
+             throw new BadRequestException('Você não tem permissão para editar este usuário.');
         }
 
         if (updateUserDto.email && updateUserDto.email !== user.email) {
@@ -200,7 +202,7 @@ export class UsersService {
         const cleanItems = (items: any[]) => items.map(item => {
             const { id: itemId, ...rest } = item;
             const itemData = (itemId === null || itemId === undefined) ? rest : item;
-            return { ...itemData, user: { id }, ownerId: user.ownerId };
+            return { ...itemData, user: { id }, ownerId: user.ownerId, tenantId: user.tenantId };
         });
 
         if (phones) user.phones = cleanItems(phones) as any;
@@ -210,7 +212,7 @@ export class UsersService {
 
         if (tags && tags.length > 0) {
             if (user.tags && user.tags.length > 0) {
-                Object.assign(user.tags[0], { ...tags[0], ownerId: user.ownerId });
+                Object.assign(user.tags[0], { ...tags[0], ownerId: user.ownerId, tenantId: user.tenantId });
             }
         }
 
@@ -244,6 +246,10 @@ export class UsersService {
         
         if (!user) {
             throw new NotFoundException(`Usuário com ID ${id} não encontrado.`);
+        }
+
+        if (currentUser?.tenantId && user.tenantId !== currentUser?.tenantId) {
+            throw new BadRequestException('Acesso negado: Este usuário pertence a outra organização.');
         }
 
         if (user.ownerId !== currentUser?.sub && user.id !== currentUser?.sub) {

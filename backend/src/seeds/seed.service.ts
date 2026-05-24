@@ -11,6 +11,7 @@ import { UserSeedService } from './users/user-seed.service';
 @Injectable()
 export class SeedService {
   private readonly logger = new Logger(SeedService.name);
+  private readonly TIWEB_ID = 'aebfbdfa-0088-4bf1-9bee-36529cfc3866';
 
   constructor(
     @InjectRepository(Role)
@@ -63,7 +64,6 @@ export class SeedService {
   private async seedAdminUser(adminRole: Role): Promise<User | undefined> {
     const adminEmail = 'admin@smartcontact.com.br';
     const adminPassword = 'Senha@123';
-    const DEFAULT_OWNER_ID = '00000000-0000-0000-0000-000000000000';
 
     let admin = await this.userRepository.findOne({ 
         where: { email: adminEmail },
@@ -74,15 +74,17 @@ export class SeedService {
     const hashedPassword = await bcrypt.hash(adminPassword, salt);
 
     const adminData: DeepPartial<User> = {
+        id: this.TIWEB_ID, // Fixar o ID do admin para facilitar ownerId
         name: 'Usuário Administrador',
         email: adminEmail,
         cpf: '00000000000',
         password: hashedPassword,
         isVerified: true,
         role: adminRole,
-        ownerId: DEFAULT_OWNER_ID,
+        ownerId: this.TIWEB_ID,
+        tenantId: this.TIWEB_ID,
         phones: [
-            { number: '00000000000', isWhatsapp: true, isMain: true, ownerId: DEFAULT_OWNER_ID }
+            { number: '00000000000', isWhatsapp: true, isMain: true, ownerId: this.TIWEB_ID, tenantId: this.TIWEB_ID }
         ],
         addresses: [
             { 
@@ -94,7 +96,8 @@ export class SeedService {
                 zipCode: '00000000', 
                 isMain: true,
                 tag: 'WORK' as any,
-                ownerId: DEFAULT_OWNER_ID
+                ownerId: this.TIWEB_ID,
+                tenantId: this.TIWEB_ID
             }
         ]
     };
@@ -114,8 +117,8 @@ export class SeedService {
         const newTagData: DeepPartial<Tag> = {
             uuid: 'test-tag-admin',
             userId: admin.id,
-            ownerId: DEFAULT_OWNER_ID,
-            tenantId: DEFAULT_OWNER_ID, // Corrigido: estava faltando no objeto create
+            ownerId: this.TIWEB_ID,
+            tenantId: this.TIWEB_ID,
             redirectMode: RedirectMode.PROFILE,
             isActive: true
         };

@@ -1,6 +1,6 @@
 // users/dto/user.dto.ts
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsEmail, Length, Matches, IsOptional, IsArray, IsBoolean, IsEnum, ValidateNested, IsUUID } from 'class-validator';
+import { IsString, IsEmail, IsOptional, IsArray, IsBoolean, IsEnum, ValidateNested, IsUUID, Matches, Length } from 'class-validator';
 import { Type } from 'class-transformer';
 import { AddressTag } from '../entities/address.entity';
 
@@ -163,4 +163,9 @@ export class CreateUserDto {
   @ValidateNested({ each: true })
   @Type(() => CreateLinkDto)
   links?: CreateLinkDto[];
+
+  @ApiPropertyOptional({ type: [Object] })
+  @IsOptional()
+  @IsArray()
+  tags?: any[];
 }

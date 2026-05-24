@@ -49,9 +49,10 @@ export class UserSeedService {
         isVerified: true,
         isActive: true,
         role: defaultRole,
-        ownerId: admin.id, // O Admin é o dono desses usuários (contatos dele)
+        ownerId: admin.id, // O criador é o Admin
+        tenantId: admin.tenantId, // Pertencem à mesma empresa (Tiweb)
         phones: [
-            { number: randomPhone, isWhatsapp: Math.random() > 0.3, isMain: true, ownerId: admin.id }
+            { number: randomPhone, isWhatsapp: Math.random() > 0.3, isMain: true, ownerId: admin.id, tenantId: admin.tenantId }
         ],
         addresses: [
             {
@@ -63,7 +64,8 @@ export class UserSeedService {
                 zipCode: randomCep,
                 tag: 'HOME' as any,
                 isMain: true,
-                ownerId: admin.id
+                ownerId: admin.id,
+                tenantId: admin.tenantId
             }
         ]
       };
@@ -83,7 +85,7 @@ export class UserSeedService {
               uuid: `test-tag-${emailBase}`,
               userId: user.id,
               ownerId: admin.id,
-              tenantId: admin.tenantId as string, // Cast para string pois admin.tenantId pode ser null na entidade mas garantimos no seed
+              tenantId: admin.tenantId as string,
               redirectMode: RedirectMode.PROFILE,
               isActive: true
           };
