@@ -105,7 +105,13 @@ export class AuthService {
         throw new UnauthorizedException('Por favor, verifique seu e-mail antes de acessar o sistema.');
       }
 
-      const payload = { sub: user.id, name: user.name, email: user.email, role: user.role?.name || 'usuario' };
+      const payload = { 
+          sub: user.id, 
+          name: user.name, 
+          email: user.email, 
+          role: user.role?.name || 'usuario',
+          tenantId: user.tenantId 
+      };
       
       const token = await this.jwtService.signAsync(payload);
       return {
@@ -158,7 +164,8 @@ export class AuthService {
         sub: user.id, 
         name: user.name, 
         email: user.email, 
-        role: user.role?.name || 'USER' // Fallback caso a role demore a carregar
+        role: user.role?.name || 'USER', // Fallback caso a role demore a carregar
+        tenantId: user.tenantId
       };
 
       return {

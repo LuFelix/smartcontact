@@ -15,6 +15,10 @@ export class Phone {
   @Column({ default: false, name: 'is_main' })
   isMain!: boolean;
 
+  @Column({ type: 'uuid', name: 'tenant_id', nullable: true })
+  @Index()
+  tenantId!: string | null;
+
   @ManyToOne(() => User, (user) => user.phones, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: User;

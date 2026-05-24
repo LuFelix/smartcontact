@@ -1,4 +1,4 @@
-import { Body, Controller, Get, NotFoundException, Param, Patch, UseGuards, Delete, Query, ParseUUIDPipe, Post } from '@nestjs/common';
+import { Body, Controller, Get, NotFoundException, Param, Patch, UseGuards, Delete, Query, ParseUUIDPipe, Post, Req } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -6,13 +6,14 @@ import { CreateUserDto } from './dto/user.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
+import { GetUser } from 'src/auth/decorators/get-user.decorator';
 
 @ApiTags('Users')
 @ApiBearerAuth()
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @Controller('users')
 export class UsersController {
-    
+
     constructor(private readonly usersService: UsersService) {}
 
 // =======================================================
@@ -24,8 +25,8 @@ export class UsersController {
     @ApiOperation({ summary: 'Criar um novo usuário (Apenas Admin)' })
     @ApiBody({ type: CreateUserDto })
     @ApiResponse({ status: 201, description: 'Usuário criado com sucesso' })
-    async create(@Body() createUserDto: CreateUserDto) {
-        return this.usersService.create(createUserDto);
+    async create(@Body() createUserDto: CreateUserDto, @GetUser() currentUser: any) {
+        return this.usersService.create(createUserDto, currentUser);
     }
 
     @Get()
@@ -37,25 +38,26 @@ export class UsersController {
         @Query('name') name?: string,
         @Query('email') email?: string,
         @Query('cpf') cpf?: string,
+        @GetUser() currentUser?: any,
     ) {
-        return this.usersService.findAll(page, limit, name, email, cpf);
+        return this.usersService.findAll(page, limit, name, email, cpf, currentUser);
     }
-    
+
     @Delete(':id')
     @Roles('administrador')
     @ApiOperation({ summary: 'Deletar um usuário (Apenas Admin)' })
-    @ApiParam({ name: 'id', type: String }) // <-- Alterado para String
-    remove(@Param('id', ParseUUIDPipe) id: string) { // <-- ParseUUIDPipe e string
-        return this.usersService.remove(id); // <-- Envia string pro service
+    @ApiParam({ name: 'id', type: String })
+    remove(@Param('id', ParseUUIDPipe) id: string, @GetUser() currentUser?: any) { 
+        return this.usersService.remove(id, currentUser); 
     }
 
     @Get(':id')
     @ApiOperation({ summary: 'Busca um usuário por ID' })
-    @ApiParam({ name: 'id', type: String }) // <-- Alterado para String
+    @ApiParam({ name: 'id', type: String })
     @ApiResponse({ status: 200, description: 'Usuário encontrado' })
     @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
-    async findById(@Param('id', ParseUUIDPipe) id: string) { // <-- ParseUUIDPipe e string
-        const user = await this.usersService.findById(id); // <-- Envia string pro service
+    async findById(@Param('id', ParseUUIDPipe) id: string, @GetUser() currentUser?: any) { 
+        const user = await this.usersService.findById(id, currentUser); 
         if (!user) {
             throw new NotFoundException(`Usuário com ID ${id} não encontrado`);
         }
@@ -64,15 +66,17 @@ export class UsersController {
 
     @Patch(':id')
     @ApiOperation({ summary: 'Atualiza parcialmente um usuário' })
-    @ApiParam({ name: 'id', type: String }) // <-- Alterado para String
+    @ApiParam({ name: 'id', type: String })
     @ApiBody({ type: UpdateUserDto })
     @ApiResponse({ status: 200, description: 'Usuário atualizado com sucesso' })
     @ApiResponse({ status: 400, description: 'Dados inválidos ou duplicados' })
     @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
     async update( 
-        @Param('id', ParseUUIDPipe) id: string, // <-- ParseUUIDPipe e string
-        @Body() updateUserDto: UpdateUserDto 
+        @Param('id', ParseUUIDPipe) id: string, 
+        @Body() updateUserDto: UpdateUserDto,
+        @GetUser() currentUser?: any
     ){
-        return this.usersService.update(id, updateUserDto); // <-- Envia string pro service
+        return this.usersService.update(id, updateUserDto, currentUser); 
     }
+
 }
