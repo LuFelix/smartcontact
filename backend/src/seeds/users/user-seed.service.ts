@@ -5,6 +5,8 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from 'src/users/entities/user.entity';
 import { Role } from 'src/roles/entities/role.entity';
+import { Tag, RedirectMode } from 'src/tags/entities/tag.entity';
+
 // Importação direta usando CommonJS require para evitar problemas de iterabilidade com import *
 const usersData = require('./users-data.json');
 
@@ -19,23 +21,24 @@ export class UserSeedService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
+    @InjectRepository(Tag)
+    private readonly tagRepository: Repository<Tag>,
   ) {}
 
   async run(defaultRole: Role) {
-    this.logger.log('Iniciando seed de 50 usuários com contatos...');
+    this.logger.log('Iniciando seed de 50 usuários com contatos e tags...');
 
     const password = 'Senha!123';
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
 
     for (const [index, userData] of usersData.entries()) {
-      // Slugify name for email
       const emailBase = userData.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-');
       const email = `${emailBase}@smartcontact.tiweb.app.br`;
 
       let user = await this.userRepository.findOne({ 
         where: { email },
-        relations: ['phones', 'addresses']
+        relations: ['phones', 'addresses', 'tags']
       });
 
       const randomCep = this.ceps[Math.floor(Math.random() * this.ceps.length)];
@@ -67,15 +70,28 @@ export class UserSeedService {
 
       if (!user) {
         user = this.userRepository.create(data);
-        await this.userRepository.save(user);
-        this.logger.log(`Usuário '${userData.name}' criado com contatos.`);
+        user = await this.userRepository.save(user);
+        this.logger.log(`Usuário '${userData.name}' criado.`);
       } else {
         this.userRepository.merge(user, data);
-        await this.userRepository.save(user);
-        this.logger.log(`Usuário '${userData.name}' atualizado com contatos.`);
+        user = await this.userRepository.save(user);
+        this.logger.log(`Usuário '${userData.name}' atualizado.`);
+      }
+
+      // Garante que cada usuário do seed tenha uma tag para teste
+      if (!user.tags || user.tags.length === 0) {
+          const newTag = this.tagRepository.create({
+              uuid: `test-tag-${emailBase}`,
+              userId: user.id,
+              tenantId: '00000000-0000-0000-0000-000000000000', // Default tenant
+              redirectMode: RedirectMode.PROFILE,
+              isActive: true
+          });
+          await this.tagRepository.save(newTag);
+          this.logger.log(`Tag 'test-tag-${emailBase}' criada para o usuário.`);
       }
     }
 
-    this.logger.log('Seed de 50 usuários concluído.');
+    this.logger.log('Seed de 50 usuários e tags concluído.');
   }
 }

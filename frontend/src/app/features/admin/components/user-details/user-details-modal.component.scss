@@ -43,6 +43,16 @@
     }
 }
 
+.tag-management-section {
+    border: 1px solid var(--mat-sys-primary);
+    
+    .tag-settings-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+}
+
 .array-container {
     display: flex;
     flex-direction: column;

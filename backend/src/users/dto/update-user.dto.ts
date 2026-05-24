@@ -172,4 +172,9 @@ export class UpdateUserDto {
   @ValidateNested({ each: true })
   @Type(() => UpdateLinkDto)
   links?: UpdateLinkDto[];
+
+  @ApiPropertyOptional({ type: [Object] })
+  @IsOptional()
+  @IsArray()
+  tags?: any[];
 }

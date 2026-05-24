@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/roles/entities/role.entity';
 import { User } from 'src/users/entities/user.entity';
+import { Tag, RedirectMode } from 'src/tags/entities/tag.entity';
 import { UserSeedService } from './users/user-seed.service';
 
 @Injectable()
@@ -16,6 +17,8 @@ export class SeedService {
     private readonly roleRepository: Repository<Role>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Tag)
+    private readonly tagRepository: Repository<Tag>,
     private readonly userSeedService: UserSeedService,
   ) {}
 
@@ -104,6 +107,20 @@ export class SeedService {
       this.userRepository.merge(admin, adminData);
       await this.userRepository.save(admin);
       this.logger.log(`Usuário administrador atualizado para a nova estrutura.`);
+    }
+
+    // Garante que o Admin tenha uma tag de teste
+    const adminTag = await this.tagRepository.findOne({ where: { userId: admin!.id } });
+    if (!adminTag) {
+        const newTag = this.tagRepository.create({
+            uuid: 'test-tag-admin',
+            userId: admin!.id,
+            tenantId: '00000000-0000-0000-0000-000000000000',
+            redirectMode: RedirectMode.PROFILE,
+            isActive: true
+        });
+        await this.tagRepository.save(newTag);
+        this.logger.log(`Tag 'test-tag-admin' criada para o administrador.`);
     }
   }
 }
