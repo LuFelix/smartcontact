@@ -20,6 +20,8 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { User } from '../../../shared/models/users.models';
 import { UsersListComponent } from '../../../admin/components/users-list/users-list.component';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { SocialAuthService, GoogleLoginProvider } from '@abacritt/angularx-social-login';
+import { GoogleContactsService } from '../../../../core/services/google-contacts.service';
 
 @Component({
   selector: 'app-users-page',
@@ -48,11 +50,14 @@ export class UsersPage implements OnInit {
   private snackBar = inject(MatSnackBar);
   public readonly authService = inject(AuthService);
   private fb = inject(FormBuilder);
+  private googleContactsService = inject(GoogleContactsService);
+  private socialAuthService = inject(SocialAuthService);
 
   displayedColumns: string[] = ['name', 'email', 'actions'];
   dataSource = new MatTableDataSource<User>([]);
   totalUsers = 0;
   isLoading = true;
+  isSyncing = false;
 
   filterForm = new FormGroup({
     name: new FormControl(''),
@@ -199,5 +204,33 @@ export class UsersPage implements OnInit {
 
   onPageChange(event: PageEvent): void {
       this.loadUsers();
+  }
+
+  syncWithGoogle(): void {
+    this.isSyncing = true;
+    this.snackBar.open('Solicitando autorização do Google...', 'Fechar', { duration: 3000 });
+
+    this.socialAuthService.getAccessToken(GoogleLoginProvider.PROVIDER_ID)
+      .then(accessToken => {
+        this.snackBar.open('Sincronizando contatos. Isso pode levar alguns segundos...', 'OK');
+        
+        this.googleContactsService.syncContacts(accessToken)
+          .pipe(finalize(() => this.isSyncing = false))
+          .subscribe({
+            next: (res) => {
+              this.snackBar.open(`${res.imported} contatos importados de um total de ${res.total}.`, 'Sucesso', { duration: 5000 });
+              this.loadUsers();
+            },
+            error: (err) => {
+              console.error('Erro na sincronização:', err);
+              this.snackBar.open('Falha ao sincronizar contatos. Verifique sua permissão.', 'Fechar', { duration: 5000 });
+            }
+          });
+      })
+      .catch(err => {
+        this.isSyncing = false;
+        console.error('Erro ao obter token de acesso:', err);
+        this.snackBar.open('Autorização cancelada ou falhou.', 'Fechar', { duration: 3000 });
+      });
   }
 }
