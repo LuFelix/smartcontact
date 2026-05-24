@@ -16,13 +16,13 @@ export class UsersService {
         private readonly usersRepository: Repository<User>,
 
         @InjectRepository(Role)
-        private readonly rolesRepository: Repository<Role>,
+        private readonly rolesRepository: Repository<Repository<Role>>,
 
         private readonly rolesService: RolesService,
     ) { }
 
     async create(createUserDto: CreateUserDto): Promise<User> {
-        let { email, cpf, password, roleId, phones, addresses, secondaryEmails, links } = createUserDto; 
+        let { email, cpf, password, roleId, phones, addresses, secondaryEmails, links } = createUserDto as any; 
 
         const emailExists = await this.usersRepository.findOne({ where: { email } });
         if (emailExists) {
@@ -79,14 +79,14 @@ export class UsersService {
     async findByCpf(cpf: string): Promise<User | null> {
         return this.usersRepository.findOne({ 
             where: { cpf }, 
-            relations: ['role', 'phones', 'addresses'] 
+            relations: ['role', 'phones', 'addresses', 'tags'] 
         });
     }
 
     async findById(userId: string): Promise<User | null> {
         return this.usersRepository.findOne({ 
             where: { id: userId }, 
-            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links'] 
+            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags'] 
         });
     }
 
@@ -112,7 +112,7 @@ export class UsersService {
             skip: skip,
             take: limit ?? undefined,
             where: where,
-            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links'],
+            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags'],
         };
 
         const [data, total] = await this.usersRepository.findAndCount(findOptions);
@@ -126,7 +126,7 @@ export class UsersService {
    async update(id: string, updateUserDto: UpdateUserDto): Promise<User> { 
         const user = await this.usersRepository.findOne({
             where: { id },
-            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links'],
+            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags'],
         });
 
         if (!user) {
@@ -152,17 +152,17 @@ export class UsersService {
         }
 
         // TypeORM cascade handles update if items have IDs, or creates new ones if they don't.
-        const { roleId, phones, addresses, secondaryEmails, links, ...userUpdateData } = updateUserDto;
+        const { roleId, phones, addresses, secondaryEmails, links, tags, ...userUpdateData } = updateUserDto;
         
         this.usersRepository.merge(user, userUpdateData);
 
-        // Função auxiliar para remover IDs nulos que quebram o cascade do TypeORM
+        // Função auxiliar para remover IDs nulos e estabelecer vínculo
         const cleanItems = (items: any[]) => items.map(item => {
-            if (item.id === null || item.id === undefined) {
-                const { id, ...rest } = item;
-                return rest;
-            }
-            return item;
+            const { id: itemId, ...rest } = item;
+            // Se itemId for nulo/undefined, estamos criando. Senão, estamos atualizando.
+            const itemData = (itemId === null || itemId === undefined) ? rest : item;
+            // Retorna um objeto que o TypeORM reconhece como vinculado
+            return { ...itemData, user: { id } };
         });
 
         if (phones) {
@@ -176,6 +176,12 @@ export class UsersService {
         }
         if (links) {
             user.links = cleanItems(links) as any;
+        }
+
+        if (tags && tags.length > 0) {
+            if (user.tags && user.tags.length > 0) {
+                Object.assign(user.tags[0], tags[0]);
+            }
         }
 
         return this.usersRepository.save(user);
@@ -199,7 +205,7 @@ export class UsersService {
     async findByEmail(email: string): Promise<User | null> {
         return this.usersRepository.findOne({ 
             where: { email }, 
-            relations: ['role', 'phones', 'addresses'] 
+            relations: ['role', 'phones', 'addresses', 'tags'] 
         });
     }
 

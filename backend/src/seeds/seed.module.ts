@@ -4,13 +4,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { User } from 'src/users/entities/user.entity';
 import { Role } from 'src/roles/entities/role.entity';
+import { Tag } from 'src/tags/entities/tag.entity';
 import { SeedService } from './seed.service';
 import { UserSeedService } from './users/user-seed.service';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
-    TypeOrmModule.forFeature([Role, User]),
+    TypeOrmModule.forFeature([Role, User, Tag]),
   ],
   providers: [SeedService, UserSeedService],
   exports: [SeedService],

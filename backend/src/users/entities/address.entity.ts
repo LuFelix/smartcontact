@@ -48,7 +48,4 @@ export class Address {
   @ManyToOne(() => User, (user) => user.addresses, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: User;
-
-  @Column({ type: 'uuid', name: 'user_id' })
-  userId!: string;
 }

@@ -43,6 +43,22 @@ export interface UserLink {
     url: string;
 }
 
+export enum RedirectMode {
+  PROFILE = 'PROFILE',
+  WHATSAPP = 'WHATSAPP',
+  VCARD = 'VCARD',
+  CUSTOM_URL = 'CUSTOM_URL',
+}
+
+export interface Tag {
+  id: string;
+  uuid: string;
+  redirectMode: RedirectMode;
+  customUrl?: string | null;
+  userId: string;
+  isActive: boolean;
+}
+
 export enum AddressTag {
   HOME = 'HOME',
   WORK = 'WORK',
@@ -66,16 +82,22 @@ export interface Address {
 
 // --- Interface Básica do Usuário (Listagem) ---
 export interface User {
-  id: string; // Mudado para string (UUID)
+  id: string; 
   name: string;
   email: string;
   cpf?: string;
   isActive?: boolean;
   role?: { id: string, name: string };
+  profile?: {
+    bio?: string;
+    jobTitle?: string;
+    company?: string;
+  };
   phones?: Phone[];
   addresses?: Address[];
   secondaryEmails?: SecondaryEmail[];
   links?: UserLink[];
+  tags?: Tag[];
 }
 
 // --- Interface para Registro (Usada pelo AuthService) ---
@@ -108,9 +130,15 @@ export interface FullUserResponse {
   cpf?: string; 
   isVerified: boolean;
   role: { id: string, name: string };
+  profile?: {
+    bio?: string;
+    jobTitle?: string;
+    company?: string;
+  };
   phones?: Phone[];
   addresses?: Address[];
   secondaryEmails?: SecondaryEmail[];
   links?: UserLink[];
+  tags?: Tag[];
   profilePictureUrl?: string; 
 }
