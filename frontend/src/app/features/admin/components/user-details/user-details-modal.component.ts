@@ -3,6 +3,7 @@
 import { Component, Inject, OnInit, inject, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormControl, FormArray} from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
+import { RouterModule } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -36,6 +37,7 @@ export interface UserModalData {
         CommonModule,
         ReactiveFormsModule,
         MatDialogModule,
+        RouterModule,
         MatButtonModule,
         MatInputModule,
         MatFormFieldModule,
@@ -302,7 +304,7 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
                 }
 
                 if (loadedUser.tags && loadedUser.tags.length > 0) {
-                    const activeTag = loadedUser.tags.find(t => t.isActive) || loadedUser.tags[0];
+                    const activeTag = loadedUser.tags.find((t: Tag) => t.isActive) || loadedUser.tags[0];
                     this.userForm.get('tagSettings')?.patchValue({
                         id: activeTag.id,
                         redirectMode: activeTag.redirectMode,

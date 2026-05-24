@@ -17,4 +17,7 @@ export class UserEmail {
   @ManyToOne(() => User, (user) => user.secondaryEmails, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: User;
+
+  @Column({ type: 'uuid', name: 'user_id' })
+  userId!: string;
 }

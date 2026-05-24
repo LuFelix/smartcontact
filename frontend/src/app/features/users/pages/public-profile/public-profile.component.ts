@@ -69,7 +69,7 @@ export class PublicProfileComponent implements OnInit {
     if (data.redirectMode === RedirectMode.CUSTOM_URL && data.customUrl) {
       window.location.href = data.customUrl;
     } else if (data.redirectMode === RedirectMode.WHATSAPP) {
-      const mainPhone = data.user.phones?.find(p => p.isWhatsapp) || data.user.phones?.[0];
+      const mainPhone = data.user.phones?.find((p: any) => p.isWhatsapp) || data.user.phones?.[0];
       if (mainPhone) {
         const cleanNumber = mainPhone.number.replace(/\D/g, '');
         window.location.href = `https://wa.me/${cleanNumber}`;

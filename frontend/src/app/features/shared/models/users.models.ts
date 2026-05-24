@@ -92,6 +92,7 @@ export interface User {
   addresses?: Address[];
   secondaryEmails?: SecondaryEmail[];
   links?: UserLink[];
+  tags?: Tag[];
 }
 
 // --- Interface para Registro (Usada pelo AuthService) ---

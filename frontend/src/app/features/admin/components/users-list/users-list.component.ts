@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -16,6 +17,7 @@ import { AuthService } from '../../../../core/services/auth.service';
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     MatButtonModule,
     MatIconModule,
     MatTooltipModule,
@@ -58,7 +60,7 @@ export class UsersListComponent {
 
   getTagUuid(user: User): string | null {
     if (!user.tags || user.tags.length === 0) return null;
-    const activeTag = user.tags.find(t => t.isActive);
+    const activeTag = user.tags.find((t: Tag) => t.isActive);
     return activeTag ? activeTag.uuid : user.tags[0].uuid;
   }
 
