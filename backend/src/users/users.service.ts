@@ -16,7 +16,7 @@ export class UsersService {
         private readonly usersRepository: Repository<User>,
 
         @InjectRepository(Role)
-        private readonly rolesRepository: Repository<Repository<Role>>,
+        private readonly rolesRepository: Repository<Role>,
 
         private readonly rolesService: RolesService,
     ) { }
