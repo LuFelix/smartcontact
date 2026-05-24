@@ -25,9 +25,12 @@
                 <button mat-icon-button color="primary" (click)="editRole.emit(role)" matTooltip="Editar">
                     <mat-icon>edit</mat-icon>
                 </button>
-                <button mat-icon-button color="warn" (click)="deleteRole.emit(role)" matTooltip="Excluir">
-                    <mat-icon>delete_outline</mat-icon>
-                </button>
+                
+                @if (role.name !== 'administrador' && role.name !== 'usuario') {
+                    <button mat-icon-button color="warn" (click)="deleteRole.emit(role)" matTooltip="Excluir">
+                        <mat-icon>delete_outline</mat-icon>
+                    </button>
+                }
             </td>
         </ng-container>
 

@@ -24,9 +24,12 @@
           <button mat-icon-button color="primary" (click)="editRole.emit(role)" matTooltip="Editar Função">
             <mat-icon>edit</mat-icon>
           </button>
-          <button mat-icon-button color="warn" (click)="deleteRole.emit(role)" matTooltip="Excluir Função">
-            <mat-icon>delete</mat-icon>
-          </button>
+          
+          @if (role.name !== 'administrador' && role.name !== 'usuario') {
+            <button mat-icon-button color="warn" (click)="deleteRole.emit(role)" matTooltip="Excluir Função">
+              <mat-icon>delete</mat-icon>
+            </button>
+          }
         </mat-card-actions>
       </mat-card>
     } @empty {
