@@ -60,13 +60,15 @@ export class RoleDialogComponent implements OnInit {
 
     this.isSaving = true;
     const formData = this.roleForm.getRawValue();
+    
+    // BACKEND LIMITATION: DTO expects only name and description
+    const payload = {
+        name: formData.name,
+        description: formData.description
+    };
 
     if (this.isEdit && this.data.role) {
-      const updateData: UpdateRoleDTO = {
-          ...formData,
-          permissionIds: [] // TODO: Implementar seleção de permissões no futuro
-      };
-      this.rolesService.update(this.data.role.id, updateData)
+      this.rolesService.update(this.data.role.id, payload)
         .pipe(finalize(() => this.isSaving = false))
         .subscribe({
           next: () => {
@@ -75,15 +77,11 @@ export class RoleDialogComponent implements OnInit {
           },
           error: (err) => {
               console.error(err);
-              this.snackBar.open('Erro ao atualizar função.', 'Fechar', { duration: 3000 });
+              this.snackBar.open('Erro ao atualizar função. Verifique se o nome já existe.', 'Fechar', { duration: 3000 });
           }
         });
     } else {
-      const createData: CreateRoleDTO = {
-          ...formData,
-          permissionIds: []
-      };
-      this.rolesService.create(createData)
+      this.rolesService.create(payload)
         .pipe(finalize(() => this.isSaving = false))
         .subscribe({
           next: () => {
@@ -92,7 +90,7 @@ export class RoleDialogComponent implements OnInit {
           },
           error: (err) => {
               console.error(err);
-              this.snackBar.open('Erro ao criar função.', 'Fechar', { duration: 3000 });
+              this.snackBar.open('Erro ao criar função. Verifique se o nome já existe.', 'Fechar', { duration: 3000 });
           }
         });
     }

@@ -3,10 +3,12 @@ import { CommonModule } from '@angular/common';
 import { RolesService } from '../../services/roles.service';
 import { Role } from '../../../shared/models/role.model';
 import { RoleDialogComponent } from '../../components/role-dialog/role-dialog';
+import { RolesCardListComponent } from '../../components/roles-card-list/roles-card-list';
+import { RolesListViewComponent } from '../../components/roles-list-view/roles-list-view';
+import { LayoutService } from '../../../../core/services/layout.service';
 import { finalize } from 'rxjs';
 
 // Material
-import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -20,14 +22,15 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
   standalone: true,
   imports: [
     CommonModule,
-    MatTableModule,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
     MatCardModule,
     MatTooltipModule,
     MatDialogModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    RolesCardListComponent,
+    RolesListViewComponent
   ],
   templateUrl: './roles-page.html',
   styleUrl: './roles-page.scss'
@@ -36,10 +39,10 @@ export class RolesPageComponent implements OnInit {
   private rolesService = inject(RolesService);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
+  public layoutService = inject(LayoutService);
 
   roles: Role[] = [];
   isLoading = true;
-  displayedColumns: string[] = ['id', 'name', 'description', 'actions'];
 
   ngOnInit(): void {
     this.loadRoles();
