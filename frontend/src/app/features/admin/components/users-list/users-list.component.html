@@ -41,6 +41,16 @@
             </button>
           }
 
+          @if (getTagUuid(user); as uuid) {
+            <a mat-icon-button color="accent" 
+               class="icon-align-fix"
+               [routerLink]="['/t', uuid]" 
+               target="_blank" 
+               matTooltip="Ver Perfil Público">
+                <mat-icon>contact_page</mat-icon>
+            </a>
+          }
+
           <button mat-icon-button 
                   class="action-button-favorite icon-align-fix"
                   (click)="toggleFavorite(user)" 

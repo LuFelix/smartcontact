@@ -24,7 +24,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { NgxMaskDirective } from 'ngx-mask';
 
 // Models e Serviços
-import { UserData, FullUserResponse, Phone, Address, AddressTag, SecondaryEmail, UserLink } from '../../../shared/models/users.models';
+import { UserData, FullUserResponse, Phone, Address, AddressTag, SecondaryEmail, UserLink, RedirectMode, Tag } from '../../../shared/models/users.models';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { CepService } from '../../../../core/utils/cep.service';
@@ -62,6 +62,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   profileForm: FormGroup;
   currentUserData: FullUserResponse | null = null;
+  activeTag: Tag | null = null;
+  
   isLoading = true;
   isSaving = false;
   isEditing = false;
@@ -76,6 +78,13 @@ export class ProfileComponent implements OnInit, OnDestroy {
     [AddressTag.OTHER]: 'Outro'
   };
   addressTags = Object.values(AddressTag);
+  
+  redirectModes = [
+      { value: RedirectMode.PROFILE, label: 'Perfil Inteligente' },
+      { value: RedirectMode.WHATSAPP, label: 'WhatsApp Direto' },
+      { value: RedirectMode.VCARD, label: 'Salvar Contato (vCard)' },
+      { value: RedirectMode.CUSTOM_URL, label: 'Link Personalizado' }
+  ];
 
   private cepSubscriptions: Subscription[] = [];
   private profileSubscription!: Subscription;
@@ -89,7 +98,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
       phones: this.fb.array([]),
       addresses: this.fb.array([]),
       secondaryEmails: this.fb.array([]),
-      links: this.fb.array([])
+      links: this.fb.array([]),
+      tagSettings: this.fb.group({
+          id: [null],
+          redirectMode: [RedirectMode.PROFILE],
+          customUrl: ['']
+      })
     });
   }
 
@@ -294,6 +308,15 @@ export class ProfileComponent implements OnInit, OnDestroy {
           cpf: userProfile.cpf || ''
         });
 
+        if (userProfile.tags && userProfile.tags.length > 0) {
+            this.activeTag = userProfile.tags.find(t => t.isActive) || userProfile.tags[0];
+            this.profileForm.get('tagSettings')?.patchValue({
+                id: this.activeTag.id,
+                redirectMode: this.activeTag.redirectMode,
+                customUrl: this.activeTag.customUrl
+            });
+        }
+
         this.phones.clear();
         if (userProfile.phones) {
             const sortedPhones = [...userProfile.phones].sort((a, b) => (b.isMain ? 1 : 0) - (a.isMain ? 1 : 0));
@@ -330,6 +353,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       this.addresses.controls.forEach(c => c.enable());
       this.secondaryEmails.controls.forEach(c => c.enable());
       this.links.controls.forEach(c => c.enable());
+      this.profileForm.get('tagSettings')?.enable();
     } else {
       this.onCancel();
     }
@@ -375,7 +399,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
             id: l.id,
             title: l.title,
             url: l.url
-        }))
+        })),
+        tags: formData.tagSettings.id ? [{
+            id: formData.tagSettings.id,
+            redirectMode: formData.tagSettings.redirectMode,
+            customUrl: formData.tagSettings.customUrl
+        }] : []
     };
 
     this.userService.updateUser(this.currentUserData!.id, payload).pipe(

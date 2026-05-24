@@ -128,5 +128,6 @@ export interface FullUserResponse {
   addresses?: Address[];
   secondaryEmails?: SecondaryEmail[];
   links?: UserLink[];
+  tags?: Tag[];
   profilePictureUrl?: string; 
 }

@@ -12,7 +12,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CommonModule } from '@angular/common';
 import { UserService } from '../../../users/services/user.service';
-import { User, AddressTag } from '../../../shared/models/users.models';
+import { User, AddressTag, RedirectMode, Tag } from '../../../shared/models/users.models';
 import { Role } from '../../../shared/models/role.model';
 import { finalize, Observable, Subscription, debounceTime, distinctUntilChanged, filter, switchMap, catchError, of, tap } from 'rxjs';
 import { MatSelectModule } from '@angular/material/select'; 
@@ -74,6 +74,13 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
     };
     addressTags = Object.values(AddressTag);
 
+    redirectModes = [
+        { value: RedirectMode.PROFILE, label: 'Perfil Inteligente' },
+        { value: RedirectMode.WHATSAPP, label: 'WhatsApp Direto' },
+        { value: RedirectMode.VCARD, label: 'Salvar Contato (vCard)' },
+        { value: RedirectMode.CUSTOM_URL, label: 'Link Personalizado' }
+    ];
+
     // Estados de Loading
     isLoadingDetails = false;
     isSaving = false;
@@ -112,7 +119,12 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
             phones: this.fb.array([]),
             addresses: this.fb.array([]),
             secondaryEmails: this.fb.array([]),
-            links: this.fb.array([])
+            links: this.fb.array([]),
+            tagSettings: this.fb.group({
+                id: [null],
+                redirectMode: [RedirectMode.PROFILE],
+                customUrl: ['']
+            })
         });
     }
 
@@ -289,6 +301,15 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
                   this.roleIdControl.setValue(loadedUser.role.id);
                 }
 
+                if (loadedUser.tags && loadedUser.tags.length > 0) {
+                    const activeTag = loadedUser.tags.find(t => t.isActive) || loadedUser.tags[0];
+                    this.userForm.get('tagSettings')?.patchValue({
+                        id: activeTag.id,
+                        redirectMode: activeTag.redirectMode,
+                        customUrl: activeTag.customUrl
+                    });
+                }
+
                 this.phones.clear();
                 if (loadedUser.phones) {
                     const sortedPhones = [...loadedUser.phones].sort((a, b) => (b.isMain ? 1 : 0) - (a.isMain ? 1 : 0));
@@ -352,7 +373,12 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
                 id: l.id,
                 title: l.title,
                 url: l.url
-            }))
+            })),
+            tags: rawData.tagSettings.id ? [{
+                id: rawData.tagSettings.id,
+                redirectMode: rawData.tagSettings.redirectMode,
+                customUrl: rawData.tagSettings.customUrl
+            }] : []
         };
 
         if (!this.data.isCreation && !payload.password) {

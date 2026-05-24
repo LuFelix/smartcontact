@@ -56,6 +56,12 @@ export class UsersListComponent {
     return mainPhone ? mainPhone.number : user.phones[0].number;
   }
 
+  getTagUuid(user: User): string | null {
+    if (!user.tags || user.tags.length === 0) return null;
+    const activeTag = user.tags.find(t => t.isActive);
+    return activeTag ? activeTag.uuid : user.tags[0].uuid;
+  }
+
   getMainAddressInfo(user: User): { neighborhood: string, cityState: string } | null {
     if (!user.addresses || user.addresses.length === 0) return null;
     const addr = user.addresses.find(a => a.isMain) || user.addresses[0];

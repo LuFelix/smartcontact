@@ -18,6 +18,39 @@
 
         <form [formGroup]="userForm" class="config-form" autocomplete="off">
             
+            <!-- SEÇÃO 0: CONFIGURAÇÕES DA TAG (Se existir) -->
+            @if (userForm.get('tagSettings.id')?.value) {
+                <mat-card class="section-card tag-management-section">
+                    <mat-card-header class="header-with-action">
+                        <div class="header-inner">
+                            <mat-card-title>Configurações da Tag NFC</mat-card-title>
+                            <a mat-stroked-button color="primary" [routerLink]="['/t', user?.tags?.[0]?.uuid]" target="_blank" (click)="$event.stopPropagation()">
+                                <mat-icon>visibility</mat-icon> Ver Perfil
+                            </a>
+                        </div>
+                    </mat-card-header>
+                    <mat-card-content>
+                        <div formGroupName="tagSettings" class="tag-settings-grid" style="padding: 10px 20px;">
+                            <mat-form-field appearance="outline">
+                                <mat-label>Modo de Redirecionamento</mat-label>
+                                <mat-select formControlName="redirectMode">
+                                    @for (mode of redirectModes; track mode.value) {
+                                        <mat-option [value]="mode.value">{{ mode.label }}</mat-option>
+                                    }
+                                </mat-select>
+                            </mat-form-field>
+
+                            @if (userForm.get('tagSettings.redirectMode')?.value === 'CUSTOM_URL') {
+                                <mat-form-field appearance="outline">
+                                    <mat-label>URL Personalizada</mat-label>
+                                    <input matInput formControlName="customUrl" placeholder="https://exemplo.com">
+                                </mat-form-field>
+                            }
+                        </div>
+                    </mat-card-content>
+                </mat-card>
+            }
+
             <!-- SEÇÃO 1: INFORMAÇÕES BÁSICAS -->
             <mat-card class="section-card">
                 <mat-card-header>
@@ -227,6 +260,7 @@
                                 </div>
 
                                 <div class="address-grid">
+                                    <!-- ORDEM CORRIGIDA: CEP -> Nº -> RUA -> BAIRRO -> COMPLEMENTO -> CIDADE -> UF -->
                                     <mat-form-field appearance="outline">
                                         <mat-label>CEP</mat-label>
                                         <input matInput formControlName="zipCode" mask="00000-000" [dropSpecialCharacters]="true" placeholder="00000-000" class="focus-target-address">

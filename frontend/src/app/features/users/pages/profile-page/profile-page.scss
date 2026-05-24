@@ -118,6 +118,34 @@
   mat-form-field { width: 100%; }
 }
 
+.tag-management-section {
+    .tag-uuid-badge {
+        background-color: var(--mat-sys-primary-container);
+        color: var(--mat-sys-on-primary-container);
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        mat-icon { font-size: 14px; width: 14px; height: 14px; }
+    }
+    
+    .tag-settings-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+        gap: 16px;
+    }
+    
+    .tag-preview-action {
+        display: flex;
+        align-items: center;
+        height: 56px;
+    }
+}
+
 .form-section {
     display: flex;
     flex-direction: column;

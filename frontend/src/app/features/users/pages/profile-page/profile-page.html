@@ -26,6 +26,44 @@
       </div>
 
       <form [formGroup]="profileForm" class="profile-form" autocomplete="off">
+        
+        <!-- CONFIGURAÇÕES DA TAG NFC -->
+        <div class="form-section tag-management-section" *ngIf="activeTag">
+            <div class="section-header">
+                <h3 class="section-title">Minha Tag SmartContact</h3>
+                <span class="tag-uuid-badge" [matTooltip]="'ID da Tag: ' + activeTag.uuid">
+                    <mat-icon>nfc</mat-icon> Ativa
+                </span>
+            </div>
+            
+            <div formGroupName="tagSettings" class="tag-settings-grid">
+                <mat-form-field appearance="outline">
+                    <mat-label>Onde sua Tag vai abrir?</mat-label>
+                    <mat-select formControlName="redirectMode">
+                        @for (mode of redirectModes; track mode.value) {
+                            <mat-option [value]="mode.value">{{ mode.label }}</mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+
+                @if (profileForm.get('tagSettings.redirectMode')?.value === 'CUSTOM_URL') {
+                    <mat-form-field appearance="outline" class="fade-in">
+                        <mat-label>URL Personalizada</mat-label>
+                        <input matInput formControlName="customUrl" placeholder="https://exemplo.com">
+                        <mat-icon matSuffix>link</mat-icon>
+                    </mat-form-field>
+                }
+                
+                <div class="tag-preview-action">
+                    <a mat-stroked-button color="primary" [routerLink]="['/t', activeTag.uuid]" target="_blank">
+                        <mat-icon>visibility</mat-icon> Ver meu Perfil Público
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <mat-divider *ngIf="activeTag"></mat-divider>
+
         <!-- INFORMAÇÕES BÁSICAS -->
         <div class="form-section">
             <h3 class="section-title">Dados Pessoais</h3>

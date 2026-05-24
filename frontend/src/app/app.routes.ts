@@ -14,7 +14,7 @@ import { UnauthorizedComponent } from './core/pages/unauthorized-page/unauthoriz
 export const routes: Routes = [
     // Rotas Públicas
     { path: 'login', component: LoginPage, title: 'SmartContact - Login' },
-    { path: '', component: LandingPage }, // Rota raiz pública
+    { path: '', component: LandingPage, pathMatch: 'full' }, // Rota raiz pública (Corrigido pathMatch)
     // Rota para Acesso Negado
     { path: 'unauthorized', component: UnauthorizedComponent },
     

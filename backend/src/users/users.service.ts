@@ -166,16 +166,16 @@ export class UsersService {
         });
 
         if (phones) {
-            user.phones = cleanItems(phones) as any;
+            user.phones = cleanItems(phones).map(p => ({ ...p, user })) as any;
         }
         if (addresses) {
-            user.addresses = cleanItems(addresses) as any;
+            user.addresses = cleanItems(addresses).map(a => ({ ...a, user })) as any;
         }
         if (secondaryEmails) {
-            user.secondaryEmails = cleanItems(secondaryEmails) as any;
+            user.secondaryEmails = cleanItems(secondaryEmails).map(e => ({ ...e, user })) as any;
         }
         if (links) {
-            user.links = cleanItems(links) as any;
+            user.links = cleanItems(links).map(l => ({ ...l, user })) as any;
         }
 
         return this.usersRepository.save(user);
