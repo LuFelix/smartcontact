@@ -84,10 +84,14 @@ export class UsersService {
             links: cleanItems(links),
         };
 
-        const user = this.usersRepository.create(userData);
-        const savedUser = await this.usersRepository.save(user);
+    const user = this.usersRepository.create(userData);
+    const savedUser = await this.usersRepository.save(user);
 
-        // CRIAÇÃO AUTOMÁTICA DE PROFILE
+    // CRIAÇÃO AUTOMÁTICA DE PROFILE E TAG (Apenas para Contas Reais/SaaS)
+    // Se o usuário não tem senha ou é apenas um contato importado, não ganha perfil público
+    const isRealAccount = !!createUserDto.password || ['administrador', 'colaborador'].includes(assignedRole.name);
+
+    if (isRealAccount) {
         await this.profilesService.create({
             userId: savedUser.id,
             ownerId: savedUser.ownerId!,
@@ -95,15 +99,15 @@ export class UsersService {
             profilePictureUrl: profilePictureUrl
         });
 
-        // CRIAÇÃO AUTOMÁTICA DE TAG (Para o perfil público funcionar de imediato)
         await this.tagsService.createDefaultTag(
             savedUser.id,
             savedUser.ownerId!,
             savedUser.tenantId!
         );
-
-        return savedUser;
     }
+
+    return savedUser;
+  }
 
     async findByCpf(cpf: string): Promise<User | null> {
         return this.usersRepository.findOne({ 

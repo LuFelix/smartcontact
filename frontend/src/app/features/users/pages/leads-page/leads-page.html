@@ -30,6 +30,11 @@
                         <td mat-cell *matCellDef="let lead"> {{ lead.leadPhone || '-' }} </td>
                     </ng-container>
 
+                    <ng-container matColumnDef="leadNote">
+                        <th mat-header-cell *matHeaderCellDef> Nota/Contexto </th>
+                        <td mat-cell *matCellDef="let lead"> {{ lead.leadNote || '-' }} </td>
+                    </ng-container>
+
                     <ng-container matColumnDef="accessedAt">
                         <th mat-header-cell *matHeaderCellDef> Data </th>
                         <td mat-cell *matCellDef="let lead"> {{ lead.accessedAt | date:'dd/MM/yyyy HH:mm' }} </td>

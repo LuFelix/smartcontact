@@ -43,7 +43,7 @@ export class GoogleContactsController {
           }
       }
   })
-  async saveLead(@Body() data: { accessToken: string, lead: any }) {
-    return this.googleContactsService.saveLeadToGoogle(data.accessToken, data.lead);
+  async saveLead(@Body() data: { accessToken: string, lead: any }, @GetUser() currentUser: any) {
+    return this.googleContactsService.saveLeadToGoogle(data.accessToken, data.lead, currentUser);
   }
 }

@@ -15,7 +15,7 @@ export class InteractionLogsController {
   @Post('capture-lead/:tagId')
   @ApiOperation({ summary: 'Captura dados de um lead vindo de uma tag NFC' })
   async captureLead(
-    @Body() leadData: { name: string, email: string, phone?: string },
+    @Body() leadData: { name: string, email: string, phone?: string, note?: string },
     @Req() req: Request,
     @Body('tagId') tagIdParam: string // Caso venha no body, ou use o param
   ) {

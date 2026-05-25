@@ -39,7 +39,7 @@ export class LeadsPage implements OnInit {
   leads: Lead[] = [];
   isLoading = true;
   isSavingToGoogle = false;
-  displayedColumns = ['leadName', 'leadEmail', 'leadPhone', 'accessedAt', 'actions'];
+  displayedColumns = ['leadName', 'leadEmail', 'leadPhone', 'leadNote', 'accessedAt', 'actions'];
 
   ngOnInit(): void {
     this.loadLeads();

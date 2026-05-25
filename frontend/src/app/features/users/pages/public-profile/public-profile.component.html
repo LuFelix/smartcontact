@@ -127,6 +127,11 @@
                                [dropSpecialCharacters]="true"
                                placeholder="Seu telefone">
                     </mat-form-field>
+                    <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>Como nos conhecemos?</mat-label>
+                        <input matInput formControlName="note" maxlength="50" placeholder="Ex: Nos conhecemos em...">
+                        <mat-hint align="end">{{ leadForm.get('note')?.value?.length || 0 }}/50</mat-hint>
+                    </mat-form-field>
                     <button mat-flat-button color="primary" type="submit" [disabled]="leadForm.invalid || isSubmittingLead">
                         {{ isSubmittingLead ? 'Enviando...' : 'Enviar meu contato' }}
                     </button>
