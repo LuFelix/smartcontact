@@ -27,13 +27,13 @@ export class Profile {
   @Column({ type: 'jsonb', name: 'social_links', nullable: true })
   socialLinks!: any;
 
-  @Column({ type: 'uuid', name: 'tenant_id' })
+  @Column({ type: 'uuid', name: 'tenant_id', nullable: true })
   @Index()
-  tenantId!: string;
+  tenantId!: string | null;
 
-  @Column({ type: 'uuid', name: 'owner_id' })
+  @Column({ type: 'uuid', name: 'owner_id', nullable: true })
   @Index()
-  ownerId!: string;
+  ownerId!: string | null;
 
   @OneToOne(() => User)
   @JoinColumn({ name: 'user_id' })
