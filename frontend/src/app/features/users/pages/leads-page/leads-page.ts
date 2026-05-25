@@ -5,11 +5,15 @@ import { GoogleContactsService } from '../../../../core/services/google-contacts
 import { Lead } from '../../../shared/models/users.models';
 import { finalize } from 'rxjs';
 import { SocialAuthService, GoogleLoginProvider } from '@abacritt/angularx-social-login';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { LayoutService } from '../../../../core/services/layout.service';
+
+// Components
+import { LeadsCardListComponent } from '../../components/leads-card-list/leads-card-list';
+import { LeadsListViewComponent } from '../../components/leads-list-view/leads-list-view';
 
 // Material
 import { MatCardModule } from '@angular/material/card';
-import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -21,11 +25,13 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   imports: [
     CommonModule,
     MatCardModule,
-    MatTableModule,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatSnackBarModule,
+    LeadsCardListComponent,
+    LeadsListViewComponent
   ],
   templateUrl: './leads-page.html',
   styleUrl: './leads-page.scss'
@@ -35,11 +41,11 @@ export class LeadsPage implements OnInit {
   private googleService = inject(GoogleContactsService);
   private socialAuth = inject(SocialAuthService);
   private snackBar = inject(MatSnackBar);
+  public layoutService = inject(LayoutService);
 
   leads: Lead[] = [];
   isLoading = true;
   isSavingToGoogle = false;
-  displayedColumns = ['leadName', 'leadEmail', 'leadPhone', 'leadNote', 'accessedAt', 'actions'];
 
   ngOnInit(): void {
     this.loadLeads();
@@ -71,7 +77,8 @@ export class LeadsPage implements OnInit {
         }).subscribe({
           next: () => {
             this.isSavingToGoogle = false;
-            this.snackBar.open('Contato salvo com sucesso no seu Google!', 'Sucesso', { duration: 3000 });
+            this.snackBar.open('Contato salvo com sucesso no seu Google e no coffer local!', 'Sucesso', { duration: 4000 });
+            this.loadLeads(); // Recarrega para atualizar estado se necessário
           },
           error: (err) => {
             this.isSavingToGoogle = false;

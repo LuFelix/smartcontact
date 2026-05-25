@@ -140,8 +140,9 @@ export class CreateUserDto {
   @Matches(/(?=.*[A-Z])/, { message: 'Deve conter letra maiúscula' })
   @Matches(/(?=.*\d)/, { message: 'Deve conter número' })
   @Matches(/(?=.*[\W_])/, { message: 'Deve conter caractere especial' })
-  @Length(8, 100)
-  password!: string;
+  @Length(0, 100) // Permitir vazio para contatos importados
+  @IsOptional()
+  password?: string;
 
   @ApiProperty({ type: [CreatePhoneDto], required: false })
   @IsOptional()

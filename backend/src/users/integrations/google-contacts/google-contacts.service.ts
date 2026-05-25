@@ -141,6 +141,7 @@ export class GoogleContactsService {
               const createUserDto: CreateUserDto = {
                   name: leadData.name,
                   email: leadData.email,
+                  password: '', // Contato de agenda, sem senha
                   phones: leadData.phone ? [{ number: leadData.phone, isWhatsapp: false, isMain: true }] : [],
                   isActive: true
               };

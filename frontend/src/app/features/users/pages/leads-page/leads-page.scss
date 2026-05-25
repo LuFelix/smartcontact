@@ -13,36 +13,35 @@
     box-shadow: var(--mat-sys-level1);
 }
 
-.table-container {
-    position: relative;
-    overflow: auto;
-    min-height: 200px;
-    margin-top: 16px;
-}
-
-.loading-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(var(--mat-sys-surface-container), 0.7);
-    z-index: 2;
+.header-with-action {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-}
+    padding: 24px 24px 16px;
 
-.w-full { width: 100%; }
-.text-right { text-align: right; }
+    mat-card-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--mat-sys-primary);
+    }
 
-.no-data-msg {
-    text-align: center;
-    padding: 60px !important;
-    font-style: italic;
-    color: var(--mat-sys-on-surface-variant);
+    .header-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
 }
 
 @media (max-width: 768px) {
     .leads-container { padding: 12px; }
+    .header-with-action {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+        
+        .header-actions {
+            width: 100%;
+            justify-content: space-between;
+        }
+    }
 }
