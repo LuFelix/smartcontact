@@ -174,15 +174,18 @@ export class AuthService {
         // Recarrega o usuário para pegar as roles/relações corretamente
         user = await this.usersService.findByEmail(payloadGoogle.email);
       } else {
-          // Se o usuário já existe mas não tem perfil (correção de "apagão")
-          const profile = await this.profilesService.findByUserId(user.id);
+          // Se o usuário já existe, sincroniza o perfil e o avatar
+          let profile = await this.profilesService.findByUserId(user.id);
           if (!profile) {
-              await this.profilesService.create({
+              profile = await this.profilesService.create({
                   userId: user.id,
                   ownerId: user.ownerId!,
                   tenantId: user.tenantId!,
                   profilePictureUrl: payloadGoogle.picture
               });
+          } else if (payloadGoogle.picture && profile.profilePictureUrl !== payloadGoogle.picture) {
+              // Sincroniza a foto do Google caso ela tenha mudado ou estivesse vazia
+              await this.profilesService.update(user.id, { profilePictureUrl: payloadGoogle.picture });
           }
 
           // Se o usuário já existe mas não tem Tag (correção de botão sumido)
