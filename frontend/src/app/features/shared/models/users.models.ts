@@ -154,6 +154,7 @@ export interface Lead {
   leadName: string;
   leadEmail: string;
   leadPhone?: string;
+  leadNote?: string;
   accessedAt: string;
   tagId: string;
 }
