@@ -9,13 +9,12 @@
     @for (member of members; track member.id) {
       <mat-card class="member-item-card" appearance="outlined">
         <mat-card-header>
-          <mat-card-avatar class="member-avatar">
+          <div mat-card-avatar class="member-avatar">
             <img [src]="getAvatar(member)" alt="Foto de {{ member.name }}">
           </div>
           <mat-card-title>{{ member.name }}</mat-card-title>
           <mat-card-subtitle>{{ member.role.name | titlecase }}</mat-card-subtitle>
-          </mat-card-header>
-
+        </mat-card-header>
 
         <mat-card-content class="card-summary-content">
             <div class="contact-info-row">
