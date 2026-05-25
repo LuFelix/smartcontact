@@ -8,6 +8,7 @@ import * as bcrypt from 'bcrypt';
 import { Role } from 'src/roles/entities/role.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { RolesService } from 'src/roles/roles.service';
+import { ProfilesService } from 'src/profiles/profiles.service';
 
 @Injectable()
 export class UsersService {
@@ -22,15 +23,14 @@ export class UsersService {
         private readonly rolesRepository: Repository<Role>,
 
         private readonly rolesService: RolesService,
+        private readonly profilesService: ProfilesService,
     ) { }
 
-    async create(createUserDto: CreateUserDto, currentUser?: any): Promise<User> {
+    async create(createUserDto: CreateUserDto, currentUser?: any, profilePictureUrl?: string): Promise<User> {
         let { email, cpf, password, roleId, phones, addresses, secondaryEmails, links, tags } = createUserDto as any; 
         
         // 1. Identificar o Tenant (Empresa) e o Owner (Dono)
-        // Se o criador tem um tenantId, usamos. Senão, usamos Tiweb.
         const tenantId = currentUser?.tenantId || this.TIWEB_ID;
-        // O dono é quem está criando (currentUser.sub)
         const ownerId = currentUser?.sub || this.TIWEB_ID;
 
         const emailExists = await this.usersRepository.findOne({ where: { email } });
@@ -83,7 +83,17 @@ export class UsersService {
         };
 
         const user = this.usersRepository.create(userData);
-        return this.usersRepository.save(user);
+        const savedUser = await this.usersRepository.save(user);
+
+        // CRIAÇÃO AUTOMÁTICA DE PROFILE
+        await this.profilesService.create({
+            userId: savedUser.id,
+            ownerId: savedUser.ownerId!,
+            tenantId: savedUser.tenantId!,
+            profilePictureUrl: profilePictureUrl
+        });
+
+        return savedUser;
     }
 
     async findByCpf(cpf: string): Promise<User | null> {
@@ -93,15 +103,19 @@ export class UsersService {
         });
     }
 
+    async findByEmail(email: string): Promise<User | null> {
+        return this.usersRepository.findOne({ 
+            where: { email }, 
+            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags'] 
+        });
+    }
+
     async findById(userId: string, currentUser?: any): Promise<User | null> {
         const baseUser = await this.usersRepository.findOne({ where: { id: userId } });
         if (!baseUser) return null;
 
-        // Regra Super Admin: Ele ignora as travas de tenant e owner para fins gerenciais
-        const isSuperAdmin = currentUser?.isSuperAdmin;
-
-        // Regra Multi-Tenant: Bloqueio total cross-tenant (Ignorado se for Super Admin)
-        if (!isSuperAdmin && currentUser?.tenantId && baseUser.tenantId !== currentUser?.tenantId) {
+        // Regra Multi-Tenant: Bloqueio total cross-tenant
+        if (currentUser?.tenantId && baseUser.tenantId !== currentUser?.tenantId) {
              throw new BadRequestException('Acesso negado: Este usuário pertence a outra organização.');
         }
 
@@ -109,14 +123,14 @@ export class UsersService {
         const isOwner = baseUser.ownerId === currentUser?.sub;
         const isOwnProfile = baseUser.id === currentUser?.sub;
         const isTenantAdmin = currentUser?.role === 'administrador';
+        const isSystemAdmin = currentUser?.isSuperAdmin;
 
         // LGPD: Só liberamos as relações de contato se houver permissão
-        // Super Admin vê tudo em todos os tenants
-        const showContacts = isSuperAdmin || isOwnProfile || isOwner || isTenantAdmin;
+        const showContacts = isSystemAdmin || isOwnProfile || isOwner || isTenantAdmin;
 
         const relations = showContacts
-            ? ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags']
-            : ['role', 'tags']; 
+            ? ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile']
+            : ['role', 'tags', 'profile']; 
 
         return this.usersRepository.findOne({ 
             where: { id: userId }, 
@@ -127,11 +141,10 @@ export class UsersService {
     async findAll(page?: number, limit?: number, name?: string, email?: string, cpf?: string, currentUser?: any): Promise<{ data: User[], total: number }> {
         const skip = page && limit ? (page - 1) * limit : 0;
         const tenantId = currentUser?.tenantId || this.TIWEB_ID;
-        const isSuperAdmin = currentUser?.isSuperAdmin;
+        const isSystemAdmin = currentUser?.isSuperAdmin;
 
         const where: any = {};
-        // Filtro Multi-Tenant: Só vê quem é da mesma empresa (Ignorado se for Super Admin)
-        if (!isSuperAdmin && tenantId) {
+        if (!isSystemAdmin && tenantId) {
             where.tenantId = tenantId;
         }
 
@@ -144,7 +157,7 @@ export class UsersService {
             skip,
             take: limit ?? undefined,
             where,
-            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags'],
+            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile'],
         };
 
         const [users, total] = await this.usersRepository.findAndCount(findOptions);
@@ -154,8 +167,7 @@ export class UsersService {
             const isOwnProfile = user.id === currentUser?.sub;
             const isTenantAdmin = user.tenantId === currentUser?.tenantId && currentUser?.role === 'administrador';
 
-            // Super Admin do Sistema OU Admin do Tenant OU Dono OU O Próprio
-            if (isSuperAdmin || isOwnProfile || isOwner || isTenantAdmin) {
+            if (isSystemAdmin || isOwnProfile || isOwner || isTenantAdmin) {
                 return user; 
             }
 
@@ -170,24 +182,25 @@ export class UsersService {
    async update(id: string, updateUserDto: UpdateUserDto, currentUser?: any): Promise<User> { 
         const user = await this.usersRepository.findOne({
             where: { id },
-            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags'],
+            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile'],
         });
 
         if (!user) {
             throw new NotFoundException(`Usuário com ID ${id} não encontrado`);
         }
 
+        const isSystemAdmin = currentUser?.isSuperAdmin;
+
         // Regra Multi-Tenant: Bloqueia edição cross-tenant
-        if (currentUser?.tenantId && user.tenantId !== currentUser?.tenantId) {
+        if (!isSystemAdmin && currentUser?.tenantId && user.tenantId !== currentUser?.tenantId) {
              throw new BadRequestException('Acesso negado: Este usuário pertence a outra organização.');
         }
 
-        // Regra Owner-Data: Apenas o dono, o próprio ou um Admin do Tenant pode editar
+        // Regra Owner-Data: Apenas o dono ou o próprio pode editar (System Admin pode tudo)
         const isOwner = user.ownerId === currentUser?.sub;
         const isOwnProfile = user.id === currentUser?.sub;
-        const isTenantAdmin = currentUser?.role === 'administrador';
 
-        if (!isOwner && !isOwnProfile && !isTenantAdmin) {
+        if (!isSystemAdmin && !isOwner && !isOwnProfile) {
              throw new BadRequestException('Você não tem permissão para editar este usuário.');
         }
 
@@ -246,13 +259,6 @@ export class UsersService {
             verificationExpires: null,
         });
     }
-    
-    async findByEmail(email: string): Promise<User | null> {
-        return this.usersRepository.findOne({ 
-            where: { email }, 
-            relations: ['role', 'phones', 'addresses', 'tags'] 
-        });
-    }
 
     async remove(id: string, currentUser?: any): Promise<{ message: string }> { 
         const user = await this.usersRepository.findOne({ where: { id } });
@@ -261,11 +267,13 @@ export class UsersService {
             throw new NotFoundException(`Usuário com ID ${id} não encontrado.`);
         }
 
-        if (currentUser?.tenantId && user.tenantId !== currentUser?.tenantId) {
+        const isSystemAdmin = currentUser?.isSuperAdmin;
+
+        if (!isSystemAdmin && currentUser?.tenantId && user.tenantId !== currentUser?.tenantId) {
             throw new BadRequestException('Acesso negado: Este usuário pertence a outra organização.');
         }
 
-        if (user.ownerId !== currentUser?.sub && user.id !== currentUser?.sub) {
+        if (!isSystemAdmin && user.ownerId !== currentUser?.sub && user.id !== currentUser?.sub) {
             throw new BadRequestException('Você não tem permissão para remover este usuário.');
         }
 

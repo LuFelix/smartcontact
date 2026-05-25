@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { User } from 'src/users/entities/user.entity';
 import { Role } from 'src/roles/entities/role.entity';
 import { Tag, RedirectMode } from 'src/tags/entities/tag.entity';
+import { ProfilesService } from 'src/profiles/profiles.service';
 import { usersData } from './users-data';
 
 @Injectable()
@@ -21,6 +22,7 @@ export class UserSeedService {
     private readonly roleRepository: Repository<Role>,
     @InjectRepository(Tag)
     private readonly tagRepository: Repository<Tag>,
+    private readonly profilesService: ProfilesService,
   ) {}
 
   async run(defaultRole: Role, admin: User) {
@@ -78,6 +80,16 @@ export class UserSeedService {
         this.userRepository.merge(user, data);
         user = await this.userRepository.save(user);
         this.logger.log(`Usuário '${userData.name}' atualizado.`);
+      }
+
+      // GARANTE QUE O USUÁRIO TENHA UM PROFILE
+      const profile = await this.profilesService.findByUserId(user.id);
+      if (!profile) {
+          await this.profilesService.create({
+              userId: user.id,
+              ownerId: admin.id,
+              tenantId: admin.tenantId as string
+          });
       }
 
       if (!user.tags || user.tags.length === 0) {
