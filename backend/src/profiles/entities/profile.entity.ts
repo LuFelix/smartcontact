@@ -21,12 +21,19 @@ export class Profile {
   @Column({ length: 50, default: 'light' })
   theme!: string;
 
+  @Column({ type: 'varchar', name: 'profile_picture_url', nullable: true })
+  profilePictureUrl!: string | null;
+
   @Column({ type: 'jsonb', name: 'social_links', nullable: true })
   socialLinks!: any;
 
   @Column({ type: 'uuid', name: 'tenant_id' })
   @Index()
   tenantId!: string;
+
+  @Column({ type: 'uuid', name: 'owner_id' })
+  @Index()
+  ownerId!: string;
 
   @OneToOne(() => User)
   @JoinColumn({ name: 'user_id' })

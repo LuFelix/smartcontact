@@ -7,12 +7,19 @@ export class UserEmail {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Index()
   @Column({ length: 100, nullable: false })
   address!: string;
 
   @Column({ default: false })
   isVerified!: boolean;
+
+  @Column({ type: 'uuid', name: 'tenant_id', nullable: true })
+  @Index()
+  tenantId!: string | null;
+
+  @Column({ type: 'uuid', name: 'owner_id', nullable: true })
+  @Index()
+  ownerId!: string | null;
 
   @ManyToOne(() => User, (user) => user.secondaryEmails, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })

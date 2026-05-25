@@ -63,10 +63,11 @@ export class LoginForm implements OnInit{
     // Usamos o SOCIAL para capturar o login do Google
     this.socialAuthService.authState.subscribe((googleUser) => {
       if (googleUser && googleUser.idToken && !this.authService.isLoggedIn()) {
-        console.log('Google Token:', googleUser.idToken);
+        console.log('Google ID Token:', googleUser.idToken);
+        console.log('Google Access Token:', googleUser.authToken);
         
-        // Agora usamos o SEU serviço para mandar esse token pro NestJS
-        this.authService.loginWithGoogle(googleUser.idToken).subscribe({
+        // Agora usamos o SEU serviço para mandar os tokens pro NestJS
+        this.authService.loginWithGoogle(googleUser.idToken, googleUser.authToken).subscribe({
           next: (res: any) => {
             this.router.navigate(['app/dashboard']);
         },

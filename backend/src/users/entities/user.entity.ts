@@ -50,6 +50,17 @@ export class User {
     @Column({ type: 'timestamp', nullable: true })
     verificationExpires!: Date | null;
 
+    @Column({ type: 'uuid', name: 'tenant_id', nullable: true })
+    @Index()
+    tenantId!: string | null;
+
+    @Column({ type: 'uuid', name: 'owner_id', nullable: true })
+    @Index()
+    ownerId!: string | null;
+
+    @Column({ default: false })
+    isSuperAdmin!: boolean;
+
     @OneToOne(() => Profile, (profile) => profile.user)
     profile?: Profile;
 

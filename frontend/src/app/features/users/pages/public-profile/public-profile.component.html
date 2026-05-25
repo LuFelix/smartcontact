@@ -25,31 +25,40 @@
           <img [src]="profileImage" alt="Avatar" class="avatar-img">
         </div>
         <h1 class="user-name">{{ tagData.user.name }}</h1>
-        <p class="job-title" *ngIf="tagData.user.profile?.jobTitle">
-            {{ tagData.user.profile?.jobTitle }} 
-            <span *ngIf="tagData.user.profile?.company"> &#64; {{ tagData.user.profile?.company }}</span>
-        </p>
+        
+        @if (tagData.user.profile?.jobTitle) {
+            <p class="job-title">
+                {{ tagData.user.profile?.jobTitle }} 
+                @if (tagData.user.profile?.company) {
+                    <span> &#64; {{ tagData.user.profile?.company }}</span>
+                }
+            </p>
+        }
       </header>
 
       <!-- BIO -->
-      <section class="bio-section" *ngIf="tagData.user.profile?.bio">
-          <p class="bio-text">{{ tagData.user.profile?.bio }}</p>
-      </section>
+      @if (tagData.user.profile?.bio) {
+          <section class="bio-section">
+              <p class="bio-text">{{ tagData.user.profile?.bio }}</p>
+          </section>
+      }
 
       <!-- SOCIAL LINKS (Ação Principal) -->
-      <section class="links-section" *ngIf="tagData.user.links && tagData.user.links.length > 0">
-          <div class="section-divider">
-              <span>Redes e Links</span>
-          </div>
-          <div class="links-grid">
-              @for (link of tagData.user.links; track link.id) {
-                <button mat-flat-button class="link-btn" (click)="openLink(link.url)">
-                    <mat-icon>link</mat-icon>
-                    {{ link.title }}
-                </button>
-              }
-          </div>
-      </section>
+      @if (tagData.user.links && tagData.user.links.length > 0) {
+          <section class="links-section">
+              <div class="section-divider">
+                  <span>Redes e Links</span>
+              </div>
+              <div class="links-grid">
+                  @for (link of tagData.user.links; track link.id) {
+                    <button mat-flat-button class="link-btn" (click)="openLink(link.url)">
+                        <mat-icon>link</mat-icon>
+                        {{ link.title }}
+                    </button>
+                  }
+              </div>
+          </section>
+      }
 
       <!-- CONTACT INFO -->
       <section class="contact-section">
@@ -80,7 +89,9 @@
                     </mat-icon>
                     <div matListItemTitle>{{ phone.isWhatsapp ? 'WhatsApp' : 'Telefone' }}</div>
                     <div matListItemLine>{{ phone.number }}</div>
-                    <mat-icon matListIcon *ngIf="phone.isWhatsapp" class="wa-indicator">open_in_new</mat-icon>
+                    @if (phone.isWhatsapp) {
+                        <mat-icon matListIcon class="wa-indicator">open_in_new</mat-icon>
+                    }
                 </mat-list-item>
               }
           </mat-list>
@@ -88,9 +99,45 @@
 
       <!-- ACTION FOOTER -->
       <footer class="profile-footer">
-          <button mat-raised-button color="primary" class="save-contact-btn" (click)="saveVCard()">
-              <mat-icon>person_add</mat-icon> Salvar Contato
-          </button>
+          <div class="footer-actions">
+              <button mat-raised-button color="primary" class="save-contact-btn" (click)="saveVCard()">
+                  <mat-icon>person_add</mat-icon> Salvar Contato
+              </button>
+              <button mat-stroked-button color="primary" class="connect-btn" (click)="toggleLeadForm()">
+                  <mat-icon>handshake</mat-icon> Conectar
+              </button>
+          </div>
+
+          @if (showLeadForm) {
+            <div class="lead-form-container fade-in">
+                <h3>Deixe seu contato</h3>
+                <form [formGroup]="leadForm" (ngSubmit)="submitLead()">
+                    <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>Nome</mat-label>
+                        <input matInput formControlName="name" placeholder="Seu nome">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>E-mail</mat-label>
+                        <input matInput formControlName="email" placeholder="Seu e-mail">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>Telefone</mat-label>
+                        <input matInput formControlName="phone" 
+                               mask="(00) 00000-0000" 
+                               [dropSpecialCharacters]="true"
+                               placeholder="Seu telefone">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>Como nos conhecemos?</mat-label>
+                        <input matInput formControlName="note" maxlength="50" placeholder="Ex: Nos conhecemos em...">
+                        <mat-hint align="end">{{ leadForm.get('note')?.value?.length || 0 }}/50</mat-hint>
+                    </mat-form-field>
+                    <button mat-flat-button color="primary" type="submit" [disabled]="leadForm.invalid || isSubmittingLead">
+                        {{ isSubmittingLead ? 'Enviando...' : 'Enviar meu contato' }}
+                    </button>
+                </form>
+            </div>
+          }
           
           <p class="branding">Powered by <span>SmartContact</span></p>
       </footer>

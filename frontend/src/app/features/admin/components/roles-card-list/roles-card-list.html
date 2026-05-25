@@ -1,0 +1,42 @@
+<div class="roles-grid-container">
+  @if (isLoading) {
+    <div class="spinner-overlay">
+      <mat-progress-spinner color="primary" mode="indeterminate"></mat-progress-spinner>
+    </div>
+  }
+
+  <div class="cards-grid">
+    @for (role of roles; track role.id) {
+      <mat-card class="role-item-card" appearance="outlined" (click)="editRole.emit(role)">
+        <mat-card-header>
+          <div mat-card-avatar class="role-avatar">
+            <mat-icon>security</mat-icon>
+          </div>
+          <mat-card-title>{{ role.name }}</mat-card-title>
+          <mat-card-subtitle>Função do Sistema</mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content class="card-summary-content">
+            <p class="description">{{ role.description || 'Sem descrição cadastrada.' }}</p>
+        </mat-card-content>
+        
+        <mat-card-actions align="end" (click)="$event.stopPropagation()">
+          <button mat-icon-button color="primary" (click)="editRole.emit(role)" matTooltip="Editar Função">
+            <mat-icon>edit</mat-icon>
+          </button>
+          
+          @if (role.name !== 'administrador' && role.name !== 'usuario') {
+            <button mat-icon-button color="warn" (click)="deleteRole.emit(role)" matTooltip="Excluir Função">
+              <mat-icon>delete</mat-icon>
+            </button>
+          }
+        </mat-card-actions>
+      </mat-card>
+    } @empty {
+      <div class="no-data">
+        <mat-icon>admin_panel_settings</mat-icon>
+        <p>Nenhuma função encontrada.</p>
+      </div>
+    }
+  </div>
+</div>

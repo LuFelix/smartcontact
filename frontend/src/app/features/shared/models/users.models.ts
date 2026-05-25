@@ -6,6 +6,10 @@ export interface JwtPayload {
     name: string;
     email: string;
     role: string;
+    tenantId?: string;
+    ownerId?: string;
+    isSuperAdmin?: boolean;
+    picture?: string;
     iat?: number;
     exp?: number;
 }
@@ -92,6 +96,7 @@ export interface User {
     bio?: string;
     jobTitle?: string;
     company?: string;
+    profilePictureUrl?: string;
   };
   phones?: Phone[];
   addresses?: Address[];
@@ -134,6 +139,7 @@ export interface FullUserResponse {
     bio?: string;
     jobTitle?: string;
     company?: string;
+    profilePictureUrl?: string;
   };
   phones?: Phone[];
   addresses?: Address[];
@@ -141,4 +147,14 @@ export interface FullUserResponse {
   links?: UserLink[];
   tags?: Tag[];
   profilePictureUrl?: string; 
+}
+
+export interface Lead {
+  id: string;
+  leadName: string;
+  leadEmail: string;
+  leadPhone?: string;
+  leadNote?: string;
+  accessedAt: string;
+  tagId: string;
 }

@@ -1,16 +1,18 @@
 // seeds/seed.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DeepPartial } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/roles/entities/role.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Tag, RedirectMode } from 'src/tags/entities/tag.entity';
 import { UserSeedService } from './users/user-seed.service';
+import { ProfilesService } from 'src/profiles/profiles.service';
 
 @Injectable()
 export class SeedService {
   private readonly logger = new Logger(SeedService.name);
+  private readonly TIWEB_ID = 'aebfbdfa-0088-4bf1-9bee-36529cfc3866';
 
   constructor(
     @InjectRepository(Role)
@@ -20,6 +22,7 @@ export class SeedService {
     @InjectRepository(Tag)
     private readonly tagRepository: Repository<Tag>,
     private readonly userSeedService: UserSeedService,
+    private readonly profilesService: ProfilesService,
   ) {}
 
   async run() {
@@ -28,12 +31,11 @@ export class SeedService {
     const adminRole = await this.seedRoles();
 
     if (adminRole) {
-      await this.seedAdminUser(adminRole);
+      const admin = await this.seedAdminUser(adminRole);
       
-      // Busca a role de colaborador para o seed de 50 usuários
       const colaboradorRole = await this.roleRepository.findOne({ where: { name: 'colaborador' } });
-      if (colaboradorRole) {
-          await this.userSeedService.run(colaboradorRole);
+      if (colaboradorRole && admin) {
+          await this.userSeedService.run(colaboradorRole, admin);
       }
     } else {
       this.logger.error('A role "administrador" não foi encontrada ou criada.');
@@ -61,7 +63,7 @@ export class SeedService {
     return adminRole;
   }
 
-  private async seedAdminUser(adminRole: Role) {
+  private async seedAdminUser(adminRole: Role): Promise<User | undefined> {
     const adminEmail = 'admin@smartcontact.com.br';
     const adminPassword = 'Senha@123';
 
@@ -73,16 +75,18 @@ export class SeedService {
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(adminPassword, salt);
 
-    const adminData = {
+    const adminData: DeepPartial<User> = {
+        id: this.TIWEB_ID, // Fixar o ID do admin para facilitar ownerId
         name: 'Usuário Administrador',
         email: adminEmail,
         cpf: '00000000000',
         password: hashedPassword,
         isVerified: true,
         role: adminRole,
-        // Garante que o admin tenha ao menos um telefone e endereço no formato novo
+        ownerId: this.TIWEB_ID,
+        tenantId: this.TIWEB_ID,
         phones: [
-            { number: '00000000000', isWhatsapp: true, isMain: true }
+            { number: '00000000000', isWhatsapp: true, isMain: true, ownerId: this.TIWEB_ID, tenantId: this.TIWEB_ID }
         ],
         addresses: [
             { 
@@ -93,34 +97,47 @@ export class SeedService {
                 state: 'AL', 
                 zipCode: '00000000', 
                 isMain: true,
-                tag: 'WORK' as any
+                tag: 'WORK' as any,
+                ownerId: this.TIWEB_ID,
+                tenantId: this.TIWEB_ID
             }
         ]
     };
 
     if (!admin) {
       admin = this.userRepository.create(adminData);
-      await this.userRepository.save(admin);
+      admin = await this.userRepository.save(admin);
       this.logger.log(`Usuário administrador criado com sucesso.`);
     } else {
-      // Atualiza o administrador existente com os novos dados (Importante para migração de estrutura)
       this.userRepository.merge(admin, adminData);
-      await this.userRepository.save(admin);
+      admin = await this.userRepository.save(admin);
       this.logger.log(`Usuário administrador atualizado para a nova estrutura.`);
     }
 
-    // Garante que o Admin tenha uma tag de teste
-    const adminTag = await this.tagRepository.findOne({ where: { userId: admin!.id } });
+    // GARANTE QUE O ADMIN TENHA UM PROFILE
+    const adminProfile = await this.profilesService.findByUserId(admin.id);
+    if (!adminProfile) {
+        await this.profilesService.create({
+            userId: admin.id,
+            ownerId: this.TIWEB_ID,
+            tenantId: this.TIWEB_ID
+        });
+    }
+
+    const adminTag = await this.tagRepository.findOne({ where: { userId: admin.id } });
     if (!adminTag) {
-        const newTag = this.tagRepository.create({
+        const newTagData: DeepPartial<Tag> = {
             uuid: 'test-tag-admin',
-            userId: admin!.id,
-            tenantId: '00000000-0000-0000-0000-000000000000',
+            userId: admin.id,
+            ownerId: this.TIWEB_ID,
+            tenantId: this.TIWEB_ID,
             redirectMode: RedirectMode.PROFILE,
             isActive: true
-        });
+        };
+        const newTag = this.tagRepository.create(newTagData);
         await this.tagRepository.save(newTag);
         this.logger.log(`Tag 'test-tag-admin' criada para o administrador.`);
     }
+    return admin;
   }
 }

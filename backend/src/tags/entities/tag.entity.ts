@@ -46,9 +46,13 @@ export class Tag {
   @Column({ type: 'uuid', name: 'user_id' })
   userId!: string;
 
-  @Column({ type: 'uuid', name: 'tenant_id' })
+  @Column({ type: 'uuid', name: 'tenant_id', nullable: true })
   @Index()
-  tenantId!: string;
+  tenantId!: string | null;
+
+  @Column({ type: 'uuid', name: 'owner_id', nullable: true })
+  @Index()
+  ownerId!: string | null;
 
   @Column({ default: true, name: 'is_active' })
   isActive!: boolean;

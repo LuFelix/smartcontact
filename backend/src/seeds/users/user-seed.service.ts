@@ -1,14 +1,13 @@
 // seeds/users/user-seed.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DeepPartial } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from 'src/users/entities/user.entity';
 import { Role } from 'src/roles/entities/role.entity';
 import { Tag, RedirectMode } from 'src/tags/entities/tag.entity';
-
-// Importação direta usando CommonJS require para evitar problemas de iterabilidade com import *
-const usersData = require('./users-data.json');
+import { ProfilesService } from 'src/profiles/profiles.service';
+import { usersData } from './users-data';
 
 @Injectable()
 export class UserSeedService {
@@ -23,9 +22,10 @@ export class UserSeedService {
     private readonly roleRepository: Repository<Role>,
     @InjectRepository(Tag)
     private readonly tagRepository: Repository<Tag>,
+    private readonly profilesService: ProfilesService,
   ) {}
 
-  async run(defaultRole: Role) {
+  async run(defaultRole: Role, admin: User) {
     this.logger.log('Iniciando seed de 50 usuários com contatos e tags...');
 
     const password = 'Senha!123';
@@ -33,7 +33,7 @@ export class UserSeedService {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     for (const [index, userData] of usersData.entries()) {
-      const emailBase = userData.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-');
+      const emailBase = userData.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f|]/g, "").replace(/\s+/g, '-');
       const email = `${emailBase}@smartcontact.tiweb.app.br`;
 
       let user = await this.userRepository.findOne({ 
@@ -44,15 +44,17 @@ export class UserSeedService {
       const randomCep = this.ceps[Math.floor(Math.random() * this.ceps.length)];
       const randomPhone = `829${Math.floor(10000000 + Math.random() * 90000000)}`;
 
-      const data = {
+      const data: DeepPartial<User> = {
         name: userData.name,
         email: email,
         password: hashedPassword,
         isVerified: true,
         isActive: true,
         role: defaultRole,
+        ownerId: admin.id, // O criador é o Admin
+        tenantId: admin.tenantId, // Pertencem à mesma empresa (Tiweb)
         phones: [
-            { number: randomPhone, isWhatsapp: Math.random() > 0.3, isMain: true }
+            { number: randomPhone, isWhatsapp: Math.random() > 0.3, isMain: true, ownerId: admin.id, tenantId: admin.tenantId }
         ],
         addresses: [
             {
@@ -63,7 +65,9 @@ export class UserSeedService {
                 state: 'AL',
                 zipCode: randomCep,
                 tag: 'HOME' as any,
-                isMain: true
+                isMain: true,
+                ownerId: admin.id,
+                tenantId: admin.tenantId
             }
         ]
       };
@@ -78,15 +82,26 @@ export class UserSeedService {
         this.logger.log(`Usuário '${userData.name}' atualizado.`);
       }
 
-      // Garante que cada usuário do seed tenha uma tag para teste
+      // GARANTE QUE O USUÁRIO TENHA UM PROFILE
+      const profile = await this.profilesService.findByUserId(user.id);
+      if (!profile) {
+          await this.profilesService.create({
+              userId: user.id,
+              ownerId: admin.id,
+              tenantId: admin.tenantId as string
+          });
+      }
+
       if (!user.tags || user.tags.length === 0) {
-          const newTag = this.tagRepository.create({
+          const newTagData: DeepPartial<Tag> = {
               uuid: `test-tag-${emailBase}`,
               userId: user.id,
-              tenantId: '00000000-0000-0000-0000-000000000000', // Default tenant
+              ownerId: admin.id,
+              tenantId: admin.tenantId as string,
               redirectMode: RedirectMode.PROFILE,
               isActive: true
-          });
+          };
+          const newTag = this.tagRepository.create(newTagData);
           await this.tagRepository.save(newTag);
           this.logger.log(`Tag 'test-tag-${emailBase}' criada para o usuário.`);
       }

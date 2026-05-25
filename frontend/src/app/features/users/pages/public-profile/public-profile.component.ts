@@ -2,8 +2,11 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule, RouterLink } from '@angular/router';
 import { TagService, TagResolutionResponse } from '../../../../core/services/tag.service';
+import { InteractionLogsService } from '../../../../core/services/interaction-logs.service';
 import { finalize } from 'rxjs';
 import { RedirectMode } from '../../../shared/models/users.models';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 // Material
 import { MatCardModule } from '@angular/material/card';
@@ -13,6 +16,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatListModule } from '@angular/material/list';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { NgxMaskDirective } from 'ngx-mask';
 
 @Component({
   selector: 'app-public-profile',
@@ -21,13 +27,17 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     CommonModule,
     RouterModule,
     RouterLink,
+    ReactiveFormsModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
     MatDividerModule,
     MatListModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatInputModule,
+    MatFormFieldModule,
+    NgxMaskDirective
   ],
   templateUrl: './public-profile.component.html',
   styleUrls: ['./public-profile.component.scss']
@@ -35,10 +45,26 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 export class PublicProfileComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private tagService = inject(TagService);
+  private logsService = inject(InteractionLogsService);
+  private fb = inject(FormBuilder);
+  private snackBar = inject(MatSnackBar);
   
   tagData: TagResolutionResponse | null = null;
   isLoading = true;
   error: string | null = null;
+
+  showLeadForm = false;
+  isSubmittingLead = false;
+  leadForm!: FormGroup;
+
+  constructor() {
+    this.leadForm = this.fb.group({
+      name: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      phone: [''],
+      note: ['', [Validators.maxLength(50)]]
+    });
+  }
 
   ngOnInit(): void {
     const uuid = this.route.snapshot.paramMap.get('uuid');
@@ -76,14 +102,14 @@ export class PublicProfileComponent implements OnInit {
         window.location.href = `https://wa.me/${cleanNumber}`;
       }
     }
-    // Se for PROFILE, permanece na página e renderiza o HTML
   }
 
   get profileImage(): string {
-    if (this.tagData?.user.profilePictureUrl) {
-        return `http://localhost:3000/${this.tagData.user.profilePictureUrl}`;
-    }
-    return 'assets/profile-photo-stock.png'; // Usando o que já existe no public do frontend
+    const url = this.tagData?.user.profile?.profilePictureUrl;
+    if (!url) return 'assets/profile-photo-stock.png';
+    
+    // Se for uma URL completa (Google, etc.), retorna direto. Senão, anexa o servidor local.
+    return url.startsWith('http') ? url : `http://localhost:3000/${url}`;
   }
 
   openLink(url: string): void {
@@ -93,5 +119,32 @@ export class PublicProfileComponent implements OnInit {
 
   saveVCard(): void {
       alert('Funcionalidade de Salvar Contato (VCard) em desenvolvimento.');
+  }
+
+  toggleLeadForm(): void {
+    this.showLeadForm = !this.showLeadForm;
+  }
+
+  submitLead(): void {
+    if (this.leadForm.invalid) return;
+
+    this.isSubmittingLead = true;
+    const tagId = this.tagData?.id;
+    
+    if (!tagId) return;
+
+    this.logsService.captureLead(tagId, this.leadForm.value)
+      .pipe(finalize(() => this.isSubmittingLead = false))
+      .subscribe({
+        next: () => {
+          this.snackBar.open('Seus dados foram enviados! Em breve entraremos em contato.', 'OK', { duration: 5000 });
+          this.leadForm.reset();
+          this.showLeadForm = false;
+        },
+        error: (err) => {
+          console.error(err);
+          this.snackBar.open('Erro ao enviar dados. Tente novamente mais tarde.', 'Fechar');
+        }
+      });
   }
 }

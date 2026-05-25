@@ -333,9 +333,14 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.links.clear();
         if (userProfile.links) userProfile.links.forEach(l => this.addLink(l));
 
-        this.profilePicturePreview = userProfile.profilePictureUrl 
-          ? 'http://localhost:3000/' + userProfile.profilePictureUrl
-          : null;
+        const avatarUrl = userProfile.profile?.profilePictureUrl;
+        if (avatarUrl) {
+            this.profilePicturePreview = avatarUrl.startsWith('http') 
+                ? avatarUrl 
+                : 'http://localhost:3000/' + avatarUrl;
+        } else {
+            this.profilePicturePreview = null;
+        }
 
         this.profileForm.disable();
       },

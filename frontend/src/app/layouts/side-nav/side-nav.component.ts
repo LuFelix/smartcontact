@@ -38,6 +38,12 @@ export class SideNavComponent {
 
     // Usuários (Gerencial)
     { link: '/app/users', label: 'Usuários', icon: 'group', requiredPermission: 'READ_USERS' }, 
+
+    // Gestão de Roles (Configurações)
+    { link: '/app/roles', label: 'Gestão de Roles', icon: 'admin_panel_settings', requiredPermission: 'ASSIGN_USER_ROLES' },
+
+    // Meus Leads (CRM)
+    { link: '/app/leads', label: 'Meus Leads', icon: 'contacts', requiredPermission: 'VIEW_DASHBOARD' },
   ];
 
   // Função auxiliar para verificar permissão

@@ -63,6 +63,19 @@ export const routes: Routes = [
                 loadChildren: () => import('./features/users/pages/profile-page/profile.routes').then(m => m.PROFILE_ROUTES),
                 // Geralmente não precisa de guarda específico aqui, só o authGuard do pai
             },
+            {
+                path: 'roles',
+                loadComponent: () => import('./features/admin/pages/roles-page/roles-page').then(m => m.RolesPageComponent),
+                canActivate: [roleGuard],
+                data: { roles: ['administrador'] },
+                title: 'SmartContact - Gestão de Roles'
+            },
+            {
+                path: 'leads',
+                loadComponent: () => import('./features/users/pages/leads-page/leads-page').then(m => m.LeadsPage),
+                canActivate: [authGuard],
+                title: 'SmartContact - Meus Leads'
+            },
             
             //outras rotas filhas aqui
         ]

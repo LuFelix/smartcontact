@@ -7,20 +7,28 @@ export interface Permission {
 
 // Definição da Função (Role)
 export interface Role {
-    id: number;
+    id: string; // Alterado para string (UUID) para alinhar com o backend
     name: string; // Ex: 'Administrador', 'Candidato'
     description: string;
-    permissions: Permission[]; // Lista de permissões que esta função possui
-    isActive: boolean; 
+    permissions?: Permission[]; // Lista de permissões que esta função possui
+    isActive?: boolean; 
+}
+
+export interface RolesApiResponse {
+  data: Role[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 // DTOs para Criação e Edição (Data Transfer Objects)
 export interface CreateRoleDTO {
     name: string;
     description: string;
-    permissionIds: number[]; // IDs das permissões a serem associadas
+    permissionIds?: number[]; // Tornando opcional para evitar erros de compilação até implementação do RBAC completo
 }
 
 export interface UpdateRoleDTO extends CreateRoleDTO {
-    isActive: boolean;
+    isActive?: boolean;
 }

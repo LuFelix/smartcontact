@@ -1,4 +1,4 @@
-[
+export const usersData = [
   { "name": "Ana Silva" },
   { "name": "Bruno Souza" },
   { "name": "Carla Oliveira" },
@@ -50,3 +50,4 @@
   { "name": "Wilson Rocha" },
   { "name": "Yasmim Ferreira" }
 ]
+;

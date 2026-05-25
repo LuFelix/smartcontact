@@ -1,0 +1,30 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Editar Função' : 'Nova Função' }}</h2>
+
+<mat-dialog-content class="dialog-content">
+    <form [formGroup]="roleForm" class="flex flex-col gap-4 mt-2">
+        <mat-form-field appearance="outline">
+            <mat-label>Nome da Função</mat-label>
+            <input matInput formControlName="name" placeholder="Ex: Moderador">
+            @if (roleForm.get('name')?.hasError('required')) {
+                <mat-error>O nome é obrigatório</mat-error>
+            }
+            @if (roleForm.get('name')?.hasError('minlength')) {
+                <mat-error>Mínimo de 3 caracteres</mat-error>
+            }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+            <mat-label>Descrição</mat-label>
+            <textarea matInput formControlName="description" rows="3" placeholder="O que este papel pode fazer?"></textarea>
+        </mat-form-field>
+    </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-button (click)="dialogRef.close()">Cancelar</button>
+    <button mat-raised-button color="primary" 
+            (click)="onSubmit()" 
+            [disabled]="roleForm.invalid || isSaving">
+        {{ isSaving ? 'Salvando...' : (isEdit ? 'Salvar Alterações' : 'Criar Role') }}
+    </button>
+</mat-dialog-actions>

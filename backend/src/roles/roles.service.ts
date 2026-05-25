@@ -11,6 +11,8 @@ import { UpdateRoleDto } from './dto/update-role.dto';
  */
 @Injectable()
 export class RolesService {
+    private readonly PROTECTED_ROLES = ['administrador', 'usuario'];
+
     constructor(
         @InjectRepository(Role)
         private readonly rolesRepository: Repository<Role>,
@@ -131,6 +133,13 @@ export class RolesService {
     async update(id: string, updateRoleDto: UpdateRoleDto): Promise<Role> {
         const existingRole = await this.findOne(id);
 
+        // Proteção contra renomeação de roles do sistema
+        if (this.PROTECTED_ROLES.includes(existingRole.name)) {
+            if (updateRoleDto.name && updateRoleDto.name.trim().toLowerCase().replace(/\s+/g, '_') !== existingRole.name) {
+                throw new BadRequestException('As funções estruturais do sistema não podem ser renomeadas.');
+            }
+        }
+
         // Verificar se o novo nome já existe (excluindo a role atual)
         if (updateRoleDto.name) {
             const nameNormalized = updateRoleDto.name.trim().toLowerCase().replace(/\s+/g, '_');
@@ -156,20 +165,43 @@ export class RolesService {
     /**
      * Exclui uma 'role' específica pelo ID.
      * 
-     * @param {number} id - ID da 'role' a ser excluída
+     * - Protege as roles 'administrador' e 'usuario' contra exclusão.
+     * - Reatribui todos os usuários da role excluída para a role 'usuario' automaticamente.
+     * 
+     * @param {string} id - ID da 'role' a ser excluída
      * @returns {Promise<void>}
      * @throws {NotFoundException} Se a 'role' não for encontrada
-     * @throws {BadRequestException} Se houver usuários associados à 'role'
+     * @throws {BadRequestException} Se for uma role protegida
      */
     async remove(id: string): Promise<void> {
-        const role = await this.findOne(id);
+        const role = await this.rolesRepository.findOne({
+            where: { id },
+            relations: ['users']
+        });
 
-        // Verificar se há usuários associados a esta role
-        // Isso assume que você tem uma propriedade 'users' na entidade Role
+        if (!role) {
+            throw new NotFoundException(`Role with ID ${id} not found`);
+        }
+
+        // Proteção de roles do sistema
+        if (this.PROTECTED_ROLES.includes(role.name)) {
+            throw new BadRequestException('As funções estruturais do sistema não podem ser excluídas.');
+        }
+
+        // 1. Localizar a role de fallback ("usuario")
+        const defaultRole = await this.rolesRepository.findOne({ where: { name: 'usuario' } });
+        if (!defaultRole) {
+             throw new BadRequestException('Função de segurança "usuario" não encontrada no sistema.');
+        }
+
+        // 2. Reatribuir usuários (se houver) para a role padrão antes de excluir
         if (role.users && role.users.length > 0) {
-            throw new BadRequestException(
-                `Cannot delete role: there are ${role.users.length} user(s) associated with this role`
-            );
+            await this.rolesRepository.manager
+                .createQueryBuilder()
+                .update('User') // Referencia a entidade User
+                .set({ role: defaultRole })
+                .where('role_id = :id', { id })
+                .execute();
         }
 
         await this.rolesRepository.remove(role);

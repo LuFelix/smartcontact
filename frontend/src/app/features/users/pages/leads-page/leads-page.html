@@ -1,0 +1,34 @@
+<div class="leads-container">
+    <mat-card class="leads-card">
+        <mat-card-header class="header-with-action">
+            <div>
+                <mat-card-title>Meus Leads Capturados</mat-card-title>
+                <mat-card-subtitle>Contatos que escanearam sua tag e deixaram informações</mat-card-subtitle>
+            </div>
+            <div class="header-actions">
+                <button mat-stroked-button (click)="layoutService.toggleLayout()" class="layout-toggle-btn">
+                    <mat-icon>{{ layoutService.layout() === 'moderno' ? 'view_list' : 'grid_view' }}</mat-icon>
+                    {{ layoutService.layout() === 'moderno' ? 'Visualizar Lista' : 'Visualizar Cards' }}
+                </button>
+            </div>
+        </mat-card-header>
+
+        <mat-card-content>
+            @if (layoutService.layout() === 'moderno') {
+                <app-leads-card-list
+                    [leads]="leads"
+                    [isLoading]="isLoading"
+                    [isSavingToGoogle]="isSavingToGoogle"
+                    (saveToGoogle)="saveToGoogle($event)">
+                </app-leads-card-list>
+            } @else {
+                <app-leads-list-view
+                    [leads]="leads"
+                    [isLoading]="isLoading"
+                    [isSavingToGoogle]="isSavingToGoogle"
+                    (saveToGoogle)="saveToGoogle($event)">
+                </app-leads-list-view>
+            }
+        </mat-card-content>
+    </mat-card>
+</div>
