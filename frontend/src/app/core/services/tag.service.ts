@@ -5,6 +5,7 @@ import { environment } from '../../environments/environment';
 import { FullUserResponse, RedirectMode } from '../../features/shared/models/users.models';
 
 export interface TagResolutionResponse {
+  id: string;
   redirectMode: RedirectMode;
   customUrl?: string;
   user: FullUserResponse;

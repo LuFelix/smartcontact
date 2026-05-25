@@ -14,7 +14,6 @@ import { Role } from '../../../shared/models/role.model';
   imports: [
     CommonModule,
     RouterModule,
-    RouterLink,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
