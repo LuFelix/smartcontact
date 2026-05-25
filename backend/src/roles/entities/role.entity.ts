@@ -1,6 +1,6 @@
 // roles/entities/role.entity.ts
 import { User } from 'src/users/entities/user.entity';
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, Index } from 'typeorm';
 
 /**
  * Representa uma 'role' de usuário no sistema.
@@ -34,4 +34,12 @@ export class Role {
    */
   @OneToMany(() => User, user => user.role)
   users!: User[];
+
+  @Column({ type: 'uuid', name: 'tenant_id', nullable: true })
+  @Index()
+  tenantId!: string | null;
+
+  @Column({ type: 'uuid', name: 'owner_id', nullable: true })
+  @Index()
+  ownerId!: string | null;
 }
