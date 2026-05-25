@@ -122,7 +122,10 @@
                     </mat-form-field>
                     <mat-form-field appearance="outline" class="w-full">
                         <mat-label>Telefone</mat-label>
-                        <input matInput formControlName="phone" placeholder="Seu telefone">
+                        <input matInput formControlName="phone" 
+                               mask="(00) 00000-0000" 
+                               [dropSpecialCharacters]="true"
+                               placeholder="Seu telefone">
                     </mat-form-field>
                     <button mat-flat-button color="primary" type="submit" [disabled]="leadForm.invalid || isSubmittingLead">
                         {{ isSubmittingLead ? 'Enviando...' : 'Enviar meu contato' }}

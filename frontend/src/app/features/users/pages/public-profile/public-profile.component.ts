@@ -18,6 +18,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { NgxMaskDirective } from 'ngx-mask';
 
 @Component({
   selector: 'app-public-profile',
@@ -35,7 +36,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
     MatListModule,
     MatTooltipModule,
     MatInputModule,
-    MatFormFieldModule
+    MatFormFieldModule,
+    NgxMaskDirective
   ],
   templateUrl: './public-profile.component.html',
   styleUrls: ['./public-profile.component.scss']
@@ -126,11 +128,11 @@ export class PublicProfileComponent implements OnInit {
     if (this.leadForm.invalid) return;
 
     this.isSubmittingLead = true;
-    const uuid = this.route.snapshot.paramMap.get('uuid');
+    const tagId = this.tagData?.id;
     
-    if (!uuid) return;
+    if (!tagId) return;
 
-    this.logsService.captureLead(uuid, this.leadForm.value)
+    this.logsService.captureLead(tagId, this.leadForm.value)
       .pipe(finalize(() => this.isSubmittingLead = false))
       .subscribe({
         next: () => {

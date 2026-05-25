@@ -51,6 +51,7 @@ export class TagsService {
     };
 
     return {
+      id: tag.id, // Adicionado para que o front saiba o ID interno da tag para logs
       redirectMode: tag.redirectMode,
       customUrl: tag.customUrl,
       user: publicUser,
