@@ -1,5 +1,6 @@
 import { User } from 'src/users/entities/user.entity';
 import { InteractionLog } from 'src/interaction-logs/entities/interaction-log.entity';
+import { UserTagAccess } from './user-tag-access.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -59,6 +60,9 @@ export class Tag {
 
   @OneToMany(() => InteractionLog, (log) => log.tag)
   interactionLogs!: InteractionLog[];
+
+  @OneToMany(() => UserTagAccess, (access) => access.tag)
+  accesses!: UserTagAccess[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

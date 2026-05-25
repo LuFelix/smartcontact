@@ -17,6 +17,7 @@ issues-todo.json
 issues-fechar.smartcontact.js
 issues-ler.smartcontact.js
 issues-todo.json
+clean-test-users.sh
 
 /.docs/generated_plans
 
