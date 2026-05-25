@@ -71,6 +71,13 @@ export const routes: Routes = [
                 title: 'SmartContact - Gestão de Roles'
             },
             {
+                path: 'team',
+                loadComponent: () => import('./features/admin/pages/team-manager/team-manager').then(m => m.TeamManagerComponent),
+                canActivate: [roleGuard],
+                data: { roles: ['administrador'] },
+                title: 'SmartContact - Gestão de Equipe'
+            },
+            {
                 path: 'leads',
                 loadComponent: () => import('./features/users/pages/leads-page/leads-page').then(m => m.LeadsPage),
                 canActivate: [authGuard],

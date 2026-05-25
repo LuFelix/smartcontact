@@ -42,6 +42,9 @@ export class SideNavComponent {
     // Gestão de Roles (Configurações)
     { link: '/app/roles', label: 'Gestão de Roles', icon: 'admin_panel_settings', requiredPermission: 'ASSIGN_USER_ROLES' },
 
+    // Gestão de Equipe (Workspace)
+    { link: '/app/team', label: 'Gestão de Equipe', icon: 'group_add', requiredPermission: 'VIEW_DASHBOARD' },
+
     // Meus Leads (CRM)
     { link: '/app/leads', label: 'Meus Leads', icon: 'contacts', requiredPermission: 'VIEW_DASHBOARD' },
   ];

@@ -1,0 +1,42 @@
+<h2 mat-dialog-title>Convidar Membro para Equipe</h2>
+
+<mat-dialog-content>
+    <form [formGroup]="invitationForm" class="invitation-form">
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Nome Completo</mat-label>
+            <input matInput formControlName="name" placeholder="Ex: João Silva">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>E-mail Corporativo</mat-label>
+            <input matInput formControlName="email" placeholder="Ex: joao@empresa.com">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Senha Provisória</mat-label>
+            <input matInput formControlName="password" type="password" placeholder="Mínimo 8 caracteres">
+            <mat-hint>O usuário poderá trocar a senha no primeiro acesso.</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Cargo / Função</mat-label>
+            <mat-select formControlName="roleId">
+                @if (isLoadingRoles) {
+                    <mat-option disabled>Carregando funções...</mat-option>
+                }
+                @for (role of roles; track role.id) {
+                    <mat-option [value]="role.id">{{ role.name | titlecase }}</mat-option>
+                }
+            </mat-select>
+        </mat-form-field>
+    </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Cancelar</button>
+    <button mat-flat-button color="primary" 
+            (click)="submit()" 
+            [disabled]="invitationForm.invalid || isSubmitting">
+        {{ isSubmitting ? 'Enviando Convite...' : 'Confirmar Convite' }}
+    </button>
+</mat-dialog-actions>
