@@ -2,7 +2,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role } from './entities/role.entity';
-import { Repository, FindOptionsWhere, ILike } from 'typeorm';
+import { Repository, FindOptionsWhere, ILike, IsNull } from 'typeorm';
 import { CreateRoleDto } from './dto/role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 
@@ -74,10 +74,8 @@ export class RolesService {
             // Usuário comum vê as globais (tenant null) + as da sua empresa
             where = [
                 { tenantId: tenantId },
-                { tenantId: null } // Roles de sistema (opcional: ou vinculadas ao tenant sistema)
+                { tenantId: IsNull() } // Força a exibição das roles globais de sistema
             ];
-            // Nota: Se no seed as roles de sistema ganharem o TIWEB_ID, ajustamos o filtro.
-            // Atualmente o seed as vincula ao TIWEB_ID? Vamos conferir.
         }
         
         const [roles, total] = await this.rolesRepository.findAndCount({
