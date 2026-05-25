@@ -119,6 +119,13 @@ export class UsersService {
         });
     }
 
+    /**
+     * Garante que um usuário tenha ao menos uma tag vinculada (para o perfil público funcionar)
+     */
+    async ensureHasDefaultTag(user: User): Promise<void> {
+        await this.tagsService.createDefaultTag(user.id, user.ownerId!, user.tenantId!);
+    }
+
     async findById(userId: string, currentUser?: any): Promise<User | null> {
         const baseUser = await this.usersRepository.findOne({ where: { id: userId } });
         if (!baseUser) return null;

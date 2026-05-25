@@ -184,6 +184,11 @@ export class AuthService {
                   profilePictureUrl: payloadGoogle.picture
               });
           }
+
+          // Se o usuário já existe mas não tem Tag (correção de botão sumido)
+          if (!user.tags || user.tags.length === 0) {
+              await this.usersService.ensureHasDefaultTag(user);
+          }
       }
       if (!user) {
         throw new InternalServerErrorException('Erro ao processar ou criar usuário via Google');
