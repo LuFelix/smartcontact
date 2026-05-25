@@ -25,21 +25,22 @@ export class AuthService {
   ) { }
 
  async register(registerDto: MinimalRegisterDto): Promise<string> {
-  
-    // 1. Log de entrada para comparar com o Postman
-    console.log('[DEBUG] Dados recebidos do Angular:', registerDto);
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expires = new Date();
-    expires.setMinutes(expires.getMinutes() + 15);
-    
-    // 2. Garanta que o CreateUserDto tenha o que o banco pede
-    const createUserDto = {
-        name: registerDto.name,
-        email: registerDto.email,
-        password: registerDto.password,
-    };
+   // 1. Log de entrada para comparar com o Postman
+   console.log('[DEBUG] Dados recebidos do Angular:', registerDto);
 
+   const code = Math.floor(100000 + Math.random() * 900000).toString();
+   const expires = new Date();
+   expires.setMinutes(expires.getMinutes() + 15);
+
+   // 2. Garanta que o CreateUserDto tenha o que o banco pede
+   // Para novos registros SaaS, definimos a role como Administrador do seu novo tenant
+   const createUserDto = {
+       name: registerDto.name,
+       email: registerDto.email,
+       password: registerDto.password,
+       roleId: 'ec057e51-50db-41e7-929b-e520a2bc2e1a' // ID da Role 'administrador'
+   };
     // Novo usuário ganha um tenant próprio (empresa de um homem só)
     const newTenantContext = {
         tenantId: uuidv4(),
@@ -167,6 +168,7 @@ export class AuthService {
           email: payloadGoogle.email,
           name: payloadGoogle.name || 'Usuário Google',
           password: Math.random().toString(36).slice(-10), // Senha aleatória "dummy"
+          roleId: 'ec057e51-50db-41e7-929b-e520a2bc2e1a' // ID da Role 'administrador'
         }, newUserContext, payloadGoogle.picture);
 
         // Como o Google já validou o e-mail, marcamos como verificado direto
