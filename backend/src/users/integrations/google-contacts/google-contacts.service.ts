@@ -64,13 +64,15 @@ export class GoogleContactsService {
             isMain: p.metadata?.primary || false,
           })) || [];
 
+          // Prepara o DTO de criação
           const createUserDto: CreateUserDto = {
             name,
             email,
-            password: Math.random().toString(36).slice(-12),
+            password: '', // Removemos a senha dummy. Sem senha = Contato de agenda, não conta real.
             isActive: true,
             phones,
           };
+
 
           try {
             const existing = await this.usersService.findByEmail(email);
