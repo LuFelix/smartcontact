@@ -9,6 +9,7 @@ import { Role } from 'src/roles/entities/role.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { RolesService } from 'src/roles/roles.service';
 import { ProfilesService } from 'src/profiles/profiles.service';
+import { TagsService } from 'src/tags/tags.service';
 
 @Injectable()
 export class UsersService {
@@ -24,6 +25,7 @@ export class UsersService {
 
         private readonly rolesService: RolesService,
         private readonly profilesService: ProfilesService,
+        private readonly tagsService: TagsService,
     ) { }
 
     async create(createUserDto: CreateUserDto, currentUser?: any, profilePictureUrl?: string): Promise<User> {
@@ -93,6 +95,13 @@ export class UsersService {
             profilePictureUrl: profilePictureUrl
         });
 
+        // CRIAÇÃO AUTOMÁTICA DE TAG (Para o perfil público funcionar de imediato)
+        await this.tagsService.createDefaultTag(
+            savedUser.id,
+            savedUser.ownerId!,
+            savedUser.tenantId!
+        );
+
         return savedUser;
     }
 
@@ -106,7 +115,7 @@ export class UsersService {
     async findByEmail(email: string): Promise<User | null> {
         return this.usersRepository.findOne({ 
             where: { email }, 
-            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags'] 
+            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile'] 
         });
     }
 

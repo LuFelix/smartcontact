@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Tag } from './entities/tag.entity';
+import { Tag, RedirectMode } from './entities/tag.entity';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class TagsService {
@@ -9,6 +10,18 @@ export class TagsService {
     @InjectRepository(Tag)
     private readonly tagRepository: Repository<Tag>,
   ) {}
+
+  async createDefaultTag(userId: string, ownerId: string, tenantId: string): Promise<Tag> {
+      const tag = this.tagRepository.create({
+          uuid: uuidv4(),
+          userId,
+          ownerId,
+          tenantId,
+          redirectMode: RedirectMode.PROFILE,
+          isActive: true
+      });
+      return this.tagRepository.save(tag);
+  }
 
   async resolveTag(uuid: string) {
     const tag = await this.tagRepository.findOne({

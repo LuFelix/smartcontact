@@ -92,6 +92,7 @@ export interface User {
     bio?: string;
     jobTitle?: string;
     company?: string;
+    profilePictureUrl?: string;
   };
   phones?: Phone[];
   addresses?: Address[];
@@ -134,6 +135,7 @@ export interface FullUserResponse {
     bio?: string;
     jobTitle?: string;
     company?: string;
+    profilePictureUrl?: string;
   };
   phones?: Phone[];
   addresses?: Address[];

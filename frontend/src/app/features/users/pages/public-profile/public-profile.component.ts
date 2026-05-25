@@ -99,14 +99,14 @@ export class PublicProfileComponent implements OnInit {
         window.location.href = `https://wa.me/${cleanNumber}`;
       }
     }
-    // Se for PROFILE, permanece na página e renderiza o HTML
   }
 
   get profileImage(): string {
-    if (this.tagData?.user.profilePictureUrl) {
-        return `http://localhost:3000/${this.tagData.user.profilePictureUrl}`;
-    }
-    return 'assets/profile-photo-stock.png'; // Usando o que já existe no public do frontend
+    const url = this.tagData?.user.profile?.profilePictureUrl;
+    if (!url) return 'assets/profile-photo-stock.png';
+    
+    // Se for uma URL completa (Google, etc.), retorna direto. Senão, anexa o servidor local.
+    return url.startsWith('http') ? url : `http://localhost:3000/${url}`;
   }
 
   openLink(url: string): void {
