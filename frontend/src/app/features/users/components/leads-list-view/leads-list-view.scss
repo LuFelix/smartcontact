@@ -1,0 +1,33 @@
+.table-container {
+    position: relative;
+    overflow: auto;
+    min-height: 200px;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(var(--mat-sys-surface-container), 0.7);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.w-full { width: 100%; }
+.text-right { text-align: right; }
+
+.no-data-msg {
+    text-align: center;
+    padding: 60px !important;
+    font-style: italic;
+    color: var(--mat-sys-on-surface-variant);
+}
+
+tr.mat-mdc-row:hover {
+    background-color: var(--mat-sys-surface-container-high);
+    cursor: pointer;
+}

@@ -3,6 +3,7 @@ import { Injectable, InternalServerErrorException, UnauthorizedException } from 
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
+import { ProfilesService } from 'src/profiles/profiles.service';
 import { LoginDto, MinimalRegisterDto } from './dto/auth.dto';
 import { GoogleLoginDto } from './dto/google-token.dto';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -17,6 +18,7 @@ export class AuthService {
   
   constructor(
     private readonly usersService: UsersService,
+    private readonly profilesService: ProfilesService,
     private readonly jwtService: JwtService,
     private readonly mailerService: MailerService
     
@@ -119,7 +121,8 @@ export class AuthService {
           role: user.role?.name || 'usuario',
           ownerId: user.ownerId,
           tenantId: user.tenantId,
-          isSuperAdmin: user.isSuperAdmin
+          isSuperAdmin: user.isSuperAdmin,
+          picture: user.profile?.profilePictureUrl
       };
       
       const token = await this.jwtService.signAsync(payload);
@@ -164,13 +167,36 @@ export class AuthService {
           email: payloadGoogle.email,
           name: payloadGoogle.name || 'Usuário Google',
           password: Math.random().toString(36).slice(-10), // Senha aleatória "dummy"
-        }, newUserContext);
+        }, newUserContext, payloadGoogle.picture);
 
         // Como o Google já validou o e-mail, marcamos como verificado direto
         await this.usersService.markEmailAsVerified(user.id);
         
         // Recarrega o usuário para pegar as roles/relações corretamente
         user = await this.usersService.findByEmail(payloadGoogle.email);
+      } else {
+          // Se o usuário já existe, sincroniza o perfil e o avatar
+          let profile = await this.profilesService.findByUserId(user.id);
+          if (!profile) {
+              profile = await this.profilesService.create({
+                  userId: user.id,
+                  ownerId: user.ownerId!,
+                  tenantId: user.tenantId!,
+                  profilePictureUrl: payloadGoogle.picture
+              });
+          } else if (payloadGoogle.picture && profile.profilePictureUrl !== payloadGoogle.picture) {
+              // Sincroniza a foto do Google caso ela tenha mudado ou estivesse vazia
+              await this.profilesService.update(user.id, { profilePictureUrl: payloadGoogle.picture });
+          }
+
+          // Se o usuário já existe mas não tem Tag (correção de botão sumido)
+          if (!user.tags || user.tags.length === 0) {
+              await this.usersService.ensureHasDefaultTag(user);
+          }
+
+          // RECARREGA O USUÁRIO para garantir que o profile (e a nova foto) 
+          // entrem no payload do JWT abaixo
+          user = await this.usersService.findByEmail(payloadGoogle.email);
       }
       if (!user) {
         throw new InternalServerErrorException('Erro ao processar ou criar usuário via Google');
@@ -183,7 +209,8 @@ export class AuthService {
         role: user.role?.name || 'USER', // Fallback caso a role demore a carregar
         ownerId: user.ownerId,
         tenantId: user.tenantId,
-        isSuperAdmin: user.isSuperAdmin
+        isSuperAdmin: user.isSuperAdmin,
+        picture: user.profile?.profilePictureUrl
       };
 
       return {

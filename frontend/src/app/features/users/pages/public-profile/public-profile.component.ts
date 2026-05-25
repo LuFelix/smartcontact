@@ -18,6 +18,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { NgxMaskDirective } from 'ngx-mask';
 
 @Component({
   selector: 'app-public-profile',
@@ -35,7 +36,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
     MatListModule,
     MatTooltipModule,
     MatInputModule,
-    MatFormFieldModule
+    MatFormFieldModule,
+    NgxMaskDirective
   ],
   templateUrl: './public-profile.component.html',
   styleUrls: ['./public-profile.component.scss']
@@ -59,7 +61,8 @@ export class PublicProfileComponent implements OnInit {
     this.leadForm = this.fb.group({
       name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      phone: ['']
+      phone: [''],
+      note: ['', [Validators.maxLength(50)]]
     });
   }
 
@@ -99,14 +102,14 @@ export class PublicProfileComponent implements OnInit {
         window.location.href = `https://wa.me/${cleanNumber}`;
       }
     }
-    // Se for PROFILE, permanece na página e renderiza o HTML
   }
 
   get profileImage(): string {
-    if (this.tagData?.user.profilePictureUrl) {
-        return `http://localhost:3000/${this.tagData.user.profilePictureUrl}`;
-    }
-    return 'assets/profile-photo-stock.png'; // Usando o que já existe no public do frontend
+    const url = this.tagData?.user.profile?.profilePictureUrl;
+    if (!url) return 'assets/profile-photo-stock.png';
+    
+    // Se for uma URL completa (Google, etc.), retorna direto. Senão, anexa o servidor local.
+    return url.startsWith('http') ? url : `http://localhost:3000/${url}`;
   }
 
   openLink(url: string): void {
@@ -126,11 +129,11 @@ export class PublicProfileComponent implements OnInit {
     if (this.leadForm.invalid) return;
 
     this.isSubmittingLead = true;
-    const uuid = this.route.snapshot.paramMap.get('uuid');
+    const tagId = this.tagData?.id;
     
-    if (!uuid) return;
+    if (!tagId) return;
 
-    this.logsService.captureLead(uuid, this.leadForm.value)
+    this.logsService.captureLead(tagId, this.leadForm.value)
       .pipe(finalize(() => this.isSubmittingLead = false))
       .subscribe({
         next: () => {

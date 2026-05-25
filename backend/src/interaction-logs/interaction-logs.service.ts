@@ -28,13 +28,14 @@ export class InteractionLogsService {
   /**
    * Captura um lead (nome/email/telefone) vindo do perfil público
    */
-  async captureLead(tagId: string, leadData: { name: string, email: string, phone?: string }, metadata: any) {
+  async captureLead(tagId: string, leadData: { name: string, email: string, phone?: string, note?: string }, metadata: any) {
       const log = this.interactionLogRepository.create({
           tagId,
           interactionType: InteractionType.LEAD,
           leadName: leadData.name,
           leadEmail: leadData.email,
           leadPhone: leadData.phone,
+          leadNote: leadData.note,
           ipAddress: metadata.ip,
           userAgent: metadata.userAgent,
       });

@@ -1,62 +1,34 @@
 <div class="leads-container">
     <mat-card class="leads-card">
-        <mat-card-header>
-            <mat-card-title>Meus Leads Capturados</mat-card-title>
-            <mat-card-subtitle>Contatos que escanearam sua tag e deixaram informações</mat-card-subtitle>
+        <mat-card-header class="header-with-action">
+            <div>
+                <mat-card-title>Meus Leads Capturados</mat-card-title>
+                <mat-card-subtitle>Contatos que escanearam sua tag e deixaram informações</mat-card-subtitle>
+            </div>
+            <div class="header-actions">
+                <button mat-stroked-button (click)="layoutService.toggleLayout()" class="layout-toggle-btn">
+                    <mat-icon>{{ layoutService.layout() === 'moderno' ? 'view_list' : 'grid_view' }}</mat-icon>
+                    {{ layoutService.layout() === 'moderno' ? 'Visualizar Lista' : 'Visualizar Cards' }}
+                </button>
+            </div>
         </mat-card-header>
 
         <mat-card-content>
-            @if (isLoading) {
-                <div class="loading-overlay">
-                    <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
-                </div>
+            @if (layoutService.layout() === 'moderno') {
+                <app-leads-card-list
+                    [leads]="leads"
+                    [isLoading]="isLoading"
+                    [isSavingToGoogle]="isSavingToGoogle"
+                    (saveToGoogle)="saveToGoogle($event)">
+                </app-leads-card-list>
+            } @else {
+                <app-leads-list-view
+                    [leads]="leads"
+                    [isLoading]="isLoading"
+                    [isSavingToGoogle]="isSavingToGoogle"
+                    (saveToGoogle)="saveToGoogle($event)">
+                </app-leads-list-view>
             }
-
-            <div class="table-container">
-                <table mat-table [dataSource]="leads" class="w-full">
-                    
-                    <ng-container matColumnDef="leadName">
-                        <th mat-header-cell *matHeaderCellDef> Nome </th>
-                        <td mat-cell *matCellDef="let lead"> {{ lead.leadName }} </td>
-                    </ng-container>
-
-                    <ng-container matColumnDef="leadEmail">
-                        <th mat-header-cell *matHeaderCellDef> E-mail </th>
-                        <td mat-cell *matCellDef="let lead"> {{ lead.leadEmail }} </td>
-                    </ng-container>
-
-                    <ng-container matColumnDef="leadPhone">
-                        <th mat-header-cell *matHeaderCellDef> Telefone </th>
-                        <td mat-cell *matCellDef="let lead"> {{ lead.leadPhone || '-' }} </td>
-                    </ng-container>
-
-                    <ng-container matColumnDef="accessedAt">
-                        <th mat-header-cell *matHeaderCellDef> Data </th>
-                        <td mat-cell *matCellDef="let lead"> {{ lead.accessedAt | date:'dd/MM/yyyy HH:mm' }} </td>
-                    </ng-container>
-
-                    <ng-container matColumnDef="actions">
-                        <th mat-header-cell *matHeaderCellDef class="text-right"> Ações </th>
-                        <td mat-cell *matCellDef="let lead" class="text-right">
-                            <button mat-flat-button color="primary" 
-                                    (click)="saveToGoogle(lead)" 
-                                    [disabled]="isSavingToGoogle"
-                                    matTooltip="Salvar no seu Google Contatos">
-                                <mat-icon>person_add</mat-icon> Salvar no Google
-                            </button>
-                        </td>
-                    </ng-container>
-
-                    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-
-                    <tr class="mat-row" *matNoDataRow>
-                        <td class="mat-cell no-data-msg" colspan="5">
-                            Nenhum lead capturado ainda. Compartilhe sua tag!
-                        </td>
-                    </tr>
-                </table>
-            </div>
         </mat-card-content>
     </mat-card>
 </div>

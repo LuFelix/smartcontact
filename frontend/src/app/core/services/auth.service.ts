@@ -243,7 +243,8 @@ export class AuthService {
            id: decoded.sub,
            email: decoded.email,
            name: decoded.name, // Usa 'name'
-           role: decoded.role
+           role: decoded.role,
+           profilePictureUrl: decoded.picture
        };
    }
    /**

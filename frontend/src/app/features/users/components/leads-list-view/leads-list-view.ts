@@ -1,31 +1,31 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, RouterLink } from '@angular/router';
-import { MatCardModule } from '@angular/material/card';
+import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Role } from '../../../shared/models/role.model';
+import { Lead } from '../../../shared/models/users.models';
 
 @Component({
-  selector: 'app-roles-card-list',
+  selector: 'app-leads-list-view',
   standalone: true,
   imports: [
     CommonModule,
-    RouterModule,
-    MatCardModule,
+    MatTableModule,
     MatButtonModule,
     MatIconModule,
     MatTooltipModule,
     MatProgressSpinnerModule
   ],
-  templateUrl: './roles-card-list.html',
-  styleUrl: './roles-card-list.scss'
+  templateUrl: './leads-list-view.html',
+  styleUrl: './leads-list-view.scss'
 })
-export class RolesCardListComponent {
-  @Input() roles: Role[] = [];
+export class LeadsListViewComponent {
+  @Input() leads: Lead[] = [];
   @Input() isLoading = false;
-  @Output() editRole = new EventEmitter<Role>();
-  @Output() deleteRole = new EventEmitter<Role>();
+  @Input() isSavingToGoogle = false;
+  @Output() saveToGoogle = new EventEmitter<Lead>();
+
+  displayedColumns = ['leadName', 'leadEmail', 'leadPhone', 'leadNote', 'accessedAt', 'actions'];
 }

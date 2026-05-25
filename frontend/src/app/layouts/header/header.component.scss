@@ -90,11 +90,18 @@
 .user-menu-button {
   display: flex;
   align-items: center;
-  padding: 0 8px;
+  padding: 0 12px;
   margin-left: 8px;
-  height: 44px;
-  border-radius: 22px;
+  height: 48px;
+  border-radius: 24px;
   color: var(--mat-sys-on-surface);
+  
+  // Garantindo alinhamento vertical dos elementos internos (MDC fix)
+  ::ng-deep .mdc-button__label {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px;
+  }
   
   &:hover {
     background-color: var(--mat-sys-surface-container-highest);
@@ -104,10 +111,11 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
+    object-fit: cover;
   }
 
   .user-name {
-    margin: 0 8px;
+    margin: 0;
     font-weight: 500;
     font-size: 0.9rem;
   }

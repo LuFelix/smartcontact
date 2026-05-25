@@ -64,13 +64,15 @@ export class GoogleContactsService {
             isMain: p.metadata?.primary || false,
           })) || [];
 
+          // Prepara o DTO de criação
           const createUserDto: CreateUserDto = {
             name,
             email,
-            password: Math.random().toString(36).slice(-12),
+            password: '', // Removemos a senha dummy. Sem senha = Contato de agenda, não conta real.
             isActive: true,
             phones,
           };
+
 
           try {
             const existing = await this.usersService.findByEmail(email);
@@ -95,8 +97,9 @@ export class GoogleContactsService {
 
   /**
    * Salva um contato individual diretamente na conta Google do usuário
+   * e também registra o contato no coffer (Users) do tenant local.
    */
-  async saveLeadToGoogle(accessToken: string, leadData: { name: string, email: string, phone?: string }): Promise<any> {
+  async saveLeadToGoogle(accessToken: string, leadData: { name: string, email: string, phone?: string }, currentUser: any): Promise<any> {
     if (!accessToken) {
       throw new UnauthorizedException('Access Token do Google não fornecido.');
     }
@@ -130,6 +133,25 @@ export class GoogleContactsService {
 
       const result = await response.json();
       this.logger.log(`Lead salvo com sucesso no Google: ${result.resourceName}`);
+
+      // SYNC AUTOMÁTICO LOCAL: Adiciona ao coffer de contatos do usuário logado
+      try {
+          const existing = await this.usersService.findByEmail(leadData.email);
+          if (!existing) {
+              const createUserDto: CreateUserDto = {
+                  name: leadData.name,
+                  email: leadData.email,
+                  password: '', // Contato de agenda, sem senha
+                  phones: leadData.phone ? [{ number: leadData.phone, isWhatsapp: false, isMain: true }] : [],
+                  isActive: true
+              };
+              await this.usersService.create(createUserDto, currentUser);
+              this.logger.log(`Lead ${leadData.email} sincronizado automaticamente no coffer local.`);
+          }
+      } catch (syncErr: any) {
+          this.logger.warn(`Falha na sincronização automática local do lead: ${syncErr.message}`);
+      }
+
       return result;
 
     } catch (error: any) {

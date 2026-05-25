@@ -7,6 +7,7 @@ import { Role } from 'src/roles/entities/role.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Tag, RedirectMode } from 'src/tags/entities/tag.entity';
 import { UserSeedService } from './users/user-seed.service';
+import { ProfilesService } from 'src/profiles/profiles.service';
 
 @Injectable()
 export class SeedService {
@@ -21,6 +22,7 @@ export class SeedService {
     @InjectRepository(Tag)
     private readonly tagRepository: Repository<Tag>,
     private readonly userSeedService: UserSeedService,
+    private readonly profilesService: ProfilesService,
   ) {}
 
   async run() {
@@ -110,6 +112,16 @@ export class SeedService {
       this.userRepository.merge(admin, adminData);
       admin = await this.userRepository.save(admin);
       this.logger.log(`Usuário administrador atualizado para a nova estrutura.`);
+    }
+
+    // GARANTE QUE O ADMIN TENHA UM PROFILE
+    const adminProfile = await this.profilesService.findByUserId(admin.id);
+    if (!adminProfile) {
+        await this.profilesService.create({
+            userId: admin.id,
+            ownerId: this.TIWEB_ID,
+            tenantId: this.TIWEB_ID
+        });
     }
 
     const adminTag = await this.tagRepository.findOne({ where: { userId: admin.id } });
