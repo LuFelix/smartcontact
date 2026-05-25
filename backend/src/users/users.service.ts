@@ -88,8 +88,9 @@ export class UsersService {
     const savedUser = await this.usersRepository.save(user);
 
     // CRIAÇÃO AUTOMÁTICA DE PROFILE E TAG (Apenas para Contas Reais/SaaS)
-    // Se o usuário não tem senha ou é apenas um contato importado, não ganha perfil público
-    const isRealAccount = !!createUserDto.password || ['administrador', 'colaborador'].includes(assignedRole.name);
+    // Se o usuário não tem senha, ele é apenas um contato importado/lead e não ganha perfil público.
+    // Usuários Google ganham senha dummy no AuthService, então passam aqui.
+    const isRealAccount = !!createUserDto.password && createUserDto.password.length > 0;
 
     if (isRealAccount) {
         await this.profilesService.create({
