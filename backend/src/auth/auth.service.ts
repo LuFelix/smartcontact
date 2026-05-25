@@ -139,6 +139,8 @@ export class AuthService {
   }
 
   async loginWithGoogle(loginDto: GoogleLoginDto): Promise<{ access_token: string }> {
+    const TIWEB_ID = 'aebfbdfa-0088-4bf1-9bee-36529cfc3866'; // Fallback Admin ID
+
     try {
       const { token, accessToken } = loginDto;
       
@@ -180,8 +182,8 @@ export class AuthService {
           if (!profile) {
               profile = await this.profilesService.create({
                   userId: user.id,
-                  ownerId: user.ownerId!,
-                  tenantId: user.tenantId!,
+                  ownerId: user.ownerId || TIWEB_ID,
+                  tenantId: user.tenantId || TIWEB_ID,
                   profilePictureUrl: payloadGoogle.picture
               });
           } else if (payloadGoogle.picture && profile.profilePictureUrl !== payloadGoogle.picture) {

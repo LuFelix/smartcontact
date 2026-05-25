@@ -84,28 +84,27 @@ export class UsersService {
             links: cleanItems(links),
         };
 
-    const user = this.usersRepository.create(userData);
-    const savedUser = await this.usersRepository.save(user);
+        const user = this.usersRepository.create(userData);
+        const savedUser = await this.usersRepository.save(user);
 
-    // CRIAÇÃO AUTOMÁTICA DE PROFILE E TAG (Apenas para Contas Reais/SaaS)
-    // Se o usuário não tem senha, ele é apenas um contato importado/lead e não ganha perfil público.
-    // Usuários Google ganham senha dummy no AuthService, então passam aqui.
-    const isRealAccount = !!createUserDto.password && createUserDto.password.length > 0;
+        // CRIAÇÃO AUTOMÁTICA DE PROFILE E TAG (Apenas para Contas Reais/SaaS)
+        // Se o usuário não tem senha, ele é apenas um contato importado/lead e não ganha perfil público.
+        const isRealAccount = !!createUserDto.password && createUserDto.password.length > 0;
 
-    if (isRealAccount) {
-        await this.profilesService.create({
-            userId: savedUser.id,
-            ownerId: savedUser.ownerId!,
-            tenantId: savedUser.tenantId!,
-            profilePictureUrl: profilePictureUrl
-        });
+        if (isRealAccount) {
+            await this.profilesService.create({
+                userId: savedUser.id,
+                ownerId: savedUser.ownerId || this.TIWEB_ID,
+                tenantId: savedUser.tenantId || this.TIWEB_ID,
+                profilePictureUrl: profilePictureUrl
+            });
 
-        await this.tagsService.createDefaultTag(
-            savedUser.id,
-            savedUser.ownerId!,
-            savedUser.tenantId!
-        );
-    }
+            await this.tagsService.createDefaultTag(
+                savedUser.id,
+                savedUser.ownerId || this.TIWEB_ID,
+                savedUser.tenantId || this.TIWEB_ID
+            );
+        }
 
     return savedUser;
   }
