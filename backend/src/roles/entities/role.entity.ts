@@ -8,6 +8,7 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToMany, Index } from 'typeor
  */
 
 @Entity('roles')
+@Index(['name', 'tenantId'], { unique: true })
 export class Role {
   /**
    * ID único da 'role'.
@@ -16,10 +17,10 @@ export class Role {
   id!: string;
 
   /**
-   * Nome do papel (normalizado e único).
+   * Nome do papel (normalizado).
    * Ex: "administrador", "gente_e_cultura", "colaborador", etc.
    */
-  @Column({ unique: true })
+  @Column()
   name!: string;
 
   /**
