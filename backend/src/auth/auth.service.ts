@@ -193,6 +193,10 @@ export class AuthService {
           if (!user.tags || user.tags.length === 0) {
               await this.usersService.ensureHasDefaultTag(user);
           }
+
+          // RECARREGA O USUÁRIO para garantir que o profile (e a nova foto) 
+          // entrem no payload do JWT abaixo
+          user = await this.usersService.findByEmail(payloadGoogle.email);
       }
       if (!user) {
         throw new InternalServerErrorException('Erro ao processar ou criar usuário via Google');

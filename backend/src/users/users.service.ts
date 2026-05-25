@@ -112,7 +112,7 @@ export class UsersService {
     async findByCpf(cpf: string): Promise<User | null> {
         return this.usersRepository.findOne({ 
             where: { cpf }, 
-            relations: ['role', 'phones', 'addresses', 'tags'] 
+            relations: ['role', 'phones', 'addresses', 'tags', 'profile'] 
         });
     }
 
