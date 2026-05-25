@@ -61,6 +61,7 @@ export interface Tag {
   customUrl?: string | null;
   userId: string;
   isActive: boolean;
+  user?: User;
 }
 
 export enum AddressTag {

@@ -1,9 +1,10 @@
-import { Component, inject, OnInit, MAT_DIALOG_DATA } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
+import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatListModule } from '@angular/material/list';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TagService } from '../../../../core/services/tag.service';
 import { Tag, FullUserResponse } from '../../../shared/models/users.models';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -17,7 +18,8 @@ import { finalize } from 'rxjs';
     MatDialogModule,
     MatButtonModule,
     MatCheckboxModule,
-    MatListModule
+    MatListModule,
+    MatProgressSpinnerModule
   ],
   templateUrl: './resource-delegation-dialog.html',
   styleUrl: './resource-delegation-dialog.scss'
