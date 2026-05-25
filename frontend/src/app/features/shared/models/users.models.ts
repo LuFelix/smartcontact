@@ -6,6 +6,10 @@ export interface JwtPayload {
     name: string;
     email: string;
     role: string;
+    tenantId?: string;
+    ownerId?: string;
+    isSuperAdmin?: boolean;
+    picture?: string;
     iat?: number;
     exp?: number;
 }

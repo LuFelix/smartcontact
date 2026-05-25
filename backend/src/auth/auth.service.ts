@@ -121,7 +121,8 @@ export class AuthService {
           role: user.role?.name || 'usuario',
           ownerId: user.ownerId,
           tenantId: user.tenantId,
-          isSuperAdmin: user.isSuperAdmin
+          isSuperAdmin: user.isSuperAdmin,
+          picture: user.profile?.profilePictureUrl
       };
       
       const token = await this.jwtService.signAsync(payload);
@@ -204,7 +205,8 @@ export class AuthService {
         role: user.role?.name || 'USER', // Fallback caso a role demore a carregar
         ownerId: user.ownerId,
         tenantId: user.tenantId,
-        isSuperAdmin: user.isSuperAdmin
+        isSuperAdmin: user.isSuperAdmin,
+        picture: user.profile?.profilePictureUrl
       };
 
       return {

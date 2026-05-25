@@ -42,6 +42,12 @@ export class HeaderComponent {
     this.userData = this.authService.getUserData();
   }
 
+  get profileImage(): string {
+    const url = this.userData?.profilePictureUrl;
+    if (!url) return '';
+    return url.startsWith('http') ? url : `http://localhost:3000/${url}`;
+  }
+
   emitToggleSidenav() {
     this.toggleSidenav.emit();
   }
