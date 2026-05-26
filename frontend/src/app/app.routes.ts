@@ -17,6 +17,15 @@ export const routes: Routes = [
     { path: '', component: LandingPage, pathMatch: 'full' }, // Rota raiz pública (Corrigido pathMatch)
     // Rota para Acesso Negado
     { path: 'unauthorized', component: UnauthorizedComponent },
+
+    // Rota para Convites (Join)
+    {
+        path: 'join/:token',
+        loadComponent: () =>
+        import('./features/auth/pages/join-page/join-page.component')
+            .then(m => m.JoinPageComponent),
+        title: 'SmartContact - Entrar na Equipe'
+    },
     
     // Rota para Perfil Público (Mini-site via Tag)
     {

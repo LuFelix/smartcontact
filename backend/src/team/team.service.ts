@@ -1,11 +1,22 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { UsersService } from '../users/users.service';
 import { CreateMemberDto } from './dto/create-member.dto';
 import { User } from '../users/entities/user.entity';
+import { GroupInvitation } from './entities/group-invitation.entity';
+import { CreateInvitationDto } from './dto/create-invitation.dto';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class TeamService {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    @InjectRepository(GroupInvitation)
+    private readonly invitationRepository: Repository<GroupInvitation>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+  ) {}
 
   /**
    * Adiciona um novo membro ao time (Workspace).
@@ -51,5 +62,71 @@ export class TeamService {
 
     // Usamos o findAll do UsersService que já possui o filtro por tenantId
     return this.usersService.findAll(1, 100, undefined, undefined, undefined, currentUser);
+  }
+
+  /**
+   * Gera um novo convite de grupo.
+   */
+  async createInvitation(dto: CreateInvitationDto, currentUser: any): Promise<GroupInvitation> {
+    if (currentUser.role !== 'administrador' && !currentUser.isSuperAdmin) {
+      throw new BadRequestException('Apenas administradores podem gerar convites.');
+    }
+
+    const { roleId, expiresInHours = 48 } = dto;
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + expiresInHours);
+
+    const invitation = this.invitationRepository.create({
+      token: uuidv4(),
+      tenantId: currentUser.tenantId,
+      roleId,
+      expiresAt,
+      createdById: currentUser.sub,
+    });
+
+    return this.invitationRepository.save(invitation);
+  }
+
+  /**
+   * Valida um token de convite.
+   */
+  async resolveInvitation(token: string): Promise<GroupInvitation> {
+    const invitation = await this.invitationRepository.findOne({
+      where: { token, isActive: true },
+      relations: ['tenant', 'role'],
+    });
+
+    if (!invitation) {
+      throw new NotFoundException('Convite não encontrado ou inativo.');
+    }
+
+    if (new Date() > invitation.expiresAt) {
+      invitation.isActive = false;
+      await this.invitationRepository.save(invitation);
+      throw new BadRequestException('Este convite expirou.');
+    }
+
+    return invitation;
+  }
+
+  /**
+   * Processa o aceite do convite pelo usuário logado.
+   */
+  async acceptInvitation(token: string, currentUser: any): Promise<{ message: string }> {
+    const invitation = await this.resolveInvitation(token);
+    
+    // Buscar o usuário logado para garantir que ele existe e obter seus dados atuais
+    const user = await this.userRepository.findOne({ where: { id: currentUser.sub } });
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado.');
+    }
+
+    // Atualizar o usuário para o novo Tenant e Role
+    await this.userRepository.update(user.id, {
+      tenantId: invitation.tenantId,
+      role: { id: invitation.roleId } as any,
+    });
+
+    return { message: 'Você entrou na equipe com sucesso!' };
   }
 }
