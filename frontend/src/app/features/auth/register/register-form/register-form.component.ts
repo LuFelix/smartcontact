@@ -128,7 +128,7 @@ export class RegisterFormComponent {
       
       // Realizar login automático para poder aceitar o convite
       const rawData = this.form.getRawValue();
-      this.authService.login({ email: rawData.email, password: rawData.password }).subscribe({
+      this.authService.login({ identifier: rawData.email, password: rawData.password }).subscribe({
         next: () => {
           const pendingToken = sessionStorage.getItem('pending_invitation_token');
           if (pendingToken) {

@@ -111,7 +111,7 @@ export class MemberInvitationDialogComponent implements OnInit {
               QRCode.toCanvas(this.qrcodeCanvas.nativeElement, this.invitationLink, {
                 width: 250,
                 margin: 2
-              }, (error) => {
+              }, (error: Error | null | undefined) => {
                 if (error) console.error(error);
               });
             }
