@@ -6,6 +6,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { TeamService } from './team.service';
 import { CreateMemberDto } from './dto/create-member.dto';
 import { GetUser } from '../auth/decorators/get-user.decorator';
+import { CreateInvitationDto } from './dto/create-invitation.dto';
 
 @ApiTags('Team Management')
 @ApiBearerAuth()
@@ -28,5 +29,14 @@ export class TeamController {
   @ApiOperation({ summary: 'Listar todos os membros do seu Workspace' })
   async listMembers(@GetUser() currentUser: any) {
     return this.teamService.listTeamMembers(currentUser);
+  }
+
+  @Post('invitations')
+  @Roles('administrador')
+  @ApiOperation({ summary: 'Gerar um token de convite para a equipe' })
+  @ApiBody({ type: CreateInvitationDto })
+  @ApiResponse({ status: 201, description: 'Convite gerado com sucesso' })
+  async createInvitation(@Body() dto: CreateInvitationDto, @GetUser() currentUser: any) {
+    return this.teamService.createInvitation(dto, currentUser);
   }
 }

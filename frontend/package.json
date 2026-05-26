@@ -22,11 +22,13 @@
     "@angular/material": "^20.1.0",
     "@angular/platform-browser": "^20.0.0",
     "@angular/router": "^20.0.0",
+    "@types/qrcode": "^1.5.6",
     "crypto-js": "^4.2.0",
     "ethers": "^6.15.0",
     "jwt-decode": "^4.0.0",
     "ngx-mask": "^19.0.7",
     "node-fetch": "^3.3.2",
+    "qrcode": "^1.5.4",
     "rxjs": "~7.8.0",
     "tslib": "^2.8.1",
     "zone.js": "~0.15.0"

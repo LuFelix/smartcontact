@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
@@ -6,11 +6,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatIconModule } from '@angular/material/icon';
 import { RolesService } from '../../services/roles.service';
 import { TeamService } from '../../../../core/services/team.service';
 import { Role } from '../../../shared/models/role.model';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { finalize } from 'rxjs';
+import * as QRCode from 'qrcode';
 
 @Component({
   selector: 'app-member-invitation-dialog',
@@ -22,7 +25,9 @@ import { finalize } from 'rxjs';
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
-    MatButtonModule
+    MatButtonModule,
+    MatTabsModule,
+    MatIconModule
   ],
   templateUrl: './member-invitation-dialog.html',
   styleUrl: './member-invitation-dialog.scss'
@@ -34,16 +39,25 @@ export class MemberInvitationDialogComponent implements OnInit {
   private dialogRef = inject(MatDialogRef<MemberInvitationDialogComponent>);
   private snackBar = inject(MatSnackBar);
 
+  @ViewChild('qrcodeCanvas') qrcodeCanvas!: ElementRef<HTMLCanvasElement>;
+
   invitationForm: FormGroup;
+  qrForm: FormGroup;
   roles: Role[] = [];
   isLoadingRoles = true;
   isSubmitting = false;
+  invitationToken: string | null = null;
+  invitationLink: string | null = null;
 
   constructor() {
     this.invitationForm = this.fb.group({
       name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(8)]],
+      roleId: ['', Validators.required]
+    });
+
+    this.qrForm = this.fb.group({
       roleId: ['', Validators.required]
     });
   }
@@ -78,5 +92,42 @@ export class MemberInvitationDialogComponent implements OnInit {
           this.snackBar.open(msg, 'Fechar', { duration: 5000 });
         }
       });
+  }
+
+  generateQR(): void {
+    if (this.qrForm.invalid) return;
+
+    this.isSubmitting = true;
+    this.teamService.createInvitation(this.qrForm.value.roleId)
+      .pipe(finalize(() => this.isSubmitting = false))
+      .subscribe({
+        next: (res) => {
+          this.invitationToken = res.token;
+          const baseUrl = window.location.origin;
+          this.invitationLink = `${baseUrl}/join/${res.token}`;
+          
+          setTimeout(() => {
+            if (this.qrcodeCanvas && this.invitationLink) {
+              QRCode.toCanvas(this.qrcodeCanvas.nativeElement, this.invitationLink, {
+                width: 250,
+                margin: 2
+              }, (error: Error | null | undefined) => {
+                if (error) console.error(error);
+              });
+            }
+          });
+        },
+        error: (err) => {
+          const msg = err.error?.message || 'Falha ao gerar convite.';
+          this.snackBar.open(msg, 'Fechar', { duration: 5000 });
+        }
+      });
+  }
+
+  copyLink(): void {
+    if (!this.invitationLink) return;
+    navigator.clipboard.writeText(this.invitationLink).then(() => {
+      this.snackBar.open('Link copiado!', 'OK', { duration: 2000 });
+    });
   }
 }

@@ -1,12 +1,19 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { TeamService } from './team.service';
 import { TeamController } from './team.controller';
+import { InvitationsController } from './invitations.controller';
 import { UsersModule } from '../users/users.module';
+import { GroupInvitation } from './entities/group-invitation.entity';
+import { User } from '../users/entities/user.entity';
 
 @Module({
-  imports: [UsersModule],
+  imports: [
+    TypeOrmModule.forFeature([GroupInvitation, User]),
+    UsersModule,
+  ],
   providers: [TeamService],
-  controllers: [TeamController],
+  controllers: [TeamController, InvitationsController],
   exports: [TeamService],
 })
 export class TeamModule {}
