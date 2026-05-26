@@ -6,6 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { Role } from 'src/roles/entities/role.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Tag, RedirectMode } from 'src/tags/entities/tag.entity';
+import { Tenant } from 'src/tenants/entities/tenant.entity';
 import { UserSeedService } from './users/user-seed.service';
 import { ProfilesService } from 'src/profiles/profiles.service';
 
@@ -21,6 +22,8 @@ export class SeedService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Tag)
     private readonly tagRepository: Repository<Tag>,
+    @InjectRepository(Tenant)
+    private readonly tenantRepository: Repository<Tenant>,
     private readonly userSeedService: UserSeedService,
     private readonly profilesService: ProfilesService,
   ) {}
@@ -28,10 +31,28 @@ export class SeedService {
   async run() {
     this.logger.log('Iniciando o processo de seeding...');
 
+    // 0. Garante que o Tenant Master existe
+    await this.seedDefaultTenant();
+
     // 1. Garante que todos os usuários tenham usernames (Migração retroativa)
     await this.userSeedService.migrateUsernames();
+...
+  private async seedDefaultTenant(): Promise<void> {
+    const existing = await this.tenantRepository.findOne({ where: { id: this.TIWEB_ID } });
+    if (!existing) {
+      const tenant = this.tenantRepository.create({
+        id: this.TIWEB_ID,
+        name: 'TIWEB Master',
+        slug: 'tiweb',
+        isActive: true
+      });
+      await this.tenantRepository.save(tenant);
+      this.logger.log('Tenant Master (TIWEB) criado.');
+    }
+  }
 
-    const adminRole = await this.seedRoles();
+  private async seedRoles(): Promise<Role | undefined> {
+
 
     if (adminRole) {
       const admin = await this.seedAdminUser(adminRole);
