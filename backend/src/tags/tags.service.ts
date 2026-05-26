@@ -90,9 +90,10 @@ export class TagsService {
       return this.accessRepository.save(access);
   }
 
-  async resolveTag(uuid: string) {
-    const tag = await this.tagRepository.findOne({
-      where: { uuid, isActive: true },
+  async resolveTag(identifier: string) {
+    // Busca primeiro por UUID (NFC)
+    let tag = await this.tagRepository.findOne({
+      where: { uuid: identifier, isActive: true },
       relations: [
         'user',
         'user.profile',
@@ -102,6 +103,21 @@ export class TagsService {
         'user.links',
       ],
     });
+
+    // Se não achar por UUID, busca por Username (URL Amigável)
+    if (!tag) {
+        tag = await this.tagRepository.findOne({
+            where: { user: { username: identifier }, isActive: true },
+            relations: [
+              'user',
+              'user.profile',
+              'user.phones',
+              'user.addresses',
+              'user.secondaryEmails',
+              'user.links',
+            ],
+        });
+    }
 
     if (!tag) return null;
 

@@ -12,14 +12,14 @@ export class TagsController {
   constructor(private readonly tagsService: TagsService) {}
 
   @Public()
-  @Get('resolve/:uuid')
-  @ApiOperation({ summary: 'Resolve a tag UUID and return public user information' })
+  @Get('resolve/:identifier')
+  @ApiOperation({ summary: 'Resolve a tag UUID or Username and return public user information' })
   @ApiResponse({ status: 200, description: 'Tag and public user info found' })
   @ApiResponse({ status: 404, description: 'Tag not found' })
-  async resolve(@Param('uuid') uuid: string) {
-    const data = await this.tagsService.resolveTag(uuid);
+  async resolve(@Param('identifier') identifier: string) {
+    const data = await this.tagsService.resolveTag(identifier);
     if (!data) {
-      throw new NotFoundException('Tag não encontrada');
+      throw new NotFoundException('Tag ou Usuário não encontrado');
     }
     return data;
   }

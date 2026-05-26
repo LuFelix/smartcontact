@@ -28,6 +28,9 @@ export class SeedService {
   async run() {
     this.logger.log('Iniciando o processo de seeding...');
 
+    // 1. Garante que todos os usuários tenham usernames (Migração retroativa)
+    await this.userSeedService.migrateUsernames();
+
     const adminRole = await this.seedRoles();
 
     if (adminRole) {

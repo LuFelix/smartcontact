@@ -200,6 +200,13 @@ export class AuthService {
           // entrem no payload do JWT abaixo
           user = await this.usersService.findByEmail(payloadGoogle.email);
       }
+
+      if (!user || !user.profile) {
+          // Double check: Se o perfil ainda estiver nulo (ex: falha na criação)
+          // vamos tentar recarregar uma última vez ou logar o erro
+          console.warn(`[AuthService Google] Perfil não carregado para ${payloadGoogle.email}. Tentando fallback...`);
+          user = await this.usersService.findByEmail(payloadGoogle.email);
+      }
       if (!user) {
         throw new InternalServerErrorException('Erro ao processar ou criar usuário via Google');
       }

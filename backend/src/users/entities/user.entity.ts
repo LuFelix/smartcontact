@@ -51,6 +51,10 @@ export class User {
     @Column({ type: 'timestamp', nullable: true })
     verificationExpires!: Date | null;
 
+    @Index({ unique: true })
+    @Column({ type: 'varchar', length: 50, unique: true, nullable: true })
+    username!: string | null;
+
     @Column({ type: 'uuid', name: 'tenant_id', nullable: true })
     @Index()
     tenantId!: string | null;

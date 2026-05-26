@@ -8,12 +8,14 @@ import { Tag } from 'src/tags/entities/tag.entity';
 import { SeedService } from './seed.service';
 import { UserSeedService } from './users/user-seed.service';
 import { ProfilesModule } from 'src/profiles/profiles.module';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
     TypeOrmModule.forFeature([Role, User, Tag]),
     ProfilesModule,
+    UsersModule,
   ],
   providers: [SeedService, UserSeedService],
   exports: [SeedService],

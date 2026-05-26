@@ -50,6 +50,7 @@ export class AuthService {
   readonly userEmail = computed(() => this.#decodedToken()?.email);
   readonly userName = computed(() => this.#decodedToken()?.name);
   readonly userId = computed(() => this.#decodedToken()?.sub);
+  readonly userPicture = computed(() => this.#decodedToken()?.picture);
 
   // --- Métodos de Autenticação ---
 
