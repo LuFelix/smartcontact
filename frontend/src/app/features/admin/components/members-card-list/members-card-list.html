@@ -1,0 +1,46 @@
+<div class="members-grid-container">
+  @if (isLoading) {
+    <div class="spinner-overlay">
+      <mat-progress-spinner color="primary" mode="indeterminate"></mat-progress-spinner>
+    </div>
+  }
+
+  <div class="cards-grid">
+    @for (member of members; track member.id) {
+      <mat-card class="member-item-card" appearance="outlined">
+        <mat-card-header>
+          <div mat-card-avatar class="member-avatar">
+            <img [src]="getAvatar(member)" alt="Foto de {{ member.name }}">
+          </div>
+          <mat-card-title>{{ member.name }}</mat-card-title>
+          <mat-card-subtitle>{{ member.role.name | titlecase }}</mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content class="card-summary-content">
+            <div class="contact-info-row">
+                <mat-icon>email</mat-icon>
+                <span>{{ member.email }}</span>
+            </div>
+            <div class="contact-info-row">
+                <mat-icon>verified_user</mat-icon>
+                <span>{{ member.isVerified ? 'E-mail Verificado' : 'Aguardando Verificação' }}</span>
+            </div>
+        </mat-card-content>
+        
+        <mat-card-actions align="end">
+          <button mat-icon-button color="accent" (click)="delegateResources.emit(member)" matTooltip="Gerenciar Acessos (ABAC)">
+            <mat-icon>key</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="removeMember.emit(member)" matTooltip="Remover Membro">
+            <mat-icon>person_remove</mat-icon>
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    } @empty {
+      <div class="no-data">
+        <mat-icon>group_off</mat-icon>
+        <p>Sua equipe está vazia. Convide seu primeiro membro!</p>
+      </div>
+    }
+  </div>
+</div>

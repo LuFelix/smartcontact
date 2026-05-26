@@ -1,0 +1,30 @@
+<h2 mat-dialog-title>Gerenciar Acessos (ABAC)</h2>
+
+<mat-dialog-content>
+    <p>Selecione as Tags/Turmas que <strong>{{ data.member.name }}</strong> poderá visualizar e gerenciar:</p>
+
+    @if (isLoading) {
+        <mat-spinner diameter="30"></mat-spinner>
+    }
+
+    <mat-selection-list class="tag-selection-list">
+        @for (tag of tags; track tag.id) {
+            <mat-list-option (click)="toggleTag(tag.id)">
+                <mat-icon matListItemIcon>qr_code_2</mat-icon>
+                <div matListItemTitle>{{ tag.uuid }}</div>
+                <div matListItemLine>Dono: {{ tag.user?.name }}</div>
+            </mat-list-option>
+        } @empty {
+            <div class="no-tags">Nenhuma tag encontrada no seu Workspace.</div>
+        }
+    </mat-selection-list>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Fechar</button>
+    <button mat-flat-button color="primary" 
+            (click)="save()" 
+            [disabled]="isSaving || selectedTagIds.size === 0">
+        {{ isSaving ? 'Salvando...' : 'Delegar Acessos' }}
+    </button>
+</mat-dialog-actions>
