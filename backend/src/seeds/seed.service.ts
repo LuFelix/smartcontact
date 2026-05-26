@@ -36,23 +36,8 @@ export class SeedService {
 
     // 1. Garante que todos os usuários tenham usernames (Migração retroativa)
     await this.userSeedService.migrateUsernames();
-...
-  private async seedDefaultTenant(): Promise<void> {
-    const existing = await this.tenantRepository.findOne({ where: { id: this.TIWEB_ID } });
-    if (!existing) {
-      const tenant = this.tenantRepository.create({
-        id: this.TIWEB_ID,
-        name: 'TIWEB Master',
-        slug: 'tiweb',
-        isActive: true
-      });
-      await this.tenantRepository.save(tenant);
-      this.logger.log('Tenant Master (TIWEB) criado.');
-    }
-  }
 
-  private async seedRoles(): Promise<Role | undefined> {
-
+    const adminRole = await this.seedRoles();
 
     if (adminRole) {
       const admin = await this.seedAdminUser(adminRole);
@@ -66,6 +51,20 @@ export class SeedService {
     }
 
     this.logger.log('Seeding concluído com sucesso.');
+  }
+
+  private async seedDefaultTenant(): Promise<void> {
+    const existing = await this.tenantRepository.findOne({ where: { id: this.TIWEB_ID } });
+    if (!existing) {
+      const tenant = this.tenantRepository.create({
+        id: this.TIWEB_ID,
+        name: 'TIWEB Master',
+        slug: 'tiweb',
+        isActive: true
+      });
+      await this.tenantRepository.save(tenant);
+      this.logger.log('Tenant Master (TIWEB) criado.');
+    }
   }
 
   private async seedRoles(): Promise<Role | undefined> {
