@@ -34,6 +34,9 @@ export class SeedService {
     // 0. Garante que o Tenant Master existe
     await this.seedDefaultTenant();
 
+    // 0.1. "Database Doctor": Garante que todos os tenants usados por usuários existam
+    await this.fixMissingTenants();
+
     // 1. Garante que todos os usuários tenham usernames (Migração retroativa)
     await this.userSeedService.migrateUsernames();
 
@@ -64,6 +67,29 @@ export class SeedService {
       });
       await this.tenantRepository.save(tenant);
       this.logger.log('Tenant Master (TIWEB) criado.');
+    }
+  }
+
+  /**
+   * Varre a tabela de usuários e cria registros de Tenant para qualquer ID que não exista.
+   * Isso evita erros de chave estrangeira em ambientes com dados "sujos".
+   */
+  private async fixMissingTenants(): Promise<void> {
+    const users = await this.userRepository.find({ select: ['tenantId'] });
+    const uniqueTenantIds = [...new Set(users.map(u => u.tenantId).filter(id => !!id))];
+
+    for (const tenantId of uniqueTenantIds) {
+      const exists = await this.tenantRepository.findOne({ where: { id: tenantId! } });
+      if (!exists) {
+        this.logger.warn(`Tenant ID ${tenantId} encontrado em usuários mas não na tabela de Tenants. Corrigindo...`);
+        const newTenant = this.tenantRepository.create({
+          id: tenantId!,
+          name: `Tenant Recuperado (${tenantId?.substring(0, 8)})`,
+          slug: `recovered-${tenantId?.substring(0, 8)}`,
+          isActive: true
+        });
+        await this.tenantRepository.save(newTenant);
+      }
     }
   }
 
