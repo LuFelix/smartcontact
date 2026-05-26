@@ -50,6 +50,7 @@ export class AuthService {
   readonly userEmail = computed(() => this.#decodedToken()?.email);
   readonly userName = computed(() => this.#decodedToken()?.name);
   readonly userId = computed(() => this.#decodedToken()?.sub);
+  readonly userUsername = computed(() => this.#decodedToken()?.username);
   readonly userPicture = computed(() => this.#decodedToken()?.picture);
 
   // --- Métodos de Autenticação ---
@@ -243,7 +244,8 @@ export class AuthService {
        return {
            id: decoded.sub,
            email: decoded.email,
-           name: decoded.name, // Usa 'name'
+           name: decoded.name, 
+           username: decoded.username,
            role: decoded.role,
            profilePictureUrl: decoded.picture
        };

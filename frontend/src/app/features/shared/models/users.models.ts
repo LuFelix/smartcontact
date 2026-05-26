@@ -5,6 +5,7 @@ export interface JwtPayload {
     sub: string; // User ID (geralmente string UUID ou número como string)
     name: string;
     email: string;
+    username?: string;
     role: string;
     tenantId?: string;
     ownerId?: string;
@@ -120,6 +121,7 @@ export interface UserData {
     id: string;         
     email: string;      
     name: string;       
+    username?: string;
     role: string;       
     firstName?: string;
     lastName?: string;

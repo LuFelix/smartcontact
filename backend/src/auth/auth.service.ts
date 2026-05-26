@@ -119,6 +119,7 @@ export class AuthService {
           sub: user.id, 
           name: user.name, 
           email: user.email, 
+          username: user.username,
           role: user.role?.name || 'usuario',
           ownerId: user.ownerId,
           tenantId: user.tenantId,
@@ -215,6 +216,7 @@ export class AuthService {
         sub: user.id, 
         name: user.name, 
         email: user.email, 
+        username: user.username,
         role: user.role?.name || 'USER', // Fallback caso a role demore a carregar
         ownerId: user.ownerId,
         tenantId: user.tenantId,
