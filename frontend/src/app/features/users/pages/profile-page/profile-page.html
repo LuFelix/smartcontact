@@ -85,7 +85,7 @@
 
                 <mat-form-field appearance="outline" class="col-span-2">
                     <mat-label>Seu Username (URL Única)</mat-label>
-                    <input matInput [value]="userUsername()" readonly />
+                    <input matInput [value]="userUsername()" disabled readonly />
                     <mat-icon matSuffix matTooltip="Este é o seu identificador único para o link direto.">verified</mat-icon>
                     <mat-hint>Seu link direto é: smartcontact.tiweb.app.br/t/{{ userUsername() }}</mat-hint>
                 </mat-form-field>
