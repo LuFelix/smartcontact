@@ -107,7 +107,7 @@ export class MemberInvitationDialogComponent implements OnInit {
           this.invitationLink = `${baseUrl}/join/${res.token}`;
           
           setTimeout(() => {
-            if (this.qrcodeCanvas) {
+            if (this.qrcodeCanvas && this.invitationLink) {
               QRCode.toCanvas(this.qrcodeCanvas.nativeElement, this.invitationLink, {
                 width: 250,
                 margin: 2
