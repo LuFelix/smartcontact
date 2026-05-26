@@ -2,7 +2,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { FindManyOptions, ILike, Like, Repository, DeepPartial } from 'typeorm';
+import { FindManyOptions, ILike, Like, Repository, DeepPartial, IsNull } from 'typeorm';
 import { CreateUserDto } from './dto/user.dto';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/roles/entities/role.entity';
@@ -84,13 +84,20 @@ export class UsersService {
 
         let assignedRole;
         if (roleId) {
-            assignedRole = await this.rolesRepository.findOne({ where: { id: roleId } });
+            // SEGURANÇA: Busca a role garantindo que ela seja Global (tenantId null) 
+            // OU que pertença ao mesmo Tenant do criador.
+            assignedRole = await this.rolesRepository.findOne({ 
+                where: [
+                    { id: roleId, tenantId },
+                    { id: roleId, tenantId: IsNull() }
+                ] 
+            });
         } else {
             assignedRole = await this.rolesRepository.findOne({ where: { name: 'colaborador' } });
         }
 
         if (!assignedRole) {
-            throw new BadRequestException('Role especificada não existe');
+            throw new BadRequestException('A função especificada não existe ou não pertence a esta organização.');
         }
 
         const cleanItems = (items: any[] | undefined) => items ? items.map(item => {
