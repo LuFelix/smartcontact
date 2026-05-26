@@ -13,7 +13,7 @@ import { TeamService } from '../../../../core/services/team.service';
 import { Role } from '../../../shared/models/role.model';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { finalize } from 'rxjs';
-import * as QRCode from 'qrcode';
+import QRCode from 'qrcode';
 
 @Component({
   selector: 'app-member-invitation-dialog',
