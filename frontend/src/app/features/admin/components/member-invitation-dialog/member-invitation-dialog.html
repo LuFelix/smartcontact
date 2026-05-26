@@ -91,7 +91,7 @@
   }
   .description {
     font-size: 0.9rem;
-    color: #666;
+    color: var(--mat-sys-on-surface-variant);
     margin-bottom: 16px;
   }
   .actions {
@@ -113,18 +113,15 @@
   }
   .invitation-url {
     font-family: monospace;
-    font-size: 0.8rem;
-    background: rgba(0, 0, 0, 0.05);
-    color: currentColor;
-    padding: 10px;
-    border-radius: 4px;
+    font-size: 0.85rem;
+    background-color: var(--mat-sys-surface-container-highest);
+    color: var(--mat-sys-on-surface-variant);
+    padding: 12px;
+    border-radius: 8px;
     word-break: break-all;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    margin-top: 8px;
-  }
-  :host-context(.dark-theme) .invitation-url {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--mat-sys-outline-variant);
+    margin-top: 12px;
+    display: block;
   }
   .qr-actions {
     display: flex;
