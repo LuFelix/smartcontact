@@ -28,6 +28,35 @@ export class UsersService {
         private readonly tagsService: TagsService,
     ) { }
 
+    /**
+     * Gera um username único a partir do nome do usuário.
+     * Resolve colisões adicionando um sufixo numérico.
+     */
+    async generateUniqueUsername(name: string): Promise<string> {
+        const baseUsername = name
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+            .replace(/[^a-z0-9]/g, "") // Mantém apenas letras e números
+            .substring(0, 30); // Limita o tamanho
+
+        let username = baseUsername;
+        let counter = 1;
+        let exists = true;
+
+        while (exists) {
+            const user = await this.usersRepository.findOne({ where: { username } });
+            if (!user) {
+                exists = false;
+            } else {
+                username = `${baseUsername}${counter}`;
+                counter++;
+            }
+        }
+
+        return username;
+    }
+
     async create(createUserDto: CreateUserDto, currentUser?: any, profilePictureUrl?: string): Promise<User> {
         let { email, cpf, password, roleId, phones, addresses, secondaryEmails, links, tags } = createUserDto as any; 
         
@@ -51,7 +80,7 @@ export class UsersService {
             }
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(password || '', 10);
 
         let assignedRole;
         if (roleId) {
@@ -69,9 +98,13 @@ export class UsersService {
             return { ...restItem, ownerId, tenantId };
         }) : [];
 
+        // GERA USERNAME AUTOMÁTICO NA CRIAÇÃO
+        const username = await this.generateUniqueUsername(createUserDto.name);
+
         const userData: DeepPartial<User> = {
             name: createUserDto.name,
             email: createUserDto.email,
+            username,
             cpf: cpf as any, 
             password: hashedPassword,
             isActive: createUserDto.isActive ?? true,
@@ -84,31 +117,30 @@ export class UsersService {
             links: cleanItems(links),
         };
 
-    const user = this.usersRepository.create(userData);
-    const savedUser = await this.usersRepository.save(user);
+        const user = this.usersRepository.create(userData);
+        const savedUser = await this.usersRepository.save(user);
 
-    // CRIAÇÃO AUTOMÁTICA DE PROFILE E TAG (Apenas para Contas Reais/SaaS)
-    // Se o usuário não tem senha, ele é apenas um contato importado/lead e não ganha perfil público.
-    // Usuários Google ganham senha dummy no AuthService, então passam aqui.
-    const isRealAccount = !!createUserDto.password && createUserDto.password.length > 0;
+        // CRIAÇÃO AUTOMÁTICA DE PROFILE E TAG (Apenas para Contas Reais/SaaS)
+        const isRealAccount = !!createUserDto.password && createUserDto.password.length > 0;
 
-    if (isRealAccount) {
-        await this.profilesService.create({
-            userId: savedUser.id,
-            ownerId: savedUser.ownerId!,
-            tenantId: savedUser.tenantId!,
-            profilePictureUrl: profilePictureUrl
-        });
+        if (isRealAccount) {
+            await this.profilesService.create({
+                userId: savedUser.id,
+                ownerId: savedUser.ownerId!,
+                tenantId: savedUser.tenantId!,
+                profilePictureUrl: profilePictureUrl
+            });
 
-        await this.tagsService.createDefaultTag(
-            savedUser.id,
-            savedUser.ownerId!,
-            savedUser.tenantId!
-        );
+            await this.tagsService.createDefaultTag(
+                savedUser.id,
+                savedUser.ownerId!,
+                savedUser.tenantId!
+            );
+        }
+
+        // RETORNA O USUÁRIO COMPLETO COM RELAÇÕES CARREGADAS
+        return this.findByEmail(savedUser.email) as Promise<User>;
     }
-
-    return savedUser;
-  }
 
     async findByCpf(cpf: string): Promise<User | null> {
         return this.usersRepository.findOne({ 
@@ -124,11 +156,11 @@ export class UsersService {
         });
     }
 
-    /**
-     * Garante que um usuário tenha ao menos uma tag vinculada (para o perfil público funcionar)
-     */
-    async ensureHasDefaultTag(user: User): Promise<void> {
-        await this.tagsService.createDefaultTag(user.id, user.ownerId!, user.tenantId!);
+    async findByUsername(username: string): Promise<User | null> {
+        return this.usersRepository.findOne({ 
+            where: { username }, 
+            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile'] 
+        });
     }
 
     async findById(userId: string, currentUser?: any): Promise<User | null> {
@@ -146,7 +178,6 @@ export class UsersService {
         const isTenantAdmin = currentUser?.role === 'administrador';
         const isSystemAdmin = currentUser?.isSuperAdmin;
 
-        // LGPD: Só liberamos as relações de contato se houver permissão
         const showContacts = isSystemAdmin || isOwnProfile || isOwner || isTenantAdmin;
 
         const relations = showContacts
@@ -192,7 +223,6 @@ export class UsersService {
                 return user; 
             }
 
-            // LGPD: Strip sensitive data for users we don't own/manage
             const { phones, addresses, secondaryEmails, links, ...basicInfo } = user;
             return basicInfo as User;
         });
@@ -212,12 +242,10 @@ export class UsersService {
 
         const isSystemAdmin = currentUser?.isSuperAdmin;
 
-        // Regra Multi-Tenant: Bloqueia edição cross-tenant
         if (!isSystemAdmin && currentUser?.tenantId && user.tenantId !== currentUser?.tenantId) {
              throw new BadRequestException('Acesso negado: Este usuário pertence a outra organização.');
         }
 
-        // Regra Owner-Data: Apenas o dono ou o próprio pode editar (System Admin pode tudo)
         const isOwner = user.ownerId === currentUser?.sub;
         const isOwnProfile = user.id === currentUser?.sub;
 
@@ -300,5 +328,23 @@ export class UsersService {
 
         await this.usersRepository.delete(id);
         return { message: `Usuário com ID ${id} foi removido com sucesso.` };
+    }
+
+    /**
+     * Garante que um usuário tenha ao menos uma tag vinculada (para o perfil público funcionar)
+     */
+    async ensureHasDefaultTag(user: User): Promise<void> {
+        await this.tagsService.createDefaultTag(user.id, user.ownerId!, user.tenantId!);
+    }
+
+    /**
+     * Migração retroativa para popular usernames de quem já existe no banco.
+     */
+    async migrateUsernames(): Promise<void> {
+        const users = await this.usersRepository.find({ where: { username: null as any } });
+        for (const user of users) {
+            const username = await this.generateUniqueUsername(user.name);
+            await this.usersRepository.update(user.id, { username });
+        }
     }
 }

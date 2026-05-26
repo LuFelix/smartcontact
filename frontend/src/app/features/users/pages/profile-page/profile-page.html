@@ -55,7 +55,7 @@
                 }
                 
                 <div class="tag-preview-action">
-                    <a mat-stroked-button color="primary" [routerLink]="['/t', activeTag.uuid]" target="_blank">
+                    <a mat-stroked-button color="primary" [routerLink]="['/t', userUsername() || activeTag.uuid]" target="_blank">
                         <mat-icon>visibility</mat-icon> Ver meu Perfil Público
                     </a>
                 </div>
@@ -81,6 +81,13 @@
                 <mat-form-field appearance="outline">
                     <mat-label>Sobrenome</mat-label>
                     <input matInput formControlName="lastName" autocomplete="off" />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="col-span-2">
+                    <mat-label>Seu Username (URL Única)</mat-label>
+                    <input matInput [value]="userUsername()" disabled readonly />
+                    <mat-icon matSuffix matTooltip="Este é o seu identificador único para o link direto.">verified</mat-icon>
+                    <mat-hint>Seu link direto é: smartcontact.tiweb.app.br/t/{{ userUsername() }}</mat-hint>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="col-span-2">

@@ -61,6 +61,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private cepService = inject(CepService);
 
+  // Signals
+  userUsername = this.authService.userUsername;
+
   profileForm: FormGroup;
   currentUserData: FullUserResponse | null = null;
   activeTag: Tag | null = null;

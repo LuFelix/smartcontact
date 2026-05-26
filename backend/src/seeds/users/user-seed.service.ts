@@ -7,6 +7,7 @@ import { User } from 'src/users/entities/user.entity';
 import { Role } from 'src/roles/entities/role.entity';
 import { Tag, RedirectMode } from 'src/tags/entities/tag.entity';
 import { ProfilesService } from 'src/profiles/profiles.service';
+import { UsersService } from 'src/users/users.service';
 import { usersData } from './users-data';
 
 @Injectable()
@@ -23,7 +24,13 @@ export class UserSeedService {
     @InjectRepository(Tag)
     private readonly tagRepository: Repository<Tag>,
     private readonly profilesService: ProfilesService,
+    private readonly usersService: UsersService,
   ) {}
+
+  async migrateUsernames() {
+      this.logger.log('Iniciando migração de usernames...');
+      await this.usersService.migrateUsernames();
+  }
 
   async run(defaultRole: Role, admin: User) {
     this.logger.log('Iniciando seed de 50 usuários com contatos e tags...');
@@ -44,15 +51,19 @@ export class UserSeedService {
       const randomCep = this.ceps[Math.floor(Math.random() * this.ceps.length)];
       const randomPhone = `829${Math.floor(10000000 + Math.random() * 90000000)}`;
 
+      // GERA USERNAME ÚNICO PARA O SEED
+      const username = await this.usersService.generateUniqueUsername(userData.name);
+
       const data: DeepPartial<User> = {
         name: userData.name,
         email: email,
+        username: username,
         password: hashedPassword,
         isVerified: true,
         isActive: true,
         role: defaultRole,
-        ownerId: admin.id, // O criador é o Admin
-        tenantId: admin.tenantId, // Pertencem à mesma empresa (Tiweb)
+        ownerId: admin.id, 
+        tenantId: admin.tenantId,
         phones: [
             { number: randomPhone, isWhatsapp: Math.random() > 0.3, isMain: true, ownerId: admin.id, tenantId: admin.tenantId }
         ],
@@ -73,26 +84,29 @@ export class UserSeedService {
       };
 
       if (!user) {
-        user = this.userRepository.create(data);
-        user = await this.userRepository.save(user);
-        this.logger.log(`Usuário '${userData.name}' criado.`);
+        // Usa o usersService.create para garantir o ciclo de vida completo
+        user = await this.usersService.create(data as any, admin);
+        this.logger.log(`Usuário '${userData.name}' criado via UsersService.`);
       } else {
         this.userRepository.merge(user, data);
+        if (!user.username) {
+            user.username = username;
+        }
         user = await this.userRepository.save(user);
         this.logger.log(`Usuário '${userData.name}' atualizado.`);
+
+        // GARANTE QUE O USUÁRIO TENHA UM PROFILE
+        const profile = await this.profilesService.findByUserId(user.id);
+        if (!profile) {
+            await this.profilesService.create({
+                userId: user.id,
+                ownerId: admin.id,
+                tenantId: admin.tenantId as string
+            });
+        }
       }
 
-      // GARANTE QUE O USUÁRIO TENHA UM PROFILE
-      const profile = await this.profilesService.findByUserId(user.id);
-      if (!profile) {
-          await this.profilesService.create({
-              userId: user.id,
-              ownerId: admin.id,
-              tenantId: admin.tenantId as string
-          });
-      }
-
-      if (!user.tags || user.tags.length === 0) {
+      if (user && (!user.tags || user.tags.length === 0)) {
           const newTagData: DeepPartial<Tag> = {
               uuid: `test-tag-${emailBase}`,
               userId: user.id,
