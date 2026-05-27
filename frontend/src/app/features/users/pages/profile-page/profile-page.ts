@@ -385,18 +385,21 @@ export class ProfileComponent implements OnInit, OnDestroy {
     if (this.profileForm.invalid) return;
     this.isLoading = true;
 
-    const { tagSettings, ...formData } = this.profileForm.getRawValue();
-    const payload = {
-        ...formData,
-        name: `${formData.firstName} ${formData.lastName}`,
-        phones: formData.phones.map((p: any) => ({
-            id: p.id,
+    const rawValue = this.profileForm.getRawValue();
+    const { tagSettings, firstName, lastName, email, cpf } = rawValue;
+
+    const payload: any = {
+        name: `${firstName} ${lastName}`.trim(),
+        email: email,
+        cpf: cpf,
+        phones: rawValue.phones.map((p: any) => ({
+            id: p.id || undefined,
             number: p.phoneNumber,
             isWhatsapp: p.isWhatsapp,
             isMain: p.isMain
         })),
-        addresses: formData.addresses.map((a: any) => ({
-            id: a.id,
+        addresses: rawValue.addresses.map((a: any) => ({
+            id: a.id || undefined,
             street: a.street,
             number: a.streetNumber,
             zipCode: a.zipCode,
@@ -407,12 +410,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
             tag: a.tag,
             isMain: a.isMain
         })),
-        secondaryEmails: formData.secondaryEmails.map((e: any) => ({
-            id: e.id,
+        secondaryEmails: rawValue.secondaryEmails.map((e: any) => ({
+            id: e.id || undefined,
             address: e.address
         })),
-        links: formData.links.map((l: any) => ({
-            id: l.id,
+        links: rawValue.links.map((l: any) => ({
+            id: l.id || undefined,
             title: l.title,
             url: l.url
         })),
@@ -423,12 +426,22 @@ export class ProfileComponent implements OnInit, OnDestroy {
             qrRedirectMode: tagSettings.qrRedirectMode,
             qrCustomUrl: tagSettings.qrCustomUrl
         }] : [],
-        // Enviar os modos fora do array também para garantir persistência via fallback do UsersService
         nfcRedirectMode: tagSettings.nfcRedirectMode,
         nfcCustomUrl: tagSettings.nfcCustomUrl,
         qrRedirectMode: tagSettings.qrRedirectMode,
         qrCustomUrl: tagSettings.qrCustomUrl
     };
+
+    // Remover IDs nulos para evitar erro de validação UUID no backend
+    const cleanId = (obj: any) => {
+        if (obj.id === null) delete obj.id;
+        return obj;
+    };
+    payload.phones.forEach(cleanId);
+    payload.addresses.forEach(cleanId);
+    payload.secondaryEmails.forEach(cleanId);
+    payload.links.forEach(cleanId);
+    if (payload.tags.length > 0) cleanId(payload.tags[0]);
 
     this.userService.updateUser(this.currentUserData!.id, payload).pipe(
         finalize(() => this.isLoading = false)

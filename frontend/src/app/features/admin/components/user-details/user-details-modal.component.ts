@@ -354,18 +354,24 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
         }
 
         this.isSaving = true;
-        const { tagSettings, ...rawData } = this.userForm.getRawValue();
+        const rawData = this.userForm.getRawValue();
+        const { tagSettings, name, email, cpf, isActive, roleId, password } = rawData;
 
-        const payload = {
-            ...rawData,
+        const payload: any = {
+            name,
+            email,
+            cpf,
+            isActive,
+            roleId,
+            password,
             phones: rawData.phones.map((p: any) => ({
-                id: p.id,
+                id: p.id || undefined,
                 number: p.phoneNumber,
                 isWhatsapp: p.isWhatsapp,
                 isMain: p.isMain
             })),
             addresses: rawData.addresses.map((a: any) => ({
-                id: a.id,
+                id: a.id || undefined,
                 street: a.street,
                 number: a.streetNumber,
                 complement: a.complement,
@@ -377,11 +383,11 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
                 isMain: a.isMain
             })),
             secondaryEmails: rawData.secondaryEmails.map((e: any) => ({
-                id: e.id,
+                id: e.id || undefined,
                 address: e.address
             })),
             links: rawData.links.map((l: any) => ({
-                id: l.id,
+                id: l.id || undefined,
                 title: l.title,
                 url: l.url
             })),
@@ -397,6 +403,17 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
             qrRedirectMode: tagSettings.qrRedirectMode,
             qrCustomUrl: tagSettings.qrCustomUrl
         };
+
+        // Limpeza de IDs nulos
+        const cleanId = (obj: any) => {
+            if (obj.id === null) delete obj.id;
+            return obj;
+        };
+        payload.phones.forEach(cleanId);
+        payload.addresses.forEach(cleanId);
+        payload.secondaryEmails.forEach(cleanId);
+        payload.links.forEach(cleanId);
+        if (payload.tags.length > 0) cleanId(payload.tags[0]);
 
         if (!this.data.isCreation && !payload.password) {
             delete payload.password;
