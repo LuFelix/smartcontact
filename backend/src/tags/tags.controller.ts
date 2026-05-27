@@ -16,8 +16,11 @@ export class TagsController {
   @ApiOperation({ summary: 'Resolve a tag UUID or Username and return public user information' })
   @ApiResponse({ status: 200, description: 'Tag and public user info found' })
   @ApiResponse({ status: 404, description: 'Tag not found' })
-  async resolve(@Param('identifier') identifier: string) {
-    const data = await this.tagsService.resolveTag(identifier);
+  async resolve(
+    @Param('identifier') identifier: string,
+    @Query('source') source?: string
+  ) {
+    const data = await this.tagsService.resolveTag(identifier, source);
     if (!data) {
       throw new NotFoundException('Tag ou Usuário não encontrado');
     }

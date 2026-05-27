@@ -180,7 +180,8 @@ export class SeedService {
             userId: admin.id,
             ownerId: this.TIWEB_ID,
             tenantId: this.TIWEB_ID,
-            redirectMode: RedirectMode.PROFILE,
+            nfcRedirectMode: RedirectMode.PROFILE,
+            qrRedirectMode: RedirectMode.PROFILE,
             isActive: true
         };
         const newTag = this.tagRepository.create(newTagData);

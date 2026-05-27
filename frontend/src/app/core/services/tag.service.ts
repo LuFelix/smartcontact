@@ -18,8 +18,9 @@ export class TagService {
   private readonly http = inject(HttpClient);
   private readonly API_URL = `${environment.apiUrl}/tags`;
 
-  resolveTag(uuid: string): Observable<TagResolutionResponse> {
-    return this.http.get<TagResolutionResponse>(`${this.API_URL}/resolve/${uuid}`);
+  resolveTag(uuid: string, source?: string): Observable<TagResolutionResponse> {
+    const url = source ? `${this.API_URL}/resolve/${uuid}?source=${source}` : `${this.API_URL}/resolve/${uuid}`;
+    return this.http.get<TagResolutionResponse>(url);
   }
 
   /**

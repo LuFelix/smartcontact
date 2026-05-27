@@ -20,7 +20,8 @@ export class TagsService {
           userId,
           ownerId,
           tenantId,
-          redirectMode: RedirectMode.PROFILE,
+          nfcRedirectMode: RedirectMode.PROFILE,
+          qrRedirectMode: RedirectMode.PROFILE,
           isActive: true
       });
       return this.tagRepository.save(tag);
@@ -90,7 +91,7 @@ export class TagsService {
       return this.accessRepository.save(access);
   }
 
-  async resolveTag(identifier: string) {
+  async resolveTag(identifier: string, source?: string) {
     // Busca primeiro por UUID (NFC)
     let tag = await this.tagRepository.findOne({
       where: { uuid: identifier, isActive: true },
@@ -133,11 +134,16 @@ export class TagsService {
       links: user.links,
     };
 
+    // Determinar qual modo de redirecionamento usar baseado no source
+    const redirectMode = source === 'qr' ? tag.qrRedirectMode : tag.nfcRedirectMode;
+    const customUrl = source === 'qr' ? tag.qrCustomUrl : tag.nfcCustomUrl;
+
     return {
       id: tag.id,
-      redirectMode: tag.redirectMode,
-      customUrl: tag.customUrl,
+      redirectMode,
+      customUrl,
       user: publicUser,
+      tech_type: source || 'nfc' // Default para nfc se não especificado
     };
   }
 

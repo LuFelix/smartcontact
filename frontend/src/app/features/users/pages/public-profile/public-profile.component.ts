@@ -68,17 +68,19 @@ export class PublicProfileComponent implements OnInit {
 
   ngOnInit(): void {
     const uuid = this.route.snapshot.paramMap.get('uuid');
+    const source = this.route.snapshot.queryParamMap.get('source');
+    
     if (uuid) {
-      this.loadTag(uuid);
+      this.loadTag(uuid, source || undefined);
     } else {
       this.error = 'Código de tag inválido.';
       this.isLoading = false;
     }
   }
 
-  loadTag(uuid: string): void {
+  loadTag(uuid: string, source?: string): void {
     this.isLoading = true;
-    this.tagService.resolveTag(uuid)
+    this.tagService.resolveTag(uuid, source)
       .pipe(finalize(() => this.isLoading = false))
       .subscribe({
         next: (data) => {
