@@ -1,6 +1,6 @@
 // Caminho: src/app/features/admin/components/user-details/user-details-modal.component.ts
 
-import { Component, Inject, OnInit, inject, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, Inject, OnInit, inject, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormControl, FormArray} from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { RouterModule, RouterLink } from '@angular/router';
@@ -16,7 +16,7 @@ import { UserService } from '../../../users/services/user.service';
 import { User, AddressTag, RedirectMode, Tag } from '../../../shared/models/users.models';
 import { Role } from '../../../shared/models/role.model';
 import { finalize, Observable, Subscription, debounceTime, distinctUntilChanged, filter, switchMap, catchError, of, tap } from 'rxjs';
-import { MatSelectModule } from '@angular/material/select'; 
+import { MatSelectModule, MatSelect } from '@angular/material/select'; 
 import { MatOptionModule } from '@angular/material/core';
 import { RoleService } from '../../../users/services/role.service';
 import { MatDividerModule } from '@angular/material/divider';
@@ -58,7 +58,7 @@ export interface UserModalData {
     templateUrl: './user-details-modal.component.html',
     styleUrls: ['./user-details-modal.component.scss']
 })
-export class UserDetailsModalComponent implements OnInit, OnDestroy {
+export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewInit {
     private fb = inject(FormBuilder);
     private userService = inject(UserService);
     private roleService = inject(RoleService);
@@ -66,6 +66,7 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
     public dialogRef = inject(MatDialogRef<UserDetailsModalComponent>);
 
     @ViewChild('qrcodeCanvas') qrcodeCanvas!: ElementRef<HTMLCanvasElement>;
+    @ViewChild('qrSelect') qrSelect!: MatSelect;
 
     user: User | null = null;
     userForm!: FormGroup;
@@ -107,6 +108,15 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
         if (!this.data.isCreation && this.data.userId) {
             this.loadUser(this.data.userId);
         }
+    }
+
+    ngAfterViewInit(): void {
+        // Garantir foco inicial no dropdown do QR para evitar scroll indesejado para baixo
+        setTimeout(() => {
+            if (this.qrSelect) {
+                this.qrSelect.focus();
+            }
+        }, 500);
     }
 
     ngOnDestroy(): void {

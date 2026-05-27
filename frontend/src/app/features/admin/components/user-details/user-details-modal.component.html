@@ -56,7 +56,7 @@
                                 <h4 class="source-label"><mat-icon>qr_code_2</mat-icon> Destino do QR Code</h4>
                                 <mat-form-field appearance="outline" class="w-full">
                                     <mat-label>Onde o QR vai abrir?</mat-label>
-                                    <mat-select formControlName="qrRedirectMode" cdkFocusInitial>
+                                    <mat-select formControlName="qrRedirectMode" #qrSelect>
                                         @for (mode of redirectModes; track mode.value) {
                                             <mat-option [value]="mode.value">{{ mode.label }}</mat-option>
                                         }
