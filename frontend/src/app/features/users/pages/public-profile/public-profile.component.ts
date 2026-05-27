@@ -68,40 +68,58 @@ export class PublicProfileComponent implements OnInit {
 
   ngOnInit(): void {
     const uuid = this.route.snapshot.paramMap.get('uuid');
+    const source = this.route.snapshot.queryParamMap.get('source');
+    
     if (uuid) {
-      this.loadTag(uuid);
+      this.loadTag(uuid, source || undefined);
     } else {
       this.error = 'Código de tag inválido.';
       this.isLoading = false;
     }
   }
 
-  loadTag(uuid: string): void {
+  loadTag(uuid: string, source?: string): void {
     this.isLoading = true;
-    this.tagService.resolveTag(uuid)
-      .pipe(finalize(() => this.isLoading = false))
+    this.tagService.resolveTag(uuid, source)
       .subscribe({
         next: (data) => {
+          // LÓGICA REFINADA:
+          // Só redirecionamos se houver um 'source' (veio de NFC ou QR).
+          // Se o usuário acessou o link direto (/t/username) sem source, 
+          // ele deve SEMPRE ver o Perfil Inteligente.
+          if (source && data.redirectMode !== RedirectMode.PROFILE) {
+            const success = this.handleRedirection(data);
+            if (success) return; // Navegador vai sair da página
+            
+            // Se falhou o redirect, fallback para o perfil
+            this.snackBar.open('Redirecionamento não configurado. Mostrando perfil.', 'OK', { duration: 3000 });
+          }
+          
           this.tagData = data;
-          this.handleRedirection(data);
+          this.isLoading = false;
         },
         error: (err) => {
+          this.isLoading = false;
           this.error = 'Tag não encontrada ou desativada.';
           console.error(err);
         }
       });
   }
 
-  handleRedirection(data: TagResolutionResponse): void {
+  handleRedirection(data: TagResolutionResponse): boolean {
     if (data.redirectMode === RedirectMode.CUSTOM_URL && data.customUrl) {
-      window.location.href = data.customUrl;
+      const targetUrl = data.customUrl.startsWith('http') ? data.customUrl : `https://${data.customUrl}`;
+      window.location.href = targetUrl;
+      return true;
     } else if (data.redirectMode === RedirectMode.WHATSAPP) {
       const mainPhone = data.user.phones?.find((p: any) => p.isWhatsapp) || data.user.phones?.[0];
-      if (mainPhone) {
+      if (mainPhone && mainPhone.number) {
         const cleanNumber = mainPhone.number.replace(/\D/g, '');
         window.location.href = `https://wa.me/${cleanNumber}`;
+        return true;
       }
     }
+    return false;
   }
 
   get profileImage(): string {

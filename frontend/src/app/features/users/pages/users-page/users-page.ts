@@ -96,6 +96,8 @@ export class UsersPage implements OnInit {
       width: '850px',
       maxWidth: '95vw',
       data: data,
+      autoFocus: false,
+      restoreFocus: false
     });
 
     dialogRef.afterClosed().subscribe(result => {
@@ -159,7 +161,9 @@ export class UsersPage implements OnInit {
       data: { 
         userId: userId, 
         isCreation: false 
-      }
+      },
+      autoFocus: false,
+      restoreFocus: false
     });
 
 

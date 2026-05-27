@@ -112,7 +112,8 @@ export class UserSeedService {
               userId: user.id,
               ownerId: admin.id,
               tenantId: admin.tenantId as string,
-              redirectMode: RedirectMode.PROFILE,
+              nfcRedirectMode: RedirectMode.PROFILE,
+              qrRedirectMode: RedirectMode.PROFILE,
               isActive: true
           };
           const newTag = this.tagRepository.create(newTagData);

@@ -11,4 +11,9 @@ export class GoogleLoginDto {
   @IsOptional()
   @IsString()
   accessToken?: string;
+
+  @ApiPropertyOptional({ description: 'Token de convite (opcional)' })
+  @IsOptional()
+  @IsString()
+  invitationToken?: string;
 }

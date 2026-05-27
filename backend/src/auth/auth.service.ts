@@ -1,9 +1,10 @@
 // auth/auth.service.ts
-import { Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, UnauthorizedException, Inject, forwardRef, BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
 import { ProfilesService } from 'src/profiles/profiles.service';
+import { TeamService } from 'src/team/team.service';
 import { LoginDto, MinimalRegisterDto } from './dto/auth.dto';
 import { GoogleLoginDto } from './dto/google-token.dto';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -20,7 +21,9 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly profilesService: ProfilesService,
     private readonly jwtService: JwtService,
-    private readonly mailerService: MailerService
+    private readonly mailerService: MailerService,
+    @Inject(forwardRef(() => TeamService))
+    private readonly teamService: TeamService
     
   ) { }
 
@@ -33,18 +36,34 @@ export class AuthService {
    const expires = new Date();
    expires.setMinutes(expires.getMinutes() + 15);
 
-   // 2. Garanta que o CreateUserDto tenha o que o banco pede
-   // Para novos registros SaaS, definimos a role como Administrador do seu novo tenant
+   let tenantId = uuidv4();
+   let roleId = 'ec057e51-50db-41e7-929b-e520a2bc2e1a'; // Default: administrador de novo tenant
+
+   // 2. Se houver token de convite, resolvemos para pegar o Tenant e Role de destino
+   if (registerDto.invitationToken) {
+       try {
+           const invitation = await this.teamService.resolveInvitation(registerDto.invitationToken);
+           tenantId = invitation.tenantId;
+           roleId = invitation.roleId;
+       } catch (error) {
+           console.warn(`[AuthService] Convite inválido ou expirado ignorado: ${registerDto.invitationToken}`);
+           // Se o convite for inválido, seguimos com a criação de um novo tenant para não travar o cadastro?
+           // Ou barramos? O usuário disse: "os que não existem deveria ser passada a informação".
+           // Mas aqui é sobre o token. Se o token falhar, talvez devêssemos avisar.
+           throw new BadRequestException('O convite utilizado é inválido ou expirou.');
+       }
+   }
+
    const createUserDto = {
        name: registerDto.name,
        email: registerDto.email,
        password: registerDto.password,
-       roleId: 'ec057e51-50db-41e7-929b-e520a2bc2e1a' // ID da Role 'administrador'
+       roleId: roleId
    };
-    // Novo usuário ganha um tenant próprio (empresa de um homem só)
+
     const newTenantContext = {
-        tenantId: uuidv4(),
-        sub: null // Indica que é um registro público, o UsersService cuidará do owner
+        tenantId: tenantId,
+        sub: null 
     };
 
     const user = await this.usersService.create(createUserDto, newTenantContext);
@@ -59,10 +78,14 @@ export class AuthService {
     });
 
   } catch (mailError: any) {
-       console.error('Falha ao enviar e-mail HostGator, mas cadastro OK:', mailError.message);
+       console.error('Falha ao enviar e-mail HostGator:', mailError.message);
+       // Se o e-mail for rejeitado por caixa inexistente (550), informamos o erro
+       if (mailError.message.includes('550') || mailError.message.includes('Mailbox does not exist')) {
+           throw new BadRequestException('Não foi possível enviar o e-mail de verificação. Verifique se o endereço está correto ou se a caixa de entrada existe.');
+       }
   }
 
-  return user.email; // O servidor vai responder 201 agora!
+  return user.email;
     
 }
   async verifyEmailCode(email: string, code: string): Promise<{ message: string }> {
@@ -160,8 +183,21 @@ export class AuthService {
 
       // Se o usuário não existe, faz o "Silent Registration"
       if (!user) {
+        let tenantId = uuidv4();
+        let roleId = 'ec057e51-50db-41e7-929b-e520a2bc2e1a'; // Administrador do novo tenant
+
+        if (loginDto.invitationToken) {
+            try {
+                const invitation = await this.teamService.resolveInvitation(loginDto.invitationToken);
+                tenantId = invitation.tenantId;
+                roleId = invitation.roleId;
+            } catch (error) {
+                console.warn(`[AuthService Google] Convite inválido ignorado: ${loginDto.invitationToken}`);
+            }
+        }
+
         const newUserContext = {
-            tenantId: uuidv4(),
+            tenantId: tenantId,
             sub: null
         };
         
@@ -169,7 +205,7 @@ export class AuthService {
           email: payloadGoogle.email,
           name: payloadGoogle.name || 'Usuário Google',
           password: Math.random().toString(36).slice(-10), // Senha aleatória "dummy"
-          roleId: 'ec057e51-50db-41e7-929b-e520a2bc2e1a' // ID da Role 'administrador'
+          roleId: roleId
         }, newUserContext, payloadGoogle.picture);
 
         // Como o Google já validou o e-mail, marcamos como verificado direto

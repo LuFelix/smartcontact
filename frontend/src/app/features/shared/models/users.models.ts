@@ -58,8 +58,10 @@ export enum RedirectMode {
 export interface Tag {
   id: string;
   uuid: string;
-  redirectMode: RedirectMode;
-  customUrl?: string | null;
+  nfcRedirectMode: RedirectMode;
+  nfcCustomUrl?: string | null;
+  qrRedirectMode: RedirectMode;
+  qrCustomUrl?: string | null;
   userId: string;
   isActive: boolean;
   user?: User;
@@ -91,6 +93,7 @@ export interface User {
   id: string; 
   name: string;
   email: string;
+  username?: string;
   cpf?: string;
   isActive?: boolean;
   role?: { id: string, name: string };
@@ -110,6 +113,7 @@ export interface User {
 // --- Interface para Registro (Usada pelo AuthService) ---
 export interface RegistrationData {
   token?: string; 
+  invitationToken?: string;
   cpf?: string;
   name: string;
   email: string;
@@ -135,6 +139,7 @@ export interface FullUserResponse {
   id: string; 
   name: string; 
   email: string;
+  username?: string;
   cpf?: string; 
   isVerified: boolean;
   role: { id: string, name: string };

@@ -10,6 +10,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { RolesService } from 'src/roles/roles.service';
 import { ProfilesService } from 'src/profiles/profiles.service';
 import { TagsService } from 'src/tags/tags.service';
+import { Tag } from 'src/tags/entities/tag.entity';
 
 @Injectable()
 export class UsersService {
@@ -22,6 +23,9 @@ export class UsersService {
 
         @InjectRepository(Role)
         private readonly rolesRepository: Repository<Role>,
+
+        @InjectRepository(Tag)
+        private readonly tagRepository: Repository<Tag>,
 
         private readonly rolesService: RolesService,
         private readonly profilesService: ProfilesService,
@@ -292,10 +296,27 @@ export class UsersService {
         if (secondaryEmails) user.secondaryEmails = cleanItems(secondaryEmails) as any;
         if (links) user.links = cleanItems(links) as any;
 
-        if (tags && tags.length > 0) {
-            if (user.tags && user.tags.length > 0) {
-                Object.assign(user.tags[0], { ...tags[0], ownerId: user.ownerId, tenantId: user.tenantId });
+        // --- Lógica de Persistência de TAG Refatorada ---
+        if (user.tags && user.tags.length > 0) {
+            const activeTag = user.tags[0];
+            
+            // Prioridade para campos nfcRedirectMode/qrRedirectMode vindos do DTO
+            if (updateUserDto.nfcRedirectMode) activeTag.nfcRedirectMode = updateUserDto.nfcRedirectMode;
+            if (updateUserDto.nfcCustomUrl !== undefined) activeTag.nfcCustomUrl = updateUserDto.nfcCustomUrl;
+            if (updateUserDto.qrRedirectMode) activeTag.qrRedirectMode = updateUserDto.qrRedirectMode;
+            if (updateUserDto.qrCustomUrl !== undefined) activeTag.qrCustomUrl = updateUserDto.qrCustomUrl;
+
+            // Se vier dentro do array 'tags' (legado ou compatibilidade), mesclamos também
+            if (tags && tags.length > 0) {
+                const tagData = tags[0];
+                if (tagData.nfcRedirectMode) activeTag.nfcRedirectMode = tagData.nfcRedirectMode;
+                if (tagData.nfcCustomUrl !== undefined) activeTag.nfcCustomUrl = tagData.nfcCustomUrl;
+                if (tagData.qrRedirectMode) activeTag.qrRedirectMode = tagData.qrRedirectMode;
+                if (tagData.qrCustomUrl !== undefined) activeTag.qrCustomUrl = tagData.qrCustomUrl;
             }
+
+            // SALVAMENTO EXPLÍCITO DA TAG
+            await this.tagRepository.save(activeTag);
         }
 
         return this.usersRepository.save(user);

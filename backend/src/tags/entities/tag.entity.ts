@@ -33,12 +33,23 @@ export class Tag {
     type: 'enum',
     enum: RedirectMode,
     default: RedirectMode.PROFILE,
-    name: 'redirect_mode',
+    name: 'nfc_redirect_mode',
   })
-  redirectMode!: RedirectMode;
+  nfcRedirectMode!: RedirectMode;
 
-  @Column({ type: 'varchar', name: 'custom_url', nullable: true })
-  customUrl!: string | null;
+  @Column({ type: 'varchar', name: 'nfc_custom_url', nullable: true })
+  nfcCustomUrl!: string | null;
+
+  @Column({
+    type: 'enum',
+    enum: RedirectMode,
+    default: RedirectMode.PROFILE,
+    name: 'qr_redirect_mode',
+  })
+  qrRedirectMode!: RedirectMode;
+
+  @Column({ type: 'varchar', name: 'qr_custom_url', nullable: true })
+  qrCustomUrl!: string | null;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })

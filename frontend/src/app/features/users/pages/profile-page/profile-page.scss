@@ -23,6 +23,7 @@
   padding: 40px 24px;
   display: flex;
   justify-content: center; 
+  align-items: center;
   text-align: center;
   border-bottom: 1px solid var(--mat-sys-outline-variant);
 
@@ -52,6 +53,7 @@
   flex-direction: column;
   align-items: center;
   padding: 40px 0 20px;
+  gap: 24px;
 
   .image-wrapper {
     position: relative;
@@ -107,6 +109,21 @@
       transition: opacity 0.2s ease;
       mat-icon { font-size: 32px; width: 32px; height: 32px; }
   }
+
+  .avatar-actions {
+      display: flex;
+      justify-content: center;
+      margin-top: 16px;
+      gap: 12px;
+  }
+
+  .avatar-action-btn {
+      height: 48px;
+      border-radius: 24px !important;
+      padding: 0 24px;
+      font-weight: 700;
+      box-shadow: var(--mat-sys-level1);
+  }
 }
 
 .profile-form {
@@ -119,6 +136,12 @@
 }
 
 .tag-management-section {
+    background-color: var(--mat-sys-surface-container-low);
+    border-radius: 24px;
+    padding: 32px;
+    margin-bottom: 24px;
+    border: 1px dashed var(--mat-sys-outline-variant);
+
     .tag-uuid-badge {
         background-color: var(--mat-sys-primary-container);
         color: var(--mat-sys-on-primary-container);
@@ -131,19 +154,112 @@
         gap: 4px;
         mat-icon { font-size: 14px; width: 14px; height: 14px; }
     }
+}
+
+.tag-settings-dual-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-top: 24px;
     
-    .tag-settings-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        align-items: start;
-        gap: 16px;
+    @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.tag-source-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 24px;
+    background: var(--mat-sys-surface-container-highest);
+    border-radius: 16px;
+}
+
+.source-label {
+    margin: 0 0 8px 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--mat-sys-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    
+    mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+    }
+}
+
+.personal-qr-section {
+    margin-top: 32px;
+    display: flex;
+    justify-content: center;
+}
+
+.qr-display-card {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    padding: 24px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: var(--mat-sys-level2);
+    border: 1px solid var(--mat-sys-outline-variant);
+    
+    canvas {
+        background: white;
+        padding: 12px;
+        border-radius: 12px;
     }
     
-    .tag-preview-action {
+    .qr-info {
+        h4 { margin: 0 0 8px 0; color: #333; font-size: 1.1rem; }
+        p { margin: 0 0 20px 0; font-size: 0.9rem; color: #666; max-width: 250px; line-height: 1.4; }
+    }
+
+    .qr-actions-row {
         display: flex;
-        align-items: center;
-        height: 56px;
+        gap: 12px;
+        margin-top: 16px;
+        
+        .test-config-btn, .download-qr-btn {
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            padding: 0 24px;
+            height: 48px;
+            border-radius: 32px !important;
+            box-shadow: var(--mat-sys-level1);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--mat-sys-level3);
+                filter: brightness(1.1);
+            }
+
+            &:active {
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 400px) {
+            flex-direction: column;
+        }
     }
+
+    @media (max-width: 600px) {
+        flex-direction: column;
+        text-align: center;
+        width: 100%;
+    }
+}
+
+.dark-mode .qr-display-card {
+    background: #f5f5f5; 
+    .qr-info h4 { color: #000; }
+    .qr-info p { color: #444; }
 }
 
 .form-section {
@@ -257,9 +373,17 @@
   .action-btn {
       height: 52px;
       padding: 0 32px;
-      border-radius: 26px;
+      border-radius: 32px !important;
       font-weight: 600;
   }
+}
+
+// Estilização GLOBAL dos botões para este componente
+button[mat-flat-button], 
+button[mat-raised-button], 
+button[mat-stroked-button], 
+a[mat-flat-button] {
+    border-radius: 32px !important;
 }
 
 .button-content-wrapper {
@@ -270,6 +394,11 @@
 }
 
 @media (max-width: 768px) {
+  .profile-card-header { 
+      flex-direction: column; 
+      text-align: center;
+      .header-text-container { align-items: center; }
+  }
   .profile-form { padding: 20px 24px 32px; }
   .grid-2-cols, .address-grid { grid-template-columns: 1fr; }
   .col-span-2 { grid-column: span 1; }

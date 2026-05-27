@@ -20,7 +20,8 @@ export class TagsService {
           userId,
           ownerId,
           tenantId,
-          redirectMode: RedirectMode.PROFILE,
+          nfcRedirectMode: RedirectMode.PROFILE,
+          qrRedirectMode: RedirectMode.PROFILE,
           isActive: true
       });
       return this.tagRepository.save(tag);
@@ -90,36 +91,40 @@ export class TagsService {
       return this.accessRepository.save(access);
   }
 
-  async resolveTag(identifier: string) {
-    // Busca primeiro por UUID (NFC)
-    let tag = await this.tagRepository.findOne({
-      where: { uuid: identifier, isActive: true },
-      relations: [
-        'user',
-        'user.profile',
-        'user.phones',
-        'user.addresses',
-        'user.secondaryEmails',
-        'user.links',
-      ],
-    });
+  async resolveTag(identifier: string, source?: string) {
+    // 1. Tenta buscar primeiro por UUID (NFC)
+    let tag = await this.tagRepository.createQueryBuilder('tag')
+      .leftJoinAndSelect('tag.user', 'user')
+      .leftJoinAndSelect('user.profile', 'profile')
+      .leftJoinAndSelect('user.phones', 'phones')
+      .leftJoinAndSelect('user.addresses', 'addresses')
+      .leftJoinAndSelect('user.secondaryEmails', 'secondaryEmails')
+      .leftJoinAndSelect('user.links', 'links')
+      .where('tag.uuid = :identifier', { identifier })
+      .andWhere('tag.is_active = :isActive', { isActive: true })
+      .getOne();
 
-    // Se não achar por UUID, busca por Username (URL Amigável)
+    // 2. Se não achar por UUID, tenta por Username (URL Amigável) - Case Insensitive
     if (!tag) {
-        tag = await this.tagRepository.findOne({
-            where: { user: { username: identifier }, isActive: true },
-            relations: [
-              'user',
-              'user.profile',
-              'user.phones',
-              'user.addresses',
-              'user.secondaryEmails',
-              'user.links',
-            ],
-        });
+        tag = await this.tagRepository.createQueryBuilder('tag')
+          .leftJoinAndSelect('tag.user', 'user')
+          .leftJoinAndSelect('user.profile', 'profile')
+          .leftJoinAndSelect('user.phones', 'phones')
+          .leftJoinAndSelect('user.addresses', 'addresses')
+          .leftJoinAndSelect('user.secondaryEmails', 'secondaryEmails')
+          .leftJoinAndSelect('user.links', 'links')
+          .where('LOWER(user.username) = LOWER(:identifier)', { identifier })
+          .andWhere('tag.is_active = :isActive', { isActive: true })
+          .getOne();
     }
 
-    if (!tag) return null;
+    if (!tag) {
+        console.warn(`[TagsService] Tag NOT FOUND for identifier: ${identifier}`);
+        return null;
+    }
+
+    console.log(`[TagsService] Resolved: ${identifier} | Found Tag ID: ${tag.id} | User: ${tag.user?.email} | Source: ${source}`);
+    console.log(`[TagsService] Active Config - NFC: ${tag.nfcRedirectMode}, QR: ${tag.qrRedirectMode}`);
 
     // Filter sensitive data
     const { user } = tag;
@@ -133,11 +138,16 @@ export class TagsService {
       links: user.links,
     };
 
+    // Determinar qual modo de redirecionamento usar baseado no source
+    const redirectMode = source === 'qr' ? tag.qrRedirectMode : tag.nfcRedirectMode;
+    const customUrl = source === 'qr' ? tag.qrCustomUrl : tag.nfcCustomUrl;
+
     return {
       id: tag.id,
-      redirectMode: tag.redirectMode,
-      customUrl: tag.customUrl,
+      redirectMode,
+      customUrl,
       user: publicUser,
+      tech_type: source || 'nfc' // Default para nfc se não especificado
     };
   }
 

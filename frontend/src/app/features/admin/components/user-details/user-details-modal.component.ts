@@ -1,6 +1,6 @@
 // Caminho: src/app/features/admin/components/user-details/user-details-modal.component.ts
 
-import { Component, Inject, OnInit, inject, OnDestroy } from '@angular/core';
+import { Component, Inject, OnInit, inject, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormControl, FormArray} from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { RouterModule, RouterLink } from '@angular/router';
@@ -16,13 +16,15 @@ import { UserService } from '../../../users/services/user.service';
 import { User, AddressTag, RedirectMode, Tag } from '../../../shared/models/users.models';
 import { Role } from '../../../shared/models/role.model';
 import { finalize, Observable, Subscription, debounceTime, distinctUntilChanged, filter, switchMap, catchError, of, tap } from 'rxjs';
-import { MatSelectModule } from '@angular/material/select'; 
+import { MatSelectModule, MatSelect } from '@angular/material/select'; 
 import { MatOptionModule } from '@angular/material/core';
 import { RoleService } from '../../../users/services/role.service';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { A11yModule } from '@angular/cdk/a11y';
 import { CepService } from '../../../../core/utils/cep.service';
 import { NgxMaskDirective } from 'ngx-mask';
+import * as QRCode from 'qrcode';
 
 // Interface para os dados recebidos
 export interface UserModalData {
@@ -50,17 +52,21 @@ export interface UserModalData {
         MatOptionModule,
         MatDividerModule,
         MatTooltipModule,
+        A11yModule,
         NgxMaskDirective
     ],
     templateUrl: './user-details-modal.component.html',
     styleUrls: ['./user-details-modal.component.scss']
 })
-export class UserDetailsModalComponent implements OnInit, OnDestroy {
+export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewInit {
     private fb = inject(FormBuilder);
     private userService = inject(UserService);
     private roleService = inject(RoleService);
     private cepService = inject(CepService);
     public dialogRef = inject(MatDialogRef<UserDetailsModalComponent>);
+
+    @ViewChild('qrcodeCanvas') qrcodeCanvas!: ElementRef<HTMLCanvasElement>;
+    @ViewChild('qrSelect') qrSelect!: MatSelect;
 
     user: User | null = null;
     userForm!: FormGroup;
@@ -104,6 +110,16 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
         }
     }
 
+    ngAfterViewInit(): void {
+        // Garantir foco inicial no dropdown do QR de forma determinística
+        // O preventScroll impede que o navegador puxe a tela para baixo abruptamente
+        setTimeout(() => {
+            if (this.qrSelect && this.qrSelect._elementRef) {
+                this.qrSelect._elementRef.nativeElement.focus({ preventScroll: true });
+            }
+        }, 300);
+    }
+
     ngOnDestroy(): void {
         this.cepSubscriptions.forEach(s => s.unsubscribe());
     }
@@ -125,8 +141,10 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
             links: this.fb.array([]),
             tagSettings: this.fb.group({
                 id: [null],
-                redirectMode: [RedirectMode.PROFILE],
-                customUrl: ['']
+                nfcRedirectMode: [RedirectMode.PROFILE],
+                nfcCustomUrl: [''],
+                qrRedirectMode: [RedirectMode.PROFILE],
+                qrCustomUrl: ['']
             })
         });
     }
@@ -308,9 +326,12 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
                     const activeTag = loadedUser.tags.find((t: Tag) => t.isActive) || loadedUser.tags[0];
                     this.userForm.get('tagSettings')?.patchValue({
                         id: activeTag.id,
-                        redirectMode: activeTag.redirectMode,
-                        customUrl: activeTag.customUrl
+                        nfcRedirectMode: activeTag.nfcRedirectMode,
+                        nfcCustomUrl: activeTag.nfcCustomUrl,
+                        qrRedirectMode: activeTag.qrRedirectMode,
+                        qrCustomUrl: activeTag.qrCustomUrl
                     });
+                    this.generatePersonalQR(activeTag.uuid);
                 }
 
                 this.phones.clear();
@@ -346,18 +367,24 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
         }
 
         this.isSaving = true;
-        const { tagSettings, ...rawData } = this.userForm.getRawValue();
+        const rawData = this.userForm.getRawValue();
+        const { tagSettings, name, email, cpf, isActive, roleId, password } = rawData;
 
-        const payload = {
-            ...rawData,
+        const payload: any = {
+            name,
+            email,
+            cpf,
+            isActive,
+            roleId,
+            password,
             phones: rawData.phones.map((p: any) => ({
-                id: p.id,
+                id: p.id || undefined,
                 number: p.phoneNumber,
                 isWhatsapp: p.isWhatsapp,
                 isMain: p.isMain
             })),
             addresses: rawData.addresses.map((a: any) => ({
-                id: a.id,
+                id: a.id || undefined,
                 street: a.street,
                 number: a.streetNumber,
                 complement: a.complement,
@@ -369,20 +396,37 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
                 isMain: a.isMain
             })),
             secondaryEmails: rawData.secondaryEmails.map((e: any) => ({
-                id: e.id,
+                id: e.id || undefined,
                 address: e.address
             })),
             links: rawData.links.map((l: any) => ({
-                id: l.id,
+                id: l.id || undefined,
                 title: l.title,
                 url: l.url
             })),
             tags: tagSettings.id ? [{
                 id: tagSettings.id,
-                redirectMode: tagSettings.redirectMode,
-                customUrl: tagSettings.customUrl
-            }] : []
+                nfcRedirectMode: tagSettings.nfcRedirectMode,
+                nfcCustomUrl: tagSettings.nfcCustomUrl,
+                qrRedirectMode: tagSettings.qrRedirectMode,
+                qrCustomUrl: tagSettings.qrCustomUrl
+            }] : [],
+            nfcRedirectMode: tagSettings.nfcRedirectMode,
+            nfcCustomUrl: tagSettings.nfcCustomUrl,
+            qrRedirectMode: tagSettings.qrRedirectMode,
+            qrCustomUrl: tagSettings.qrCustomUrl
         };
+
+        // Limpeza de IDs nulos
+        const cleanId = (obj: any) => {
+            if (obj.id === null) delete obj.id;
+            return obj;
+        };
+        payload.phones.forEach(cleanId);
+        payload.addresses.forEach(cleanId);
+        payload.secondaryEmails.forEach(cleanId);
+        payload.links.forEach(cleanId);
+        if (payload.tags.length > 0) cleanId(payload.tags[0]);
 
         if (!this.data.isCreation && !payload.password) {
             delete payload.password;
@@ -418,5 +462,31 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
                 next: () => this.dialogRef.close(true),
                 error: (err) => console.error('Erro ao excluir', err)
             });
+    }
+
+    generatePersonalQR(uuid: string): void {
+        const baseUrl = window.location.origin;
+        const identifier = this.user?.username || uuid;
+        const url = `${baseUrl}/t/${identifier}?source=qr`;
+        
+        setTimeout(() => {
+            if (this.qrcodeCanvas) {
+                QRCode.toCanvas(this.qrcodeCanvas.nativeElement, url, {
+                    width: 180,
+                    margin: 1
+                }, (error: Error | null | undefined) => {
+                    if (error) console.error(error);
+                });
+            }
+        });
+    }
+
+    downloadPersonalQR(): void {
+        if (!this.qrcodeCanvas || !this.user) return;
+        const canvas = this.qrcodeCanvas.nativeElement;
+        const link = document.createElement('a');
+        link.download = `smartcontact-qr-${this.user.name.replace(/\s+/g, '-').toLowerCase()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
     }
 }
