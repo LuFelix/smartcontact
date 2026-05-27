@@ -10,6 +10,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { RolesService } from 'src/roles/roles.service';
 import { ProfilesService } from 'src/profiles/profiles.service';
 import { TagsService } from 'src/tags/tags.service';
+import { Tag } from 'src/tags/entities/tag.entity';
 
 @Injectable()
 export class UsersService {
