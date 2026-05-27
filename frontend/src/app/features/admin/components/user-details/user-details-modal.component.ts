@@ -111,13 +111,8 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     ngAfterViewInit(): void {
-        // Garantir foco inicial no dropdown do QR de forma determinística
-        // O preventScroll impede que o navegador puxe a tela para baixo abruptamente
-        setTimeout(() => {
-            if (this.qrSelect && this.qrSelect._elementRef) {
-                this.qrSelect._elementRef.nativeElement.focus({ preventScroll: true });
-            }
-        }, 300);
+        // Removida toda a lógica de foco programático para evitar flickering.
+        // A modal deve renderizar naturalmente baseada nas configurações do MatDialog.
     }
 
     ngOnDestroy(): void {
