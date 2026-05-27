@@ -111,10 +111,16 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     ngAfterViewInit(): void {
-        // Garantir foco inicial no dropdown do QR para evitar scroll indesejado para baixo
+        // Garantir foco inicial no dropdown do QR
         setTimeout(() => {
             if (this.qrSelect) {
                 this.qrSelect.focus();
+                // O navegador tenta centralizar o elemento focado, rolando a tela para baixo.
+                // Forçamos o scroll voltar para o topo do container da modal.
+                const dialogContent = document.querySelector('.dialog-content');
+                if (dialogContent) {
+                    dialogContent.scrollTop = 0;
+                }
             }
         }, 500);
     }
