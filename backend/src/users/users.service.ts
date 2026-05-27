@@ -220,7 +220,7 @@ export class UsersService {
             skip,
             take: limit ?? undefined,
             where,
-            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile'],
+            relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile', 'tagAccesses', 'tagAccesses.tag'],
         };
 
         const [users, total] = await this.usersRepository.findAndCount(findOptions);
