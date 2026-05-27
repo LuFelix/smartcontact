@@ -67,8 +67,10 @@ export class TeamManagerComponent implements OnInit {
 
   openDelegationDialog(member: FullUserResponse): void {
       const dialogRef = this.dialog.open(ResourceDelegationDialogComponent, {
-          width: '850px',
-          data: { member }
+          width: '1000px',
+          maxWidth: '95vw',
+          data: { member },
+          panelClass: 'large-abac-modal'
       });
       // ABAC logic handles assignment
   }

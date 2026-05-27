@@ -74,6 +74,12 @@ export class ResourceDelegationDialogComponent implements OnInit {
   }
 
   previewTag(tag: Tag): void {
+      if (this.focusedTag?.id === tag.id) {
+          this.focusedTag = null;
+          this.focusedTagUrl = null;
+          return;
+      }
+
       this.focusedTag = tag;
       const baseUrl = window.location.origin;
       const identifier = tag.user?.username ? tag.user.username : tag.uuid;
@@ -82,7 +88,7 @@ export class ResourceDelegationDialogComponent implements OnInit {
       setTimeout(() => {
           if (this.qrcodeCanvas && this.focusedTagUrl) {
               QRCode.toCanvas(this.qrcodeCanvas.nativeElement, this.focusedTagUrl, {
-                  width: 200,
+                  width: 250,
                   margin: 2
               }, (error: Error | null | undefined) => {
                   if (error) console.error(error);
