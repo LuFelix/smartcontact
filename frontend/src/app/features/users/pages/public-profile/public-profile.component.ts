@@ -81,13 +81,19 @@ export class PublicProfileComponent implements OnInit {
   loadTag(uuid: string, source?: string): void {
     this.isLoading = true;
     this.tagService.resolveTag(uuid, source)
-      .pipe(finalize(() => this.isLoading = false))
       .subscribe({
         next: (data) => {
-          this.tagData = data;
-          this.handleRedirection(data);
+          if (data.redirectMode === RedirectMode.PROFILE) {
+            this.tagData = data;
+            this.isLoading = false;
+          } else {
+            // Se houver redirecionamento, mantemos o isLoading = true 
+            // para o usuário ver apenas o spinner até o navegador sair da página.
+            this.handleRedirection(data);
+          }
         },
         error: (err) => {
+          this.isLoading = false;
           this.error = 'Tag não encontrada ou desativada.';
           console.error(err);
         }
