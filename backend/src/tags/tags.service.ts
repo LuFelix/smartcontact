@@ -81,6 +81,14 @@ export class TagsService {
           throw new NotFoundException('Tag não encontrada no seu ambiente.');
       }
 
+      const existingAccess = await this.accessRepository.findOne({
+          where: { tagId, userId: targetUserId }
+      });
+
+      if (existingAccess) {
+          return existingAccess; // Já tem acesso
+      }
+
       const access = this.accessRepository.create({
           tagId,
           userId: targetUserId,
@@ -89,6 +97,51 @@ export class TagsService {
       });
 
       return this.accessRepository.save(access);
+  }
+
+  /**
+   * Revoga o acesso de uma Tag previamente delegada a um sub-usuário.
+   */
+  async revokeAccess(tagId: string, targetUserId: string, currentUser: any) {
+      const { tenantId, role } = currentUser;
+
+      // Apenas Admins podem revogar recursos
+      if (role !== 'administrador') {
+          throw new ForbiddenException('Apenas administradores podem revogar acesso a recursos.');
+      }
+
+      const access = await this.accessRepository.findOne({
+          where: { tagId, userId: targetUserId, tenantId }
+      });
+
+      if (!access) {
+          throw new NotFoundException('Delegação de acesso não encontrada.');
+      }
+
+      return this.accessRepository.remove(access);
+  }
+
+  /**
+   * Lista os usuários que receberam acesso delegado a uma Tag específica.
+   */
+  async getDelegations(tagId: string, currentUser: any) {
+      const { tenantId, role } = currentUser;
+
+      if (role !== 'administrador') {
+          throw new ForbiddenException('Apenas administradores podem ver as delegações.');
+      }
+
+      const accesses = await this.accessRepository.find({
+          where: { tagId, tenantId },
+          relations: ['user']
+      });
+
+      return accesses.map(access => ({
+          userId: access.user.id,
+          name: access.user.name,
+          email: access.user.email,
+          grantedAt: access.createdAt
+      }));
   }
 
   async resolveTag(identifier: string, source?: string) {
@@ -178,5 +231,24 @@ export class TagsService {
       if (tag.ownerId !== userId && !hasDelegatedAccess) {
           throw new ForbiddenException('Você não tem permissão para acessar este recurso (Tag/Turma).');
       }
+  }
+
+  /**
+   * Atualiza as configurações de redirecionamento de uma Tag específica.
+   */
+  async update(tagId: string, updateData: any, currentUser: any): Promise<Tag> {
+      // 1. Valida Permissão ABAC
+      await this.validateAccess(tagId, currentUser);
+
+      const tag = await this.tagRepository.findOne({ where: { id: tagId } });
+      if (!tag) throw new NotFoundException('Tag não encontrada.');
+
+      // 2. Aplica atualizações permitidas
+      if (updateData.nfcRedirectMode) tag.nfcRedirectMode = updateData.nfcRedirectMode;
+      if (updateData.nfcCustomUrl !== undefined) tag.nfcCustomUrl = updateData.nfcCustomUrl;
+      if (updateData.qrRedirectMode) tag.qrRedirectMode = updateData.qrRedirectMode;
+      if (updateData.qrCustomUrl !== undefined) tag.qrCustomUrl = updateData.qrCustomUrl;
+
+      return this.tagRepository.save(tag);
   }
 }

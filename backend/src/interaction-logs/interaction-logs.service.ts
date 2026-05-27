@@ -1,13 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { InteractionLog, InteractionType } from './entities/interaction-log.entity';
+import { UserTagAccess } from 'src/tags/entities/user-tag-access.entity';
 
 @Injectable()
 export class InteractionLogsService {
   constructor(
     @InjectRepository(InteractionLog)
     private readonly interactionLogRepository: Repository<InteractionLog>,
+    @InjectRepository(UserTagAccess)
+    private readonly accessRepository: Repository<UserTagAccess>,
   ) {}
 
   /**
@@ -43,15 +46,54 @@ export class InteractionLogsService {
   }
 
   /**
-   * Retorna os leads de um usuário específico (dono das tags)
+   * Retorna os leads considerando o controle de acesso ABAC.
+   * - Admins vêem tudo do tenant.
+   * - Outros (Tutores/Colaboradores) vêem leads das tags que criaram ou que foram delegadas.
    */
-  async findLeadsByOwner(userId: string): Promise<InteractionLog[]> {
+  async findLeadsByOwner(currentUser: any): Promise<InteractionLog[]> {
+      const { sub: userId, tenantId, role, isSuperAdmin } = currentUser;
+
+      // 1. Super Admin vê tudo
+      if (isSuperAdmin) {
+          return this.interactionLogRepository.find({
+              where: { interactionType: InteractionType.LEAD },
+              relations: ['tag', 'tag.user'],
+              order: { accessedAt: 'DESC' }
+          });
+      }
+
+      // 2. Admin do Tenant vê todos os leads do seu tenant
+      if (role === 'administrador') {
+          return this.interactionLogRepository.find({
+              where: { 
+                  interactionType: InteractionType.LEAD,
+                  tag: { tenantId } 
+              },
+              relations: ['tag', 'tag.user'],
+              order: { accessedAt: 'DESC' }
+          });
+      }
+
+      // 3. Outros (Tutor/Colaborador): Visão restrita (ABAC)
+      // Buscar tags delegadas
+      const delegatedAccess = await this.accessRepository.find({
+          where: { userId },
+          select: ['tagId']
+      });
+      const delegatedTagIds = delegatedAccess.map(a => a.tagId);
+
       return this.interactionLogRepository.find({
-          where: { 
-              interactionType: InteractionType.LEAD,
-              tag: { user: { id: userId } }
-          },
-          relations: ['tag'],
+          where: [
+              { 
+                  interactionType: InteractionType.LEAD,
+                  tag: { ownerId: userId } 
+              },
+              { 
+                  interactionType: InteractionType.LEAD,
+                  tag: { id: In(delegatedTagIds) } 
+              }
+          ],
+          relations: ['tag', 'tag.user'],
           order: { accessedAt: 'DESC' }
       });
   }

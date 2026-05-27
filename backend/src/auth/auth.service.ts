@@ -5,6 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
 import { ProfilesService } from 'src/profiles/profiles.service';
 import { TeamService } from 'src/team/team.service';
+import { RolesService } from 'src/roles/roles.service';
 import { LoginDto, MinimalRegisterDto } from './dto/auth.dto';
 import { GoogleLoginDto } from './dto/google-token.dto';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -22,6 +23,7 @@ export class AuthService {
     private readonly profilesService: ProfilesService,
     private readonly jwtService: JwtService,
     private readonly mailerService: MailerService,
+    private readonly rolesService: RolesService,
     @Inject(forwardRef(() => TeamService))
     private readonly teamService: TeamService
     
@@ -37,7 +39,13 @@ export class AuthService {
    expires.setMinutes(expires.getMinutes() + 15);
 
    let tenantId = uuidv4();
-   let roleId = 'ec057e51-50db-41e7-929b-e520a2bc2e1a'; // Default: administrador de novo tenant
+   
+   // BUSCA DINÂMICA DA ROLE DE ADMINISTRADOR
+   const adminRole = await this.rolesService.findOneByName('administrador');
+   if (!adminRole) {
+       throw new InternalServerErrorException('Configuração de sistema incompleta: Role administrador não encontrada.');
+   }
+   let roleId = adminRole.id;
 
    // 2. Se houver token de convite, resolvemos para pegar o Tenant e Role de destino
    if (registerDto.invitationToken) {
@@ -184,7 +192,13 @@ export class AuthService {
       // Se o usuário não existe, faz o "Silent Registration"
       if (!user) {
         let tenantId = uuidv4();
-        let roleId = 'ec057e51-50db-41e7-929b-e520a2bc2e1a'; // Administrador do novo tenant
+        
+        // BUSCA DINÂMICA DA ROLE DE ADMINISTRADOR
+        const adminRole = await this.rolesService.findOneByName('administrador');
+        if (!adminRole) {
+            throw new InternalServerErrorException('Configuração de sistema incompleta: Role administrador não encontrada.');
+        }
+        let roleId = adminRole.id;
 
         if (loginDto.invitationToken) {
             try {
