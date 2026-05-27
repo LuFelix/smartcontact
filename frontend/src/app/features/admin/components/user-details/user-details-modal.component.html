@@ -1,4 +1,4 @@
-<h2 mat-dialog-title>
+<h2 mat-dialog-title cdkFocusInitial>
     {{ data.isCreation ? 'Novo Usuário' : 'Detalhes do Usuário' }}
     @if (!data.isCreation && userForm.get('name')?.value) {
         <span class="user-title-name">: {{ userForm.get('name')?.value }}</span>

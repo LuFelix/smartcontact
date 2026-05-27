@@ -210,6 +210,13 @@
     margin-right: auto;
 }
 
+// Estilização GLOBAL dos botões para este componente
+button[mat-flat-button], 
+button[mat-raised-button], 
+button[mat-stroked-button] {
+    border-radius: 32px !important;
+}
+
 @media (max-width: 640px) {
     .config-fields, .address-grid { grid-template-columns: 1fr; }
     .md\:col-span-2 { grid-column: span 1; }
