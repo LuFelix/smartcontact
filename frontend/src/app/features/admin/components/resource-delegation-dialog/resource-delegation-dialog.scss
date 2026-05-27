@@ -1,8 +1,8 @@
 .delegation-layout {
     display: flex;
     gap: 20px;
-    min-height: 450px;
-    max-height: 600px;
+    min-height: 500px;
+    max-height: 650px;
 
     .selection-column {
         flex: 1.2;
@@ -13,8 +13,9 @@
 
         .helper-text {
             color: #666;
-            font-size: 0.9rem;
-            margin-bottom: 16px;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+            font-style: italic;
         }
 
         .loading-container {
@@ -26,37 +27,53 @@
         .tag-nav-list {
             overflow-y: auto;
             flex: 1;
-            
-            .tag-list-item {
+
+            .tag-item-wrapper {
+                display: flex;
+                align-items: center;
                 border-radius: 8px;
-                margin-bottom: 4px;
-                transition: background 0.2s ease;
+                margin-bottom: 6px;
+                padding-left: 8px;
+                border: 1px solid transparent;
+                transition: all 0.2s ease;
 
                 &:hover {
-                    background: rgba(0, 0, 0, 0.03);
+                    background: #f8f9fa;
+                    border-color: #eee;
                 }
 
                 &.active-item {
-                    background: rgba(var(--mat-primary-rgb, 63, 81, 181), 0.08);
+                    background: rgba(63, 81, 181, 0.05);
+                    border-color: rgba(63, 81, 181, 0.2);
                     
                     .tag-title {
-                        color: var(--mat-primary-color, #3f51b5);
+                        color: #3f51b5;
                         font-weight: 600;
                     }
                 }
 
-                .tag-title {
-                    font-size: 0.95rem;
-                    font-weight: 500;
+                .tag-checkbox {
+                    margin-right: 4px;
                 }
 
-                .tag-subtitle {
-                    font-size: 0.8rem;
-                    color: #777;
-                }
+                .tag-link {
+                    flex: 1;
+                    height: auto;
+                    padding: 8px 12px;
+                    
+                    // Remove o ponto/pixel (bullet ou sublinhado de link)
+                    text-decoration: none !important;
+                    outline: none !important;
 
-                mat-checkbox {
-                    margin-right: 8px;
+                    .tag-title {
+                        font-size: 0.9rem;
+                        font-weight: 500;
+                    }
+
+                    .tag-subtitle {
+                        font-size: 0.75rem;
+                        color: #888;
+                    }
                 }
             }
         }
@@ -64,21 +81,21 @@
 
     .preview-column {
         flex: 0.8;
-        min-width: 280px;
+        min-width: 320px;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         background: #fafafa;
         border-radius: 12px;
-        padding: 20px;
+        padding: 24px;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         border: 2px dashed #eee;
 
         &.has-content {
             background: white;
             border: 1px solid #e0e0e0;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.06);
             justify-content: flex-start;
         }
 
@@ -91,12 +108,12 @@
                 width: 64px;
                 height: 64px;
                 margin-bottom: 16px;
-                opacity: 0.5;
+                opacity: 0.4;
             }
 
             p {
                 font-size: 0.9rem;
-                line-height: 1.4;
+                line-height: 1.5;
             }
         }
 
@@ -104,23 +121,28 @@
             width: 100%;
             display: flex;
             flex-direction: column;
-            animation: fadeIn 0.3s ease;
+            animation: slideIn 0.3s ease-out;
 
             .preview-header {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 20px;
+                margin-bottom: 16px;
+                border-bottom: 1px solid #f0f0f0;
+                padding-bottom: 12px;
 
                 h3 {
                     margin: 0;
-                    font-size: 1rem;
-                    font-weight: 600;
-                    color: #333;
+                    font-size: 0.95rem;
+                    font-weight: 700;
+                    color: #444;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
                 }
 
                 button {
                     transform: scale(0.8);
+                    color: #999;
                 }
             }
 
@@ -128,10 +150,11 @@
                 display: flex;
                 justify-content: center;
                 background: white;
-                padding: 12px;
-                border: 1px solid #eee;
-                border-radius: 8px;
+                padding: 16px;
+                border: 1px solid #f0f0f0;
+                border-radius: 12px;
                 margin-bottom: 16px;
+                box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
                 
                 canvas {
                     max-width: 100%;
@@ -140,46 +163,46 @@
             }
 
             .tag-url {
-                font-size: 0.75rem;
+                font-size: 0.7rem;
                 color: #555;
-                background: #f5f5f5;
-                padding: 8px;
-                border-radius: 6px;
+                background: #f8f9fa;
+                padding: 10px;
+                border-radius: 8px;
                 word-break: break-all;
                 margin-bottom: 20px;
-                border-left: 3px solid #ddd;
+                border: 1px solid #eee;
+                font-family: monospace;
             }
 
             .tag-details {
                 background: #fcfcfc;
-                border: 1px solid #f0f0f0;
-                border-radius: 8px;
-                padding: 12px;
+                border: 1px solid #f5f5f5;
+                border-radius: 10px;
+                padding: 16px;
 
                 .detail-row {
                     display: flex;
                     flex-direction: column;
-                    margin-bottom: 8px;
+                    margin-bottom: 12px;
                     
                     &:last-child {
                         margin-bottom: 0;
                     }
 
                     .label {
-                        font-size: 0.7rem;
+                        font-size: 0.65rem;
                         text-transform: uppercase;
-                        letter-spacing: 0.5px;
-                        color: #999;
-                        font-weight: 600;
+                        letter-spacing: 0.8px;
+                        color: #aaa;
+                        font-weight: 700;
+                        margin-bottom: 2px;
                     }
 
                     .value {
                         font-size: 0.85rem;
                         color: #333;
-                        font-weight: 500;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                        white-space: nowrap;
+                        font-weight: 600;
+                        word-break: break-all;
                     }
                 }
             }
@@ -187,30 +210,31 @@
     }
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
 }
 
 // Responsividade
-@media (max-width: 800px) {
+@media (max-width: 850px) {
     .delegation-layout {
         flex-direction: column;
         max-height: none;
+        min-height: auto;
         
         .selection-column {
             border-right: none;
             padding-right: 0;
             border-bottom: 1px solid #e0e0e0;
             padding-bottom: 20px;
-            max-height: 300px;
+            max-height: 350px;
         }
 
         .preview-column {
             width: 100%;
-            min-height: auto;
+            min-height: 400px;
             flex: none;
-            margin-top: 10px;
+            margin-top: 16px;
         }
     }
 }

@@ -4,7 +4,7 @@
     <div class="delegation-layout">
         <!-- Coluna Esquerda: Listagem -->
         <div class="selection-column">
-            <p class="helper-text">Selecione as Tags para <strong>{{ data.member.name }}</strong>:</p>
+            <p class="helper-text">Clique na tag para ver o QR Code ou use o checkbox para delegar acesso:</p>
 
             @if (isLoading) {
                 <div class="loading-container">
@@ -14,23 +14,21 @@
 
             <mat-nav-list class="tag-nav-list">
                 @for (tag of tags; track tag.id) {
-                    <a mat-list-item 
-                       (click)="previewTag(tag)" 
-                       [class.active-item]="focusedTag?.id === tag.id"
-                       class="tag-list-item">
-                        
+                    <div class="tag-item-wrapper" [class.active-item]="focusedTag?.id === tag.id">
                         <mat-checkbox 
-                            matListItemIcon
                             [checked]="selectedTagIds.has(tag.id)" 
-                            (click)="$event.stopPropagation()"
-                            (change)="toggleTag(tag.id)">
+                            (change)="toggleTag(tag.id)"
+                            class="tag-checkbox">
                         </mat-checkbox>
-
-                        <div matListItemTitle class="tag-title">{{ tag.uuid }}</div>
-                        <div matListItemLine class="tag-subtitle">Dono: {{ tag.user?.name }}</div>
                         
-                        <mat-icon matListItemMeta color="primary" *ngIf="focusedTag?.id === tag.id">chevron_right</mat-icon>
-                    </a>
+                        <a mat-list-item 
+                           (click)="previewTag(tag)" 
+                           class="tag-link">
+                            <div matListItemTitle class="tag-title">{{ tag.uuid }}</div>
+                            <div matListItemLine class="tag-subtitle">Dono: {{ tag.user?.name || 'Sem dono' }}</div>
+                            <mat-icon matListItemMeta *ngIf="focusedTag?.id === tag.id">visibility</mat-icon>
+                        </a>
+                    </div>
                 } @empty {
                     <div class="no-tags">Nenhuma tag encontrada no seu Workspace.</div>
                 }
@@ -43,7 +41,7 @@
                 <div class="qr-preview-container">
                     <div class="preview-header">
                         <h3>Visualização da Tag</h3>
-                        <button mat-icon-button (click)="focusedTag = null">
+                        <button mat-icon-button (click)="focusedTag = null" matTooltip="Limpar visualização">
                             <mat-icon>close</mat-icon>
                         </button>
                     </div>
@@ -56,12 +54,12 @@
                     
                     <div class="tag-details">
                         <div class="detail-row">
-                            <span class="label">UUID:</span>
+                            <span class="label">UUID da Tag:</span>
                             <span class="value">{{ focusedTag.uuid }}</span>
                         </div>
                         <div class="detail-row">
                             <span class="label">Proprietário:</span>
-                            <span class="value">{{ focusedTag.user?.name }}</span>
+                            <span class="value">{{ focusedTag.user?.name || 'Não atribuído' }}</span>
                         </div>
                     </div>
                 </div>
