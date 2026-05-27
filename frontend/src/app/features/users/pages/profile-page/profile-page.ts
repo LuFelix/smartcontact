@@ -358,6 +358,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
         }
 
         this.profileForm.disable();
+        this.phones.controls.forEach(c => c.disable());
+        this.addresses.controls.forEach(c => c.disable());
+        this.secondaryEmails.controls.forEach(c => c.disable());
+        this.links.controls.forEach(c => c.disable());
+        this.profileForm.get('tagSettings')?.disable();
       },
       error: () => {
         this.snackBar.open('Erro ao carregar seu perfil.', 'Fechar', { duration: 5000 });

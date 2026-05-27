@@ -33,12 +33,14 @@
             } @else {
               <div class="flex gap-2">
                   <button mat-raised-button color="accent" (click)="onSave()" [disabled]="profileForm.invalid || isLoading" class="avatar-action-btn">
-                      <mat-icon *ngIf="!isLoading">save</mat-icon>
-                      <mat-spinner *ngIf="isLoading" [diameter]="18"></mat-spinner>
-                      Salvar Alterações
+                      @if (isLoading) {
+                        <mat-spinner [diameter]="18"></mat-spinner>
+                      } @else {
+                        <mat-icon>save</mat-icon> Salvar Alterações
+                      }
                   </button>
                   <button mat-stroked-button color="warn" (click)="onCancel()" [disabled]="isLoading" class="avatar-action-btn">
-                      <mat-icon>cancel</mat-icon>
+                      <mat-icon>cancel</mat-icon> Cancelar
                   </button>
               </div>
             }

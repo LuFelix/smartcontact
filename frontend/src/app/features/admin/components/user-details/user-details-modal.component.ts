@@ -21,6 +21,7 @@ import { MatOptionModule } from '@angular/material/core';
 import { RoleService } from '../../../users/services/role.service';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { A11yModule } from '@angular/cdk/a11y';
 import { CepService } from '../../../../core/utils/cep.service';
 import { NgxMaskDirective } from 'ngx-mask';
 import * as QRCode from 'qrcode';
@@ -51,6 +52,7 @@ export interface UserModalData {
         MatOptionModule,
         MatDividerModule,
         MatTooltipModule,
+        A11yModule,
         NgxMaskDirective
     ],
     templateUrl: './user-details-modal.component.html',

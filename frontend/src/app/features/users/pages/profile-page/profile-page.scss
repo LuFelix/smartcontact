@@ -113,20 +113,19 @@
   .avatar-actions {
       display: flex;
       justify-content: center;
+      margin-top: 16px;
       gap: 12px;
   }
 
   .avatar-action-btn {
       height: 48px;
-      border-radius: 24px;
-      padding: 0 32px;
+      border-radius: 24px !important;
+      padding: 0 24px;
       font-weight: 700;
       box-shadow: var(--mat-sys-level1);
-      
-      &[mat-stroked-button] {
-          border-radius: 24px !important;
-      }
   }
+  }
+
 }
 
 .profile-form {
