@@ -1,30 +1,62 @@
 <h2 mat-dialog-title>Gerenciar Acessos (ABAC)</h2>
 
 <mat-dialog-content>
-    <p>Selecione as Tags/Turmas que <strong>{{ data.member.name }}</strong> poderá visualizar e gerenciar:</p>
+    <div class="delegation-layout">
+        <!-- Coluna Esquerda: Listagem -->
+        <div class="selection-column">
+            <p>Selecione as Tags que <strong>{{ data.member.name }}</strong> poderá gerenciar:</p>
 
-    @if (isLoading) {
-        <mat-spinner diameter="30"></mat-spinner>
-    }
+            @if (isLoading) {
+                <mat-spinner diameter="30"></mat-spinner>
+            }
 
-    <mat-selection-list class="tag-selection-list">
-        @for (tag of tags; track tag.id) {
-            <mat-list-option (click)="toggleTag(tag.id)" [selected]="selectedTagIds.has(tag.id)">
-                <mat-icon matListItemIcon>qr_code_2</mat-icon>
-                <div matListItemTitle>{{ tag.uuid }}</div>
-                <div matListItemLine>Dono: {{ tag.user?.name }}</div>
-            </mat-list-option>
-        } @empty {
-            <div class="no-tags">Nenhuma tag encontrada no seu Workspace.</div>
-        }
-    </mat-selection-list>
+            <mat-selection-list class="tag-selection-list">
+                @for (tag of tags; track tag.id) {
+                    <mat-list-option [selected]="selectedTagIds.has(tag.id)" class="tag-option">
+                        <div class="option-content">
+                            <mat-checkbox [checked]="selectedTagIds.has(tag.id)" (change)="toggleTag(tag.id)"></mat-checkbox>
+                            <div class="tag-info" (click)="previewTag(tag)">
+                                <div class="tag-uuid">{{ tag.uuid }}</div>
+                                <div class="tag-owner">Dono: {{ tag.user?.name }}</div>
+                            </div>
+                            <button mat-icon-button (click)="previewTag(tag)" matTooltip="Visualizar QR Code">
+                                <mat-icon>qr_code_2</mat-icon>
+                            </button>
+                        </div>
+                    </mat-list-option>
+                } @empty {
+                    <div class="no-tags">Nenhuma tag encontrada no seu Workspace.</div>
+                }
+            </mat-selection-list>
+        </div>
+
+        <!-- Coluna Direita: Preview QR Code -->
+        <div class="preview-column" [class.visible]="focusedTag">
+            @if (focusedTag) {
+                <div class="qr-preview-container">
+                    <h3>Visualização da Tag</h3>
+                    <canvas #qrcodeCanvas></canvas>
+                    <p class="tag-url">{{ focusedTagUrl }}</p>
+                    <div class="tag-meta">
+                        <span><strong>UUID:</strong> {{ focusedTag.uuid }}</span>
+                        <span><strong>Dono:</strong> {{ focusedTag.user?.name }}</span>
+                    </div>
+                </div>
+            } @else {
+                <div class="empty-preview">
+                    <mat-icon>touch_app</mat-icon>
+                    <p>Clique em uma tag para visualizar o QR Code</p>
+                </div>
+            }
+        </div>
+    </div>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
     <button mat-button mat-dialog-close>Fechar</button>
     <button mat-flat-button color="primary" 
             (click)="save()" 
-            [disabled]="isSaving || selectedTagIds.size === 0">
-        {{ isSaving ? 'Salvando...' : 'Delegar Acessos' }}
+            [disabled]="isSaving">
+        {{ isSaving ? 'Salvando...' : 'Salvar Alterações' }}
     </button>
 </mat-dialog-actions>

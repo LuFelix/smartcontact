@@ -1,14 +1,16 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatIconModule } from '@angular/material/icon';
 import { TagService } from '../../../../core/services/tag.service';
 import { Tag, FullUserResponse } from '../../../shared/models/users.models';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { finalize } from 'rxjs';
+import * as QRCode from 'qrcode';
 
 @Component({
   selector: 'app-resource-delegation-dialog',
@@ -19,7 +21,8 @@ import { finalize } from 'rxjs';
     MatButtonModule,
     MatCheckboxModule,
     MatListModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatIconModule
   ],
   templateUrl: './resource-delegation-dialog.html',
   styleUrl: './resource-delegation-dialog.scss'
@@ -30,10 +33,14 @@ export class ResourceDelegationDialogComponent implements OnInit {
   private snackBar = inject(MatSnackBar);
   public data = inject<{ member: FullUserResponse }>(MAT_DIALOG_DATA);
 
+  @ViewChild('qrcodeCanvas') qrcodeCanvas!: ElementRef<HTMLCanvasElement>;
+
   tags: Tag[] = [];
   isLoading = true;
   selectedTagIds: Set<string> = new Set();
   isSaving = false;
+  focusedTag: Tag | null = null;
+  focusedTagUrl: string | null = null;
 
   ngOnInit(): void {
     this.loadTags();
@@ -46,7 +53,6 @@ export class ResourceDelegationDialogComponent implements OnInit {
       .subscribe({
         next: (res) => {
             this.tags = res;
-            // Preenche os checkboxes baseados nos acessos atuais do usuário
             if (this.data.member.tagAccesses) {
                 this.data.member.tagAccesses.forEach(access => {
                     if (access.tag) {
@@ -65,6 +71,24 @@ export class ResourceDelegationDialogComponent implements OnInit {
       } else {
           this.selectedTagIds.add(tagId);
       }
+  }
+
+  previewTag(tag: Tag): void {
+      this.focusedTag = tag;
+      const baseUrl = window.location.origin;
+      const identifier = tag.user?.username ? tag.user.username : tag.uuid;
+      this.focusedTagUrl = `${baseUrl}/t/${identifier}`;
+
+      setTimeout(() => {
+          if (this.qrcodeCanvas && this.focusedTagUrl) {
+              QRCode.toCanvas(this.qrcodeCanvas.nativeElement, this.focusedTagUrl, {
+                  width: 200,
+                  margin: 2
+              }, (error: Error | null | undefined) => {
+                  if (error) console.error(error);
+              });
+          }
+      });
   }
 
   save(): void {
