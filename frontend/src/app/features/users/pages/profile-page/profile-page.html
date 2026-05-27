@@ -36,7 +36,9 @@
                       @if (isLoading) {
                         <mat-spinner [diameter]="18"></mat-spinner>
                       } @else {
-                        <mat-icon>save</mat-icon> Salvar Alterações
+                        <ng-container>
+                            <mat-icon>save</mat-icon> Salvar Alterações
+                        </ng-container>
                       }
                   </button>
                   <button mat-stroked-button color="warn" (click)="onCancel()" [disabled]="isLoading" class="avatar-action-btn">
