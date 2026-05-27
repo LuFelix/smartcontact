@@ -88,7 +88,7 @@ export class ResourceDelegationDialogComponent implements OnInit {
       setTimeout(() => {
           if (this.qrcodeCanvas && this.focusedTagUrl) {
               QRCode.toCanvas(this.qrcodeCanvas.nativeElement, this.focusedTagUrl, {
-                  width: 250,
+                  width: 180,
                   margin: 2
               }, (error: Error | null | undefined) => {
                   if (error) console.error(error);
