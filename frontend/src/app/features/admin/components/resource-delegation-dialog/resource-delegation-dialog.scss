@@ -141,26 +141,27 @@
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                margin-bottom: 16px;
+                margin-bottom: 8px; // Reduzido
                 
                 h3 {
                     margin: 0;
-                    font-size: 0.8rem;
+                    font-size: 0.75rem; // Reduzido
                     text-transform: uppercase;
                     letter-spacing: 1px;
                     color: var(--mat-sys-on-surface-variant);
                 }
 
-                button { transform: scale(0.8); }
+                button { transform: scale(0.7); } // Reduzido
             }
 
             .qr-canvas-container {
                 align-self: center;
-                background: white; // QR precisa de branco
-                padding: 12px;
-                border-radius: 12px;
-                margin-bottom: 20px;
+                background: white;
+                padding: 10px; // Reduzido
+                border-radius: 8px; // Reduzido
+                margin-bottom: 12px; // Reduzido
                 box-shadow: var(--mat-sys-level1);
+                border: 2px solid var(--mat-sys-primary-container);
 
                 canvas {
                     display: block;
@@ -170,21 +171,21 @@
 
             .url-display {
                 background: var(--mat-sys-surface-container);
-                padding: 8px 12px;
-                border-radius: 8px;
-                margin-bottom: 16px;
+                padding: 6px 10px; // Reduzido
+                border-radius: 6px;
+                margin-bottom: 12px; // Reduzido
 
                 .url-label {
                     display: block;
-                    font-size: 0.65rem;
+                    font-size: 0.6rem; // Reduzido
                     text-transform: uppercase;
                     color: var(--mat-sys-primary);
                     font-weight: 700;
-                    margin-bottom: 2px;
+                    margin-bottom: 1px;
                 }
 
                 .url-value {
-                    font-size: 0.75rem;
+                    font-size: 0.7rem; // Reduzido
                     color: var(--mat-sys-on-surface);
                     font-family: monospace;
                     word-break: break-all;
@@ -193,24 +194,24 @@
 
             .metadata-grid {
                 display: grid;
-                gap: 12px;
+                gap: 8px; // Reduzido
 
                 .meta-item {
                     display: flex;
                     flex-direction: column;
                     
                     .meta-label {
-                        font-size: 0.65rem;
+                        font-size: 0.6rem; // Reduzido
                         text-transform: uppercase;
                         color: var(--mat-sys-on-surface-variant);
                         font-weight: 600;
                     }
 
                     .meta-value {
-                        font-size: 0.85rem;
+                        font-size: 0.8rem; // Reduzido
                         color: var(--mat-sys-on-surface);
                         font-weight: 500;
-                        padding-bottom: 4px; // Evita clipping
+                        padding-bottom: 2px;
                     }
                 }
             }
