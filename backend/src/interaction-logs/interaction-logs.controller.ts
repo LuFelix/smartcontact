@@ -30,8 +30,8 @@ export class InteractionLogsController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Get('leads')
-  @ApiOperation({ summary: 'Listar todos os leads capturados do usuário logado' })
-  async listMyLeads(@GetUser('sub') userId: string) {
-    return this.logsService.findLeadsByOwner(userId);
+  @ApiOperation({ summary: 'Listar todos os leads acessíveis pelo usuário logado (ABAC)' })
+  async listMyLeads(@GetUser() currentUser: any) {
+    return this.logsService.findLeadsByOwner(currentUser);
   }
 }
