@@ -83,18 +83,20 @@ export class PublicProfileComponent implements OnInit {
     this.tagService.resolveTag(uuid, source)
       .subscribe({
         next: (data) => {
-          if (data.redirectMode === RedirectMode.PROFILE) {
-            this.tagData = data;
-            this.isLoading = false;
-          } else {
-            // Tenta redirecionar. Se falhar (ex: link vazio), cai no fallback do perfil
+          // LÓGICA REFINADA:
+          // Só redirecionamos se houver um 'source' (veio de NFC ou QR).
+          // Se o usuário acessou o link direto (/t/username) sem source, 
+          // ele deve SEMPRE ver o Perfil Inteligente.
+          if (source && data.redirectMode !== RedirectMode.PROFILE) {
             const success = this.handleRedirection(data);
-            if (!success) {
-                this.tagData = data;
-                this.isLoading = false;
-                this.snackBar.open('Redirecionamento não configurado corretamente. Mostrando perfil.', 'OK', { duration: 3000 });
-            }
+            if (success) return; // Navegador vai sair da página
+            
+            // Se falhou o redirect, fallback para o perfil
+            this.snackBar.open('Redirecionamento não configurado. Mostrando perfil.', 'OK', { duration: 3000 });
           }
+          
+          this.tagData = data;
+          this.isLoading = false;
         },
         error: (err) => {
           this.isLoading = false;

@@ -67,6 +67,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
   // Signals
   userUsername = this.authService.userUsername;
 
+  get currentHost(): string {
+    return window.location.host;
+  }
+
   profileForm: FormGroup;
   currentUserData: FullUserResponse | null = null;
   activeTag: Tag | null = null;
