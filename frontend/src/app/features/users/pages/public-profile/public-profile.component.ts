@@ -87,9 +87,13 @@ export class PublicProfileComponent implements OnInit {
             this.tagData = data;
             this.isLoading = false;
           } else {
-            // Se houver redirecionamento, mantemos o isLoading = true 
-            // para o usuário ver apenas o spinner até o navegador sair da página.
-            this.handleRedirection(data);
+            // Tenta redirecionar. Se falhar (ex: link vazio), cai no fallback do perfil
+            const success = this.handleRedirection(data);
+            if (!success) {
+                this.tagData = data;
+                this.isLoading = false;
+                this.snackBar.open('Redirecionamento não configurado corretamente. Mostrando perfil.', 'OK', { duration: 3000 });
+            }
           }
         },
         error: (err) => {
@@ -100,17 +104,20 @@ export class PublicProfileComponent implements OnInit {
       });
   }
 
-  handleRedirection(data: TagResolutionResponse): void {
+  handleRedirection(data: TagResolutionResponse): boolean {
     if (data.redirectMode === RedirectMode.CUSTOM_URL && data.customUrl) {
       const targetUrl = data.customUrl.startsWith('http') ? data.customUrl : `https://${data.customUrl}`;
       window.location.href = targetUrl;
+      return true;
     } else if (data.redirectMode === RedirectMode.WHATSAPP) {
       const mainPhone = data.user.phones?.find((p: any) => p.isWhatsapp) || data.user.phones?.[0];
-      if (mainPhone) {
+      if (mainPhone && mainPhone.number) {
         const cleanNumber = mainPhone.number.replace(/\D/g, '');
         window.location.href = `https://wa.me/${cleanNumber}`;
+        return true;
       }
     }
+    return false;
   }
 
   get profileImage(): string {

@@ -104,7 +104,7 @@ export class TagsService {
       .andWhere('tag.is_active = :isActive', { isActive: true })
       .getOne();
 
-    // 2. Se não achar por UUID, tenta por Username (URL Amigável)
+    // 2. Se não achar por UUID, tenta por Username (URL Amigável) - Case Insensitive
     if (!tag) {
         tag = await this.tagRepository.createQueryBuilder('tag')
           .leftJoinAndSelect('tag.user', 'user')
@@ -113,15 +113,18 @@ export class TagsService {
           .leftJoinAndSelect('user.addresses', 'addresses')
           .leftJoinAndSelect('user.secondaryEmails', 'secondaryEmails')
           .leftJoinAndSelect('user.links', 'links')
-          .where('user.username = :identifier', { identifier })
+          .where('LOWER(user.username) = LOWER(:identifier)', { identifier })
           .andWhere('tag.is_active = :isActive', { isActive: true })
           .getOne();
     }
 
-    if (!tag) return null;
+    if (!tag) {
+        console.warn(`[TagsService] Tag NOT FOUND for identifier: ${identifier}`);
+        return null;
+    }
 
-    console.log(`[TagsService] Resolving: ${identifier} | Found Tag ID: ${tag.id} | Source: ${source}`);
-    console.log(`[TagsService] Config - NFC: ${tag.nfcRedirectMode}, QR: ${tag.qrRedirectMode}`);
+    console.log(`[TagsService] Resolved: ${identifier} | Found Tag ID: ${tag.id} | User: ${tag.user?.email} | Source: ${source}`);
+    console.log(`[TagsService] Active Config - NFC: ${tag.nfcRedirectMode}, QR: ${tag.qrRedirectMode}`);
 
     // Filter sensitive data
     const { user } = tag;

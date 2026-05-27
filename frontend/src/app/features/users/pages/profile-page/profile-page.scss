@@ -205,16 +205,25 @@
     .qr-actions-row {
         display: flex;
         gap: 12px;
+        margin-top: 16px;
         
         .test-config-btn, .download-qr-btn {
             font-weight: 700;
             letter-spacing: 0.5px;
+            padding: 0 24px;
+            height: 48px;
+            border-radius: 12px;
             box-shadow: var(--mat-sys-level1);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             
             &:hover {
                 transform: translateY(-2px);
-                box-shadow: var(--mat-sys-level2);
+                box-shadow: var(--mat-sys-level3);
+                filter: brightness(1.1);
+            }
+
+            &:active {
+                transform: translateY(0);
             }
         }
 
