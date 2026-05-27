@@ -3,6 +3,7 @@ import { IsOptional, IsString, IsEmail, Length, IsArray, ValidateNested, IsBoole
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { AddressTag } from '../entities/address.entity';
+import { RedirectMode } from 'src/tags/entities/tag.entity';
 
 export class UpdatePhoneDto {
   @ApiPropertyOptional({ example: 'uuid-here' })
