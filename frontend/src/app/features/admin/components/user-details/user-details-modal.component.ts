@@ -453,17 +453,27 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
 
     generatePersonalQR(uuid: string): void {
         const baseUrl = window.location.origin;
-        const url = `${baseUrl}/t/${uuid}?source=qr`;
+        const identifier = this.user?.username || uuid;
+        const url = `${baseUrl}/t/${identifier}?source=qr`;
         
         setTimeout(() => {
             if (this.qrcodeCanvas) {
                 QRCode.toCanvas(this.qrcodeCanvas.nativeElement, url, {
-                    width: 150,
+                    width: 180,
                     margin: 1
                 }, (error: Error | null | undefined) => {
                     if (error) console.error(error);
                 });
             }
         });
+    }
+
+    downloadPersonalQR(): void {
+        if (!this.qrcodeCanvas || !this.user) return;
+        const canvas = this.qrcodeCanvas.nativeElement;
+        const link = document.createElement('a');
+        link.download = `smartcontact-qr-${this.user.name.replace(/\s+/g, '-').toLowerCase()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
     }
 }

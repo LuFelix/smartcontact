@@ -206,7 +206,7 @@
         display: flex;
         gap: 12px;
         
-        .test-config-btn {
+        .test-config-btn, .download-qr-btn {
             font-weight: 700;
             letter-spacing: 0.5px;
             box-shadow: var(--mat-sys-level1);

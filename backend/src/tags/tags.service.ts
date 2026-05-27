@@ -92,38 +92,36 @@ export class TagsService {
   }
 
   async resolveTag(identifier: string, source?: string) {
-    // Busca primeiro por UUID (NFC)
-    let tag = await this.tagRepository.findOne({
-      where: { uuid: identifier, isActive: true },
-      relations: [
-        'user',
-        'user.profile',
-        'user.phones',
-        'user.addresses',
-        'user.secondaryEmails',
-        'user.links',
-      ],
-    });
+    // 1. Tenta buscar primeiro por UUID (NFC)
+    let tag = await this.tagRepository.createQueryBuilder('tag')
+      .leftJoinAndSelect('tag.user', 'user')
+      .leftJoinAndSelect('user.profile', 'profile')
+      .leftJoinAndSelect('user.phones', 'phones')
+      .leftJoinAndSelect('user.addresses', 'addresses')
+      .leftJoinAndSelect('user.secondaryEmails', 'secondaryEmails')
+      .leftJoinAndSelect('user.links', 'links')
+      .where('tag.uuid = :identifier', { identifier })
+      .andWhere('tag.is_active = :isActive', { isActive: true })
+      .getOne();
 
-    // Se não achar por UUID, busca por Username (URL Amigável)
+    // 2. Se não achar por UUID, tenta por Username (URL Amigável)
     if (!tag) {
-        tag = await this.tagRepository.findOne({
-            where: { user: { username: identifier }, isActive: true },
-            relations: [
-              'user',
-              'user.profile',
-              'user.phones',
-              'user.addresses',
-              'user.secondaryEmails',
-              'user.links',
-            ],
-        });
+        tag = await this.tagRepository.createQueryBuilder('tag')
+          .leftJoinAndSelect('tag.user', 'user')
+          .leftJoinAndSelect('user.profile', 'profile')
+          .leftJoinAndSelect('user.phones', 'phones')
+          .leftJoinAndSelect('user.addresses', 'addresses')
+          .leftJoinAndSelect('user.secondaryEmails', 'secondaryEmails')
+          .leftJoinAndSelect('user.links', 'links')
+          .where('user.username = :identifier', { identifier })
+          .andWhere('tag.is_active = :isActive', { isActive: true })
+          .getOne();
     }
 
     if (!tag) return null;
 
-    console.log(`[TagsService] Resolving Tag: ${identifier} | Source: ${source}`);
-    console.log(`[TagsService] Database - NFC: ${tag.nfcRedirectMode}, QR: ${tag.qrRedirectMode}`);
+    console.log(`[TagsService] Resolving: ${identifier} | Found Tag ID: ${tag.id} | Source: ${source}`);
+    console.log(`[TagsService] Config - NFC: ${tag.nfcRedirectMode}, QR: ${tag.qrRedirectMode}`);
 
     // Filter sensitive data
     const { user } = tag;

@@ -472,7 +472,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
   generatePersonalQR(): void {
       if (!this.activeTag) return;
       const baseUrl = window.location.origin;
-      const url = `${baseUrl}/t/${this.activeTag.uuid}?source=qr`;
+      const identifier = this.userUsername() || this.activeTag.uuid;
+      const url = `${baseUrl}/t/${identifier}?source=qr`;
       
       setTimeout(() => {
           if (this.qrcodeCanvas) {

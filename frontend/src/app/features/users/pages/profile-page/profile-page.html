@@ -91,10 +91,11 @@
                             <a mat-flat-button color="primary" [routerLink]="['/t', userUsername() || activeTag.uuid]" [queryParams]="{ source: 'qr' }" target="_blank" class="test-config-btn">
                                 <mat-icon>open_in_new</mat-icon> Testar Configuração
                             </a>
-                            <button mat-stroked-button color="primary" (click)="downloadPersonalQR()">
+                            <button mat-flat-button color="accent" (click)="downloadPersonalQR()" class="download-qr-btn">
                                 <mat-icon>download</mat-icon> Baixar QR
                             </button>
                         </div>
+
                     </div>
                 </div>
             </div>
