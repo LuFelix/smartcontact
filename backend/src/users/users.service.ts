@@ -23,6 +23,9 @@ export class UsersService {
         @InjectRepository(Role)
         private readonly rolesRepository: Repository<Role>,
 
+        @InjectRepository(Tag)
+        private readonly tagRepository: Repository<Tag>,
+
         private readonly rolesService: RolesService,
         private readonly profilesService: ProfilesService,
         private readonly tagsService: TagsService,
@@ -292,27 +295,27 @@ export class UsersService {
         if (secondaryEmails) user.secondaryEmails = cleanItems(secondaryEmails) as any;
         if (links) user.links = cleanItems(links) as any;
 
-        if (tags && tags.length > 0) {
-            if (user.tags && user.tags.length > 0) {
-                const tagUpdate = { 
-                    ...tags[0], 
-                    ownerId: user.ownerId, 
-                    tenantId: user.tenantId,
-                    nfcRedirectMode: updateUserDto.nfcRedirectMode ?? user.tags[0].nfcRedirectMode,
-                    nfcCustomUrl: updateUserDto.nfcCustomUrl ?? user.tags[0].nfcCustomUrl,
-                    qrRedirectMode: updateUserDto.qrRedirectMode ?? user.tags[0].qrRedirectMode,
-                    qrCustomUrl: updateUserDto.qrCustomUrl ?? user.tags[0].qrCustomUrl,
-                };
-                Object.assign(user.tags[0], tagUpdate);
+        // --- Lógica de Persistência de TAG Refatorada ---
+        if (user.tags && user.tags.length > 0) {
+            const activeTag = user.tags[0];
+            
+            // Prioridade para campos nfcRedirectMode/qrRedirectMode vindos do DTO
+            if (updateUserDto.nfcRedirectMode) activeTag.nfcRedirectMode = updateUserDto.nfcRedirectMode;
+            if (updateUserDto.nfcCustomUrl !== undefined) activeTag.nfcCustomUrl = updateUserDto.nfcCustomUrl;
+            if (updateUserDto.qrRedirectMode) activeTag.qrRedirectMode = updateUserDto.qrRedirectMode;
+            if (updateUserDto.qrCustomUrl !== undefined) activeTag.qrCustomUrl = updateUserDto.qrCustomUrl;
+
+            // Se vier dentro do array 'tags' (legado ou compatibilidade), mesclamos também
+            if (tags && tags.length > 0) {
+                const tagData = tags[0];
+                if (tagData.nfcRedirectMode) activeTag.nfcRedirectMode = tagData.nfcRedirectMode;
+                if (tagData.nfcCustomUrl !== undefined) activeTag.nfcCustomUrl = tagData.nfcCustomUrl;
+                if (tagData.qrRedirectMode) activeTag.qrRedirectMode = tagData.qrRedirectMode;
+                if (tagData.qrCustomUrl !== undefined) activeTag.qrCustomUrl = tagData.qrCustomUrl;
             }
-        } else if (updateUserDto.nfcRedirectMode || updateUserDto.qrRedirectMode) {
-             // Fallback caso venha apenas os enums fora do array tags (comum em formulários simples)
-             if (user.tags && user.tags.length > 0) {
-                 if (updateUserDto.nfcRedirectMode) user.tags[0].nfcRedirectMode = updateUserDto.nfcRedirectMode;
-                 if (updateUserDto.nfcCustomUrl !== undefined) user.tags[0].nfcCustomUrl = updateUserDto.nfcCustomUrl!;
-                 if (updateUserDto.qrRedirectMode) user.tags[0].qrRedirectMode = updateUserDto.qrRedirectMode;
-                 if (updateUserDto.qrCustomUrl !== undefined) user.tags[0].qrCustomUrl = updateUserDto.qrCustomUrl!;
-             }
+
+            // SALVAMENTO EXPLÍCITO DA TAG
+            await this.tagRepository.save(activeTag);
         }
 
         return this.usersRepository.save(user);
