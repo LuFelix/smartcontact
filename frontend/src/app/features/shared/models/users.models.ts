@@ -93,6 +93,7 @@ export interface User {
   id: string; 
   name: string;
   email: string;
+  username?: string;
   cpf?: string;
   isActive?: boolean;
   role?: { id: string, name: string };
@@ -138,6 +139,7 @@ export interface FullUserResponse {
   id: string; 
   name: string; 
   email: string;
+  username?: string;
   cpf?: string; 
   isVerified: boolean;
   role: { id: string, name: string };

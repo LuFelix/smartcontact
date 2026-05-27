@@ -40,6 +40,13 @@
         justify-content: space-between;
         align-items: center;
         width: 100%;
+        
+        .test-config-btn {
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            &:hover { transform: translateY(-1px); box-shadow: var(--mat-sys-level1); }
+        }
     }
 }
 
@@ -83,20 +90,10 @@
     }
 
     .personal-qr-preview-container {
-        .header-inner {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
+        display: flex;
+        justify-content: center;
+        padding-bottom: 20px;
 
-            .test-config-btn {
-                font-weight: 700;
-                letter-spacing: 0.5px;
-                transition: transform 0.2s ease, box-shadow 0.2s ease;
-                &:hover { transform: translateY(-1px); box-shadow: var(--mat-sys-level1); }
-            }
-        }
-        ...
         .qr-preview-card {
             display: flex;
             align-items: center;
@@ -123,6 +120,8 @@
                 }
             }
         }
+    }
+}
 
 .array-container {
     display: flex;
