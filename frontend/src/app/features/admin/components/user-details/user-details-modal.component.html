@@ -1,4 +1,4 @@
-<h2 mat-dialog-title cdkFocusInitial>
+<h2 mat-dialog-title>
     {{ data.isCreation ? 'Novo Usuário' : 'Detalhes do Usuário' }}
     @if (!data.isCreation && userForm.get('name')?.value) {
         <span class="user-title-name">: {{ userForm.get('name')?.value }}</span>
@@ -56,7 +56,7 @@
                                 <h4 class="source-label"><mat-icon>qr_code_2</mat-icon> Destino do QR Code</h4>
                                 <mat-form-field appearance="outline" class="w-full">
                                     <mat-label>Onde o QR vai abrir?</mat-label>
-                                    <mat-select formControlName="qrRedirectMode">
+                                    <mat-select formControlName="qrRedirectMode" cdkFocusInitial>
                                         @for (mode of redirectModes; track mode.value) {
                                             <mat-option [value]="mode.value">{{ mode.label }}</mat-option>
                                         }

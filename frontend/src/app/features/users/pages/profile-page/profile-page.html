@@ -5,24 +5,6 @@
         <mat-card-title>Meu Perfil</mat-card-title>
         <mat-card-subtitle>Visualize e edite suas informações</mat-card-subtitle>
       </div>
-      <div class="header-actions">
-          @if (!isEditing) {
-            <button mat-flat-button color="primary" (click)="toggleEditMode()" class="header-action-btn">
-              <mat-icon>edit</mat-icon> Editar
-            </button>
-          } @else {
-            <div class="flex gap-2">
-                <button mat-raised-button color="accent" (click)="onSave()" [disabled]="profileForm.invalid || isLoading" class="header-action-btn">
-                    <mat-icon *ngIf="!isLoading">save</mat-icon>
-                    <mat-spinner *ngIf="isLoading" [diameter]="18"></mat-spinner>
-                    Salvar
-                </button>
-                <button mat-stroked-button color="warn" (click)="onCancel()" [disabled]="isLoading" class="header-action-btn">
-                    <mat-icon>cancel</mat-icon>
-                </button>
-            </div>
-          }
-      </div>
     </mat-card-header>
 
     <mat-card-content>
@@ -40,6 +22,26 @@
               <mat-icon>photo_camera</mat-icon>
             </div>
           }
+        </div>
+
+        <!-- AÇÕES DE EDIÇÃO ABAIXO DA FOTO -->
+        <div class="avatar-actions">
+            @if (!isEditing) {
+              <button mat-flat-button color="primary" (click)="toggleEditMode()" class="avatar-action-btn">
+                <mat-icon>edit</mat-icon> Editar Perfil
+              </button>
+            } @else {
+              <div class="flex gap-2">
+                  <button mat-raised-button color="accent" (click)="onSave()" [disabled]="profileForm.invalid || isLoading" class="avatar-action-btn">
+                      <mat-icon *ngIf="!isLoading">save</mat-icon>
+                      <mat-spinner *ngIf="isLoading" [diameter]="18"></mat-spinner>
+                      Salvar Alterações
+                  </button>
+                  <button mat-stroked-button color="warn" (click)="onCancel()" [disabled]="isLoading" class="avatar-action-btn">
+                      <mat-icon>cancel</mat-icon>
+                  </button>
+              </div>
+            }
         </div>
       </div>
 
