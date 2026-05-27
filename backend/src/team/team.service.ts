@@ -116,9 +116,27 @@ export class TeamService {
     const invitation = await this.resolveInvitation(token);
     
     // Buscar o usuário logado para garantir que ele existe e obter seus dados atuais
-    const user = await this.userRepository.findOne({ where: { id: currentUser.sub } });
+    const user = await this.userRepository.findOne({ 
+        where: { id: currentUser.sub },
+        relations: ['role']
+    });
+
     if (!user) {
       throw new NotFoundException('Usuário não encontrado.');
+    }
+
+    // SEGURANÇA: Se o usuário já pertence ao tenant do convite, não faz nada
+    if (user.tenantId === invitation.tenantId) {
+        return { message: 'Você já faz parte desta equipe.' };
+    }
+
+    // SEGURANÇA: Se o usuário é um Administrador (e não está apenas trocando de tenant por convite legítimo)
+    // podemos querer bloquear para evitar perda de acesso acidental ao seu próprio tenant.
+    if (user.role?.name === 'administrador' && !currentUser.isSuperAdmin) {
+        // Se for um admin real, avisamos que ele perderá o controle da sua empresa atual
+        // Mas por simplicidade de fluxo B2B, vamos apenas permitir se o tenantId for diferente.
+        // O ideal é que admins não aceitem convites de outros.
+        console.warn(`[TeamService] Admin ${user.email} aceitando convite para outro tenant.`);
     }
 
     // Atualizar o usuário para o novo Tenant e Role

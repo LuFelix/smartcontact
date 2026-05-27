@@ -9,6 +9,7 @@ export interface TagResolutionResponse {
   redirectMode: RedirectMode;
   customUrl?: string;
   user: FullUserResponse;
+  tech_type: 'qr' | 'nfc';
 }
 
 @Injectable({

@@ -177,4 +177,24 @@ export class UpdateUserDto {
   @IsOptional()
   @IsArray()
   tags?: any[];
+
+  @ApiPropertyOptional({ enum: RedirectMode })
+  @IsOptional()
+  @IsEnum(RedirectMode)
+  nfcRedirectMode?: RedirectMode;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  nfcCustomUrl?: string;
+
+  @ApiPropertyOptional({ enum: RedirectMode })
+  @IsOptional()
+  @IsEnum(RedirectMode)
+  qrRedirectMode?: RedirectMode;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  qrCustomUrl?: string;
 }

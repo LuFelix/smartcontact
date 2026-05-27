@@ -265,9 +265,12 @@ export class AuthService {
     console.log("[AuthService Google Login] Iniciando validação do token Google...");
     let loginResponse: LoginResponse;
 
+    const invitationToken = sessionStorage.getItem('pending_invitation_token');
+
     const payload = { 
         token: idToken,
-        accessToken: accessToken
+        accessToken: accessToken,
+        invitationToken: invitationToken || undefined
     };
 
     // 1. Enviamos os tokens para o endpoint do NestJS
@@ -277,6 +280,9 @@ export class AuthService {
           console.log("[AuthService Google Login] Token do sistema recebido após validação Google.");
           loginResponse = response;
           this.setSession(response.access_token); // Salva o JWT do nosso sistema e atualiza signals
+          if (invitationToken) {
+              sessionStorage.removeItem('pending_invitation_token');
+          }
         },
         error: err => console.error("[AuthService Google Login] Erro na validação backend:", err)
       }),

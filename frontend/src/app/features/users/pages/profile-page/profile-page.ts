@@ -1,12 +1,13 @@
 // Caminho: src/app/features/users/pages/profile-page/profile-page.ts
 
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { Subscription, EMPTY, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError, filter, finalize } from 'rxjs/operators';
+import * as QRCode from 'qrcode';
 
 // Imports do Angular Material
 import { MatCardModule } from '@angular/material/card';
@@ -61,6 +62,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private cepService = inject(CepService);
 
+  @ViewChild('qrcodeCanvas') qrcodeCanvas!: ElementRef<HTMLCanvasElement>;
+
   // Signals
   userUsername = this.authService.userUsername;
 
@@ -105,8 +108,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
       links: this.fb.array([]),
       tagSettings: this.fb.group({
           id: [null],
-          redirectMode: [RedirectMode.PROFILE],
-          customUrl: ['']
+          nfcRedirectMode: [RedirectMode.PROFILE],
+          nfcCustomUrl: [''],
+          qrRedirectMode: [RedirectMode.PROFILE],
+          qrCustomUrl: ['']
       })
     });
   }
@@ -316,9 +321,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
             this.activeTag = userProfile.tags.find((t: Tag) => t.isActive) || userProfile.tags[0];
             this.profileForm.get('tagSettings')?.patchValue({
                 id: this.activeTag.id,
-                redirectMode: this.activeTag.redirectMode,
-                customUrl: this.activeTag.customUrl
+                nfcRedirectMode: this.activeTag.nfcRedirectMode,
+                nfcCustomUrl: this.activeTag.nfcCustomUrl,
+                qrRedirectMode: this.activeTag.qrRedirectMode,
+                qrCustomUrl: this.activeTag.qrCustomUrl
             });
+            this.generatePersonalQR();
         }
 
         this.phones.clear();
@@ -379,9 +387,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
     const { tagSettings, ...formData } = this.profileForm.getRawValue();
     const payload = {
+        ...formData,
         name: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email, // Novo email principal (se trocado)
-        cpf: formData.cpf,
         phones: formData.phones.map((p: any) => ({
             id: p.id,
             number: p.phoneNumber,
@@ -411,9 +418,16 @@ export class ProfileComponent implements OnInit, OnDestroy {
         })),
         tags: tagSettings.id ? [{
             id: tagSettings.id,
-            redirectMode: tagSettings.redirectMode,
-            customUrl: tagSettings.customUrl
-        }] : []
+            nfcRedirectMode: tagSettings.nfcRedirectMode,
+            nfcCustomUrl: tagSettings.nfcCustomUrl,
+            qrRedirectMode: tagSettings.qrRedirectMode,
+            qrCustomUrl: tagSettings.qrCustomUrl
+        }] : [],
+        // Enviar os modos fora do array também para garantir persistência via fallback do UsersService
+        nfcRedirectMode: tagSettings.nfcRedirectMode,
+        nfcCustomUrl: tagSettings.nfcCustomUrl,
+        qrRedirectMode: tagSettings.qrRedirectMode,
+        qrCustomUrl: tagSettings.qrCustomUrl
     };
 
     this.userService.updateUser(this.currentUserData!.id, payload).pipe(
@@ -440,5 +454,35 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   navigateToDashboard(): void {
     this.router.navigate(['/app/dashboard']);
+  }
+
+  generatePersonalQR(): void {
+      if (!this.activeTag) return;
+      const baseUrl = window.location.origin;
+      const url = `${baseUrl}/t/${this.activeTag.uuid}?source=qr`;
+      
+      setTimeout(() => {
+          if (this.qrcodeCanvas) {
+              QRCode.toCanvas(this.qrcodeCanvas.nativeElement, url, {
+                  width: 250,
+                  margin: 1,
+                  color: {
+                      dark: '#000000',
+                      light: '#ffffff'
+                  }
+              }, (error: Error | null | undefined) => {
+                  if (error) console.error(error);
+              });
+          }
+      });
+  }
+
+  downloadPersonalQR(): void {
+    if (!this.qrcodeCanvas) return;
+    const canvas = this.qrcodeCanvas.nativeElement;
+    const link = document.createElement('a');
+    link.download = `smartcontact-qr-${this.userUsername() || 'me'}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
   }
 }

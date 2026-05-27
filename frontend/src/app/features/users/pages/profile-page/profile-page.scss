@@ -119,6 +119,12 @@
 }
 
 .tag-management-section {
+    background-color: var(--mat-sys-surface-container-low);
+    border-radius: 24px;
+    padding: 32px;
+    margin-bottom: 24px;
+    border: 1px dashed var(--mat-sys-outline-variant);
+
     .tag-uuid-badge {
         background-color: var(--mat-sys-primary-container);
         color: var(--mat-sys-on-primary-container);
@@ -131,19 +137,91 @@
         gap: 4px;
         mat-icon { font-size: 14px; width: 14px; height: 14px; }
     }
+}
+
+.tag-settings-dual-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-top: 24px;
     
-    .tag-settings-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        align-items: start;
-        gap: 16px;
+    @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.tag-source-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 24px;
+    background: var(--mat-sys-surface-container-highest);
+    border-radius: 16px;
+}
+
+.source-label {
+    margin: 0 0 8px 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--mat-sys-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    
+    mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+    }
+}
+
+.personal-qr-section {
+    margin-top: 32px;
+    display: flex;
+    justify-content: center;
+}
+
+.qr-display-card {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    padding: 24px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: var(--mat-sys-level2);
+    border: 1px solid var(--mat-sys-outline-variant);
+    
+    canvas {
+        background: white;
+        padding: 12px;
+        border-radius: 12px;
     }
     
-    .tag-preview-action {
+    .qr-info {
+        h4 { margin: 0 0 8px 0; color: #333; font-size: 1.1rem; }
+        p { margin: 0 0 20px 0; font-size: 0.9rem; color: #666; max-width: 250px; line-height: 1.4; }
+    }
+
+    .qr-actions-row {
         display: flex;
-        align-items: center;
-        height: 56px;
+        gap: 12px;
+        
+        @media (max-width: 400px) {
+            flex-direction: column;
+        }
     }
+
+    @media (max-width: 600px) {
+        flex-direction: column;
+        text-align: center;
+        width: 100%;
+    }
+}
+
+.dark-mode .qr-display-card {
+    background: #f5f5f5; 
+    .qr-info h4 { color: #000; }
+    .qr-info p { color: #444; }
 }
 
 .form-section {

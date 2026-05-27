@@ -27,37 +27,75 @@
 
       <form [formGroup]="profileForm" class="profile-form" autocomplete="off">
         
-        <!-- CONFIGURAÇÕES DA TAG NFC -->
+        <!-- CONFIGURAÇÕES DA TAG E QR CODE -->
         <div class="form-section tag-management-section" *ngIf="activeTag">
             <div class="section-header">
-                <h3 class="section-title">Minha Tag SmartContact</h3>
+                <h3 class="section-title">Controle de Redirecionamento</h3>
                 <span class="tag-uuid-badge" [matTooltip]="'ID da Tag: ' + activeTag.uuid">
                     <mat-icon>nfc</mat-icon> Ativa
                 </span>
             </div>
             
-            <div formGroupName="tagSettings" class="tag-settings-grid">
-                <mat-form-field appearance="outline">
-                    <mat-label>Onde sua Tag vai abrir?</mat-label>
-                    <mat-select formControlName="redirectMode">
-                        @for (mode of redirectModes; track mode.value) {
-                            <mat-option [value]="mode.value">{{ mode.label }}</mat-option>
-                        }
-                    </mat-select>
-                </mat-form-field>
-
-                @if (profileForm.get('tagSettings.redirectMode')?.value === 'CUSTOM_URL') {
-                    <mat-form-field appearance="outline" class="fade-in">
-                        <mat-label>URL Personalizada</mat-label>
-                        <input matInput formControlName="customUrl" placeholder="https://exemplo.com">
-                        <mat-icon matSuffix>link</mat-icon>
+            <div formGroupName="tagSettings" class="tag-settings-dual-grid">
+                <!-- COLUNA NFC -->
+                <div class="tag-source-group">
+                    <h4 class="source-label"><mat-icon>contactless</mat-icon> Destino do Chip NFC</h4>
+                    <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Onde o NFC vai abrir?</mat-label>
+                        <mat-select formControlName="nfcRedirectMode">
+                            @for (mode of redirectModes; track mode.value) {
+                                <mat-option [value]="mode.value">{{ mode.label }}</mat-option>
+                            }
+                        </mat-select>
                     </mat-form-field>
-                }
-                
-                <div class="tag-preview-action">
-                    <a mat-stroked-button color="primary" [routerLink]="['/t', userUsername() || activeTag.uuid]" target="_blank">
-                        <mat-icon>visibility</mat-icon> Ver meu Perfil Público
-                    </a>
+
+                    @if (profileForm.get('tagSettings.nfcRedirectMode')?.value === 'CUSTOM_URL') {
+                        <mat-form-field appearance="outline" class="full-width fade-in">
+                            <mat-label>URL Personalizada (NFC)</mat-label>
+                            <input matInput formControlName="nfcCustomUrl" placeholder="https://exemplo.com">
+                            <mat-icon matSuffix>link</mat-icon>
+                        </mat-form-field>
+                    }
+                </div>
+
+                <!-- COLUNA QR CODE -->
+                <div class="tag-source-group">
+                    <h4 class="source-label"><mat-icon>qr_code_2</mat-icon> Destino do QR Code</h4>
+                    <mat-form-field appearance="outline" class="full-width">
+                        <mat-label>Onde o QR vai abrir?</mat-label>
+                        <mat-select formControlName="qrRedirectMode">
+                            @for (mode of redirectModes; track mode.value) {
+                                <mat-option [value]="mode.value">{{ mode.label }}</mat-option>
+                            }
+                        </mat-select>
+                    </mat-form-field>
+
+                    @if (profileForm.get('tagSettings.qrRedirectMode')?.value === 'CUSTOM_URL') {
+                        <mat-form-field appearance="outline" class="full-width fade-in">
+                            <mat-label>URL Personalizada (QR)</mat-label>
+                            <input matInput formControlName="qrCustomUrl" placeholder="https://exemplo.com">
+                            <mat-icon matSuffix>link</mat-icon>
+                        </mat-form-field>
+                    }
+                </div>
+            </div>
+
+            <!-- EXIBIÇÃO DO QR CODE PESSOAL -->
+            <div class="personal-qr-section">
+                <div class="qr-display-card">
+                    <canvas #qrcodeCanvas></canvas>
+                    <div class="qr-info">
+                        <h4>Seu QR Code Pessoal</h4>
+                        <p>Aponte a câmera para testar o destino configurado acima.</p>
+                        <div class="qr-actions-row">
+                            <a mat-stroked-button color="primary" [routerLink]="['/t', userUsername() || activeTag.uuid]" target="_blank">
+                                <mat-icon>visibility</mat-icon> Ver Perfil
+                            </a>
+                            <button mat-flat-button color="accent" (click)="downloadPersonalQR()">
+                                <mat-icon>download</mat-icon> Baixar QR
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

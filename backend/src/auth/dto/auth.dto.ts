@@ -142,6 +142,14 @@ export class MinimalRegisterDto {
   })
   @IsString()
   name!: string;
+
+  @ApiProperty({
+    description: 'Token de convite (opcional)',
+    required: false
+  })
+  @IsOptional()
+  @IsString()
+  invitationToken?: string;
 }
 
 export class VerifyEmailDto {

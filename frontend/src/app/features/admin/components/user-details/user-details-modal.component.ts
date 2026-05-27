@@ -1,6 +1,6 @@
 // Caminho: src/app/features/admin/components/user-details/user-details-modal.component.ts
 
-import { Component, Inject, OnInit, inject, OnDestroy } from '@angular/core';
+import { Component, Inject, OnInit, inject, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormControl, FormArray} from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { RouterModule, RouterLink } from '@angular/router';
@@ -23,6 +23,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { CepService } from '../../../../core/utils/cep.service';
 import { NgxMaskDirective } from 'ngx-mask';
+import * as QRCode from 'qrcode';
 
 // Interface para os dados recebidos
 export interface UserModalData {
@@ -61,6 +62,8 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
     private roleService = inject(RoleService);
     private cepService = inject(CepService);
     public dialogRef = inject(MatDialogRef<UserDetailsModalComponent>);
+
+    @ViewChild('qrcodeCanvas') qrcodeCanvas!: ElementRef<HTMLCanvasElement>;
 
     user: User | null = null;
     userForm!: FormGroup;
@@ -125,8 +128,10 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
             links: this.fb.array([]),
             tagSettings: this.fb.group({
                 id: [null],
-                redirectMode: [RedirectMode.PROFILE],
-                customUrl: ['']
+                nfcRedirectMode: [RedirectMode.PROFILE],
+                nfcCustomUrl: [''],
+                qrRedirectMode: [RedirectMode.PROFILE],
+                qrCustomUrl: ['']
             })
         });
     }
@@ -308,9 +313,12 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
                     const activeTag = loadedUser.tags.find((t: Tag) => t.isActive) || loadedUser.tags[0];
                     this.userForm.get('tagSettings')?.patchValue({
                         id: activeTag.id,
-                        redirectMode: activeTag.redirectMode,
-                        customUrl: activeTag.customUrl
+                        nfcRedirectMode: activeTag.nfcRedirectMode,
+                        nfcCustomUrl: activeTag.nfcCustomUrl,
+                        qrRedirectMode: activeTag.qrRedirectMode,
+                        qrCustomUrl: activeTag.qrCustomUrl
                     });
+                    this.generatePersonalQR(activeTag.uuid);
                 }
 
                 this.phones.clear();
@@ -379,9 +387,15 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
             })),
             tags: tagSettings.id ? [{
                 id: tagSettings.id,
-                redirectMode: tagSettings.redirectMode,
-                customUrl: tagSettings.customUrl
-            }] : []
+                nfcRedirectMode: tagSettings.nfcRedirectMode,
+                nfcCustomUrl: tagSettings.nfcCustomUrl,
+                qrRedirectMode: tagSettings.qrRedirectMode,
+                qrCustomUrl: tagSettings.qrCustomUrl
+            }] : [],
+            nfcRedirectMode: tagSettings.nfcRedirectMode,
+            nfcCustomUrl: tagSettings.nfcCustomUrl,
+            qrRedirectMode: tagSettings.qrRedirectMode,
+            qrCustomUrl: tagSettings.qrCustomUrl
         };
 
         if (!this.data.isCreation && !payload.password) {
@@ -418,5 +432,21 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
                 next: () => this.dialogRef.close(true),
                 error: (err) => console.error('Erro ao excluir', err)
             });
+    }
+
+    generatePersonalQR(uuid: string): void {
+        const baseUrl = window.location.origin;
+        const url = `${baseUrl}/t/${uuid}?source=qr`;
+        
+        setTimeout(() => {
+            if (this.qrcodeCanvas) {
+                QRCode.toCanvas(this.qrcodeCanvas.nativeElement, url, {
+                    width: 150,
+                    margin: 1
+                }, (error: Error | null | undefined) => {
+                    if (error) console.error(error);
+                });
+            }
+        });
     }
 }

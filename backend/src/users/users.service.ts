@@ -294,8 +294,25 @@ export class UsersService {
 
         if (tags && tags.length > 0) {
             if (user.tags && user.tags.length > 0) {
-                Object.assign(user.tags[0], { ...tags[0], ownerId: user.ownerId, tenantId: user.tenantId });
+                const tagUpdate = { 
+                    ...tags[0], 
+                    ownerId: user.ownerId, 
+                    tenantId: user.tenantId,
+                    nfcRedirectMode: updateUserDto.nfcRedirectMode ?? user.tags[0].nfcRedirectMode,
+                    nfcCustomUrl: updateUserDto.nfcCustomUrl ?? user.tags[0].nfcCustomUrl,
+                    qrRedirectMode: updateUserDto.qrRedirectMode ?? user.tags[0].qrRedirectMode,
+                    qrCustomUrl: updateUserDto.qrCustomUrl ?? user.tags[0].qrCustomUrl,
+                };
+                Object.assign(user.tags[0], tagUpdate);
             }
+        } else if (updateUserDto.nfcRedirectMode || updateUserDto.qrRedirectMode) {
+             // Fallback caso venha apenas os enums fora do array tags (comum em formulários simples)
+             if (user.tags && user.tags.length > 0) {
+                 if (updateUserDto.nfcRedirectMode) user.tags[0].nfcRedirectMode = updateUserDto.nfcRedirectMode;
+                 if (updateUserDto.nfcCustomUrl !== undefined) user.tags[0].nfcCustomUrl = updateUserDto.nfcCustomUrl!;
+                 if (updateUserDto.qrRedirectMode) user.tags[0].qrRedirectMode = updateUserDto.qrRedirectMode;
+                 if (updateUserDto.qrCustomUrl !== undefined) user.tags[0].qrCustomUrl = updateUserDto.qrCustomUrl!;
+             }
         }
 
         return this.usersRepository.save(user);

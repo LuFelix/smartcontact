@@ -79,23 +79,27 @@ export class RegisterFormComponent {
 
     this.isSubmitting.set(true);
     const rawData = this.form.getRawValue();
+    const invitationToken = sessionStorage.getItem('pending_invitation_token');
 
     const registrationData: RegistrationData = {
       name: `${rawData.firstName} ${rawData.lastName}`.trim(),
       email: rawData.email,
-      password: rawData.password
-    };
+      password: rawData.password,
+      invitationToken: invitationToken || undefined
+    } as any;
 
     this.authService.register(registrationData)
       .pipe(finalize(() => this.isSubmitting.set(false)))
       .subscribe({
         next: () => {
           this.registeredEmail.set(registrationData.email);
-          this.isRegistered.set(true);
+          this.isRegistered.set(true); // Isso deve habilitar o formulário de código de verificação no HTML
+          this.snackBar.open('Cadastro realizado! Enviamos um código para seu e-mail.', 'OK', { duration: 5000 });
         },
         error: (err) => {
           console.error(err);
-          this.snackBar.open(err.error?.message || 'Erro ao realizar cadastro.', 'Fechar', { duration: 5000 });
+          const msg = err.error?.message || 'Erro ao realizar cadastro.';
+          this.snackBar.open(msg, 'Fechar', { duration: 7000 });
         }
       });
   }
