@@ -41,7 +41,7 @@ export class AuthService {
    let tenantId = uuidv4();
    
    // BUSCA DINÂMICA DA ROLE DE ADMINISTRADOR
-   const adminRole = await this.rolesService.findByName('administrador');
+   const adminRole = await this.rolesService.findOneByName('administrador');
    if (!adminRole) {
        throw new InternalServerErrorException('Configuração de sistema incompleta: Role administrador não encontrada.');
    }
@@ -194,7 +194,7 @@ export class AuthService {
         let tenantId = uuidv4();
         
         // BUSCA DINÂMICA DA ROLE DE ADMINISTRADOR
-        const adminRole = await this.rolesService.findByName('administrador');
+        const adminRole = await this.rolesService.findOneByName('administrador');
         if (!adminRole) {
             throw new InternalServerErrorException('Configuração de sistema incompleta: Role administrador não encontrada.');
         }
