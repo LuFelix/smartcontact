@@ -46,7 +46,14 @@ export class ResourceDelegationDialogComponent implements OnInit {
       .subscribe({
         next: (res) => {
             this.tags = res;
-            // Identifica quais tags o usuário já tem acesso (TODO: backend deve prover essa lista na entidade)
+            // Preenche os checkboxes baseados nos acessos atuais do usuário
+            if (this.data.member.tagAccesses) {
+                this.data.member.tagAccesses.forEach(access => {
+                    if (access.tag) {
+                        this.selectedTagIds.add(access.tag.id);
+                    }
+                });
+            }
         },
         error: () => this.snackBar.open('Erro ao carregar tags.', 'Fechar')
       });
@@ -62,9 +69,34 @@ export class ResourceDelegationDialogComponent implements OnInit {
 
   save(): void {
       this.isSaving = true;
-      const promises = Array.from(this.selectedTagIds).map(tagId => 
-          this.tagService.grantAccess(tagId, this.data.member.id).toPromise()
-      );
+      
+      // Como o endpoint grantAccess adiciona, precisaríamos revogar os desmarcados também.
+      // O ideal seria que a action enviasse o array final. 
+      // Por simplicidade, assumiremos que grantAccess pode ser chamado pros selecionados
+      // e criaremos promises para grant e revoke baseado no estado original
+      
+      const originalSelected = new Set<string>();
+      if (this.data.member.tagAccesses) {
+          this.data.member.tagAccesses.forEach(a => {
+              if (a.tag) originalSelected.add(a.tag.id);
+          });
+      }
+
+      const promises: Promise<any>[] = [];
+
+      // Concede acesso aos novos
+      Array.from(this.selectedTagIds).forEach(tagId => {
+          if (!originalSelected.has(tagId)) {
+              promises.push(this.tagService.grantAccess(tagId, this.data.member.id).toPromise());
+          }
+      });
+
+      // Revoga acesso dos desmarcados
+      Array.from(originalSelected).forEach(tagId => {
+          if (!this.selectedTagIds.has(tagId)) {
+              promises.push(this.tagService.revokeAccess(tagId, this.data.member.id).toPromise());
+          }
+      });
 
       Promise.all(promises)
           .then(() => {

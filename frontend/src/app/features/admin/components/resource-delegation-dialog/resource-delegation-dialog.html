@@ -9,7 +9,7 @@
 
     <mat-selection-list class="tag-selection-list">
         @for (tag of tags; track tag.id) {
-            <mat-list-option (click)="toggleTag(tag.id)">
+            <mat-list-option (click)="toggleTag(tag.id)" [selected]="selectedTagIds.has(tag.id)">
                 <mat-icon matListItemIcon>qr_code_2</mat-icon>
                 <div matListItemTitle>{{ tag.uuid }}</div>
                 <div matListItemLine>Dono: {{ tag.user?.name }}</div>

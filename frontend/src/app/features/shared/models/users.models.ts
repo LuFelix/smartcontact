@@ -136,11 +136,11 @@ export interface UserData {
 
 // Interface completa retornada pelo backend
 export interface FullUserResponse {
-  id: string; 
-  name: string; 
+  id: string;
+  name: string;
   email: string;
   username?: string;
-  cpf?: string; 
+  cpf?: string;
   isVerified: boolean;
   role: { id: string, name: string };
   profile?: {
@@ -154,9 +154,9 @@ export interface FullUserResponse {
   secondaryEmails?: SecondaryEmail[];
   links?: UserLink[];
   tags?: Tag[];
-  profilePictureUrl?: string; 
+  tagAccesses?: { id: string, tag: Tag }[];
+  profilePictureUrl?: string;
 }
-
 export interface Lead {
   id: string;
   leadName: string;

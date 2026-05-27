@@ -37,4 +37,11 @@ export class TagService {
   grantAccess(tagId: string, userId: string): Observable<any> {
       return this.http.post(`${this.API_URL}/${tagId}/grant/${userId}`, {});
   }
+
+  /**
+   * Revoga acesso a uma tag específica de outro usuário.
+   */
+  revokeAccess(tagId: string, userId: string): Observable<any> {
+      return this.http.delete(`${this.API_URL}/${tagId}/revoke/${userId}`);
+  }
 }
