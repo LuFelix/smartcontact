@@ -122,6 +122,9 @@ export class TagsService {
 
     if (!tag) return null;
 
+    console.log(`[TagsService] Resolving Tag: ${identifier} | Source: ${source}`);
+    console.log(`[TagsService] Database - NFC: ${tag.nfcRedirectMode}, QR: ${tag.qrRedirectMode}`);
+
     // Filter sensitive data
     const { user } = tag;
     const publicUser = {

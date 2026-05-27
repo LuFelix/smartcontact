@@ -96,7 +96,8 @@ export class PublicProfileComponent implements OnInit {
 
   handleRedirection(data: TagResolutionResponse): void {
     if (data.redirectMode === RedirectMode.CUSTOM_URL && data.customUrl) {
-      window.location.href = data.customUrl;
+      const targetUrl = data.customUrl.startsWith('http') ? data.customUrl : `https://${data.customUrl}`;
+      window.location.href = targetUrl;
     } else if (data.redirectMode === RedirectMode.WHATSAPP) {
       const mainPhone = data.user.phones?.find((p: any) => p.isWhatsapp) || data.user.phones?.[0];
       if (mainPhone) {
