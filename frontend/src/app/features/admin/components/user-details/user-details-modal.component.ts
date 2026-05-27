@@ -111,8 +111,13 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     ngAfterViewInit(): void {
-        // A lógica forçada de foco e scroll causava flickering (piscar tela).
-        // Removido para manter a abertura fluida padrão do Angular Material.
+        // Garantir foco inicial no dropdown do QR de forma determinística
+        // O preventScroll impede que o navegador puxe a tela para baixo abruptamente
+        setTimeout(() => {
+            if (this.qrSelect && this.qrSelect._elementRef) {
+                this.qrSelect._elementRef.nativeElement.focus({ preventScroll: true });
+            }
+        }, 300);
     }
 
     ngOnDestroy(): void {
