@@ -41,10 +41,10 @@
             </button>
           }
 
-          @if (getTagUuid(user); as uuid) {
+          @if (getPublicLinkIdentifier(user); as identifier) {
             <a mat-icon-button color="accent" 
                class="icon-align-fix"
-               [routerLink]="['/t', uuid]" 
+               [routerLink]="['/t', identifier]" 
                target="_blank" 
                matTooltip="Ver Perfil Público">
                 <mat-icon>contact_page</mat-icon>

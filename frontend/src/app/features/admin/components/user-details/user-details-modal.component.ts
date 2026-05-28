@@ -355,6 +355,13 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
             });
     }
 
+    getPublicLinkIdentifier(): string | null {
+        if (this.user?.username) return this.user.username;
+        if (!this.user?.tags || this.user.tags.length === 0) return null;
+        const activeTag = this.user.tags.find((t: Tag) => t.isActive);
+        return activeTag ? activeTag.uuid : this.user.tags[0].uuid;
+    }
+
     saveUser(): void {
         if (this.userForm.invalid) {
             this.userForm.markAllAsTouched();

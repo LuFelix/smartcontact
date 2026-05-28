@@ -64,6 +64,11 @@ export class UsersListComponent {
     return activeTag ? activeTag.uuid : user.tags[0].uuid;
   }
 
+  getPublicLinkIdentifier(user: User): string | null {
+    if (user.username) return user.username;
+    return this.getTagUuid(user);
+  }
+
   getMainAddressInfo(user: User): { neighborhood: string, cityState: string } | null {
     if (!user.addresses || user.addresses.length === 0) return null;
     const addr = user.addresses.find(a => a.isMain) || user.addresses[0];
