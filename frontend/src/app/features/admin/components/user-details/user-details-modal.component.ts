@@ -18,6 +18,7 @@ import { Role } from '../../../shared/models/role.model';
 import { finalize, Observable, Subscription, debounceTime, distinctUntilChanged, filter, switchMap, catchError, of, tap } from 'rxjs';
 import { MatSelectModule, MatSelect } from '@angular/material/select'; 
 import { MatOptionModule } from '@angular/material/core';
+import { MatTabsModule } from '@angular/material/tabs';
 import { RoleService } from '../../../users/services/role.service';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -25,6 +26,8 @@ import { A11yModule } from '@angular/cdk/a11y';
 import { CepService } from '../../../../core/utils/cep.service';
 import { NgxMaskDirective } from 'ngx-mask';
 import * as QRCode from 'qrcode';
+
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 // Interface para os dados recebidos
 export interface UserModalData {
@@ -50,8 +53,10 @@ export interface UserModalData {
         MatProgressSpinnerModule,
         MatSelectModule, 
         MatOptionModule,
+        MatTabsModule,
         MatDividerModule,
         MatTooltipModule,
+        MatSnackBarModule,
         A11yModule,
         NgxMaskDirective
     ],
@@ -63,6 +68,7 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
     private userService = inject(UserService);
     private roleService = inject(RoleService);
     private cepService = inject(CepService);
+    private snackBar = inject(MatSnackBar);
     public dialogRef = inject(MatDialogRef<UserDetailsModalComponent>);
 
     @ViewChild('qrcodeCanvas') qrcodeCanvas!: ElementRef<HTMLCanvasElement>;
@@ -441,9 +447,27 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
             request$ = this.userService.updateUser(this.data.userId!, payload);
         }
 
+        const isCreation = this.data.isCreation;
+
         request$.pipe(finalize(() => this.isSaving = false))
             .subscribe({
-                next: () => this.dialogRef.close(true),
+                next: (savedUser) => {
+                    this.snackBar.open(
+                        isCreation ? 'Usuário criado com sucesso!' : 'Alterações salvas com sucesso!', 
+                        'OK', 
+                        { duration: 3000 }
+                    );
+                    
+                    if (isCreation && savedUser?.id) {
+                        // Se era criação, agora vira edição para permitir continuar editando
+                        this.data.isCreation = false;
+                        this.data.userId = savedUser.id;
+                        this.loadUser(savedUser.id);
+                    } else {
+                        // Apenas recarrega para garantir sincronia
+                        this.loadUser(this.data.userId!);
+                    }
+                },
                 error: (err) => {
                     console.error('Erro ao salvar', err);
                     const msg = err.error?.message;
