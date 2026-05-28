@@ -420,7 +420,12 @@
         </button>
     }
     
-    <button mat-button (click)="$event.stopPropagation(); dialogRef.close(false)" [disabled]="isSaving || isDeleting">Cancelar</button>
+    <button mat-button 
+            (click)="$event.stopPropagation(); dialogRef.close(true)" 
+            [disabled]="isSaving || isDeleting"
+            matTooltip="Certifique-se de salvar suas alterações antes de fechar. Você também pode usar a tecla ESC para fechar.">
+        Fechar
+    </button>
 
     <button mat-raised-button color="primary" (click)="saveUser()" [disabled]="userForm.invalid || isSaving || isDeleting">
         <span class="button-content-wrapper">

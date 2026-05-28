@@ -27,6 +27,8 @@ import { CepService } from '../../../../core/utils/cep.service';
 import { NgxMaskDirective } from 'ngx-mask';
 import * as QRCode from 'qrcode';
 
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+
 // Interface para os dados recebidos
 export interface UserModalData {
     userId: string | null; 
@@ -54,6 +56,7 @@ export interface UserModalData {
         MatTabsModule,
         MatDividerModule,
         MatTooltipModule,
+        MatSnackBarModule,
         A11yModule,
         NgxMaskDirective
     ],
@@ -65,6 +68,7 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
     private userService = inject(UserService);
     private roleService = inject(RoleService);
     private cepService = inject(CepService);
+    private snackBar = inject(MatSnackBar);
     public dialogRef = inject(MatDialogRef<UserDetailsModalComponent>);
 
     @ViewChild('qrcodeCanvas') qrcodeCanvas!: ElementRef<HTMLCanvasElement>;
@@ -443,9 +447,27 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
             request$ = this.userService.updateUser(this.data.userId!, payload);
         }
 
+        const isCreation = this.data.isCreation;
+
         request$.pipe(finalize(() => this.isSaving = false))
             .subscribe({
-                next: () => this.dialogRef.close(true),
+                next: (savedUser) => {
+                    this.snackBar.open(
+                        isCreation ? 'Usuário criado com sucesso!' : 'Alterações salvas com sucesso!', 
+                        'OK', 
+                        { duration: 3000 }
+                    );
+                    
+                    if (isCreation && savedUser?.id) {
+                        // Se era criação, agora vira edição para permitir continuar editando
+                        this.data.isCreation = false;
+                        this.data.userId = savedUser.id;
+                        this.loadUser(savedUser.id);
+                    } else {
+                        // Apenas recarrega para garantir sincronia
+                        this.loadUser(this.data.userId!);
+                    }
+                },
                 error: (err) => {
                     console.error('Erro ao salvar', err);
                     const msg = err.error?.message;
