@@ -7,71 +7,27 @@
         </button>
     </div>
 
-    <mat-tab-group color="primary" class="manager-tabs">
-        
-        <!-- ABA: MEMBROS -->
-        <mat-tab>
-            <ng-template mat-tab-label>
-                <mat-icon class="tab-icon">group</mat-icon>
-                Membros
-            </ng-template>
-            
-            <div class="tab-content">
-                <div class="tab-actions">
-                    <button mat-flat-button color="primary" (click)="openInvitationDialog()">
-                        <mat-icon>person_add</mat-icon> Convidar Membro
-                    </button>
-                </div>
+    <div class="tab-content members-content">
+        <div class="tab-actions">
+            <button mat-flat-button color="primary" (click)="openInvitationDialog()">
+                <mat-icon>person_add</mat-icon> Convidar Membro
+            </button>
+        </div>
 
-                @if (layoutService.layout() === 'moderno') {
-                    <app-members-card-list
-                        [members]="members"
-                        [isLoading]="isLoadingMembers"
-                        (delegateResources)="openDelegationDialog($event)"
-                        (removeMember)="removeMember($event)">
-                    </app-members-card-list>
-                } @else {
-                    <app-members-list-view
-                        [members]="members"
-                        [isLoading]="isLoadingMembers"
-                        (delegateResources)="openDelegationDialog($event)"
-                        (removeMember)="removeMember($event)">
-                    </app-members-list-view>
-                }
-            </div>
-        </mat-tab>
-
-        <!-- ABA: CARGOS (ROLES) -->
-        <mat-tab>
-            <ng-template mat-tab-label>
-                <mat-icon class="tab-icon">admin_panel_settings</mat-icon>
-                Cargos (Roles)
-            </ng-template>
-
-            <div class="tab-content">
-                <div class="tab-actions">
-                    <button mat-flat-button color="primary" (click)="openRoleDialog()">
-                        <mat-icon>add</mat-icon> Novo Cargo Customizado
-                    </button>
-                </div>
-
-                @if (layoutService.layout() === 'moderno') {
-                    <app-roles-card-list
-                        [roles]="roles"
-                        [isLoading]="isLoadingRoles"
-                        (editRole)="openRoleDialog($event)"
-                        (deleteRole)="deleteRole($event)">
-                    </app-roles-card-list>
-                } @else {
-                    <app-roles-list-view
-                        [roles]="roles"
-                        [isLoading]="isLoadingRoles"
-                        (editRole)="openRoleDialog($event)"
-                        (deleteRole)="deleteRole($event)">
-                    </app-roles-list-view>
-                }
-            </div>
-        </mat-tab>
-
-    </mat-tab-group>
+        @if (layoutService.layout() === 'moderno') {
+            <app-members-card-list
+                [members]="members"
+                [isLoading]="isLoadingMembers"
+                (delegateResources)="openDelegationDialog($event)"
+                (removeMember)="removeMember($event)">
+            </app-members-card-list>
+        } @else {
+            <app-members-list-view
+                [members]="members"
+                [isLoading]="isLoadingMembers"
+                (delegateResources)="openDelegationDialog($event)"
+                (removeMember)="removeMember($event)">
+            </app-members-list-view>
+        }
+    </div>
 </div>
