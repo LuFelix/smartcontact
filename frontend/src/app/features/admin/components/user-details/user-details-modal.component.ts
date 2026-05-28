@@ -18,6 +18,7 @@ import { Role } from '../../../shared/models/role.model';
 import { finalize, Observable, Subscription, debounceTime, distinctUntilChanged, filter, switchMap, catchError, of, tap } from 'rxjs';
 import { MatSelectModule, MatSelect } from '@angular/material/select'; 
 import { MatOptionModule } from '@angular/material/core';
+import { MatTabsModule } from '@angular/material/tabs';
 import { RoleService } from '../../../users/services/role.service';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -50,6 +51,7 @@ export interface UserModalData {
         MatProgressSpinnerModule,
         MatSelectModule, 
         MatOptionModule,
+        MatTabsModule,
         MatDividerModule,
         MatTooltipModule,
         A11yModule,
