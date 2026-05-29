@@ -82,12 +82,18 @@ export class UsersListComponent {
 
   canViewPublicProfile(user: User): boolean {
     // Só mostramos o link se houver um username (URL amigável) ou tags vinculadas
+    // E o usuário deve estar minimamente "ativo" no sistema.
     return !!(user.username || (user.tags && user.tags.length > 0));
   }
 
   isExternalContact(user: User): boolean {
-    // É considerado contato externo se não possuir uma Role (não é membro/admin)
-    return !user.role;
+    // É considerado contato externo se não possuir uma Role 
+    // OU se a role for a básica (colaborador) mas ele ainda não estiver "verificado"
+    // (característica de leads importados que ganham role default mas não têm conta real)
+    const isContributor = user.role?.name?.toLowerCase() === 'colaborador';
+    const isImported = !user.username && (!user.tags || user.tags.length === 0);
+    
+    return !user.role || (isContributor && isImported);
   }
 
   getMainAddressInfo(user: User): { neighborhood: string, cityState: string } | null {
