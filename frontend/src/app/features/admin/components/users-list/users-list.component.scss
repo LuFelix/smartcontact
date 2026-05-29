@@ -148,3 +148,19 @@
     grid-template-columns: 1fr;
   }
 }
+
+.external-badge {
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 8px;
+    background-color: var(--mat-sys-surface-container-highest);
+    color: var(--mat-sys-on-surface-variant);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid var(--mat-sys-outline-variant);
+}
+
+.flex { display: flex; }
+.items-center { align-items: center; }
+.gap-2 { gap: 8px; }

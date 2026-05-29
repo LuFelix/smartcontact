@@ -69,6 +69,12 @@ export class UsersListComponent {
     return this.getTagUuid(user);
   }
 
+  isSmartUser(user: User): boolean {
+    // Um usuário é considerado SmartContact se tiver um username definido ou se tiver tags vinculadas.
+    // Leads importados do Google geralmente não possuem username nem tags inicialmente.
+    return !!(user.username || (user.tags && user.tags.length > 0));
+  }
+
   getMainAddressInfo(user: User): { neighborhood: string, cityState: string } | null {
     if (!user.addresses || user.addresses.length === 0) return null;
     const addr = user.addresses.find(a => a.isMain) || user.addresses[0];
