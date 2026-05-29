@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FullUserResponse } from '../../../shared/models/users.models';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-members-list-view',
@@ -30,8 +31,12 @@ export class MembersListViewComponent {
   displayedColumns = ['avatar', 'name', 'email', 'role', 'status', 'actions'];
 
   getAvatar(member: FullUserResponse): string {
-      const url = member.profile?.profilePictureUrl;
-      if (!url) return 'assets/profile-photo-stock.png';
-      return url.startsWith('http') ? url : `http://localhost:3000/${url}`;
+      const url = member.profile?.profilePictureUrl || member.profilePictureUrl;
+      if (url) {
+        if (url.startsWith('http')) return url;
+        const baseUrl = environment.apiUrl.replace('/api', '');
+        return `${baseUrl}/${url}`;
+      }
+      return 'assets/profile-photo-stock.png';
   }
 }

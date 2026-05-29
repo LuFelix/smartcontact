@@ -50,11 +50,7 @@ export class TeamManagerComponent implements OnInit {
     this.teamService.listMembers()
       .pipe(finalize(() => this.isLoadingMembers = false))
       .subscribe({
-        next: (res) => {
-            // Filtro rigoroso: Apenas usuários que aceitaram o convite (isVerified)
-            // ou que já possuem username definido (garantia de conta ativa)
-            this.members = res.data.filter((u: FullUserResponse) => u.isVerified || !!u.username);
-        },
+        next: (res) => this.members = res.data,
         error: () => this.snackBar.open('Erro ao carregar membros.', 'Fechar')
       });
   }

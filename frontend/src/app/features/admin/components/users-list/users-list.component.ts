@@ -69,10 +69,24 @@ export class UsersListComponent {
     return this.getTagUuid(user);
   }
 
-  isSmartUser(user: User): boolean {
-    // Um usuário é considerado SmartContact se tiver um username definido ou se tiver tags vinculadas.
-    // Leads importados do Google geralmente não possuem username nem tags inicialmente.
+  getAvatar(user: User): string {
+    const url = user.profile?.profilePictureUrl || user.profilePictureUrl;
+    if (url) {
+      if (url.startsWith('http')) return url;
+      const baseUrl = environment.apiUrl.replace('/api', '');
+      return `${baseUrl}/${url}`;
+    }
+    return 'assets/profile-photo-stock.png';
+  }
+
+  canViewPublicProfile(user: User): boolean {
+    // Só mostramos o link se houver um username (URL amigável) ou tags vinculadas
     return !!(user.username || (user.tags && user.tags.length > 0));
+  }
+
+  isExternalContact(user: User): boolean {
+    // É considerado contato externo se não possuir uma Role (não é membro/admin)
+    return !user.role;
   }
 
   getMainAddressInfo(user: User): { neighborhood: string, cityState: string } | null {
