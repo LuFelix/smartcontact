@@ -1,14 +1,18 @@
 .manager-container {
-    padding: 24px;
-    max-width: 1400px;
-    margin: 0 auto;
+    padding: 0;
+    min-height: 100%;
 }
 
 .manager-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
+    padding: 24px;
+    background-color: var(--mat-sys-surface-container-highest);
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    flex-wrap: wrap;
+    gap: 16px;
 
     .header-left {
         display: flex;
@@ -19,25 +23,26 @@
             margin: 0;
             font-weight: 800;
             color: var(--mat-sys-primary);
-            font-size: 1.8rem;
+            font-size: 1.5rem;
         }
 
         .workspace-selector {
             width: 300px;
-            margin-bottom: -1.25em; // Alinha visualmente com o título
+            margin-bottom: -1.25em; 
         }
     }
 }
 
 .manager-tabs-container {
-    background-color: var(--mat-sys-surface-container);
-    border-radius: 24px;
-    padding: 0 16px;
-    box-shadow: var(--mat-sys-level1);
+    background-color: var(--mat-sys-surface-container-high);
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+    padding: 0 16px 16px;
+    box-shadow: var(--mat-sys-level2);
     overflow: hidden;
 
     ::ng-deep .mat-mdc-tab-group {
-        --mdc-tab-indicator-active-indicator-color: var(--mat-sys-primary);
+...
         --mat-tab-header-active-label-text-color: var(--mat-sys-primary);
     }
 }
