@@ -11,7 +11,7 @@
 }
 
 .member-item-card {
-  background-color: var(--mat-sys-surface-container-high); // Unified color
+  background-color: var(--mat-sys-surface-container-low);
   border-radius: 20px;
   transition: all 0.3s ease;
   height: 100%;
@@ -36,7 +36,7 @@
   }
 }
 
-// --- AVATAR SYSTEM (LOCAL RESTORATION) ---
+// --- AVATAR SYSTEM (STABLE FIXED) ---
 .member-avatar {
     width: 40px;
     height: 40px;
@@ -90,6 +90,25 @@
           opacity: 0.7;
       }
   }
+}
+
+.icon-align-fix {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    
+    mat-icon {
+        margin: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+    }
 }
 
 .spinner-overlay {

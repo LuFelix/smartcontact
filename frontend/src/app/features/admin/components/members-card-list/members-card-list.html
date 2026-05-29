@@ -10,13 +10,13 @@
       <mat-card class="member-item-card" appearance="outlined">
         <mat-card-header>
           <div mat-card-avatar class="member-avatar" [style.background-color]="getAvatarColor(member.name)">
+            <span class="letter-placeholder">{{ getInitial(member.name) }}</span>
             @if (getAvatar(member); as avatarUrl) {
                 <img [src]="avatarUrl" (error)="handleImageError($event)">
             }
-            <span class="letter-placeholder">{{ getInitial(member.name) }}</span>
           </div>
           <mat-card-title>{{ member.name }}</mat-card-title>
-          <mat-card-subtitle>{{ member.role.name | titlecase }}</mat-card-subtitle>
+          <mat-card-subtitle>{{ member.role?.name | titlecase }}</mat-card-subtitle>
         </mat-card-header>
 
         <mat-card-content class="card-summary-content">
@@ -24,17 +24,24 @@
                 <mat-icon>email</mat-icon>
                 <span>{{ member.email }}</span>
             </div>
-            <div class="contact-info-row">
-                <mat-icon>verified_user</mat-icon>
-                <span>{{ member.isVerified ? 'E-mail Verificado' : 'Aguardando Verificação' }}</span>
-            </div>
+            @if (member.isVerified) {
+                <div class="contact-info-row text-success">
+                    <mat-icon color="primary">verified</mat-icon>
+                    <span>Conta Ativa</span>
+                </div>
+            } @else {
+                <div class="contact-info-row text-warning">
+                    <mat-icon>pending</mat-icon>
+                    <span>Convite Pendente</span>
+                </div>
+            }
         </mat-card-content>
-        
+
         <mat-card-actions align="end">
-          <button mat-icon-button color="accent" (click)="delegateResources.emit(member)" matTooltip="Gerenciar Acessos (ABAC)">
+          <button mat-icon-button color="accent" class="icon-align-fix" (click)="delegateResources.emit(member)" matTooltip="Gerenciar Acessos">
             <mat-icon>key</mat-icon>
           </button>
-          <button mat-icon-button color="warn" (click)="removeMember.emit(member)" matTooltip="Remover Membro">
+          <button mat-icon-button color="warn" class="icon-align-fix" (click)="removeMember.emit(member)" matTooltip="Remover Membro">
             <mat-icon>person_remove</mat-icon>
           </button>
         </mat-card-actions>

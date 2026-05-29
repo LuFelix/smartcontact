@@ -11,7 +11,7 @@
 }
 
 .user-item-card {
-  background-color: var(--mat-sys-surface-container-high); // UNIFIED
+  background-color: var(--mat-sys-surface-container-low);
   border-color: var(--mat-sys-outline-variant);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
@@ -25,8 +25,8 @@
 
   mat-card-title {
     font-size: 1.15rem;
-    font-weight: 800; // Standardized weight
-    color: var(--mat-sys-primary); // Standardized color
+    font-weight: 700;
+    color: var(--mat-sys-on-surface);
   }
 
   mat-card-subtitle {
@@ -71,7 +71,7 @@
   }
 }
 
-// --- AVATAR SYSTEM (HARDENED LOCAL) ---
+// --- AVATAR SYSTEM (STABLE FIXED) ---
 .user-avatar-container {
     width: 40px;
     height: 40px;
@@ -84,7 +84,6 @@
     color: white;
     font-weight: 700;
     border: 1px solid rgba(0,0,0,0.05);
-    background-color: #757575; // Fallback color
 
     img {
         position: absolute;
@@ -94,7 +93,6 @@
         height: 100%;
         object-fit: cover;
         z-index: 2;
-        border-radius: 50%;
     }
 
     .letter-placeholder {
@@ -104,7 +102,7 @@
     }
 }
 
-.img-hidden { display: none !important; opacity: 0 !important; visibility: hidden !important; }
+.img-hidden { display: none !important; }
 
 .badge-row {
     display: flex;
