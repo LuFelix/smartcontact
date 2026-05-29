@@ -1,33 +1,75 @@
 <div class="manager-container">
     <div class="manager-header">
-        <h1>Gestão de Equipe e Workspace</h1>
+        <div class="header-left">
+            <h1>Gestão de Equipe</h1>
+            
+            <!-- Seletor de Workspace (Mockup para Futuro Premium) -->
+            <mat-form-field appearance="outline" class="workspace-selector">
+                <mat-label>Workspace Selecionado</mat-label>
+                <mat-select [(value)]="selectedWorkspaceId">
+                    @for (ws of workspaces; track ws.id) {
+                        <mat-option [value]="ws.id">
+                            <div class="flex items-center gap-2">
+                                <mat-icon class="ws-icon">{{ ws.isMain ? 'home' : 'business' }}</mat-icon>
+                                {{ ws.name }}
+                            </div>
+                        </mat-option>
+                    }
+                    <mat-divider></mat-divider>
+                    <mat-option value="new" disabled>
+                        <mat-icon>add</mat-icon> Criar Novo Workspace (Premium)
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+
         <button mat-stroked-button (click)="layoutService.toggleLayout()">
             <mat-icon>{{ layoutService.layout() === 'moderno' ? 'view_list' : 'grid_view' }}</mat-icon>
             {{ layoutService.layout() === 'moderno' ? 'Ver em Lista' : 'Ver em Cards' }}
         </button>
     </div>
 
-    <div class="tab-content members-content">
-        <div class="tab-actions">
-            <button mat-flat-button color="primary" (click)="openInvitationDialog()">
-                <mat-icon>person_add</mat-icon> Convidar Membro
-            </button>
-        </div>
+    <div class="manager-tabs-container">
+        <mat-tab-group color="primary" animationDuration="200ms">
+            <!-- ABA 1: MEMBROS -->
+            <mat-tab>
+                <ng-template mat-tab-label>
+                    <mat-icon class="tab-icon">group</mat-icon>
+                    Membros da Equipe
+                </ng-template>
 
-        @if (layoutService.layout() === 'moderno') {
-            <app-members-card-list
-                [members]="members"
-                [isLoading]="isLoadingMembers"
-                (delegateResources)="openDelegationDialog($event)"
-                (removeMember)="removeMember($event)">
-            </app-members-card-list>
-        } @else {
-            <app-members-list-view
-                [members]="members"
-                [isLoading]="isLoadingMembers"
-                (delegateResources)="openDelegationDialog($event)"
-                (removeMember)="removeMember($event)">
-            </app-members-list-view>
-        }
+                <div class="tab-content">
+                    <div class="tab-actions">
+                        <button mat-flat-button color="primary" (click)="openInvitationDialog()">
+                            <mat-icon>person_add</mat-icon> Adicionar Membro
+                        </button>
+                    </div>
+
+                    @if (layoutService.layout() === 'moderno') {
+                        <app-members-card-list
+                            [members]="members"
+                            [isLoading]="isLoadingMembers"
+                            (delegateResources)="openDelegationDialog($event)"
+                            (removeMember)="removeMember($event)">
+                        </app-members-card-list>
+                    } @else {
+                        <app-members-list-view
+                            [members]="members"
+                            [isLoading]="isLoadingMembers"
+                            (delegateResources)="openDelegationDialog($event)"
+                            (removeMember)="removeMember($event)">
+                        </app-members-list-view>
+                    }
+                </div>
+            </mat-tab>
+
+            <!-- ABA 2: CONFIGURAÇÕES (Placeholder para futuro) -->
+            <mat-tab disabled>
+                <ng-template mat-tab-label>
+                    <mat-icon class="tab-icon">settings</mat-icon>
+                    Configurações
+                </ng-template>
+            </mat-tab>
+        </mat-tab-group>
     </div>
 </div>

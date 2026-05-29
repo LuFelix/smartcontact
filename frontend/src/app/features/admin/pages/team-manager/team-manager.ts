@@ -16,6 +16,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 
 @Component({
   selector: 'app-team-manager',
@@ -26,6 +29,9 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
     MatIconModule,
     MatDialogModule,
     MatSnackBarModule,
+    MatTabsModule,
+    MatSelectModule,
+    MatFormFieldModule,
     MembersCardListComponent,
     MembersListViewComponent
   ],
@@ -40,6 +46,14 @@ export class TeamManagerComponent implements OnInit {
 
   members: FullUserResponse[] = [];
   isLoadingMembers = true;
+
+  // Mock para Seletor de Workspace (Futuro Premium)
+  workspaces = [
+    { id: '1', name: 'Meu Workspace (Padrão)', isMain: true },
+    { id: '2', name: 'Filial São Paulo', isMain: false },
+    { id: '3', name: 'Time de Vendas External', isMain: false }
+  ];
+  selectedWorkspaceId = '1';
 
   ngOnInit(): void {
     this.loadMembers();
@@ -80,6 +94,17 @@ export class TeamManagerComponent implements OnInit {
   }
 
   removeMember(member: FullUserResponse): void {
-      alert('Funcionalidade de remover membro em desenvolvimento.');
+      if (!confirm(`Tem certeza que deseja remover ${member.name} da equipe?`)) return;
+
+      this.teamService.removeMember(member.id).subscribe({
+          next: () => {
+              this.snackBar.open('Membro removido com sucesso.', 'OK', { duration: 3000 });
+              this.loadMembers();
+          },
+          error: (err) => {
+              console.error(err);
+              this.snackBar.open('Erro ao remover membro.', 'Fechar');
+          }
+      });
   }
 }

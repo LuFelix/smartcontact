@@ -147,4 +147,29 @@ export class TeamService {
 
     return { message: 'Você entrou na equipe com sucesso!' };
   }
+
+  /**
+   * Remove um membro da equipe (desvincula do Tenant).
+   */
+  async removeMember(memberId: string, currentUser: any): Promise<void> {
+      if (currentUser.role !== 'administrador' && !currentUser.isSuperAdmin) {
+          throw new BadRequestException('Apenas administradores podem remover membros da equipe.');
+      }
+
+      const member = await this.userRepository.findOne({ where: { id: memberId } });
+      if (!member) {
+          throw new NotFoundException('Membro não encontrado.');
+      }
+
+      if (member.tenantId !== currentUser.tenantId) {
+          throw new BadRequestException('Este usuário não pertence à sua equipe.');
+      }
+
+      // Desvincular do Tenant (setar tenantId para null)
+      // Nota: Em um sistema B2B real, poderíamos mover para um tenant 'LIXO' ou apenas remover o acesso.
+      await this.userRepository.update(memberId, { 
+          tenantId: null,
+          role: null 
+      });
+  }
 }

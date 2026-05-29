@@ -10,19 +10,36 @@
     align-items: center;
     margin-bottom: 24px;
 
-    h1 {
-        margin: 0;
-        font-weight: 800;
-        color: var(--mat-sys-primary);
-        font-size: 1.8rem;
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 32px;
+
+        h1 {
+            margin: 0;
+            font-weight: 800;
+            color: var(--mat-sys-primary);
+            font-size: 1.8rem;
+        }
+
+        .workspace-selector {
+            width: 300px;
+            margin-bottom: -1.25em; // Alinha visualmente com o título
+        }
     }
 }
 
-.manager-tabs {
+.manager-tabs-container {
     background-color: var(--mat-sys-surface-container);
     border-radius: 24px;
-    padding: 16px;
+    padding: 0 16px;
     box-shadow: var(--mat-sys-level1);
+    overflow: hidden;
+
+    ::ng-deep .mat-mdc-tab-group {
+        --mdc-tab-indicator-active-indicator-color: var(--mat-sys-primary);
+        --mat-tab-header-active-label-text-color: var(--mat-sys-primary);
+    }
 }
 
 .tab-icon {
@@ -31,20 +48,39 @@
 
 .tab-content {
     padding: 24px 0;
+    min-height: 500px; // Estabiliza altura
 }
 
 .tab-actions {
     display: flex;
     justify-content: flex-end;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
 }
 
-@media (max-width: 768px) {
-    .manager-container { padding: 12px; }
+.ws-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    opacity: 0.7;
+}
+
+.flex { display: flex; }
+.items-center { align-items: center; }
+.gap-2 { gap: 8px; }
+
+@media (max-width: 900px) {
     .manager-header {
         flex-direction: column;
-        align-items: flex-start;
+        align-items: stretch;
         gap: 16px;
+
+        .header-left {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+
+            .workspace-selector { width: 100%; }
+        }
         
         button { width: 100%; }
     }
