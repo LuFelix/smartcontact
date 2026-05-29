@@ -70,7 +70,7 @@ export class UsersListComponent {
     return this.getTagUuid(user);
   }
 
-  getAvatar(user: User): string {
+  getAvatar(user: User): string | null {
     // Busca a foto em todas as propriedades possíveis
     const url = user.profile?.profilePictureUrl || (user as any).profilePictureUrl || (user as any).picture;
     
@@ -79,7 +79,16 @@ export class UsersListComponent {
       const baseUrl = environment.apiUrl.replace('/api', '');
       return `${baseUrl}/${url}`;
     }
-    return '/profile-photo-stock.png';
+    return null;
+  }
+
+  handleImageError(event: any): void {
+      // Oculta a imagem se falhar o carregamento
+      event.target.classList.add('img-hidden');
+  }
+
+  getInitial(name: string): string {
+      return name ? name.trim().charAt(0).toUpperCase() : '?';
   }
 
   /**

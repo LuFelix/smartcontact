@@ -305,29 +305,24 @@ export class UsersService {
         // Se estiver promovendo o lead, além de mudar o tenantId (feito acima), 
         // agora forçamos a criação do Profile e da Tag caso não existam.
         if (isPromotingLead) {
-            const hasProfile = await this.profilesService.findByUserId(user!.id);
-            if (!hasProfile) {
+            const existingProfile = await this.profilesService.findByUserId(user!.id);
+            if (!existingProfile) {
                 await this.profilesService.create({
                     userId: user!.id,
                     ownerId: user!.ownerId!,
-                    tenantId: user!.tenantId!
+                    tenantId: user!.tenantId!,
+                    profilePictureUrl: user!.profilePictureUrl || undefined // Transfere a foto do Google para o Profile
                 });
             }
             
             if (!user!.tags || user!.tags.length === 0) {
-                await this.tagsService.createDefaultTag(
+                // Cria a tag e já associa ao objeto user para evitar user_id null no merge
+                const newTag = await this.tagsService.createDefaultTag(
                     user!.id,
                     user!.ownerId!,
                     user!.tenantId!
                 );
-                
-                // RECARREGA PARA GARANTIR QUE user.tags[0] exista para o bloco de persistência de tag abaixo
-                user = await this.usersRepository.findOne({ 
-                    where: { id }, 
-                    relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile'] 
-                });
-                
-                if (!user) throw new NotFoundException('Erro ao recarregar usuário promovido');
+                user!.tags = [newTag];
             }
         }
 
