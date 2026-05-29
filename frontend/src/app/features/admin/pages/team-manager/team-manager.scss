@@ -13,7 +13,7 @@
 .custom-card-header {
   padding: 24px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start; // Title ALWAYS to the left
   align-items: flex-start;
   flex-wrap: wrap;
   gap: 16px;
@@ -37,9 +37,13 @@
 
     .workspace-selector {
         width: 320px;
-        margin-bottom: -1.25em; // Alinha visualmente com o título
+        margin-bottom: -1.25em; 
     }
   }
+}
+
+.header-actions {
+    margin-left: auto; // Push to the right
 }
 
 .no-padding-content {
@@ -53,7 +57,7 @@
 
 .tab-actions {
     display: flex;
-    justify-content: flex-start; // Move to LEFT
+    justify-content: flex-start; // Button to the LEFT
     margin-bottom: 20px;
 }
 
@@ -104,6 +108,7 @@
     
     .header-actions {
         width: 100%;
+        margin-left: 0;
         button { width: 100%; }
     }
 }

@@ -13,7 +13,7 @@
 .custom-card-header {
   padding: 24px;
   display: flex;
-  justify-content: flex-start; // Ensure title is on the left
+  justify-content: flex-start; // Title ALWAYS to the left
   align-items: flex-start;
   background-color: var(--mat-sys-surface-container-highest);
 
@@ -30,7 +30,7 @@
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); // Adjusted to allow 4+ per row
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); // 4+ per row
   gap: 24px;
 }
 

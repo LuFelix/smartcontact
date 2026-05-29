@@ -13,7 +13,7 @@
 .custom-card-header {
   padding: 24px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start; // Title ALWAYS to the left
   align-items: flex-start;
   flex-wrap: wrap;
   gap: 16px;
@@ -34,6 +34,7 @@
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  margin-left: auto; // Push actions to the right
 }
 
 @media (max-width: 768px) {
@@ -44,6 +45,7 @@
     
     .header-actions {
         flex-direction: column;
+        margin-left: 0;
         button { width: 100%; }
     }
 }
