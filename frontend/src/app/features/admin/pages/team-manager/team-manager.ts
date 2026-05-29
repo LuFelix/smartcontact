@@ -20,6 +20,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatCardModule } from '@angular/material/card';
 
 @Component({
   selector: 'app-team-manager',
@@ -34,6 +35,7 @@ import { MatDividerModule } from '@angular/material/divider';
     MatSelectModule,
     MatFormFieldModule,
     MatDividerModule,
+    MatCardModule,
     MembersCardListComponent,
     MembersListViewComponent
   ],
