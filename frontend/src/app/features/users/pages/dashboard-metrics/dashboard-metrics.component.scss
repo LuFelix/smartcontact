@@ -13,7 +13,7 @@
 .custom-card-header {
   padding: 24px;
   display: flex;
-  justify-content: flex-start; // Title ALWAYS to the left
+  justify-content: flex-start; // ALWAYS LEFT
   align-items: flex-start;
   background-color: var(--mat-sys-surface-container-highest);
 
@@ -30,12 +30,12 @@
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); // 4+ per row
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 24px;
 }
 
 .dashboard-metric-card {
-  background-color: var(--mat-sys-surface-container-low); // Standardized color
+  background-color: var(--mat-sys-surface-container-high); // UNIFIED
   border-radius: 20px; 
   box-shadow: var(--mat-sys-level1);
   border: 1px solid var(--mat-sys-outline-variant);

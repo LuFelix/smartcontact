@@ -11,7 +11,7 @@
 }
 
 .user-item-card {
-  background-color: var(--mat-sys-surface-container-high); // Unified color
+  background-color: var(--mat-sys-surface-container-high); // UNIFIED
   border-color: var(--mat-sys-outline-variant);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
@@ -25,8 +25,8 @@
 
   mat-card-title {
     font-size: 1.15rem;
-    font-weight: 700;
-    color: var(--mat-sys-on-surface);
+    font-weight: 800; // Standardized weight
+    color: var(--mat-sys-primary); // Standardized color
   }
 
   mat-card-subtitle {
@@ -71,7 +71,7 @@
   }
 }
 
-// --- AVATAR SYSTEM (LOCAL RESTORATION) ---
+// --- AVATAR SYSTEM (HARDENED LOCAL) ---
 .user-avatar-container {
     width: 40px;
     height: 40px;
@@ -84,6 +84,7 @@
     color: white;
     font-weight: 700;
     border: 1px solid rgba(0,0,0,0.05);
+    background-color: #757575; // Fallback color
 
     img {
         position: absolute;
@@ -93,6 +94,7 @@
         height: 100%;
         object-fit: cover;
         z-index: 2;
+        border-radius: 50%;
     }
 
     .letter-placeholder {
@@ -102,7 +104,7 @@
     }
 }
 
-.img-hidden { display: none !important; }
+.img-hidden { display: none !important; opacity: 0 !important; visibility: hidden !important; }
 
 .badge-row {
     display: flex;
@@ -149,3 +151,9 @@
 .flex-col { flex-direction: column; }
 .text-xs { font-size: 0.75rem; }
 .opacity-70 { opacity: 0.7; }
+
+@media (max-width: 600px) {
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
