@@ -80,6 +80,31 @@ export class ProfileComponent implements OnInit, OnDestroy {
   isEditing = false;
   isFetchingCep: { [key: number]: boolean } = {};
   profilePicturePreview: string | ArrayBuffer | null = null;
+
+  getInitial(): string {
+      const name = this.profileForm.get('firstName')?.value || '';
+      return name ? name.trim().charAt(0).toUpperCase() : '?';
+  }
+
+  getAvatarColor(): string {
+    const name = this.profileForm.get('firstName')?.value || '';
+    if (!name) return '#757575';
+    const colors = [
+      '#F44336', '#E91E63', '#9C27B0', '#673AB7', '#3F51B5',
+      '#2196F3', '#03A9F4', '#00BCD4', '#009688', '#4CAF50',
+      '#8BC34A', '#CDDC39', '#FFC107', '#FF9800', '#FF5722'
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
+  }
+
+  handleImageError(event: any): void {
+      event.target.classList.add('img-hidden');
+  }
   
   addressTagLabels = {
     [AddressTag.HOME]: 'Casa',

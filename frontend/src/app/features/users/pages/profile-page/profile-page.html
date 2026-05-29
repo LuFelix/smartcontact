@@ -9,14 +9,14 @@
 
     <mat-card-content>
       <div class="profile-avatar-section">
-        <div class="image-wrapper" (click)="triggerImageUpload()" [class.editable]="isEditing">
+        <div class="image-wrapper" (click)="triggerImageUpload()" [class.editable]="isEditing" [style.background-color]="getAvatarColor()">
           @if (profilePicturePreview) {
-            <img [src]="profilePicturePreview" alt="Foto de Perfil" class="profile-image" />
-          } @else {
-            <div class="profile-placeholder">
-              <mat-icon>person</mat-icon>
-            </div>
+            <img [src]="profilePicturePreview" class="profile-image" (error)="handleImageError($event)" />
           }
+          <div class="profile-placeholder letter-placeholder">
+            {{ getInitial() }}
+          </div>
+          
           @if (isEditing) {
             <div class="edit-overlay">
               <mat-icon>photo_camera</mat-icon>

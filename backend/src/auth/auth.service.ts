@@ -229,6 +229,13 @@ export class AuthService {
         user = await this.usersService.findByEmail(payloadGoogle.email);
       } else {
           // Se o usuário já existe, sincroniza o perfil e o avatar
+          
+          // 1. SYNC NO USER (Novo campo para Leads/Contatos e Fallback de JWT)
+          if (payloadGoogle.picture && user.profilePictureUrl !== payloadGoogle.picture) {
+              await this.usersRepository.update(user.id, { profilePictureUrl: payloadGoogle.picture });
+          }
+
+          // 2. SYNC NO PROFILE
           let profile = await this.profilesService.findByUserId(user.id);
           if (!profile) {
               profile = await this.profilesService.create({
@@ -238,7 +245,6 @@ export class AuthService {
                   profilePictureUrl: payloadGoogle.picture
               });
           } else if (payloadGoogle.picture && profile.profilePictureUrl !== payloadGoogle.picture) {
-              // Sincroniza a foto do Google caso ela tenha mudado ou estivesse vazia
               await this.profilesService.update(user.id, { profilePictureUrl: payloadGoogle.picture });
           }
 
@@ -252,26 +258,24 @@ export class AuthService {
           user = await this.usersService.findByEmail(payloadGoogle.email);
       }
 
-      if (!user || !user.profile) {
-          // Double check: Se o perfil ainda estiver nulo (ex: falha na criação)
-          // vamos tentar recarregar uma última vez ou logar o erro
-          console.warn(`[AuthService Google] Perfil não carregado para ${payloadGoogle.email}. Tentando fallback...`);
-          user = await this.usersService.findByEmail(payloadGoogle.email);
-      }
       if (!user) {
         throw new InternalServerErrorException('Erro ao processar ou criar usuário via Google');
       }
+      
+      // PRIORIDADE DE FOTO PARA O JWT: Profile -> User Column -> Google Token (Fallback final)
+      const finalPicture = user.profile?.profilePictureUrl || user.profilePictureUrl || payloadGoogle.picture;
+
       // Gera o JWT com o MESMO payload do seu login por senha
       const payload = { 
         sub: user.id, 
         name: user.name, 
         email: user.email, 
         username: user.username,
-        role: user.role?.name || 'USER', // Fallback caso a role demore a carregar
+        role: user.role?.name || 'USER', 
         ownerId: user.ownerId,
         tenantId: user.tenantId,
         isSuperAdmin: user.isSuperAdmin,
-        picture: user.profile?.profilePictureUrl
+        picture: finalPicture
       };
 
       return {
