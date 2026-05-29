@@ -50,7 +50,11 @@ export class TeamManagerComponent implements OnInit {
     this.teamService.listMembers()
       .pipe(finalize(() => this.isLoadingMembers = false))
       .subscribe({
-        next: (res) => this.members = res.data,
+        next: (res) => {
+            // Filtro rigoroso: Apenas usuários reais (que possuem Profile na plataforma)
+            // Isso exclui automaticamente os contatos/leads importados do Google.
+            this.members = res.data.filter((u: FullUserResponse) => !!u.profile);
+        },
         error: () => this.snackBar.open('Erro ao carregar membros.', 'Fechar')
       });
   }

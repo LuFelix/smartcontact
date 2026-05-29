@@ -15,9 +15,15 @@
           <mat-card-title>{{ user.name }}</mat-card-title>
           <mat-card-subtitle class="flex flex-col">
             <span class="text-xs opacity-70">{{ user.email }}</span>
-            @if (isExternalContact(user)) {
-                <span class="external-badge-inline">Contato Externo</span>
-            }
+            <div class="badge-row">
+              @if (isTeamMember(user)) {
+                  <span class="badge-item member-badge">Equipe</span>
+              } @else if (!isLead(user)) {
+                  <span class="badge-item user-badge">Usuário SC</span>
+              } @else {
+                  <span class="badge-item lead-badge">Contato / Lead</span>
+              }
+            </div>
           </mat-card-subtitle>
         </mat-card-header>
 

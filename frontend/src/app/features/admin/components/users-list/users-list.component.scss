@@ -166,19 +166,38 @@
     }
 }
 
-.external-badge-inline {
-    display: inline-block;
-    width: max-content;
+.badge-row {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.badge-item {
     font-size: 0.6rem;
     padding: 1px 6px;
-    margin-top: 4px;
     border-radius: 4px;
-    background-color: var(--mat-sys-surface-container-highest);
-    color: var(--mat-sys-on-surface-variant);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    border: 1px solid var(--mat-sys-outline-variant);
+    border: 1px solid transparent;
+}
+
+.member-badge {
+    background-color: var(--mat-sys-primary-container);
+    color: var(--mat-sys-on-primary-container);
+    border-color: var(--mat-sys-primary);
+}
+
+.user-badge {
+    background-color: var(--mat-sys-secondary-container);
+    color: var(--mat-sys-on-secondary-container);
+    border-color: var(--mat-sys-secondary);
+}
+
+.lead-badge {
+    background-color: var(--mat-sys-surface-container-highest);
+    color: var(--mat-sys-on-surface-variant);
+    border-color: var(--mat-sys-outline-variant);
 }
 
 .flex { display: flex; }

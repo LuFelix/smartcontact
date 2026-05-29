@@ -71,29 +71,45 @@ export class UsersListComponent {
   }
 
   getAvatar(user: User): string {
-    const url = user.profile?.profilePictureUrl || user.profilePictureUrl;
+    // Busca a foto em todas as propriedades possíveis (vinda do Profile ou da raiz do objeto)
+    const url = user.profile?.profilePictureUrl || (user as any).profilePictureUrl;
+    
     if (url) {
+      // Se a URL já for completa (Google, etc.), retorna ela mesma
       if (url.startsWith('http')) return url;
+      
+      // Senão, anexa ao servidor local (Backend)
       const baseUrl = environment.apiUrl.replace('/api', '');
       return `${baseUrl}/${url}`;
     }
     return 'assets/profile-photo-stock.png';
   }
 
-  canViewPublicProfile(user: User): boolean {
-    // Só mostramos o link se houver um username (URL amigável) ou tags vinculadas
-    // E o usuário deve estar minimamente "ativo" no sistema.
-    return !!(user.username || (user.tags && user.tags.length > 0));
+  /**
+   * 1. NATUREZA: CONTATO / LEAD (Fichário)
+   * Registros importados ou capturados que não possuem perfil na plataforma.
+   */
+  isLead(user: User): boolean {
+    // A prova definitiva de um "Usuário Real" é a existência de um Profile e Tags.
+    // Leads importados do Google não possuem Profile vinculado no banco.
+    return !user.profile;
   }
 
-  isExternalContact(user: User): boolean {
-    // É considerado contato externo se não possuir uma Role 
-    // OU se a role for a básica (colaborador) mas ele ainda não estiver "verificado"
-    // (característica de leads importados que ganham role default mas não têm conta real)
-    const isContributor = user.role?.name?.toLowerCase() === 'colaborador';
-    const isImported = !user.username && (!user.tags || user.tags.length === 0);
-    
-    return !user.role || (isContributor && isImported);
+  /**
+   * 2. NATUREZA: MEMBRO DA EQUIPE
+   * Usuários que possuem uma função (Role) definida.
+   */
+  isTeamMember(user: User): boolean {
+    // Se tem Role e não é apenas um dado passivo (profile existe), é membro.
+    return !!user.role && !!user.profile;
+  }
+
+  /**
+   * 3. VISIBILIDADE DO PERFIL
+   * Só mostramos o link se for um usuário real (com profile) e possuir tags.
+   */
+  canViewPublicProfile(user: User): boolean {
+    return !!user.profile && user.tags !== undefined && user.tags.length > 0;
   }
 
   getMainAddressInfo(user: User): { neighborhood: string, cityState: string } | null {

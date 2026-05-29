@@ -36,8 +36,8 @@ export class SideNavComponent {
     // Início (Dashboard de Métricas)
     { link: '/app/dashboard', label: 'Início', icon: 'home', requiredPermission: 'VIEW_DASHBOARD' },
 
-    // Usuários (Gerencial)
-    { link: '/app/users', label: 'Usuários', icon: 'group', requiredPermission: 'READ_USERS' }, 
+    // Contatos (Fichário)
+    { link: '/app/users', label: 'Contatos', icon: 'contacts', requiredPermission: 'READ_USERS' }, 
 
     // Gestão de Roles (Configurações)
     { link: '/app/roles', label: 'Gestão de Roles', icon: 'admin_panel_settings', requiredPermission: 'ASSIGN_USER_ROLES' },
@@ -45,8 +45,8 @@ export class SideNavComponent {
     // Gestão de Equipe (Workspace)
     { link: '/app/team', label: 'Gestão de Equipe', icon: 'group_add', requiredPermission: 'VIEW_DASHBOARD' },
 
-    // Meus Leads (CRM)
-    { link: '/app/leads', label: 'Meus Leads', icon: 'contacts', requiredPermission: 'VIEW_DASHBOARD' },
+    // Meus Leads (CRM) - Removido ou renomeado se redundante, mantendo por enquanto conforme pedido
+    { link: '/app/leads', label: 'Meus Leads', icon: 'person_search', requiredPermission: 'VIEW_DASHBOARD' },
   ];
 
   // Função auxiliar para verificar permissão

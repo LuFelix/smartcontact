@@ -29,7 +29,7 @@ export class MembersCardListComponent {
   @Output() removeMember = new EventEmitter<FullUserResponse>();
 
   getAvatar(member: FullUserResponse): string {
-      const url = member.profile?.profilePictureUrl || member.profilePictureUrl;
+      const url = member.profile?.profilePictureUrl || member.profilePictureUrl || (member as any).picture;
       if (url) {
         if (url.startsWith('http')) return url;
         const baseUrl = environment.apiUrl.replace('/api', '');
