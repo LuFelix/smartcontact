@@ -83,12 +83,27 @@ export class UsersListComponent {
   }
 
   handleImageError(event: any): void {
-      // Oculta a imagem se falhar o carregamento
+      // Oculta a imagem se falhar o carregamento para revelar a letra no fundo
       event.target.classList.add('img-hidden');
   }
 
   getInitial(name: string): string {
       return name ? name.trim().charAt(0).toUpperCase() : '?';
+  }
+
+  getAvatarColor(name: string): string {
+    if (!name) return '#757575';
+    const colors = [
+      '#F44336', '#E91E63', '#9C27B0', '#673AB7', '#3F51B5',
+      '#2196F3', '#03A9F4', '#00BCD4', '#009688', '#4CAF50',
+      '#8BC34A', '#CDDC39', '#FFC107', '#FF9800', '#FF5722'
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
   }
 
   /**

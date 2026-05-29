@@ -9,7 +9,7 @@
     @for (user of dataSource.data; track user.id) {
       <mat-card class="user-item-card" appearance="outlined" (click)="viewDetails.emit(user.id)">
         <mat-card-header>
-          <div mat-card-avatar class="user-avatar-container">
+          <div mat-card-avatar class="user-avatar-container" [style.background-color]="getAvatarColor(user.name)">
             @if (getAvatar(user); as avatarUrl) {
                 <img [src]="avatarUrl" (error)="handleImageError($event)">
             }
