@@ -31,6 +31,14 @@ export class TeamController {
     return this.teamService.listTeamMembers(currentUser);
   }
 
+  @Delete('members/:id')
+  @Roles('administrador')
+  @ApiOperation({ summary: 'Remover um membro da equipe' })
+  @ApiResponse({ status: 204, description: 'Membro removido com sucesso' })
+  async removeMember(@Param('id') id: string, @GetUser() currentUser: any) {
+    await this.teamService.removeMember(id, currentUser);
+  }
+
   @Post('invitations')
   @Roles('administrador')
   @ApiOperation({ summary: 'Gerar um token de convite para a equipe' })

@@ -29,6 +29,7 @@ import { UserData, FullUserResponse, Phone, Address, AddressTag, SecondaryEmail,
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { CepService } from '../../../../core/utils/cep.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-profile',
@@ -375,9 +376,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
         const avatarUrl = userProfile.profile?.profilePictureUrl || userProfile.profilePictureUrl;
         if (avatarUrl && typeof avatarUrl === 'string' && avatarUrl.length > 5) {
-            this.profilePicturePreview = avatarUrl.startsWith('http') 
-                ? avatarUrl 
-                : 'http://localhost:3000/' + avatarUrl;
+            if (avatarUrl.startsWith('http')) {
+                this.profilePicturePreview = avatarUrl;
+            } else {
+                const baseUrl = environment.apiUrl.replace('/api', '');
+                this.profilePicturePreview = `${baseUrl}/${avatarUrl}`;
+            }
         } else {
             this.profilePicturePreview = null;
         }

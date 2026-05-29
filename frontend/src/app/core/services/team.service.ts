@@ -43,6 +43,13 @@ export class TeamService {
   }
 
   /**
+   * Remove um membro da equipe.
+   */
+  removeMember(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.API_URL}/members/${id}`);
+  }
+
+  /**
    * Gera um novo convite de grupo.
    */
   createInvitation(roleId: string): Observable<InvitationResponse> {
