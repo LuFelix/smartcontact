@@ -12,7 +12,7 @@ import { UpdateRoleDto } from './dto/update-role.dto';
 @Injectable()
 export class RolesService {
     // Roles fundamentais que nascem com o sistema (Globais)
-    private readonly PROTECTED_ROLES = ['administrador', 'usuario', 'colaborador'];
+    private readonly PROTECTED_ROLES = ['administrador', 'usuario', 'contato'];
     private readonly SYSTEM_TENANT_ID = 'aebfbdfa-0088-4bf1-9bee-36529cfc3866'; // ID da Tiweb/Admin
 
     constructor(

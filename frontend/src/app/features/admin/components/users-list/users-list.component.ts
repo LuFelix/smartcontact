@@ -90,8 +90,7 @@ export class UsersListComponent {
    * Registros importados ou capturados que não possuem perfil na plataforma.
    */
   isLead(user: User): boolean {
-    // A prova definitiva de um "Usuário Real" é a existência de um Profile e Tags.
-    // Leads importados do Google não possuem Profile vinculado no banco.
+    // Um lead no SmartContact é definido pela AUSÊNCIA de um perfil (Profile).
     return !user.profile;
   }
 
@@ -100,7 +99,7 @@ export class UsersListComponent {
    * Usuários que possuem uma função (Role) definida.
    */
   isTeamMember(user: User): boolean {
-    // Se tem Role e não é apenas um dado passivo (profile existe), é membro.
+    // É membro se tiver Role E tiver Profile.
     return !!user.role && !!user.profile;
   }
 
@@ -109,7 +108,11 @@ export class UsersListComponent {
    * Só mostramos o link se for um usuário real (com profile) e possuir tags.
    */
   canViewPublicProfile(user: User): boolean {
-    return !!user.profile && user.tags !== undefined && user.tags.length > 0;
+    // Se não tem profile, não tem o que ver publicamente.
+    if (!user.profile) return false;
+    
+    // Além do profile, precisa ter Tags vinculadas.
+    return !!(user.tags && user.tags.length > 0) || !!user.username;
   }
 
   getMainAddressInfo(user: User): { neighborhood: string, cityState: string } | null {

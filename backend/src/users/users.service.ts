@@ -97,7 +97,11 @@ export class UsersService {
                 ] 
             });
         } else {
-            assignedRole = await this.rolesRepository.findOne({ where: { name: 'colaborador' } });
+            // Se não informou role, decidimos pela natureza da criação:
+            // Se tem senha, é uma adição manual de USUÁRIO.
+            // Se NÃO tem senha, é uma captura de LEAD (CONTATO).
+            const defaultRoleName = (password && password.length > 0) ? 'usuario' : 'contato';
+            assignedRole = await this.rolesRepository.findOne({ where: { name: defaultRoleName } });
         }
 
         if (!assignedRole) {
@@ -289,12 +293,34 @@ export class UsersService {
         }
 
         if (updateUserDto.roleId) {
-            const role = await this.rolesService.findOne(updateUserDto.roleId);
+            // FIX: Passa o currentUser para validar permissão da role
+            const role = await this.rolesService.findOne(updateUserDto.roleId, currentUser);
             user.role = role;
         }
 
         const { roleId, phones, addresses, secondaryEmails, links, tags, ...userUpdateData } = updateUserDto;
         this.usersRepository.merge(user, userUpdateData);
+
+        // Se estiver promovendo o lead, além de mudar o tenantId (feito acima), 
+        // agora forçamos a criação do Profile e da Tag caso não existam.
+        if (isPromotingLead) {
+            const hasProfile = await this.profilesService.findByUserId(user.id);
+            if (!hasProfile) {
+                await this.profilesService.create({
+                    userId: user.id,
+                    ownerId: user.ownerId!,
+                    tenantId: user.tenantId!
+                });
+            }
+            
+            if (!user.tags || user.tags.length === 0) {
+                await this.tagsService.createDefaultTag(
+                    user.id,
+                    user.ownerId!,
+                    user.tenantId!
+                );
+            }
+        }
 
         const cleanItems = (items: any[]) => items.map(item => {
             const { id: itemId, ...rest } = item;
@@ -330,7 +356,10 @@ export class UsersService {
             await this.tagRepository.save(activeTag);
         }
 
-        return this.usersRepository.save(user);
+        await this.usersRepository.save(user);
+
+        // RETORNA O USUÁRIO COMPLETO (Recarrega para garantir que Profile e novas relações apareçam)
+        return this.findByEmail(user.email) as Promise<User>;
     }
 
     async setVerificationData(userId: string, code: string, expires: Date): Promise<void> {

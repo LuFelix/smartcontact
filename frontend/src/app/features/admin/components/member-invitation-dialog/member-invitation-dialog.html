@@ -2,10 +2,10 @@
 
 <mat-dialog-content>
   <mat-tab-group color="primary">
-    <!-- ABA 1: CONVITE MANUAL -->
-    <mat-tab label="Convite Manual">
+    <!-- ABA 1: ADIÇÃO DIRETA -->
+    <mat-tab label="Adição Direta">
       <form [formGroup]="invitationForm" class="dialog-form" (ngSubmit)="submit()">
-        <p class="description">Cadastre o colaborador manualmente. Ele receberá os dados por e-mail.</p>
+        <p class="description">Cadastre o membro diretamente no sistema. Ele poderá logar imediatamente com o e-mail e senha informados.</p>
         
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Nome Completo</mat-label>
@@ -35,7 +35,7 @@
         <div class="actions">
           <button mat-button mat-dialog-close type="button">Cancelar</button>
           <button mat-flat-button color="primary" type="submit" [disabled]="invitationForm.invalid || isSubmitting">
-            {{ isSubmitting ? 'Enviando...' : 'Convidar Agora' }}
+            {{ isSubmitting ? 'Salvando...' : 'Adicionar Membro' }}
           </button>
         </div>
       </form>

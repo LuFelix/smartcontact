@@ -377,6 +377,18 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
             return;
         }
 
+        // --- LÓGICA DE PROMOÇÃO (UX) ---
+        // Se é uma edição, o usuário não tem perfil (é um Lead) e foi selecionada uma Role,
+        // pedimos confirmação para evitar "adoções" acidentais.
+        if (!this.data.isCreation && !this.user?.profile && this.roleIdControl.value) {
+            const confirmed = confirm(
+                'Você está prestes a PROMOVER este contato para sua EQUIPE.\n\n' +
+                'Isso criará um perfil real e permitirá que você delegue recursos a ele. ' +
+                'Deseja continuar?'
+            );
+            if (!confirmed) return;
+        }
+
         this.isSaving = true;
         const rawData = this.userForm.getRawValue();
         const { tagSettings, name, email, cpf, isActive, roleId, password } = rawData;
