@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FullUserResponse } from '../../../shared/models/users.models';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-members-card-list',
@@ -27,9 +28,39 @@ export class MembersCardListComponent {
   @Output() delegateResources = new EventEmitter<FullUserResponse>();
   @Output() removeMember = new EventEmitter<FullUserResponse>();
 
-  getAvatar(member: FullUserResponse): string {
-      const url = member.profile?.profilePictureUrl;
-      if (!url) return 'assets/profile-photo-stock.png';
-      return url.startsWith('http') ? url : `http://localhost:3000/${url}`;
+  getAvatar(member: FullUserResponse): string | null {
+      const url = (member.profile?.profilePictureUrl && member.profile.profilePictureUrl.length > 5) ? member.profile.profilePictureUrl :
+                  (member.profilePictureUrl && member.profilePictureUrl.length > 5) ? member.profilePictureUrl :
+                  ((member as any).picture && (member as any).picture.length > 5) ? (member as any).picture : null;
+
+      if (url) {
+        if (url.startsWith('http')) return url;
+        const baseUrl = environment.apiUrl.replace('/api', '');
+        return `${baseUrl}/${url}`;
+      }
+      return null;
   }
-}
+
+  getInitial(name: string): string {
+    return name ? name.trim().charAt(0).toUpperCase() : '?';
+  }
+
+  getAvatarColor(name: string): string {
+    if (!name) return '#757575';
+    const colors = [
+      '#F44336', '#E91E63', '#9C27B0', '#673AB7', '#3F51B5',
+      '#2196F3', '#03A9F4', '#00BCD4', '#009688', '#4CAF50',
+      '#8BC34A', '#CDDC39', '#FFC107', '#FF9800', '#FF5722'
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
+  }
+
+  handleImageError(event: any): void {
+      event.target.classList.add('img-hidden');
+  }
+  }

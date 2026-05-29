@@ -1,8 +1,16 @@
-<h2 mat-dialog-title>
-    {{ data.isCreation ? 'Novo Usuário' : 'Detalhes do Usuário' }}
-    @if (!data.isCreation && userForm.get('name')?.value) {
-        <span class="user-title-name">: {{ userForm.get('name')?.value }}</span>
-    }
+<h2 mat-dialog-title class="flex items-center gap-3">
+    <div class="header-avatar" [style.background-color]="getAvatarColor()">
+        @if (getAvatar(); as avatarUrl) {
+            <img [src]="avatarUrl" (error)="handleImageError($event)">
+        }
+        <span class="letter-placeholder">{{ getInitial() }}</span>
+    </div>
+    <div class="flex flex-col">
+        <span>{{ data.isCreation ? 'Novo Usuário' : 'Detalhes do Usuário' }}</span>
+        @if (!data.isCreation && userForm.get('name')?.value) {
+            <span class="user-title-name">{{ userForm.get('name')?.value }}</span>
+        }
+    </div>
 </h2>
 
 <mat-dialog-content class="dialog-content">

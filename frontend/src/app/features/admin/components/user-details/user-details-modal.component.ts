@@ -20,6 +20,7 @@ import { MatSelectModule, MatSelect } from '@angular/material/select';
 import { MatOptionModule } from '@angular/material/core';
 import { MatTabsModule } from '@angular/material/tabs';
 import { RoleService } from '../../../users/services/role.service';
+import { environment } from '../../../../environments/environment';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { A11yModule } from '@angular/cdk/a11y';
@@ -364,6 +365,44 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
             });
     }
 
+    getAvatar(): string | null {
+        const url = (this.user?.profile?.profilePictureUrl && this.user.profile.profilePictureUrl.length > 5) ? this.user.profile.profilePictureUrl :
+                    (this.user?.profilePictureUrl && this.user.profilePictureUrl.length > 5) ? this.user.profilePictureUrl :
+                    ((this.user as any)?.picture && (this.user as any).picture.length > 5) ? (this.user as any).picture : null;
+        
+        if (url) {
+            if (url.startsWith('http')) return url;
+            const baseUrl = environment.apiUrl.replace('/api', '');
+            return `${baseUrl}/${url}`;
+        }
+        return null;
+    }
+
+    getInitial(): string {
+        const name = this.userForm.get('name')?.value || '';
+        return name ? name.trim().charAt(0).toUpperCase() : '?';
+    }
+
+    getAvatarColor(): string {
+        const name = this.userForm.get('name')?.value || '';
+        if (!name) return '#757575';
+        const colors = [
+            '#F44336', '#E91E63', '#9C27B0', '#673AB7', '#3F51B5',
+            '#2196F3', '#03A9F4', '#00BCD4', '#009688', '#4CAF50',
+            '#8BC34A', '#CDDC39', '#FFC107', '#FF9800', '#FF5722'
+        ];
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) {
+            hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const index = Math.abs(hash) % colors.length;
+        return colors[index];
+    }
+
+    handleImageError(event: any): void {
+        event.target.classList.add('img-hidden');
+    }
+
     getPublicLinkIdentifier(): string | null {
         if (this.user?.username) return this.user.username;
         if (!this.user?.tags || this.user.tags.length === 0) return null;
@@ -375,6 +414,18 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
         if (this.userForm.invalid) {
             this.userForm.markAllAsTouched();
             return;
+        }
+
+        // --- LÓGICA DE PROMOÇÃO (UX) ---
+        // Se é uma edição, o usuário não tem perfil (é um Lead) e foi selecionada uma Role,
+        // pedimos confirmação para evitar "adoções" acidentais.
+        if (!this.data.isCreation && !this.user?.profile && this.roleIdControl.value) {
+            const confirmed = confirm(
+                'Você está prestes a PROMOVER este contato para sua EQUIPE.\n\n' +
+                'Isso criará um perfil real e permitirá que você delegue recursos a ele. ' +
+                'Deseja continuar?'
+            );
+            if (!confirmed) return;
         }
 
         this.isSaving = true;
@@ -415,17 +466,13 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
                 title: l.title,
                 url: l.url
             })),
-            tags: tagSettings.id ? [{
-                id: tagSettings.id,
+            tags: tagSettings.id || this.data.isCreation ? [{
+                id: tagSettings.id || undefined,
                 nfcRedirectMode: tagSettings.nfcRedirectMode,
                 nfcCustomUrl: tagSettings.nfcCustomUrl,
                 qrRedirectMode: tagSettings.qrRedirectMode,
                 qrCustomUrl: tagSettings.qrCustomUrl
-            }] : [],
-            nfcRedirectMode: tagSettings.nfcRedirectMode,
-            nfcCustomUrl: tagSettings.nfcCustomUrl,
-            qrRedirectMode: tagSettings.qrRedirectMode,
-            qrCustomUrl: tagSettings.qrCustomUrl
+            }] : []
         };
 
         // Limpeza de IDs nulos

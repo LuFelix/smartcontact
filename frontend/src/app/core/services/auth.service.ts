@@ -123,7 +123,8 @@ export class AuthService {
         localStorage.setItem(this.TOKEN_KEY, token);
         const decoded = jwtDecode<JwtPayload>(token);
         this.#decodedToken.set(decoded);
-        console.log("[AuthService setSession] Token salvo e signal #decodedToken atualizado.");
+        console.log("[AuthService setSession] Token salvo. Role do usuário:", decoded.role);
+        console.log("[AuthService setSession] Signal #decodedToken atualizado.");
     } catch (error) {
         console.error("[AuthService setSession] Erro ao decodificar ou salvar token:", error);
         this.logout();

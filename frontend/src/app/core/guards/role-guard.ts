@@ -12,12 +12,12 @@ export const roleGuard: CanActivateFn = (route, state) => {
     router.navigate(['/login']);
   }
   
-  const userRole = authService.userRole();
+  const userRole = authService.userRole()?.toLowerCase();
 
-  if (userRole && expectedRoles.includes(userRole)) {
-    return true; //
+  if (userRole && expectedRoles.some(r => r.toLowerCase() === userRole)) {
+    return true; 
   }
 
-  router.navigate(['/dashboard']);
+  router.navigate(['/app/dashboard']);
   return false;
 };

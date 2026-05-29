@@ -108,6 +108,7 @@ export interface User {
   secondaryEmails?: SecondaryEmail[];
   links?: UserLink[];
   tags?: Tag[];
+  profilePictureUrl?: string;
 }
 
 // --- Interface para Registro (Usada pelo AuthService) ---

@@ -63,10 +63,10 @@
     border: 4px solid var(--mat-sys-primary-container);
     box-shadow: var(--mat-sys-level3);
     overflow: hidden;
-    background-color: var(--mat-sys-surface-variant);
     display: flex;
     justify-content: center;
     align-items: center;
+    color: white;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     &.editable {
@@ -76,22 +76,29 @@
         .edit-overlay { opacity: 1; }
       }
     }
-  }
 
-  .profile-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
+    .profile-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 2;
+    }
 
-  .profile-placeholder {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-    color: var(--mat-sys-on-surface-variant);
-    mat-icon { font-size: 80px; width: 80px; height: 80px; opacity: 0.5; }
+    .profile-placeholder {
+        position: relative;
+        z-index: 1;
+        font-size: 4.5rem; // Tamanho estabilizado para container de 160px
+        font-weight: 800;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+    }
   }
 
   .edit-overlay {

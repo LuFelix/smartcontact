@@ -9,8 +9,11 @@
     @for (member of members; track member.id) {
       <mat-card class="member-item-card" appearance="outlined">
         <mat-card-header>
-          <div mat-card-avatar class="member-avatar">
-            <img [src]="getAvatar(member)" alt="Foto de {{ member.name }}">
+          <div mat-card-avatar class="member-avatar" [style.background-color]="getAvatarColor(member.name)">
+            @if (getAvatar(member); as avatarUrl) {
+                <img [src]="avatarUrl" (error)="handleImageError($event)">
+            }
+            <span class="letter-placeholder">{{ getInitial(member.name) }}</span>
           </div>
           <mat-card-title>{{ member.name }}</mat-card-title>
           <mat-card-subtitle>{{ member.role.name | titlecase }}</mat-card-subtitle>

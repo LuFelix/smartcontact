@@ -45,9 +45,9 @@ export class SeedService {
     if (adminRole) {
       const admin = await this.seedAdminUser(adminRole);
       
-      const colaboradorRole = await this.roleRepository.findOne({ where: { name: 'colaborador' } });
-      if (colaboradorRole && admin) {
-          await this.userSeedService.run(colaboradorRole, admin);
+      const contatoRole = await this.roleRepository.findOne({ where: { name: 'contato' } });
+      if (contatoRole && admin) {
+          await this.userSeedService.run(contatoRole, admin);
       }
     } else {
       this.logger.error('A role "administrador" não foi encontrada ou criada.');
@@ -94,7 +94,7 @@ export class SeedService {
   }
 
   private async seedRoles(): Promise<Role | undefined> {
-    const rolesToCreate = ['administrador', 'colaborador', 'usuario'];
+    const rolesToCreate = ['administrador', 'contato', 'usuario'];
     let adminRole: Role | undefined;
 
     for (const roleName of rolesToCreate) {

@@ -21,8 +21,11 @@
       
       <!-- HEADER / AVATAR -->
       <header class="profile-header">
-        <div class="avatar-wrapper">
-          <img [src]="profileImage" alt="Avatar" class="avatar-img">
+        <div class="avatar-wrapper" [style.background-color]="getAvatarColor(tagData.user.name)">
+          @if (profileImage; as avatarUrl) {
+            <img [src]="avatarUrl" class="avatar-img" (error)="handleImageError($event)">
+          }
+          <span class="letter-placeholder">{{ getInitial(tagData.user.name) }}</span>
         </div>
         <h1 class="user-name">{{ tagData.user.name }}</h1>
         

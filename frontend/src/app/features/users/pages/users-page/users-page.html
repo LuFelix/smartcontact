@@ -2,8 +2,8 @@
   
   <mat-card-header class="custom-card-header">
     <div>
-      <mat-card-title>Painel de Usuários</mat-card-title>
-      <mat-card-subtitle>Filtre e visualize os usuários do sistema</mat-card-subtitle>
+      <mat-card-title>Fichário de Contatos</mat-card-title>
+      <mat-card-subtitle>Gerencie leads, clientes e membros da sua equipe</mat-card-subtitle>
     </div>
     
     <div class="header-actions">
@@ -17,8 +17,8 @@
       </button>
 
       @if (authService.hasPermission('INVITE_USER')) {
-        <button mat-flat-button color="primary" (click)="openAddUserModal()" matTooltip="Convidar novo usuário">
-          <mat-icon>person_add</mat-icon> Adicionar Usuário
+        <button mat-flat-button color="primary" (click)="openAddUserModal()" matTooltip="Adicionar novo contato manual">
+          <mat-icon>person_add</mat-icon> Adicionar Contato
         </button>
       }
       

@@ -11,6 +11,7 @@ import { MatCardModule } from '@angular/material/card';
 // Importe seu modelo de User e AuthService
 import { User, Phone, Tag } from '../../../shared/models/users.models'; 
 import { AuthService } from '../../../../core/services/auth.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-users-list',
@@ -67,6 +68,74 @@ export class UsersListComponent {
   getPublicLinkIdentifier(user: User): string | null {
     if (user.username) return user.username;
     return this.getTagUuid(user);
+  }
+
+  getAvatar(user: User): string | null {
+    // Busca a foto em todas as propriedades possíveis, validando se o valor é preenchido
+    const url = (user.profile?.profilePictureUrl && user.profile.profilePictureUrl.length > 5) ? user.profile.profilePictureUrl :
+                (user.profilePictureUrl && user.profilePictureUrl.length > 5) ? user.profilePictureUrl :
+                ((user as any).picture && (user as any).picture.length > 5) ? (user as any).picture : null;
+    
+    if (url) {
+      if (url.startsWith('http')) return url;
+      const baseUrl = environment.apiUrl.replace('/api', '');
+      return `${baseUrl}/${url}`;
+    }
+    return null;
+  }
+
+  handleImageError(event: any): void {
+      // Oculta a imagem se falhar o carregamento para revelar a letra no fundo
+      event.target.classList.add('img-hidden');
+  }
+
+  getInitial(name: string): string {
+      return name ? name.trim().charAt(0).toUpperCase() : '?';
+  }
+
+  getAvatarColor(name: string): string {
+    if (!name) return '#757575';
+    const colors = [
+      '#F44336', '#E91E63', '#9C27B0', '#673AB7', '#3F51B5',
+      '#2196F3', '#03A9F4', '#00BCD4', '#009688', '#4CAF50',
+      '#8BC34A', '#CDDC39', '#FFC107', '#FF9800', '#FF5722'
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
+  }
+
+  /**
+   * 1. NATUREZA: CONTATO / LEAD (Fichário)
+   * Registros importados ou capturados que não possuem perfil na plataforma.
+   */
+  isLead(user: User): boolean {
+    // Um lead no SmartContact é definido pela AUSÊNCIA de um perfil (Profile).
+    return !user.profile;
+  }
+
+  /**
+   * 2. NATUREZA: MEMBRO DA EQUIPE
+   * Usuários que possuem uma função (Role) definida.
+   */
+  isTeamMember(user: User): boolean {
+    // É membro se tiver Role E tiver Profile.
+    return !!user.role && !!user.profile;
+  }
+
+  /**
+   * 3. VISIBILIDADE DO PERFIL
+   * Só mostramos o link se for um usuário real (com profile) e possuir tags.
+   */
+  canViewPublicProfile(user: User): boolean {
+    // Se não tem profile, não tem o que ver publicamente.
+    if (!user.profile) return false;
+    
+    // Além do profile, precisa ter Tags vinculadas.
+    return !!(user.tags && user.tags.length > 0) || !!user.username;
   }
 
   getMainAddressInfo(user: User): { neighborhood: string, cityState: string } | null {

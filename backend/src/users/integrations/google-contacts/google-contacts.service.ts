@@ -25,7 +25,7 @@ export class GoogleContactsService {
     try {
       do {
         const url = new URL(this.PEOPLE_API_LIST_URL);
-        url.searchParams.append('personFields', 'names,emailAddresses,phoneNumbers,organizations');
+        url.searchParams.append('personFields', 'names,emailAddresses,phoneNumbers,photos');
         url.searchParams.append('pageSize', '100');
         if (nextPageToken) {
           url.searchParams.append('pageToken', nextPageToken);
@@ -55,6 +55,7 @@ export class GoogleContactsService {
         for (const person of connections) {
           const name = person.names?.[0]?.displayName || 'Contato Google';
           const email = person.emailAddresses?.[0]?.value;
+          const photoUrl = person.photos?.[0]?.url;
 
           if (!email) continue; 
 
@@ -68,7 +69,7 @@ export class GoogleContactsService {
           const createUserDto: CreateUserDto = {
             name,
             email,
-            password: '', // Removemos a senha dummy. Sem senha = Contato de agenda, não conta real.
+            password: '', // Sem senha = Contato de agenda
             isActive: true,
             phones,
           };
@@ -77,7 +78,7 @@ export class GoogleContactsService {
           try {
             const existing = await this.usersService.findByEmail(email);
             if (!existing) {
-              await this.usersService.create(createUserDto, currentUser);
+              await this.usersService.create(createUserDto, currentUser, photoUrl);
               importedCount++;
             }
           } catch (err: any) {
