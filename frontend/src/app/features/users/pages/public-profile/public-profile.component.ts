@@ -136,7 +136,68 @@ export class PublicProfileComponent implements OnInit {
   }
 
   saveVCard(): void {
-      alert('Funcionalidade de Salvar Contato (VCard) em desenvolvimento.');
+    if (!this.tagData || !this.tagData.user) return;
+    
+    const user = this.tagData.user;
+    const vcardLines = [
+      'BEGIN:VCARD',
+      'VERSION:3.0',
+      `FN:${user.name}`,
+      `N:${user.name};;;;`,
+      `EMAIL;TYPE=INTERNET:${user.email}`,
+    ];
+
+    if (user.phones && user.phones.length > 0) {
+      user.phones.forEach((p: any) => {
+        // Formata o número (remove caracteres não numéricos exceto +)
+        const cleanPhone = p.number.replace(/[^\d+]/g, '');
+        const type = p.isWhatsapp ? 'CELL' : 'WORK';
+        vcardLines.push(`TEL;TYPE=${type}:${cleanPhone}`);
+      });
+    }
+
+    if (user.profile?.jobTitle) {
+      vcardLines.push(`TITLE:${user.profile.jobTitle}`);
+    }
+
+    if (user.profile?.company) {
+      vcardLines.push(`ORG:${user.profile.company}`);
+    }
+
+    if (user.links && user.links.length > 0) {
+      user.links.forEach((l: any) => {
+        vcardLines.push(`URL:${l.url}`);
+      });
+    }
+
+    if (user.addresses && user.addresses.length > 0) {
+      user.addresses.forEach((a: any) => {
+        const type = a.isMain ? 'HOME' : 'WORK';
+        const address = [
+            '', // PO Box
+            a.complement || '',
+            a.street + (a.number ? ', ' + a.number : ''),
+            a.city || '',
+            a.state || '',
+            a.zipCode || '',
+            'Brasil'
+        ].join(';');
+        vcardLines.push(`ADR;TYPE=${type}:${address}`);
+      });
+    }
+
+    vcardLines.push('END:VCARD');
+
+    const vcardString = vcardLines.join('\r\n');
+    const blob = new Blob([vcardString], { type: 'text/vcard;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${user.name.replace(/\s+/g, '_').toLowerCase()}.vcf`;
+    link.click();
+    
+    setTimeout(() => window.URL.revokeObjectURL(url), 100);
   }
 
   toggleLeadForm(): void {
