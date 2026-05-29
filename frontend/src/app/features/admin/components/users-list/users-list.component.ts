@@ -11,6 +11,7 @@ import { MatCardModule } from '@angular/material/card';
 // Importe seu modelo de User e AuthService
 import { User, Phone, Tag } from '../../../shared/models/users.models'; 
 import { AuthService } from '../../../../core/services/auth.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-users-list',
