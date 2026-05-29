@@ -47,3 +47,22 @@
     font-style: italic;
     color: var(--mat-sys-on-surface-variant);
 }
+
+.icon-align-fix {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    
+    mat-icon {
+        margin: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+    }
+}
