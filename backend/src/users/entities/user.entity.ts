@@ -66,6 +66,9 @@ export class User {
     @Column({ default: false })
     isSuperAdmin!: boolean;
 
+    @Column({ type: 'varchar', name: 'profile_picture_url', nullable: true })
+    profilePictureUrl!: string | null;
+
     @OneToOne(() => Profile, (profile) => profile.user)
     profile?: Profile;
 

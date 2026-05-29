@@ -126,6 +126,7 @@ export class UsersService {
             role: assignedRole,
             ownerId,
             tenantId,
+            profilePictureUrl, // SALVA A FOTO NO USER TAMBÉM
             phones: cleanItems(phones),
             addresses: cleanItems(addresses),
             secondaryEmails: cleanItems(secondaryEmails),
@@ -246,7 +247,7 @@ export class UsersService {
     }
 
    async update(id: string, updateUserDto: UpdateUserDto, currentUser?: any): Promise<User> { 
-        const user = await this.usersRepository.findOne({
+        let user = await this.usersRepository.findOne({
             where: { id },
             relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile'],
         });
@@ -275,11 +276,11 @@ export class UsersService {
 
         // Se estiver promovendo o lead, vincula ele ao tenant do admin que está promovendo
         if (isPromotingLead) {
-            user.tenantId = currentUser.tenantId;
-            user.ownerId = currentUser.sub;
+            user!.tenantId = currentUser.tenantId;
+            user!.ownerId = currentUser.sub;
         }
 
-        if (updateUserDto.email && updateUserDto.email !== user.email) {
+        if (updateUserDto.email && updateUserDto.email !== user!.email) {
             const emailExists = await this.usersRepository.findOne({
                 where: { email: updateUserDto.email },
             });
@@ -295,53 +296,55 @@ export class UsersService {
         if (updateUserDto.roleId) {
             // FIX: Passa o currentUser para validar permissão da role
             const role = await this.rolesService.findOne(updateUserDto.roleId, currentUser);
-            user.role = role;
+            user!.role = role;
         }
 
         const { roleId, phones, addresses, secondaryEmails, links, tags, ...userUpdateData } = updateUserDto;
-        this.usersRepository.merge(user, userUpdateData);
+        this.usersRepository.merge(user!, userUpdateData);
 
         // Se estiver promovendo o lead, além de mudar o tenantId (feito acima), 
         // agora forçamos a criação do Profile e da Tag caso não existam.
         if (isPromotingLead) {
-            const hasProfile = await this.profilesService.findByUserId(user.id);
+            const hasProfile = await this.profilesService.findByUserId(user!.id);
             if (!hasProfile) {
                 await this.profilesService.create({
-                    userId: user.id,
-                    ownerId: user.ownerId!,
-                    tenantId: user.tenantId!
+                    userId: user!.id,
+                    ownerId: user!.ownerId!,
+                    tenantId: user!.tenantId!
                 });
             }
             
-            if (!user.tags || user.tags.length === 0) {
+            if (!user!.tags || user!.tags.length === 0) {
                 await this.tagsService.createDefaultTag(
-                    user.id,
-                    user.ownerId!,
-                    user.tenantId!
+                    user!.id,
+                    user!.ownerId!,
+                    user!.tenantId!
                 );
                 
                 // RECARREGA PARA GARANTIR QUE user.tags[0] exista para o bloco de persistência de tag abaixo
                 user = await this.usersRepository.findOne({ 
                     where: { id }, 
                     relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile'] 
-                }) as any;
+                });
+                
+                if (!user) throw new NotFoundException('Erro ao recarregar usuário promovido');
             }
         }
 
         const cleanItems = (items: any[]) => items.map(item => {
             const { id: itemId, ...rest } = item;
             const itemData = (itemId === null || itemId === undefined) ? rest : item;
-            return { ...itemData, user: { id }, ownerId: user.ownerId, tenantId: user.tenantId };
+            return { ...itemData, user: { id }, ownerId: user!.ownerId, tenantId: user!.tenantId };
         });
 
-        if (phones) user.phones = cleanItems(phones) as any;
-        if (addresses) user.addresses = cleanItems(addresses) as any;
-        if (secondaryEmails) user.secondaryEmails = cleanItems(secondaryEmails) as any;
-        if (links) user.links = cleanItems(links) as any;
+        if (phones) user!.phones = cleanItems(phones) as any;
+        if (addresses) user!.addresses = cleanItems(addresses) as any;
+        if (secondaryEmails) user!.secondaryEmails = cleanItems(secondaryEmails) as any;
+        if (links) user!.links = cleanItems(links) as any;
 
         // --- Lógica de Persistência de TAG Refatorada ---
-        if (user.tags && user.tags.length > 0) {
-            const activeTag = user.tags[0];
+        if (user!.tags && user!.tags.length > 0) {
+            const activeTag = user!.tags[0];
             
             // Prioridade para campos nfcRedirectMode/qrRedirectMode vindos do DTO
             if ((updateUserDto as any).nfcRedirectMode) activeTag.nfcRedirectMode = (updateUserDto as any).nfcRedirectMode;
@@ -362,10 +365,10 @@ export class UsersService {
             await this.tagRepository.save(activeTag);
         }
 
-        await this.usersRepository.save(user);
+        await this.usersRepository.save(user!);
 
         // RETORNA O USUÁRIO COMPLETO (Recarrega para garantir que Profile e novas relações apareçam)
-        return this.findByEmail(user.email) as Promise<User>;
+        return this.findByEmail(user!.email) as Promise<User>;
     }
 
     async setVerificationData(userId: string, code: string, expires: Date): Promise<void> {
