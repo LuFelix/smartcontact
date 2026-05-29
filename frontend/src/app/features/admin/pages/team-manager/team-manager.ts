@@ -19,6 +19,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatDividerModule } from '@angular/material/divider';
 
 @Component({
   selector: 'app-team-manager',
@@ -32,6 +33,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
     MatTabsModule,
     MatSelectModule,
     MatFormFieldModule,
+    MatDividerModule,
     MembersCardListComponent,
     MembersListViewComponent
   ],
