@@ -306,10 +306,13 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
         controls.forEach(c => this.phones.push(c, { emitEvent: false }));
     }
 
-    private loadUser(id: string): void {
-        this.isLoadingDetails = true;
+    private loadUser(id: string, silent = false): void {
+        if (!silent) this.isLoadingDetails = true;
+        
         this.userService.getUserById(id)
-            .pipe(finalize(() => this.isLoadingDetails = false))
+            .pipe(finalize(() => {
+                if (!silent) this.isLoadingDetails = false;
+            }))
             .subscribe(loadedUser => {
                 this.user = loadedUser;
                 this.userForm.patchValue({
@@ -462,10 +465,10 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
                         // Se era criação, agora vira edição para permitir continuar editando
                         this.data.isCreation = false;
                         this.data.userId = savedUser.id;
-                        this.loadUser(savedUser.id);
+                        this.loadUser(savedUser.id); // Primeira vez após criação pode mostrar spinner
                     } else {
-                        // Apenas recarrega para garantir sincronia
-                        this.loadUser(this.data.userId!);
+                        // Apenas recarrega para garantir sincronia - Silencioso para evitar blink
+                        this.loadUser(this.data.userId!, true);
                     }
                 },
                 error: (err) => {
