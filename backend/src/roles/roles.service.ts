@@ -109,10 +109,12 @@ export class RolesService {
         }
 
         const isSystemAdmin = currentUser?.isSuperAdmin;
-        const isGlobalRole = !role.tenantId || role.tenantId === this.SYSTEM_TENANT_ID;
+        const isGlobalRole = !role.tenantId; // Tenant nulo = Global
+        const isTiwebRole = role.tenantId === this.SYSTEM_TENANT_ID; // Role da Tiweb (Admin original)
 
-        // Se não for admin global, só pode ver se for global ou do próprio tenant
-        if (!isSystemAdmin && !isGlobalRole && role.tenantId !== currentUser?.tenantId) {
+        // Se não for admin global, só pode ver se for global, se for da Tiweb (nossa organização admin) 
+        // ou se for do próprio tenant do usuário.
+        if (!isSystemAdmin && !isGlobalRole && !isTiwebRole && role.tenantId !== currentUser?.tenantId) {
              throw new BadRequestException('Acesso negado: Esta função pertence a outra organização.');
         }
 

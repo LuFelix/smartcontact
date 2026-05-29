@@ -415,17 +415,13 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
                 title: l.title,
                 url: l.url
             })),
-            tags: tagSettings.id ? [{
-                id: tagSettings.id,
+            tags: tagSettings.id || this.data.isCreation ? [{
+                id: tagSettings.id || undefined,
                 nfcRedirectMode: tagSettings.nfcRedirectMode,
                 nfcCustomUrl: tagSettings.nfcCustomUrl,
                 qrRedirectMode: tagSettings.qrRedirectMode,
                 qrCustomUrl: tagSettings.qrCustomUrl
-            }] : [],
-            nfcRedirectMode: tagSettings.nfcRedirectMode,
-            nfcCustomUrl: tagSettings.nfcCustomUrl,
-            qrRedirectMode: tagSettings.qrRedirectMode,
-            qrCustomUrl: tagSettings.qrCustomUrl
+            }] : []
         };
 
         // Limpeza de IDs nulos

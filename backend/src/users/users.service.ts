@@ -252,16 +252,27 @@ export class UsersService {
         }
 
         const isSystemAdmin = currentUser?.isSuperAdmin;
+        const isTenantAdmin = currentUser?.role === 'administrador';
 
-        if (!isSystemAdmin && currentUser?.tenantId && user.tenantId !== currentUser?.tenantId) {
+        // REGRA DE PROMOÇÃO: Se um Admin de Tenant está editando um Lead (sem profile) 
+        // para dar uma role a ele, permitimos mesmo que o tenantId do lead seja o padrão/Tiweb.
+        const isPromotingLead = isTenantAdmin && !user.profile;
+
+        if (!isSystemAdmin && !isPromotingLead && currentUser?.tenantId && user.tenantId !== currentUser?.tenantId) {
              throw new BadRequestException('Acesso negado: Este usuário pertence a outra organização.');
         }
 
         const isOwner = user.ownerId === currentUser?.sub;
         const isOwnProfile = user.id === currentUser?.sub;
 
-        if (!isSystemAdmin && !isOwner && !isOwnProfile) {
+        if (!isSystemAdmin && !isPromotingLead && !isOwner && !isOwnProfile) {
              throw new BadRequestException('Você não tem permissão para editar este usuário.');
+        }
+
+        // Se estiver promovendo o lead, vincula ele ao tenant do admin que está promovendo
+        if (isPromotingLead) {
+            user.tenantId = currentUser.tenantId;
+            user.ownerId = currentUser.sub;
         }
 
         if (updateUserDto.email && updateUserDto.email !== user.email) {
@@ -301,10 +312,10 @@ export class UsersService {
             const activeTag = user.tags[0];
             
             // Prioridade para campos nfcRedirectMode/qrRedirectMode vindos do DTO
-            if (updateUserDto.nfcRedirectMode) activeTag.nfcRedirectMode = updateUserDto.nfcRedirectMode;
-            if (updateUserDto.nfcCustomUrl !== undefined) activeTag.nfcCustomUrl = updateUserDto.nfcCustomUrl;
-            if (updateUserDto.qrRedirectMode) activeTag.qrRedirectMode = updateUserDto.qrRedirectMode;
-            if (updateUserDto.qrCustomUrl !== undefined) activeTag.qrCustomUrl = updateUserDto.qrCustomUrl;
+            if ((updateUserDto as any).nfcRedirectMode) activeTag.nfcRedirectMode = (updateUserDto as any).nfcRedirectMode;
+            if ((updateUserDto as any).nfcCustomUrl !== undefined) activeTag.nfcCustomUrl = (updateUserDto as any).nfcCustomUrl;
+            if ((updateUserDto as any).qrRedirectMode) activeTag.qrRedirectMode = (updateUserDto as any).qrRedirectMode;
+            if ((updateUserDto as any).qrCustomUrl !== undefined) activeTag.qrCustomUrl = (updateUserDto as any).qrCustomUrl;
 
             // Se vier dentro do array 'tags' (legado ou compatibilidade), mesclamos também
             if (tags && tags.length > 0) {
