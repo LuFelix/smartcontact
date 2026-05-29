@@ -69,7 +69,7 @@
         .letter-placeholder {
             position: relative;
             z-index: 1;
-            font-size: 6rem;
+            font-size: 4rem; // Tamanho estabilizado para container de 140px
             font-weight: 800;
             text-transform: uppercase;
         }
