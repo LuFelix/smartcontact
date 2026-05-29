@@ -319,6 +319,12 @@ export class UsersService {
                     user.ownerId!,
                     user.tenantId!
                 );
+                
+                // RECARREGA PARA GARANTIR QUE user.tags[0] exista para o bloco de persistência de tag abaixo
+                user = await this.usersRepository.findOne({ 
+                    where: { id }, 
+                    relations: ['role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile'] 
+                }) as any;
             }
         }
 

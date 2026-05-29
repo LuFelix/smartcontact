@@ -35,6 +35,6 @@ export class MembersCardListComponent {
         const baseUrl = environment.apiUrl.replace('/api', '');
         return `${baseUrl}/${url}`;
       }
-      return 'assets/profile-photo-stock.png';
+      return '/profile-photo-stock.png';
   }
 }

@@ -71,18 +71,15 @@ export class UsersListComponent {
   }
 
   getAvatar(user: User): string {
-    // Busca a foto em todas as propriedades possíveis (vinda do Profile ou da raiz do objeto)
-    const url = user.profile?.profilePictureUrl || (user as any).profilePictureUrl;
+    // Busca a foto em todas as propriedades possíveis
+    const url = user.profile?.profilePictureUrl || (user as any).profilePictureUrl || (user as any).picture;
     
     if (url) {
-      // Se a URL já for completa (Google, etc.), retorna ela mesma
       if (url.startsWith('http')) return url;
-      
-      // Senão, anexa ao servidor local (Backend)
       const baseUrl = environment.apiUrl.replace('/api', '');
       return `${baseUrl}/${url}`;
     }
-    return 'assets/profile-photo-stock.png';
+    return '/profile-photo-stock.png';
   }
 
   /**
