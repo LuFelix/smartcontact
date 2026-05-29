@@ -11,7 +11,7 @@
 }
 
 .lead-item-card {
-  background-color: var(--mat-sys-surface-container-high); // Unified color
+  background-color: var(--mat-sys-surface-container-low) !important; // UNIFIED
   border-radius: 20px;
   transition: all 0.3s ease;
   height: 100%;
@@ -36,7 +36,7 @@
   }
 }
 
-// --- AVATAR SYSTEM (LOCAL RESTORATION) ---
+// --- AVATAR SYSTEM (HARDENED) ---
 .lead-avatar {
     width: 40px;
     height: 40px;
@@ -58,6 +58,7 @@
         height: 100%;
         object-fit: cover;
         z-index: 2;
+        border-radius: 50%;
     }
 
     .letter-placeholder {
@@ -90,43 +91,6 @@
           opacity: 0.7;
       }
   }
-
-  .note-box {
-      margin-top: 8px;
-      padding: 12px;
-      background-color: var(--mat-sys-surface-container-highest);
-      border-radius: 12px;
-      display: flex;
-      gap: 8px;
-      
-      mat-icon {
-          font-size: 16px;
-          width: 16px;
-          height: 16px;
-          margin-top: 2px;
-          opacity: 0.6;
-      }
-
-      p {
-          margin: 0;
-          font-size: 0.85rem;
-          font-style: italic;
-          line-height: 1.4;
-      }
-  }
-}
-
-.spinner-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(var(--mat-sys-surface-container), 0.7);
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 @media (max-width: 600px) {

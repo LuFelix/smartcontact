@@ -11,7 +11,7 @@
 }
 
 .member-item-card {
-  background-color: var(--mat-sys-surface-container-low);
+  background-color: var(--mat-sys-surface-container-low) !important; // UNIFIED
   border-radius: 20px;
   transition: all 0.3s ease;
   height: 100%;
@@ -36,7 +36,7 @@
   }
 }
 
-// --- AVATAR SYSTEM (STABLE FIXED) ---
+// --- AVATAR SYSTEM (HARDENED) ---
 .member-avatar {
     width: 40px;
     height: 40px;
@@ -58,6 +58,7 @@
         height: 100%;
         object-fit: cover;
         z-index: 2;
+        border-radius: 50%;
     }
 
     .letter-placeholder {
@@ -109,19 +110,6 @@
         width: 20px;
         height: 20px;
     }
-}
-
-.spinner-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(var(--mat-sys-surface-container), 0.7);
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 @media (max-width: 600px) {

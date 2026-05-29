@@ -4,7 +4,7 @@
 }
 
 .user-card {
-  background-color: var(--mat-sys-surface-container-high);
+  background-color: var(--mat-sys-surface-container-high) !important; // OUTER CARD
   border-radius: 20px;
   overflow: hidden;
   box-shadow: var(--mat-sys-level2);
@@ -13,7 +13,7 @@
 .custom-card-header {
   padding: 24px;
   display: flex;
-  justify-content: flex-start; // ALWAYS LEFT
+  justify-content: flex-start !important; // LEFT
   align-items: flex-start;
   background-color: var(--mat-sys-surface-container-highest);
 
@@ -35,7 +35,7 @@
 }
 
 .dashboard-metric-card {
-  background-color: var(--mat-sys-surface-container-high); // UNIFIED
+  background-color: var(--mat-sys-surface-container-low) !important; // INTERNAL CARD UNIFIED
   border-radius: 20px; 
   box-shadow: var(--mat-sys-level1);
   border: 1px solid var(--mat-sys-outline-variant);
@@ -62,12 +62,4 @@
     color: var(--mat-sys-primary);
     margin: 16px 0;
   }
-}
-
-@media (max-width: 600px) {
-  .custom-card-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .dashboard-grid { gap: 16px; }
 }

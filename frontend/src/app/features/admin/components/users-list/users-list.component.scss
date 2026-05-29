@@ -11,7 +11,7 @@
 }
 
 .user-item-card {
-  background-color: var(--mat-sys-surface-container-low);
+  background-color: var(--mat-sys-surface-container-low) !important;
   border-color: var(--mat-sys-outline-variant);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
@@ -26,7 +26,7 @@
   mat-card-title {
     font-size: 1.15rem;
     font-weight: 700;
-    color: var(--mat-sys-on-surface);
+    color: var(--mat-sys-primary);
   }
 
   mat-card-subtitle {
@@ -53,12 +53,6 @@
               height: 16px;
               opacity: 0.7;
           }
-          
-          span {
-              white-space: nowrap;
-              overflow: hidden;
-              text-overflow: ellipsis;
-          }
       }
   }
 
@@ -71,7 +65,7 @@
   }
 }
 
-// --- AVATAR SYSTEM (STABLE FIXED) ---
+// --- AVATAR SYSTEM (HARDENED) ---
 .user-avatar-container {
     width: 40px;
     height: 40px;
@@ -93,6 +87,7 @@
         height: 100%;
         object-fit: cover;
         z-index: 2;
+        border-radius: 50%;
     }
 
     .letter-placeholder {
@@ -144,11 +139,6 @@
 
 .whatsapp-icon { color: #25D366; }
 .favorite-icon { color: var(--mat-sys-secondary); }
-
-.flex { display: flex; }
-.flex-col { flex-direction: column; }
-.text-xs { font-size: 0.75rem; }
-.opacity-70 { opacity: 0.7; }
 
 @media (max-width: 600px) {
   .cards-grid {

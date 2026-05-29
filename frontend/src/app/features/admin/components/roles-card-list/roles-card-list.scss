@@ -11,7 +11,7 @@
 }
 
 .role-item-card {
-  background-color: var(--mat-sys-surface-container-high); // UNIFIED
+  background-color: var(--mat-sys-surface-container-low) !important; // UNIFIED
   border-radius: 20px;
   transition: all 0.3s ease;
   cursor: pointer;
@@ -37,7 +37,7 @@
   }
 }
 
-// --- AVATAR SYSTEM (LOCAL) ---
+// --- AVATAR SYSTEM (HARDENED) ---
 .role-avatar {
     width: 40px;
     height: 40px;
@@ -66,19 +66,6 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
   }
-}
-
-.spinner-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(var(--mat-sys-surface-container), 0.7);
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 @media (max-width: 600px) {
