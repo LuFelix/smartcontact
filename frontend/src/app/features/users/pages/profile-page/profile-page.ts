@@ -373,8 +373,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.links.clear();
         if (userProfile.links) userProfile.links.forEach(l => this.addLink(l));
 
-        const avatarUrl = userProfile.profile?.profilePictureUrl;
-        if (avatarUrl) {
+        const avatarUrl = userProfile.profile?.profilePictureUrl || userProfile.profilePictureUrl;
+        if (avatarUrl && typeof avatarUrl === 'string' && avatarUrl.length > 5) {
             this.profilePicturePreview = avatarUrl.startsWith('http') 
                 ? avatarUrl 
                 : 'http://localhost:3000/' + avatarUrl;

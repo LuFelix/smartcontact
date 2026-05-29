@@ -364,6 +364,44 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
             });
     }
 
+    getAvatar(): string | null {
+        const url = (this.user?.profile?.profilePictureUrl && this.user.profile.profilePictureUrl.length > 5) ? this.user.profile.profilePictureUrl :
+                    (this.user?.profilePictureUrl && this.user.profilePictureUrl.length > 5) ? this.user.profilePictureUrl :
+                    ((this.user as any)?.picture && (this.user as any).picture.length > 5) ? (this.user as any).picture : null;
+        
+        if (url) {
+            if (url.startsWith('http')) return url;
+            const baseUrl = environment.apiUrl.replace('/api', '');
+            return `${baseUrl}/${url}`;
+        }
+        return null;
+    }
+
+    getInitial(): string {
+        const name = this.userForm.get('name')?.value || '';
+        return name ? name.trim().charAt(0).toUpperCase() : '?';
+    }
+
+    getAvatarColor(): string {
+        const name = this.userForm.get('name')?.value || '';
+        if (!name) return '#757575';
+        const colors = [
+            '#F44336', '#E91E63', '#9C27B0', '#673AB7', '#3F51B5',
+            '#2196F3', '#03A9F4', '#00BCD4', '#009688', '#4CAF50',
+            '#8BC34A', '#CDDC39', '#FFC107', '#FF9800', '#FF5722'
+        ];
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) {
+            hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const index = Math.abs(hash) % colors.length;
+        return colors[index];
+    }
+
+    handleImageError(event: any): void {
+        event.target.classList.add('img-hidden');
+    }
+
     getPublicLinkIdentifier(): string | null {
         if (this.user?.username) return this.user.username;
         if (!this.user?.tags || this.user.tags.length === 0) return null;

@@ -122,12 +122,37 @@ export class PublicProfileComponent implements OnInit {
     return false;
   }
 
-  get profileImage(): string {
-    const url = this.tagData?.user.profile?.profilePictureUrl;
-    if (!url) return 'assets/profile-photo-stock.png';
+  get profileImage(): string | null {
+    const url = (this.tagData?.user.profile?.profilePictureUrl && this.tagData.user.profile.profilePictureUrl.length > 5) ? this.tagData.user.profile.profilePictureUrl :
+                (this.tagData?.user.profilePictureUrl && this.tagData.user.profilePictureUrl.length > 5) ? this.tagData.user.profilePictureUrl : null;
     
-    // Se for uma URL completa (Google, etc.), retorna direto. Senão, anexa o servidor local.
-    return url.startsWith('http') ? url : `http://localhost:3000/${url}`;
+    if (url) {
+        return url.startsWith('http') ? url : `http://localhost:3000/${url}`;
+    }
+    return null;
+  }
+
+  getInitial(name: string): string {
+    return name ? name.trim().charAt(0).toUpperCase() : '?';
+  }
+
+  getAvatarColor(name: string): string {
+    if (!name) return '#757575';
+    const colors = [
+      '#F44336', '#E91E63', '#9C27B0', '#673AB7', '#3F51B5',
+      '#2196F3', '#03A9F4', '#00BCD4', '#009688', '#4CAF50',
+      '#8BC34A', '#CDDC39', '#FFC107', '#FF9800', '#FF5722'
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
+  }
+
+  handleImageError(event: any): void {
+      event.target.classList.add('img-hidden');
   }
 
   openLink(url: string): void {

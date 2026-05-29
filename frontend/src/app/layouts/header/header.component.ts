@@ -41,8 +41,10 @@ export class HeaderComponent {
 
   get profileImage(): string | null {
     const url = this.userPicture();
-    if (!url) return null;
-    return url.startsWith('http') ? url : `http://localhost:3000/${url}`;
+    if (url && typeof url === 'string' && url.length > 5) {
+        return url.startsWith('http') ? url : `http://localhost:3000/${url}`;
+    }
+    return null;
   }
 
   getInitial(): string {

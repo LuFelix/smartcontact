@@ -71,8 +71,10 @@ export class UsersListComponent {
   }
 
   getAvatar(user: User): string | null {
-    // Busca a foto em todas as propriedades possíveis
-    const url = user.profile?.profilePictureUrl || (user as any).profilePictureUrl || (user as any).picture;
+    // Busca a foto em todas as propriedades possíveis, validando se o valor é preenchido
+    const url = (user.profile?.profilePictureUrl && user.profile.profilePictureUrl.length > 5) ? user.profile.profilePictureUrl :
+                (user.profilePictureUrl && user.profilePictureUrl.length > 5) ? user.profilePictureUrl :
+                ((user as any).picture && (user as any).picture.length > 5) ? (user as any).picture : null;
     
     if (url) {
       if (url.startsWith('http')) return url;

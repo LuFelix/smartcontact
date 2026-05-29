@@ -366,6 +366,10 @@ export class UsersService {
         return this.findByEmail(user!.email) as Promise<User>;
     }
 
+    async updateProfilePicture(userId: string, pictureUrl: string): Promise<void> {
+        await this.usersRepository.update(userId, { profilePictureUrl: pictureUrl });
+    }
+
     async setVerificationData(userId: string, code: string, expires: Date): Promise<void> {
         await this.usersRepository.update(userId, {
             verificationCode: code,

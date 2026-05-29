@@ -31,7 +31,10 @@ export class MembersListViewComponent {
   displayedColumns = ['avatar', 'name', 'email', 'role', 'status', 'actions'];
 
   getAvatar(member: FullUserResponse): string | null {
-      const url = member.profile?.profilePictureUrl || member.profilePictureUrl || (member as any).picture;
+      const url = (member.profile?.profilePictureUrl && member.profile.profilePictureUrl.length > 5) ? member.profile.profilePictureUrl :
+                  (member.profilePictureUrl && member.profilePictureUrl.length > 5) ? member.profilePictureUrl :
+                  ((member as any).picture && (member as any).picture.length > 5) ? (member as any).picture : null;
+
       if (url) {
         if (url.startsWith('http')) return url;
         const baseUrl = environment.apiUrl.replace('/api', '');

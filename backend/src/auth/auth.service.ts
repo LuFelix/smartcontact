@@ -230,9 +230,9 @@ export class AuthService {
       } else {
           // Se o usuário já existe, sincroniza o perfil e o avatar
           
-          // 1. SYNC NO USER (Novo campo para Leads/Contatos e Fallback de JWT)
+          // 1. SYNC NO USER (Direto via repositório para evitar side-effects de promoção no service)
           if (payloadGoogle.picture && user.profilePictureUrl !== payloadGoogle.picture) {
-              await this.usersRepository.update(user.id, { profilePictureUrl: payloadGoogle.picture });
+              await this.usersService.updateProfilePicture(user.id, payloadGoogle.picture);
           }
 
           // 2. SYNC NO PROFILE
