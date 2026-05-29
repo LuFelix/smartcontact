@@ -11,7 +11,7 @@
 }
 
 .user-item-card {
-  background-color: var(--mat-sys-surface-container-low) !important;
+  background-color: var(--mat-sys-surface-container-low);
   border-color: var(--mat-sys-outline-variant);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
@@ -26,7 +26,7 @@
   mat-card-title {
     font-size: 1.15rem;
     font-weight: 700;
-    color: var(--mat-sys-primary);
+    color: var(--mat-sys-on-surface);
   }
 
   mat-card-subtitle {
@@ -65,13 +65,12 @@
   }
 }
 
-// --- AVATAR SYSTEM (HARDENED) ---
+// --- AVATAR SYSTEM (REVERTED TO STABLE) ---
 .user-avatar-container {
     width: 40px;
     height: 40px;
     border-radius: 50%;
     overflow: hidden;
-    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -79,25 +78,16 @@
     font-weight: 700;
     border: 1px solid rgba(0,0,0,0.05);
 
-    img {
-        position: absolute;
-        top: 0;
-        left: 0;
+    .user-avatar-img {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        z-index: 2;
-        border-radius: 50%;
     }
 
     .letter-placeholder {
-        position: relative;
-        z-index: 1;
         font-size: 1.2rem;
     }
 }
-
-.img-hidden { display: none !important; }
 
 .badge-row {
     display: flex;
@@ -139,6 +129,11 @@
 
 .whatsapp-icon { color: #25D366; }
 .favorite-icon { color: var(--mat-sys-secondary); }
+
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.text-xs { font-size: 0.75rem; }
+.opacity-70 { opacity: 0.7; }
 
 @media (max-width: 600px) {
   .cards-grid {

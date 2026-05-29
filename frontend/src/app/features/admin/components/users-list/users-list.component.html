@@ -10,9 +10,10 @@
       <mat-card class="user-item-card" appearance="outlined" (click)="viewDetails.emit(user.id)">
         <mat-card-header>
           <div mat-card-avatar class="user-avatar-container" [style.background-color]="getAvatarColor(user.name)">
-            <span class="letter-placeholder">{{ getInitial(user.name) }}</span>
             @if (getAvatar(user); as avatarUrl) {
-                <img [src]="avatarUrl" (error)="handleImageError($event)">
+                <img [src]="avatarUrl" class="user-avatar-img">
+            } @else {
+                <span class="letter-placeholder">{{ getInitial(user.name) }}</span>
             }
           </div>
           <mat-card-title>{{ user.name }}</mat-card-title>
