@@ -13,20 +13,14 @@
 .custom-card-header {
   padding: 24px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start; // Ensure title is on the left
   align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 16px;
   background-color: var(--mat-sys-surface-container-highest);
 
   mat-card-title {
     font-size: 1.5rem;
     font-weight: 800;
     color: var(--mat-sys-primary);
-  }
-
-  mat-card-subtitle {
-    color: var(--mat-sys-on-surface-variant);
   }
 }
 
@@ -36,12 +30,12 @@
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); // Adjusted to allow 4+ per row
   gap: 24px;
 }
 
 .dashboard-metric-card {
-  background-color: var(--mat-sys-surface-container-high);
+  background-color: var(--mat-sys-surface-container-highest); // Contrast color
   border-radius: 20px; 
   box-shadow: var(--mat-sys-level1);
   border: 1px solid var(--mat-sys-outline-variant);
