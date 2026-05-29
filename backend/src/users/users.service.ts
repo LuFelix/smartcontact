@@ -305,24 +305,24 @@ export class UsersService {
         // Se estiver promovendo o lead, além de mudar o tenantId (feito acima), 
         // agora forçamos a criação do Profile e da Tag caso não existam.
         if (isPromotingLead) {
-            const existingProfile = await this.profilesService.findByUserId(user!.id);
+            let existingProfile = await this.profilesService.findByUserId(user!.id);
             if (!existingProfile) {
-                await this.profilesService.create({
+                existingProfile = await this.profilesService.create({
                     userId: user!.id,
                     ownerId: user!.ownerId!,
                     tenantId: user!.tenantId!,
-                    profilePictureUrl: user!.profilePictureUrl || undefined // Transfere a foto do Google para o Profile
+                    profilePictureUrl: user!.profilePictureUrl || undefined
                 });
+                user!.profile = existingProfile; // VINCULA NO OBJETO EM MEMÓRIA
             }
             
             if (!user!.tags || user!.tags.length === 0) {
-                // Cria a tag e já associa ao objeto user para evitar user_id null no merge
                 const newTag = await this.tagsService.createDefaultTag(
                     user!.id,
                     user!.ownerId!,
                     user!.tenantId!
                 );
-                user!.tags = [newTag];
+                user!.tags = [newTag]; // VINCULA NO OBJETO EM MEMÓRIA
             }
         }
 
