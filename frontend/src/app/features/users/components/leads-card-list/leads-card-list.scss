@@ -5,7 +5,7 @@
 
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 20px;
   padding: 16px 0;
 }
@@ -36,28 +36,13 @@
   }
 }
 
-// --- AVATAR SYSTEM (STABLE REVERT) ---
 .lead-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    font-weight: 700;
-    border: 1px solid rgba(0,0,0,0.05);
-
-    .lead-avatar-img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .letter-placeholder {
-        font-size: 1.2rem;
-    }
+  background-color: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
 }
 
 .card-summary-content {
@@ -118,6 +103,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.no-data {
+  grid-column: 1 / -1;
+  padding: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--mat-sys-on-surface-variant);
+  
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
 }
 
 @media (max-width: 600px) {

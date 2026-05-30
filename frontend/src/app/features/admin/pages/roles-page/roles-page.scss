@@ -1,51 +1,47 @@
 .roles-container {
-    padding: 0;
+    padding: 24px;
+    display: flex;
+    justify-content: center;
     min-height: 100%;
 }
 
-.user-card {
-  background-color: var(--mat-sys-surface-container-high);
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: var(--mat-sys-level2);
+.roles-card {
+    width: 100%;
+    max-width: 1000px;
+    border-radius: 24px;
+    background-color: var(--mat-sys-surface-container);
+    box-shadow: var(--mat-sys-level1);
 }
 
-.custom-card-header {
-  padding: 24px;
-  display: flex;
-  justify-content: flex-start; // Title ALWAYS to the left
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 16px;
-  background-color: var(--mat-sys-surface-container-highest);
+.header-with-action {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 24px 16px;
 
-  mat-card-title {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: var(--mat-sys-primary);
-  }
+    mat-card-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--mat-sys-primary);
+    }
 
-  mat-card-subtitle {
-    color: var(--mat-sys-on-surface-variant);
-  }
-}
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-left: auto; // Push actions to the right
+    .header-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
 }
 
 @media (max-width: 768px) {
-    .custom-card-header {
+    .roles-container { padding: 12px; }
+    .header-with-action {
         flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .header-actions {
-        flex-direction: column;
-        margin-left: 0;
-        button { width: 100%; }
+        align-items: flex-start;
+        gap: 16px;
+        
+        .header-actions {
+            width: 100%;
+            justify-content: space-between;
+        }
     }
 }
