@@ -6,6 +6,7 @@ import { UsersModule } from 'src/users/users.module';
 import { ProfilesModule } from 'src/profiles/profiles.module';
 import { TeamModule } from 'src/team/team.module';
 import { RolesModule } from 'src/roles/roles.module';
+import { TenantsModule } from 'src/tenants/tenants.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { PassportModule } from '@nestjs/passport';
@@ -16,6 +17,7 @@ import { PassportModule } from '@nestjs/passport';
     ProfilesModule,
     PassportModule,
     RolesModule,
+    TenantsModule,
     forwardRef(() => TeamModule),
   ],
   controllers: [AuthController],
