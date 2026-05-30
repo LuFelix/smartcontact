@@ -6,6 +6,17 @@
                 <mat-card-subtitle>Contatos que escanearam sua tag e deixaram informações</mat-card-subtitle>
             </div>
             <div class="header-actions">
+                <mat-form-field appearance="outline" class="search-field">
+                    <mat-label>Filtrar leads...</mat-label>
+                    <mat-icon matPrefix>search</mat-icon>
+                    <input matInput [(ngModel)]="searchTerm" placeholder="Nome, e-mail ou telefone">
+                    @if (searchTerm) {
+                        <button mat-icon-button matSuffix (click)="searchTerm = ''" aria-label="Clear">
+                            <mat-icon>close</mat-icon>
+                        </button>
+                    }
+                </mat-form-field>
+
                 <button mat-stroked-button (click)="layoutService.toggleLayout()" class="layout-toggle-btn">
                     <mat-icon>{{ layoutService.layout() === 'moderno' ? 'view_list' : 'grid_view' }}</mat-icon>
                     {{ layoutService.layout() === 'moderno' ? 'Visualizar Lista' : 'Visualizar Cards' }}
@@ -16,14 +27,14 @@
         <mat-card-content>
             @if (layoutService.layout() === 'moderno') {
                 <app-leads-card-list
-                    [leads]="leads"
+                    [leads]="filteredLeads"
                     [isLoading]="isLoading"
                     [isSavingToGoogle]="isSavingToGoogle"
                     (saveToGoogle)="saveToGoogle($event)">
                 </app-leads-card-list>
             } @else {
                 <app-leads-list-view
-                    [leads]="leads"
+                    [leads]="filteredLeads"
                     [isLoading]="isLoading"
                     [isSavingToGoogle]="isSavingToGoogle"
                     (saveToGoogle)="saveToGoogle($event)">
