@@ -1,60 +1,68 @@
 .manager-container {
-    padding: 24px;
-    max-width: 1400px;
-    margin: 0 auto;
+    padding: 0;
+    min-height: 100%;
 }
 
-.manager-header {
+.user-card {
+  background-color: var(--mat-sys-surface-container-high);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: var(--mat-sys-level2);
+}
+
+.custom-card-header {
+  padding: 24px;
+  display: flex;
+  justify-content: flex-start; // Title ALWAYS to the left
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  background-color: var(--mat-sys-surface-container-highest);
+
+  mat-card-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--mat-sys-primary);
+  }
+
+  mat-card-subtitle {
+    color: var(--mat-sys-on-surface-variant);
+  }
+
+  .header-left {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
+    gap: 40px;
+    flex-wrap: wrap;
 
-    .header-left {
-        display: flex;
-        align-items: center;
-        gap: 32px;
-
-        h1 {
-            margin: 0;
-            font-weight: 800;
-            color: var(--mat-sys-primary);
-            font-size: 1.8rem;
-        }
-
-        .workspace-selector {
-            width: 300px;
-            margin-bottom: -1.25em; // Alinha visualmente com o título
-        }
+    .workspace-selector {
+        width: 320px;
+        margin-bottom: -1.25em; 
     }
+  }
 }
 
-.manager-tabs-container {
-    background-color: var(--mat-sys-surface-container);
-    border-radius: 24px;
-    padding: 0 16px;
-    box-shadow: var(--mat-sys-level1);
-    overflow: hidden;
-
-    ::ng-deep .mat-mdc-tab-group {
-        --mdc-tab-indicator-active-indicator-color: var(--mat-sys-primary);
-        --mat-tab-header-active-label-text-color: var(--mat-sys-primary);
-    }
+.header-actions {
+    margin-left: auto; // Push to the right
 }
 
-.tab-icon {
-    margin-right: 8px;
+.no-padding-content {
+    padding: 0 !important;
 }
 
-.tab-content {
-    padding: 24px 0;
-    min-height: 500px; // Estabiliza altura
+.tab-padding-box {
+    padding: 24px;
+    min-height: 500px;
 }
 
 .tab-actions {
     display: flex;
-    justify-content: flex-end;
+    justify-content: flex-start; // Button to the LEFT
     margin-bottom: 20px;
+}
+
+.tab-icon {
+    margin-right: 8px;
 }
 
 .ws-icon {
@@ -64,52 +72,43 @@
     opacity: 0.7;
 }
 
-.flex { display: flex; }
-.items-center { align-items: center; }
-.gap-2 { gap: 8px; }
-
-@media (max-width: 900px) {
-    .manager-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 16px;
-
-        .header-left {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 8px;
-
-            .workspace-selector { width: 100%; }
-        }
-        
-        button { width: 100%; }
-    }
-}
-
-.placeholder-content {
+.placeholder-state {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 60px 20px;
+    padding: 80px 24px;
     text-align: center;
     color: var(--mat-sys-on-surface-variant);
 
-    .big-icon {
+    .state-icon {
         font-size: 64px;
         width: 64px;
         height: 64px;
-        margin-bottom: 20px;
-        opacity: 0.5;
+        margin-bottom: 24px;
+        opacity: 0.4;
     }
 
     h3 { margin: 0 0 8px 0; font-weight: 700; color: var(--mat-sys-primary); }
-    p { margin: 0; max-width: 400px; line-height: 1.5; }
+    p { margin: 0; max-width: 450px; line-height: 1.6; }
 }
 
-.section-card {
-    border-radius: 16px;
-    background-color: var(--mat-sys-surface-container-low);
-    border: 1px solid var(--mat-sys-outline-variant);
-    &.no-shadow { box-shadow: none !important; }
+@media (max-width: 900px) {
+    .custom-card-header {
+        flex-direction: column;
+        align-items: stretch;
+
+        .header-left {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+            .workspace-selector { width: 100%; }
+        }
+    }
+    
+    .header-actions {
+        width: 100%;
+        margin-left: 0;
+        button { width: 100%; }
+    }
 }
