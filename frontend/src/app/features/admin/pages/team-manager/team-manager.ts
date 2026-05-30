@@ -19,14 +19,17 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatCardModule } from '@angular/material/card';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-team-manager',
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     MatButtonModule,
     MatIconModule,
     MatDialogModule,
@@ -34,6 +37,7 @@ import { MatCardModule } from '@angular/material/card';
     MatTabsModule,
     MatSelectModule,
     MatFormFieldModule,
+    MatInputModule,
     MatDividerModule,
     MatCardModule,
     MembersCardListComponent,
@@ -49,6 +53,7 @@ export class TeamManagerComponent implements OnInit {
   public layoutService = inject(LayoutService);
 
   members: FullUserResponse[] = [];
+  searchTerm: string = '';
   isLoadingMembers = true;
 
   // Mock para Seletor de Workspace (Futuro Premium)
@@ -61,6 +66,16 @@ export class TeamManagerComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadMembers();
+  }
+
+  get filteredMembers(): FullUserResponse[] {
+    if (!this.searchTerm) return this.members;
+    const term = this.searchTerm.toLowerCase();
+    return this.members.filter(m => 
+      m.name?.toLowerCase().includes(term) || 
+      m.email?.toLowerCase().includes(term) ||
+      m.role?.name?.toLowerCase().includes(term)
+    );
   }
 
   loadMembers(): void {
