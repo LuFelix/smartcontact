@@ -27,8 +27,13 @@
 
     .header-actions {
         display: flex;
-        gap: 12px;
+        gap: 16px;
         align-items: center;
+
+        .search-field {
+            width: 300px;
+            margin-bottom: -1.25em;
+        }
     }
 }
 
