@@ -1,10 +1,151 @@
+<div class="public-profile-container">
+  
+  @if (isLoading) {
+    <div class="state-overlay">
+      <mat-progress-spinner mode="indeterminate" diameter="60"></mat-progress-spinner>
+      <p>Acessando perfil inteligente...</p>
+    </div>
+  }
+
+  @if (error) {
+    <div class="state-overlay error-state">
+      <mat-icon>error_outline</mat-icon>
+      <h2>Ops! Algo deu errado.</h2>
+      <p>{{ error }}</p>
+      <button mat-flat-button color="primary" routerLink="/">Ir para o Início</button>
+    </div>
+  }
+
+  @if (!isLoading && !error && tagData) {
+    <div class="profile-content fade-in">
+      
       <!-- HEADER / AVATAR -->
       <header class="profile-header">
         <div class="avatar-wrapper" [style.background-color]="getAvatarColor(tagData.user.name)">
           @if (profileImage; as avatarUrl) {
             <img [src]="avatarUrl" class="avatar-img" (error)="handleImageError($event)">
-          } @else {
-            <span class="letter-placeholder">{{ getInitial(tagData.user.name) }}</span>
           }
+          <span class="letter-placeholder">{{ getInitial(tagData.user.name) }}</span>
         </div>
         <h1 class="user-name">{{ tagData.user.name }}</h1>
+        
+        @if (tagData.user.profile?.jobTitle) {
+            <p class="job-title">
+                {{ tagData.user.profile?.jobTitle }} 
+                @if (tagData.user.profile?.company) {
+                    <span> &#64; {{ tagData.user.profile?.company }}</span>
+                }
+            </p>
+        }
+      </header>
+
+      <!-- BIO -->
+      @if (tagData.user.profile?.bio) {
+          <section class="bio-section">
+              <p class="bio-text">{{ tagData.user.profile?.bio }}</p>
+          </section>
+      }
+
+      <!-- SOCIAL LINKS (Ação Principal) -->
+      @if (tagData.user.links && tagData.user.links.length > 0) {
+          <section class="links-section">
+              <div class="section-divider">
+                  <span>Redes e Links</span>
+              </div>
+              <div class="links-grid">
+                  @for (link of tagData.user.links; track link.id) {
+                    <button mat-flat-button class="link-btn" (click)="openLink(link.url)">
+                        <mat-icon>link</mat-icon>
+                        {{ link.title }}
+                    </button>
+                  }
+              </div>
+          </section>
+      }
+
+      <!-- CONTACT INFO -->
+      <section class="contact-section">
+          <div class="section-divider">
+              <span>Contatos</span>
+          </div>
+          
+          <mat-list class="contact-list">
+              <!-- E-mails -->
+              <mat-list-item>
+                  <mat-icon matListItemIcon color="primary">email</mat-icon>
+                  <div matListItemTitle>E-mail</div>
+                  <div matListItemLine>{{ tagData.user.email }}</div>
+              </mat-list-item>
+              
+              @for (email of tagData.user.secondaryEmails; track email.id) {
+                <mat-list-item>
+                    <mat-icon matListItemIcon color="primary">alternate_email</mat-icon>
+                    <div matListItemLine>{{ email.address }}</div>
+                </mat-list-item>
+              }
+
+              <!-- Telefones -->
+              @for (phone of tagData.user.phones; track phone.id) {
+                <mat-list-item (click)="phone.isWhatsapp ? openLink('https://wa.me/' + phone.number) : null" [class.clickable]="phone.isWhatsapp">
+                    <mat-icon matListItemIcon [color]="phone.isWhatsapp ? 'accent' : 'primary'">
+                        {{ phone.isWhatsapp ? 'chat' : 'phone' }}
+                    </mat-icon>
+                    <div matListItemTitle>{{ phone.isWhatsapp ? 'WhatsApp' : 'Telefone' }}</div>
+                    <div matListItemLine>{{ phone.number }}</div>
+                    @if (phone.isWhatsapp) {
+                        <mat-icon matListIcon class="wa-indicator">open_in_new</mat-icon>
+                    }
+                </mat-list-item>
+              }
+          </mat-list>
+      </section>
+
+      <!-- ACTION FOOTER -->
+      <footer class="profile-footer">
+          <div class="footer-actions">
+              <button mat-raised-button color="primary" class="save-contact-btn" (click)="saveVCard()">
+                  <mat-icon>person_add</mat-icon> Salvar Contato
+              </button>
+              <button mat-stroked-button color="primary" class="connect-btn" (click)="toggleLeadForm()">
+                  <mat-icon>handshake</mat-icon> Conectar
+              </button>
+          </div>
+
+          @if (showLeadForm) {
+            <div class="lead-form-container fade-in">
+                <h3>Deixe seu contato</h3>
+                <form [formGroup]="leadForm" (ngSubmit)="submitLead()">
+                    <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>Nome</mat-label>
+                        <input matInput formControlName="name" placeholder="Seu nome">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>E-mail</mat-label>
+                        <input matInput formControlName="email" placeholder="Seu e-mail">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>Telefone</mat-label>
+                        <input matInput formControlName="phone" 
+                               mask="(00) 00000-0000" 
+                               [dropSpecialCharacters]="true"
+                               placeholder="Seu telefone">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="w-full">
+                        <mat-label>Como nos conhecemos?</mat-label>
+                        <input matInput formControlName="note" maxlength="50" placeholder="Ex: Nos conhecemos em...">
+                        <mat-hint align="end">{{ leadForm.get('note')?.value?.length || 0 }}/50</mat-hint>
+                    </mat-form-field>
+                    <button mat-flat-button color="primary" type="submit" [disabled]="leadForm.invalid || isSubmittingLead">
+                        {{ isSubmittingLead ? 'Enviando...' : 'Enviar meu contato' }}
+                    </button>
+                </form>
+            </div>
+          }
+          
+          <p class="branding">Powered by <span>SmartContact</span></p>
+      </footer>
+
+    </div>
+  }
+
+</div>

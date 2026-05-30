@@ -6,44 +6,102 @@
   background-color: var(--mat-sys-surface-container);
   color: var(--mat-sys-on-surface);
   box-shadow: var(--mat-sys-level1);
+  transition: all 0.3s ease;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
 }
 
 .header-content {
   display: flex;
   align-items: center;
   width: 100%;
-  padding: 0 16px;
+  max-width: 100%;
+  padding: 0 12px;
+  box-sizing: border-box;
+}
+
+.brand-container {
+  display: flex;
+  align-items: center;
   gap: 8px;
-}
+  margin-left: 8px;
+  cursor: pointer;
+  
+  .logo {
+    height: 32px;
+  }
 
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-left: 8px;
+  .brand-name {
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
     
-    .logo-img {
-        height: 32px;
-        width: auto;
+    .smart {
+        color: #0078d4; // Azure Blue
     }
     
-    .brand-name {
-        font-weight: 700;
-        font-size: 1.2rem;
-        letter-spacing: -0.5px;
-        color: var(--mat-sys-primary);
+    .contact {
+        color: #9c27b0; // Lilac
     }
+  }
 }
 
-.spacer { flex: 1; }
+.spacer {
+  flex: 1 1 auto;
+}
+
+.hamburger-btn {
+  display: inline-flex; // Always visible in Admin area to toggle sidenav
+  align-items: center;
+  justify-content: center;
+  background-color: var(--mat-sys-surface-container-high) !important;
+  box-shadow: var(--mat-sys-level1);
+  border-radius: 50%;
+  width: 40px !important;
+  height: 40px !important;
+  margin: 0 4px;
+
+  mat-icon {
+      margin: 0 !important;
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+  }
+}
+
+.theme-toggle-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: var(--mat-sys-surface-container-high) !important;
+  box-shadow: var(--mat-sys-level1);
+  border-radius: 50%;
+  width: 40px !important;
+  height: 40px !important;
+  margin: 0 4px;
+
+  mat-icon {
+      margin: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+  }
+}
 
 .user-menu-button {
   display: flex;
   align-items: center;
-  padding: 0 8px;
+  padding: 0 12px;
   margin-left: 8px;
-  border-radius: 24px;
   height: 48px;
+  border-radius: 24px;
+  color: var(--mat-sys-on-surface);
+  
+  // Garantindo alinhamento vertical dos elementos internos (MDC fix)
+  ::ng-deep .mdc-button__label {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px;
+  }
   
   &:hover {
     background-color: var(--mat-sys-surface-container-highest);
@@ -52,21 +110,8 @@
   .header-avatar {
     width: 32px;
     height: 32px;
+    font-size: 1rem;
     border-radius: 50%;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    font-weight: 700;
-    font-size: 0.9rem;
-    margin-right: 8px;
-
-    .header-avatar-img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
   }
 
   .user-name {
@@ -76,8 +121,17 @@
   }
 }
 
-.img-hidden { display: none !important; }
+.notification-button {
+    margin: 0 2px;
+    color: var(--mat-sys-on-surface-variant);
+}
 
 @media (max-width: 768px) {
-  .brand-name { display: none; }
+  .brand-name {
+    display: none;
+  }
+  
+  .header-content {
+      padding: 0 4px;
+  }
 }

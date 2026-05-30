@@ -11,7 +11,7 @@
 }
 
 .user-item-card {
-  background-color: var(--mat-sys-surface-container-low);
+  background-color: var(--mat-sys-surface-container);
   border-color: var(--mat-sys-outline-variant);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
@@ -20,7 +20,23 @@
   &:hover {
     transform: translateY(-8px);
     box-shadow: var(--mat-sys-level3);
+    background-color: var(--mat-sys-surface-container-high);
     border-color: var(--mat-sys-primary);
+  }
+
+  .user-avatar {
+    background-color: var(--mat-sys-primary-container);
+    color: var(--mat-sys-on-primary-container);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    
+    mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+    }
   }
 
   mat-card-title {
@@ -53,6 +69,12 @@
               height: 16px;
               opacity: 0.7;
           }
+          
+          span {
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+          }
       }
   }
 
@@ -64,49 +86,6 @@
     align-items: center;
   }
 }
-
-// --- AVATAR SYSTEM (REVERTED TO STABLE) ---
-.user-avatar-container {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    font-weight: 700;
-    border: 1px solid rgba(0,0,0,0.05);
-
-    .user-avatar-img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .letter-placeholder {
-        font-size: 1.2rem;
-    }
-}
-
-.badge-row {
-    display: flex;
-    gap: 4px;
-    margin-top: 4px;
-}
-
-.badge-item {
-    font-size: 0.6rem;
-    padding: 1px 6px;
-    border-radius: 4px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.member-badge { background-color: var(--mat-sys-primary-container); color: var(--mat-sys-on-primary-container); }
-.user-badge { background-color: var(--mat-sys-secondary-container); color: var(--mat-sys-on-secondary-container); }
-.lead-badge { background-color: var(--mat-sys-surface-container-highest); color: var(--mat-sys-on-surface-variant); }
 
 .icon-align-fix {
     display: inline-flex !important;
@@ -127,16 +106,103 @@
     }
 }
 
-.whatsapp-icon { color: #25D366; }
-.favorite-icon { color: var(--mat-sys-secondary); }
+.whatsapp-icon {
+    color: #25D366; 
+}
 
-.flex { display: flex; }
-.flex-col { flex-direction: column; }
-.text-xs { font-size: 0.75rem; }
-.opacity-70 { opacity: 0.7; }
+.favorite-icon {
+    color: var(--mat-sys-secondary);
+}
+
+.spinner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(var(--mat-sys-surface-rgb), 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+  border-radius: 8px;
+}
+
+.no-data {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 48px;
+  color: var(--mat-sys-on-surface-variant);
+  
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+}
 
 @media (max-width: 600px) {
   .cards-grid {
     grid-template-columns: 1fr;
   }
 }
+
+.user-avatar-container {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    background-color: var(--mat-sys-primary-container);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .user-avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+.badge-row {
+    display: flex;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.badge-item {
+    font-size: 0.6rem;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid transparent;
+}
+
+.member-badge {
+    background-color: var(--mat-sys-primary-container);
+    color: var(--mat-sys-on-primary-container);
+    border-color: var(--mat-sys-primary);
+}
+
+.user-badge {
+    background-color: var(--mat-sys-secondary-container);
+    color: var(--mat-sys-on-secondary-container);
+    border-color: var(--mat-sys-secondary);
+}
+
+.lead-badge {
+    background-color: var(--mat-sys-surface-container-highest);
+    color: var(--mat-sys-on-surface-variant);
+    border-color: var(--mat-sys-outline-variant);
+}
+
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.gap-2 { gap: 8px; }
+.text-xs { font-size: 0.75rem; }
+.opacity-70 { opacity: 0.7; }

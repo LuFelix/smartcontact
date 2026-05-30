@@ -9,15 +9,11 @@
     @for (lead of leads; track lead.id) {
       <mat-card class="lead-item-card" appearance="outlined">
         <mat-card-header>
-          <div mat-card-avatar class="lead-avatar" [style.background-color]="getAvatarColor(lead.leadName)">
-            @if (getAvatar(lead); as avatarUrl) {
-                <img [src]="avatarUrl" class="lead-avatar-img">
-            } @else {
-                <span class="letter-placeholder">{{ getInitial(lead.leadName) }}</span>
-            }
+          <div mat-card-avatar class="lead-avatar">
+            <mat-icon>person</mat-icon>
           </div>
           <mat-card-title>{{ lead.leadName }}</mat-card-title>
-          <mat-card-subtitle>Lead Capturado</mat-card-subtitle>
+          <mat-card-subtitle>{{ lead.accessedAt | date:'dd/MM/yyyy HH:mm' }}</mat-card-subtitle>
         </mat-card-header>
 
         <mat-card-content class="card-summary-content">
@@ -25,31 +21,27 @@
                 <mat-icon>email</mat-icon>
                 <span>{{ lead.leadEmail }}</span>
             </div>
-            @if (lead.leadPhone) {
-                <div class="contact-info-row">
-                    <mat-icon>phone</mat-icon>
-                    <span>{{ lead.leadPhone }}</span>
-                </div>
-            }
+            <div class="contact-info-row">
+                <mat-icon>phone</mat-icon>
+                <span>{{ lead.leadPhone || 'Não informado' }}</span>
+            </div>
             @if (lead.leadNote) {
                 <div class="note-box">
-                    <mat-icon>notes</mat-icon>
+                    <mat-icon>chat_bubble_outline</mat-icon>
                     <p>{{ lead.leadNote }}</p>
                 </div>
             }
         </mat-card-content>
-
+        
         <mat-card-actions align="end">
-            <button mat-flat-button color="primary" 
-                    (click)="saveToGoogle.emit(lead)" 
-                    [disabled]="isSavingToGoogle">
-                <mat-icon>person_add</mat-icon> Salvar no Google
-            </button>
+          <button mat-flat-button color="primary" (click)="saveToGoogle.emit(lead)" [disabled]="isSavingToGoogle">
+            <mat-icon>person_add</mat-icon> Salvar no Google
+          </button>
         </mat-card-actions>
       </mat-card>
     } @empty {
       <div class="no-data">
-        <mat-icon>person_search</mat-icon>
+        <mat-icon>contacts</mat-icon>
         <p>Nenhum lead capturado ainda.</p>
       </div>
     }

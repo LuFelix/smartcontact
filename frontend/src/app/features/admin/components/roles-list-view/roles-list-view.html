@@ -22,12 +22,12 @@
         <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef class="text-right"> Ações </th>
             <td mat-cell *matCellDef="let role" class="text-right">
-                <button mat-icon-button color="primary" class="icon-align-fix" (click)="editRole.emit(role)" matTooltip="Editar">
+                <button mat-icon-button color="primary" (click)="editRole.emit(role)" matTooltip="Editar">
                     <mat-icon>edit</mat-icon>
                 </button>
                 
                 @if (role.name !== 'administrador' && role.name !== 'usuario') {
-                    <button mat-icon-button color="warn" class="icon-align-fix" (click)="deleteRole.emit(role)" matTooltip="Excluir">
+                    <button mat-icon-button color="warn" (click)="deleteRole.emit(role)" matTooltip="Excluir">
                         <mat-icon>delete_outline</mat-icon>
                     </button>
                 }

@@ -1,50 +1,40 @@
-<div class="dashboard-container">
-    <mat-card class="user-card">
-        <mat-card-header class="custom-card-header">
-            <div>
-                <mat-card-title>Dashboard Administrativo</mat-card-title>
-                <mat-card-subtitle>Métricas e estatísticas gerais da plataforma</mat-card-subtitle>
-            </div>
-        </mat-card-header>
+<div class="dashboard-grid">
+  <mat-card class="dashboard-card">
+    <mat-card-header>
+      <mat-card-title>Usuários Totais</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p class="metric">{{ totalUsers }}</p>
+    </mat-card-content>
+  </mat-card>
 
-        <mat-card-content class="dashboard-content-box">
-            <div class="dashboard-grid">
-                <mat-card class="dashboard-metric-card">
-                  <mat-card-header>
-                    <mat-card-title>Usuários Totais</mat-card-title>
-                  </mat-card-header>
-                  <mat-card-content>
-                    <p class="metric">{{ totalUsers }}</p>
-                  </mat-card-content>
-                </mat-card>
-              
-                <mat-card class="dashboard-metric-card">
-                  <mat-card-header>
-                    <mat-card-title>Novos Usuários (7d)</mat-card-title>
-                  </mat-card-header>
-                  <mat-card-content>
-                    <p class="metric">{{ newUsersLastWeek }}</p>
-                  </mat-card-content>
-                </mat-card>
-              
-                <mat-card class="dashboard-metric-card">
-                  <mat-card-header>
-                    <mat-card-title>Convites Pendentes</mat-card-title>
-                  </mat-card-header>
-                  <mat-card-content>
-                    <p class="metric">{{ pendingInvites }}</p>
-                  </mat-card-content>
-                </mat-card>
-              
-                 <mat-card class="dashboard-metric-card">
-                  <mat-card-header>
-                    <mat-card-title>Certificações Ativas</mat-card-title>
-                  </mat-card-header>
-                  <mat-card-content>
-                    <p class="metric">{{ activeCertifications }}</p>
-                  </mat-card-content>
-                </mat-card>
-              </div>
-        </mat-card-content>
-    </mat-card>
+  <mat-card class="dashboard-card">
+    <mat-card-header>
+      <mat-card-title>Novos Usuários (7d)</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p class="metric">{{ newUsersLastWeek }}</p>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="dashboard-card">
+    <mat-card-header>
+      <mat-card-title>Convites Pendentes</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p class="metric">{{ pendingInvites }}</p>
+    </mat-card-content>
+  </mat-card>
+
+   <mat-card class="dashboard-card">
+    <mat-card-header>
+      <mat-card-title>Certificações Ativas</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p class="metric">{{ activeCertifications }}</p>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Adicione mais cards conforme necessário -->
+
 </div>

@@ -1,90 +1,88 @@
 <div class="manager-container">
-    <mat-card class="user-card">
-        <mat-card-header class="custom-card-header">
-            <div class="header-left">
-                <div>
-                    <mat-card-title>Gestão de Equipe</mat-card-title>
-                    <mat-card-subtitle>Gerencie membros e permissões do seu workspace</mat-card-subtitle>
-                </div>
-                
-                <!-- Seletor de Workspace (Mockup para Futuro Premium) -->
-                <mat-form-field appearance="outline" class="workspace-selector">
-                    <mat-label>Workspace Selecionado</mat-label>
-                    <mat-select [(value)]="selectedWorkspaceId">
-                        @for (ws of workspaces; track ws.id) {
-                            <mat-option [value]="ws.id">
-                                <div class="flex items-center gap-2">
-                                    <mat-icon class="ws-icon">{{ ws.isMain ? 'home' : 'business' }}</mat-icon>
-                                    {{ ws.name }}
-                                </div>
-                            </mat-option>
-                        }
-                        <mat-divider></mat-divider>
-                        <mat-option value="new" disabled>
-                            <mat-icon>add</mat-icon> Criar Novo Workspace (Premium)
+    <div class="manager-header">
+        <div class="header-left">
+            <h1>Gestão de Equipe</h1>
+            
+            <!-- Seletor de Workspace (Mockup para Futuro Premium) -->
+            <mat-form-field appearance="outline" class="workspace-selector">
+                <mat-label>Workspace Selecionado</mat-label>
+                <mat-select [(value)]="selectedWorkspaceId">
+                    @for (ws of workspaces; track ws.id) {
+                        <mat-option [value]="ws.id">
+                            <div class="flex items-center gap-2">
+                                <mat-icon class="ws-icon">{{ ws.isMain ? 'home' : 'business' }}</mat-icon>
+                                {{ ws.name }}
+                            </div>
                         </mat-option>
-                    </mat-select>
-                </mat-form-field>
-            </div>
+                    }
+                    <mat-divider></mat-divider>
+                    <mat-option value="new" disabled>
+                        <mat-icon>add</mat-icon> Criar Novo Workspace (Premium)
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
 
-            <div class="header-actions">
-                <button mat-stroked-button (click)="layoutService.toggleLayout()">
-                    <mat-icon>{{ layoutService.layout() === 'moderno' ? 'view_list' : 'grid_view' }}</mat-icon>
-                    {{ layoutService.layout() === 'moderno' ? 'Ver em Lista' : 'Ver em Cards' }}
-                </button>
-            </div>
-        </mat-card-header>
+        <button mat-stroked-button (click)="layoutService.toggleLayout()">
+            <mat-icon>{{ layoutService.layout() === 'moderno' ? 'view_list' : 'grid_view' }}</mat-icon>
+            {{ layoutService.layout() === 'moderno' ? 'Ver em Lista' : 'Ver em Cards' }}
+        </button>
+    </div>
 
-        <mat-card-content class="no-padding-content">
-            <mat-tab-group color="primary" class="standard-tabs">
-                <!-- ABA 1: MEMBROS -->
-                <mat-tab>
-                    <ng-template mat-tab-label>
-                        <mat-icon class="tab-icon">group</mat-icon>
-                        Membros da Equipe
-                    </ng-template>
+    <div class="manager-tabs-container">
+        <mat-tab-group color="primary">
+            <!-- ABA 1: MEMBROS -->
+            <mat-tab>
+                <ng-template mat-tab-label>
+                    <mat-icon class="tab-icon">group</mat-icon>
+                    Membros da Equipe
+                </ng-template>
 
-                    <div class="tab-padding-box">
-                        <div class="tab-actions">
-                            <button mat-flat-button color="primary" (click)="openInvitationDialog()">
-                                <mat-icon>person_add</mat-icon> Adicionar Membro
-                            </button>
-                        </div>
-
-                        @if (layoutService.layout() === 'moderno') {
-                            <app-members-card-list
-                                [members]="members"
-                                [isLoading]="isLoadingMembers"
-                                (delegateResources)="openDelegationDialog($event)"
-                                (removeMember)="removeMember($event)">
-                            </app-members-card-list>
-                        } @else {
-                            <app-members-list-view
-                                [members]="members"
-                                [isLoading]="isLoadingMembers"
-                                (delegateResources)="openDelegationDialog($event)"
-                                (removeMember)="removeMember($event)">
-                            </app-members-list-view>
-                        }
+                <div class="tab-content">
+                    <div class="tab-actions">
+                        <button mat-flat-button color="primary" (click)="openInvitationDialog()">
+                            <mat-icon>person_add</mat-icon> Adicionar Membro
+                        </button>
                     </div>
-                </mat-tab>
 
-                <!-- ABA 2: CONFIGURAÇÕES -->
-                <mat-tab>
-                    <ng-template mat-tab-label>
-                        <mat-icon class="tab-icon">settings</mat-icon>
-                        Configurações do Workspace
-                    </ng-template>
+                    @if (layoutService.layout() === 'moderno') {
+                        <app-members-card-list
+                            [members]="members"
+                            [isLoading]="isLoadingMembers"
+                            (delegateResources)="openDelegationDialog($event)"
+                            (removeMember)="removeMember($event)">
+                        </app-members-card-list>
+                    } @else {
+                        <app-members-list-view
+                            [members]="members"
+                            [isLoading]="isLoadingMembers"
+                            (delegateResources)="openDelegationDialog($event)"
+                            (removeMember)="removeMember($event)">
+                        </app-members-list-view>
+                    }
+                </div>
+            </mat-tab>
 
-                    <div class="tab-padding-box">
-                        <div class="placeholder-state">
-                            <mat-icon class="state-icon">construction</mat-icon>
-                            <h3>Recursos Premium em Breve</h3>
-                            <p>Em breve você poderá configurar logos personalizados, regras de sub-equipes e integrações avançadas para o seu workspace.</p>
-                        </div>
-                    </div>
-                </mat-tab>
-            </mat-tab-group>
-        </mat-card-content>
-    </mat-card>
+            <!-- ABA 2: CONFIGURAÇÕES -->
+            <mat-tab>
+                <ng-template mat-tab-label>
+                    <mat-icon class="tab-icon">settings</mat-icon>
+                    Configurações do Workspace
+                </ng-template>
+
+                <div class="tab-content">
+                    <mat-card class="section-card no-shadow">
+                        <mat-card-header>
+                            <mat-card-title>Configurações Avançadas</mat-card-title>
+                        </mat-card-header>
+                        <mat-card-content class="placeholder-content">
+                            <mat-icon class="big-icon">construction</mat-icon>
+                            <h3>Em Construção</h3>
+                            <p>Em breve você poderá configurar permissões customizadas, logos do workspace e integrações premium aqui.</p>
+                        </mat-card-content>
+                    </mat-card>
+                </div>
+            </mat-tab>
+        </mat-tab-group>
+    </div>
 </div>

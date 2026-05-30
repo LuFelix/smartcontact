@@ -8,7 +8,7 @@
 .custom-card-header {
   padding: 24px;
   display: flex;
-  justify-content: flex-start; // Title ALWAYS to the left
+  justify-content: space-between;
   align-items: flex-start;
   flex-wrap: wrap;
   gap: 16px;
@@ -29,7 +29,6 @@
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
-  margin-left: auto; // Push actions to the right if there is space
 }
 
 .action-bar {
@@ -69,7 +68,6 @@
   
   .header-actions {
     flex-direction: column;
-    margin-left: 0; // Reset on mobile
     
     button {
         width: 100%;
