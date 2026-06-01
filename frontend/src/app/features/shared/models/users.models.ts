@@ -166,4 +166,13 @@ export interface Lead {
   leadNote?: string;
   accessedAt: string;
   tagId: string;
+  tag?: Tag;
+  capturedByUserId?: string | null;
+  capturedByUser?: {
+    id: string;
+    name: string;
+    profile?: {
+      profilePictureUrl?: string;
+    }
+  } | null;
 }
