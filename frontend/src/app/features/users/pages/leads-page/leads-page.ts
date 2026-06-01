@@ -18,18 +18,24 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-leads-page',
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
     MatSnackBarModule,
+    MatFormFieldModule,
+    MatInputModule,
     LeadsCardListComponent,
     LeadsListViewComponent
   ],
@@ -44,11 +50,22 @@ export class LeadsPage implements OnInit {
   public layoutService = inject(LayoutService);
 
   leads: Lead[] = [];
+  searchTerm: string = '';
   isLoading = true;
   isSavingToGoogle = false;
 
   ngOnInit(): void {
     this.loadLeads();
+  }
+
+  get filteredLeads(): Lead[] {
+    if (!this.searchTerm) return this.leads;
+    const term = this.searchTerm.toLowerCase();
+    return this.leads.filter(l => 
+      l.leadName?.toLowerCase().includes(term) || 
+      l.leadEmail?.toLowerCase().includes(term) ||
+      l.leadPhone?.toLowerCase().includes(term)
+    );
   }
 
   loadLeads(): void {

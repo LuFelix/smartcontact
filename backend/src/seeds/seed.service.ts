@@ -35,6 +35,7 @@ export class SeedService {
     await this.seedDefaultTenant();
 
     // 0.1. "Database Doctor": Garante que todos os tenants usados por usuários existam
+    // Isso é CRUCIAL para evitar erros de FK em convites e logs.
     await this.fixMissingTenants();
 
     // 1. Garante que todos os usuários tenham usernames (Migração retroativa)

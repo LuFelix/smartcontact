@@ -109,7 +109,7 @@ textarea:focus-visible,
     }
 }
 
-.user-avatar-container, .member-avatar, .header-avatar {
+.user-avatar-container, .member-avatar, .header-avatar, .lead-avatar, .role-avatar {
     @extend .avatar-circle;
 }
 

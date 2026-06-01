@@ -6,6 +6,7 @@ import { UsersService } from 'src/users/users.service';
 import { ProfilesService } from 'src/profiles/profiles.service';
 import { TeamService } from 'src/team/team.service';
 import { RolesService } from 'src/roles/roles.service';
+import { TenantsService } from 'src/tenants/tenants.service';
 import { LoginDto, MinimalRegisterDto } from './dto/auth.dto';
 import { GoogleLoginDto } from './dto/google-token.dto';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -24,6 +25,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly mailerService: MailerService,
     private readonly rolesService: RolesService,
+    private readonly tenantsService: TenantsService,
     @Inject(forwardRef(() => TeamService))
     private readonly teamService: TeamService
     
@@ -39,6 +41,15 @@ export class AuthService {
    expires.setMinutes(expires.getMinutes() + 15);
 
    let tenantId = uuidv4();
+
+   // SE NÃO HOUVER CONVITE, CRIAMOS UM NOVO TENANT NO BANCO
+   if (!registerDto.invitationToken) {
+       const tenantName = `${registerDto.name}'s Workspace`;
+       const tenantSlug = `ws-${uuidv4().substring(0, 8)}`;
+       const newTenant = await this.tenantsService.create(tenantName, tenantSlug);
+       tenantId = newTenant.id;
+       console.log(`[AuthService] Novo Tenant criado: ${tenantId}`);
+   }
    
    // BUSCA DINÂMICA DA ROLE DE ADMINISTRADOR
    const adminRole = await this.rolesService.findOneByName('administrador');
@@ -208,6 +219,13 @@ export class AuthService {
             } catch (error) {
                 console.warn(`[AuthService Google] Convite inválido ignorado: ${loginDto.invitationToken}`);
             }
+        } else {
+            // SE NÃO HOUVER CONVITE, CRIAMOS UM NOVO TENANT NO BANCO
+            const tenantName = `${payloadGoogle.name}'s Workspace (Google)`;
+            const tenantSlug = `google-${uuidv4().substring(0, 8)}`;
+            const newTenant = await this.tenantsService.create(tenantName, tenantSlug);
+            tenantId = newTenant.id;
+            console.log(`[AuthService Google] Novo Tenant criado: ${tenantId}`);
         }
 
         const newUserContext = {

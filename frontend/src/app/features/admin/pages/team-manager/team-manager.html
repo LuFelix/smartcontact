@@ -40,6 +40,17 @@
 
                 <div class="tab-content">
                     <div class="tab-actions">
+                        <mat-form-field appearance="outline" class="search-field">
+                            <mat-label>Buscar membro...</mat-label>
+                            <mat-icon matPrefix>search</mat-icon>
+                            <input matInput [(ngModel)]="searchTerm" placeholder="Nome, e-mail ou cargo">
+                            @if (searchTerm) {
+                                <button mat-icon-button matSuffix (click)="searchTerm = ''" aria-label="Clear">
+                                    <mat-icon>close</mat-icon>
+                                </button>
+                            }
+                        </mat-form-field>
+
                         <button mat-flat-button color="primary" (click)="openInvitationDialog()">
                             <mat-icon>person_add</mat-icon> Adicionar Membro
                         </button>
@@ -47,14 +58,14 @@
 
                     @if (layoutService.layout() === 'moderno') {
                         <app-members-card-list
-                            [members]="members"
+                            [members]="filteredMembers"
                             [isLoading]="isLoadingMembers"
                             (delegateResources)="openDelegationDialog($event)"
                             (removeMember)="removeMember($event)">
                         </app-members-card-list>
                     } @else {
                         <app-members-list-view
-                            [members]="members"
+                            [members]="filteredMembers"
                             [isLoading]="isLoadingMembers"
                             (delegateResources)="openDelegationDialog($event)"
                             (removeMember)="removeMember($event)">

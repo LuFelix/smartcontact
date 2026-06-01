@@ -53,8 +53,16 @@
 
 .tab-actions {
     display: flex;
-    justify-content: flex-end;
-    margin-bottom: 20px;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    gap: 16px;
+
+    .search-field {
+        flex: 1;
+        max-width: 400px;
+        margin-bottom: -1.25em; // Alinha com o botão
+    }
 }
 
 .ws-icon {
