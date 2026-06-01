@@ -261,8 +261,16 @@ export class UsersService {
         const isTenantAdmin = currentUser?.role === 'administrador';
 
         // REGRA DE PROMOÇÃO: Se um Admin de Tenant está editando um Lead (sem profile) 
-        // para dar uma role a ele, permitimos mesmo que o tenantId do lead seja o padrão/Tiweb.
-        const isPromotingLead = isTenantAdmin && !user.profile;
+        // e atribuindo uma nova Role (diferente de contato), permitimos a promoção.
+        let isPromotingLead = false;
+        
+        if (isTenantAdmin && !user.profile && updateUserDto.roleId) {
+            // Busca a role pretendida para checar o nome
+            const targetRole = await this.rolesService.findOne(updateUserDto.roleId, currentUser);
+            if (targetRole && targetRole.name?.toLowerCase() !== 'contato') {
+                isPromotingLead = true;
+            }
+        }
 
         if (!isSystemAdmin && !isPromotingLead && currentUser?.tenantId && user.tenantId !== currentUser?.tenantId) {
              throw new BadRequestException('Acesso negado: Este usuário pertence a outra organização.');
