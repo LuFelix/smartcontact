@@ -1,52 +1,24 @@
 .roles-container {
     padding: 24px;
-    display: flex;
-    justify-content: center;
-    min-height: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
-.roles-card {
-    width: 100%;
-    max-width: 1000px;
-    border-radius: 24px;
+.roles-content {
     background-color: var(--mat-sys-surface-container);
+    border-radius: 24px;
+    padding: 24px;
     box-shadow: var(--mat-sys-level1);
 }
 
-.header-with-action {
+.roles-actions {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 24px 24px 16px;
-
-    mat-card-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--mat-sys-primary);
-    }
-
-    .header-actions {
-        display: flex;
-        gap: 16px;
-        align-items: center;
-
-        .search-field {
-            width: 300px;
-            margin-bottom: -1.25em;
-        }
-    }
+    margin-bottom: 24px;
 }
 
-@media (max-width: 768px) {
-    .roles-container { padding: 12px; }
-    .header-with-action {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
-        
-        .header-actions {
-            width: 100%;
-            justify-content: space-between;
-        }
-    }
+@media (max-width: 900px) {
+    .roles-container { padding: 16px; }
+    .roles-content { padding: 16px; border-radius: 16px; }
 }
