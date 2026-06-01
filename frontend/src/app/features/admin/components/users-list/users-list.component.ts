@@ -119,11 +119,10 @@ export class UsersListComponent {
 
   /**
    * 2. NATUREZA: MEMBRO DA EQUIPE
-   * Usuários que possuem uma função (Role) definida.
+   * Usuários que possuem uma função (Role) definida que não seja 'contato'.
    */
   isTeamMember(user: User): boolean {
-    // É membro se tiver Role E tiver Profile.
-    return !!user.role && !!user.profile;
+    return !!user.role && user.role.name?.toLowerCase() !== 'contato';
   }
 
   /**

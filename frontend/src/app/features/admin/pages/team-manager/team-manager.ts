@@ -92,9 +92,11 @@ export class TeamManagerComponent implements OnInit {
       .pipe(finalize(() => this.isLoadingMembers = false))
       .subscribe({
         next: (res) => {
-            // Filtro rigoroso: Apenas usuários reais (que possuem Profile na plataforma)
-            // Isso exclui automaticamente os contatos/leads importados do Google.
-            this.members = res.data.filter((u: FullUserResponse) => !!u.profile);
+            // Filtro por Cargo: Consideramos membro qualquer um que não seja apenas um 'contato'.
+            // Isso permite que usuários promovidos apareçam mesmo antes de completarem o perfil.
+            this.members = res.data.filter((u: FullUserResponse) => 
+                u.role && u.role.name?.toLowerCase() !== 'contato'
+            );
         },
         error: () => this.snackBar.open('Erro ao carregar membros.', 'Fechar')
       });
