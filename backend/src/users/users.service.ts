@@ -123,6 +123,7 @@ export class UsersService {
             cpf: cpf as any, 
             password: hashedPassword,
             isActive: createUserDto.isActive ?? true,
+            isVerified: !!currentUser?.sub, // Se criado por admin logado, já nasce verificado
             role: assignedRole,
             ownerId,
             tenantId,
