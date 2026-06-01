@@ -169,7 +169,7 @@ export class TeamService {
       // Nota: Em um sistema B2B real, poderíamos mover para um tenant 'LIXO' ou apenas remover o acesso.
       await this.userRepository.update(memberId, { 
           tenantId: null,
-          role: null 
+          role: { id: null } as any
       });
   }
 }

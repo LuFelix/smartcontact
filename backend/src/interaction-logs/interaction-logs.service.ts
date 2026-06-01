@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { InteractionLog, InteractionType } from './entities/interaction-log.entity';
 import { UserTagAccess } from 'src/tags/entities/user-tag-access.entity';
+import { Tag } from 'src/tags/entities/tag.entity';
 
 @Injectable()
 export class InteractionLogsService {
@@ -11,6 +12,8 @@ export class InteractionLogsService {
     private readonly interactionLogRepository: Repository<InteractionLog>,
     @InjectRepository(UserTagAccess)
     private readonly accessRepository: Repository<UserTagAccess>,
+    @InjectRepository(Tag)
+    private readonly tagRepository: Repository<Tag>,
   ) {}
 
   /**
@@ -32,6 +35,12 @@ export class InteractionLogsService {
    * Captura um lead (nome/email/telefone) vindo do perfil público
    */
   async captureLead(tagId: string, leadData: { name: string, email: string, phone?: string, note?: string }, metadata: any) {
+      // Buscar o dono da tag para registrar quem capturou o lead
+      const tag = await this.tagRepository.findOne({ 
+          where: { id: tagId },
+          select: ['userId'] 
+      });
+
       const log = this.interactionLogRepository.create({
           tagId,
           interactionType: InteractionType.LEAD,
@@ -41,6 +50,7 @@ export class InteractionLogsService {
           leadNote: leadData.note,
           ipAddress: metadata.ip,
           userAgent: metadata.userAgent,
+          capturedByUserId: tag?.userId || null
       });
       return this.interactionLogRepository.save(log);
   }
@@ -57,7 +67,7 @@ export class InteractionLogsService {
       if (isSuperAdmin) {
           return this.interactionLogRepository.find({
               where: { interactionType: InteractionType.LEAD },
-              relations: ['tag', 'tag.user'],
+              relations: ['tag', 'tag.user', 'capturedByUser', 'capturedByUser.profile'],
               order: { accessedAt: 'DESC' }
           });
       }
@@ -69,31 +79,25 @@ export class InteractionLogsService {
                   interactionType: InteractionType.LEAD,
                   tag: { tenantId } 
               },
-              relations: ['tag', 'tag.user'],
+              relations: ['tag', 'tag.user', 'capturedByUser', 'capturedByUser.profile'],
               order: { accessedAt: 'DESC' }
           });
       }
 
       // 3. Outros (Tutor/Colaborador): Visão restrita (ABAC)
-      // Buscar tags delegadas
-      const delegatedAccess = await this.accessRepository.find({
-          where: { userId },
-          select: ['tagId']
-      });
-      const delegatedTagIds = delegatedAccess.map(a => a.tagId);
-
+      // Membros só vêem os leads que ELES mesmos capturaram ou de tags que eles possuem (ownerId)
       return this.interactionLogRepository.find({
           where: [
               { 
                   interactionType: InteractionType.LEAD,
-                  tag: { ownerId: userId } 
+                  capturedByUserId: userId
               },
               { 
                   interactionType: InteractionType.LEAD,
-                  tag: { id: In(delegatedTagIds) } 
+                  tag: { ownerId: userId } 
               }
           ],
-          relations: ['tag', 'tag.user'],
+          relations: ['tag', 'tag.user', 'capturedByUser', 'capturedByUser.profile'],
           order: { accessedAt: 'DESC' }
       });
   }
