@@ -1,76 +1,76 @@
-.user-card {
-  background-color: var(--mat-sys-surface-container-high);
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: var(--mat-sys-level2);
+.user-container {
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
 }
 
-.custom-card-header {
-  padding: 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 16px;
-  background-color: var(--mat-sys-surface-container-highest);
-
-  mat-card-title {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: var(--mat-sys-primary);
-  }
-
-  mat-card-subtitle {
-    color: var(--mat-sys-on-surface-variant);
-  }
+.user-content {
+    background-color: var(--mat-sys-surface-container);
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: var(--mat-sys-level1);
 }
 
-.header-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
+.filter-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    gap: 16px;
 
-.action-bar {
-  padding: 20px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
+    .filter-inputs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        flex: 1;
 
-.filter-group {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-}
+        mat-form-field {
+            min-width: 200px;
+            flex: 1;
+            margin-bottom: -1.25em;
+        }
 
-.action-group {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.custom-card-actions {
-  padding: 8px 16px;
-  background-color: var(--mat-sys-surface-container-highest);
-  border-top: 1px solid var(--mat-sys-outline-variant);
-  
-  mat-paginator {
-    background: transparent;
-    width: 100%;
-  }
-}
-
-@media (max-width: 600px) {
-  .custom-card-header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .header-actions {
-    flex-direction: column;
-    
-    button {
-        width: 100%;
+        .cpf-field {
+            max-width: 250px;
+        }
     }
-  }
+
+    .filter-actions {
+        padding-top: 8px;
+    }
+}
+
+.table-wrapper {
+    margin-bottom: 16px;
+}
+
+.pagination-footer {
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px solid var(--mat-sys-outline-variant);
+    padding-top: 16px;
+}
+
+@media (max-width: 900px) {
+    .user-container { padding: 16px; }
+    .user-content { padding: 16px; border-radius: 16px; }
+    
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+        
+        .filter-inputs {
+            flex-direction: column;
+            
+            mat-form-field {
+                width: 100%;
+                max-width: none;
+            }
+        }
+        
+        .filter-actions {
+            display: flex;
+            justify-content: flex-end;
+        }
+    }
 }

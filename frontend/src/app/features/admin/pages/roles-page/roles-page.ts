@@ -8,6 +8,11 @@ import { RolesListViewComponent } from '../../components/roles-list-view/roles-l
 import { LayoutService } from '../../../../core/services/layout.service';
 import { finalize } from 'rxjs';
 
+// Shared UI Components
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { SearchBarComponent } from '../../../shared/components/search-bar/search-bar.component';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+
 // Material
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -36,7 +41,10 @@ import { FormsModule } from '@angular/forms';
     MatFormFieldModule,
     MatInputModule,
     RolesCardListComponent,
-    RolesListViewComponent
+    RolesListViewComponent,
+    PageHeaderComponent,
+    SearchBarComponent,
+    EmptyStateComponent
   ],
   templateUrl: './roles-page.html',
   styleUrl: './roles-page.scss'

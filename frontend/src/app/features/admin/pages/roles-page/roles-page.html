@@ -1,33 +1,34 @@
 <div class="roles-container">
-    <mat-card class="roles-card">
-        <mat-card-header class="header-with-action">
-            <div>
-                <mat-card-title>Gestão de Funções (Roles)</mat-card-title>
-                <mat-card-subtitle>Gerencie os níveis de acesso do sistema (RBAC)</mat-card-subtitle>
-            </div>
-            <div class="header-actions">
-                <mat-form-field appearance="outline" class="search-field">
-                    <mat-label>Filtrar roles...</mat-label>
-                    <mat-icon matPrefix>search</mat-icon>
-                    <input matInput [(ngModel)]="searchTerm" placeholder="Nome ou descrição">
-                    @if (searchTerm) {
-                        <button mat-icon-button matSuffix (click)="searchTerm = ''" aria-label="Clear">
-                            <mat-icon>close</mat-icon>
-                        </button>
-                    }
-                </mat-form-field>
+    <app-page-header title="Gestão de Funções (Roles)">
+        <div header-actions>
+            <button mat-stroked-button (click)="layoutService.toggleLayout()" class="layout-toggle-btn">
+                <mat-icon>{{ layoutService.layout() === 'moderno' ? 'view_list' : 'grid_view' }}</mat-icon>
+                {{ layoutService.layout() === 'moderno' ? 'Ver em Lista' : 'Ver em Cards' }}
+            </button>
+            <button mat-flat-button color="primary" (click)="openRoleDialog()">
+                <mat-icon>add</mat-icon> Nova Role
+            </button>
+        </div>
+    </app-page-header>
 
-                <button mat-stroked-button (click)="layoutService.toggleLayout()" class="layout-toggle-btn">
-                    <mat-icon>{{ layoutService.layout() === 'moderno' ? 'view_list' : 'grid_view' }}</mat-icon>
-                    {{ layoutService.layout() === 'moderno' ? 'Visualizar Lista' : 'Visualizar Cards' }}
-                </button>
-                <button mat-raised-button color="primary" (click)="openRoleDialog()">
-                    <mat-icon>add</mat-icon> Nova Role
-                </button>
-            </div>
-        </mat-card-header>
+    <div class="roles-content">
+        <div class="roles-actions">
+            <app-search-bar
+                placeholder="Filtrar roles..."
+                [initialValue]="searchTerm"
+                (search)="searchTerm = $event">
+            </app-search-bar>
+        </div>
 
-        <mat-card-content>
+        @if (!isLoading && filteredRoles.length === 0) {
+            <app-empty-state
+                [icon]="searchTerm ? 'search_off' : 'admin_panel_settings'"
+                [title]="searchTerm ? 'Nenhuma role encontrada' : 'Nenhuma role cadastrada'"
+                [message]="searchTerm ? 'Tente ajustar sua busca por nome ou descrição.' : 'As roles definem o que cada usuário pode fazer no sistema.'"
+                [actionLabel]="searchTerm ? '' : 'Criar Nova Role'"
+                (action)="openRoleDialog()">
+            </app-empty-state>
+        } @else {
             @if (layoutService.layout() === 'moderno') {
                 <app-roles-card-list
                     [roles]="filteredRoles"
@@ -43,6 +44,6 @@
                     (deleteRole)="deleteRole($event)">
                 </app-roles-list-view>
             }
-        </mat-card-content>
-    </mat-card>
+        }
+    </div>
 </div>

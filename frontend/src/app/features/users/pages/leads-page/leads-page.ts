@@ -12,6 +12,11 @@ import { LayoutService } from '../../../../core/services/layout.service';
 import { LeadsCardListComponent } from '../../components/leads-card-list/leads-card-list';
 import { LeadsListViewComponent } from '../../components/leads-list-view/leads-list-view';
 
+// Shared UI Components
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { SearchBarComponent } from '../../../shared/components/search-bar/search-bar.component';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+
 // Material
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -37,7 +42,10 @@ import { FormsModule } from '@angular/forms';
     MatFormFieldModule,
     MatInputModule,
     LeadsCardListComponent,
-    LeadsListViewComponent
+    LeadsListViewComponent,
+    PageHeaderComponent,
+    SearchBarComponent,
+    EmptyStateComponent
   ],
   templateUrl: './leads-page.html',
   styleUrl: './leads-page.scss'

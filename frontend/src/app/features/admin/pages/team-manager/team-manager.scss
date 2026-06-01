@@ -4,29 +4,11 @@
     margin: 0 auto;
 }
 
-.manager-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-
-    .header-left {
-        display: flex;
-        align-items: center;
-        gap: 32px;
-
-        h1 {
-            margin: 0;
-            font-weight: 800;
-            color: var(--mat-sys-primary);
-            font-size: 1.8rem;
-        }
-
-        .workspace-selector {
-            width: 300px;
-            margin-bottom: -1.25em; // Alinha visualmente com o título
-        }
-    }
+// O .manager-header manual foi removido em favor do <app-page-header>
+// Mantemos apenas as customizações específicas que ainda vivem aqui
+.workspace-selector {
+    width: 300px;
+    margin-bottom: -1.25em; // Alinha visualmente com o título
 }
 
 .manager-tabs-container {
@@ -58,11 +40,7 @@
     margin-bottom: 24px;
     gap: 16px;
 
-    .search-field {
-        flex: 1;
-        max-width: 400px;
-        margin-bottom: -1.25em; // Alinha com o botão
-    }
+    // app-search-bar agora gerencia sua própria largura e margem
 }
 
 .ws-icon {
@@ -77,42 +55,7 @@
 .gap-2 { gap: 8px; }
 
 @media (max-width: 900px) {
-    .manager-header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 16px;
-
-        .header-left {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 8px;
-
-            .workspace-selector { width: 100%; }
-        }
-        
-        button { width: 100%; }
-    }
-}
-
-.placeholder-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 60px 20px;
-    text-align: center;
-    color: var(--mat-sys-on-surface-variant);
-
-    .big-icon {
-        font-size: 64px;
-        width: 64px;
-        height: 64px;
-        margin-bottom: 20px;
-        opacity: 0.5;
-    }
-
-    h3 { margin: 0 0 8px 0; font-weight: 700; color: var(--mat-sys-primary); }
-    p { margin: 0; max-width: 400px; line-height: 1.5; }
+    .workspace-selector { width: 100%; }
 }
 
 .section-card {

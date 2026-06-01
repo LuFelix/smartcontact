@@ -23,6 +23,9 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { SocialAuthService, GoogleLoginProvider } from '@abacritt/angularx-social-login';
 import { GoogleContactsService } from '../../../../core/services/google-contacts.service';
 
+// Shared UI Components
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+
 @Component({
   selector: 'app-users-page',
   standalone: true,
@@ -38,7 +41,8 @@ import { GoogleContactsService } from '../../../../core/services/google-contacts
       MatButtonModule,
       MatIconModule,
       UsersListComponent,
-      MatTooltipModule
+      MatTooltipModule,
+      PageHeaderComponent
     ],
   templateUrl: './users-page.html',
   styleUrl: './users-page.scss'

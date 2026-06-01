@@ -1,0 +1,52 @@
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  gap: 16px;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+
+    h1 {
+      margin: 0;
+      font-weight: 800;
+      color: var(--mat-sys-primary);
+      font-size: 2rem;
+      letter-spacing: -0.02em;
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    ::ng-deep > * {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+
+    .header-left {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .header-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+}

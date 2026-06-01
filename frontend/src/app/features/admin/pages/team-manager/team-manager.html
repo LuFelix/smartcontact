@@ -1,9 +1,7 @@
 <div class="manager-container">
-    <div class="manager-header">
-        <div class="header-left">
-            <h1>Gestão de Equipe</h1>
-            
-            <!-- Seletor de Workspace (Mockup para Futuro Premium) -->
+    <app-page-header title="Gestão de Equipe">
+        <!-- Seletor de Workspace -->
+        <div header-left-extra>
             <mat-form-field appearance="outline" class="workspace-selector">
                 <mat-label>Workspace Selecionado</mat-label>
                 <mat-select [(value)]="selectedWorkspaceId">
@@ -23,11 +21,14 @@
             </mat-form-field>
         </div>
 
-        <button mat-stroked-button (click)="layoutService.toggleLayout()">
-            <mat-icon>{{ layoutService.layout() === 'moderno' ? 'view_list' : 'grid_view' }}</mat-icon>
-            {{ layoutService.layout() === 'moderno' ? 'Ver em Lista' : 'Ver em Cards' }}
-        </button>
-    </div>
+        <!-- Ações do Header -->
+        <div header-actions>
+            <button mat-stroked-button (click)="layoutService.toggleLayout()">
+                <mat-icon>{{ layoutService.layout() === 'moderno' ? 'view_list' : 'grid_view' }}</mat-icon>
+                {{ layoutService.layout() === 'moderno' ? 'Ver em Lista' : 'Ver em Cards' }}
+            </button>
+        </div>
+    </app-page-header>
 
     <div class="manager-tabs-container">
         <mat-tab-group color="primary">
@@ -40,36 +41,41 @@
 
                 <div class="tab-content">
                     <div class="tab-actions">
-                        <mat-form-field appearance="outline" class="search-field">
-                            <mat-label>Buscar membro...</mat-label>
-                            <mat-icon matPrefix>search</mat-icon>
-                            <input matInput [(ngModel)]="searchTerm" placeholder="Nome, e-mail ou cargo">
-                            @if (searchTerm) {
-                                <button mat-icon-button matSuffix (click)="searchTerm = ''" aria-label="Clear">
-                                    <mat-icon>close</mat-icon>
-                                </button>
-                            }
-                        </mat-form-field>
+                        <app-search-bar 
+                            placeholder="Buscar membro..." 
+                            [initialValue]="searchTerm"
+                            (search)="searchTerm = $event">
+                        </app-search-bar>
 
                         <button mat-flat-button color="primary" (click)="openInvitationDialog()">
                             <mat-icon>person_add</mat-icon> Adicionar Membro
                         </button>
                     </div>
 
-                    @if (layoutService.layout() === 'moderno') {
-                        <app-members-card-list
-                            [members]="filteredMembers"
-                            [isLoading]="isLoadingMembers"
-                            (delegateResources)="openDelegationDialog($event)"
-                            (removeMember)="removeMember($event)">
-                        </app-members-card-list>
+                    @if (!isLoadingMembers && filteredMembers.length === 0) {
+                        <app-empty-state
+                            [icon]="searchTerm ? 'search_off' : 'group_add'"
+                            [title]="searchTerm ? 'Nenhum membro encontrado' : 'Nenhum membro na equipe'"
+                            [message]="searchTerm ? 'Tente ajustar sua busca por nome ou e-mail.' : 'Comece adicionando membros para gerenciar seu workspace.'"
+                            [actionLabel]="searchTerm ? '' : 'Adicionar Membro'"
+                            (action)="openInvitationDialog()">
+                        </app-empty-state>
                     } @else {
-                        <app-members-list-view
-                            [members]="filteredMembers"
-                            [isLoading]="isLoadingMembers"
-                            (delegateResources)="openDelegationDialog($event)"
-                            (removeMember)="removeMember($event)">
-                        </app-members-list-view>
+                        @if (layoutService.layout() === 'moderno') {
+                            <app-members-card-list
+                                [members]="filteredMembers"
+                                [isLoading]="isLoadingMembers"
+                                (delegateResources)="openDelegationDialog($event)"
+                                (removeMember)="removeMember($event)">
+                            </app-members-card-list>
+                        } @else {
+                            <app-members-list-view
+                                [members]="filteredMembers"
+                                [isLoading]="isLoadingMembers"
+                                (delegateResources)="openDelegationDialog($event)"
+                                (removeMember)="removeMember($event)">
+                            </app-members-list-view>
+                        }
                     }
                 </div>
             </mat-tab>
@@ -82,16 +88,11 @@
                 </ng-template>
 
                 <div class="tab-content">
-                    <mat-card class="section-card no-shadow">
-                        <mat-card-header>
-                            <mat-card-title>Configurações Avançadas</mat-card-title>
-                        </mat-card-header>
-                        <mat-card-content class="placeholder-content">
-                            <mat-icon class="big-icon">construction</mat-icon>
-                            <h3>Em Construção</h3>
-                            <p>Em breve você poderá configurar permissões customizadas, logos do workspace e integrações premium aqui.</p>
-                        </mat-card-content>
-                    </mat-card>
+                    <app-empty-state
+                        icon="construction"
+                        title="Em Construção"
+                        message="Em breve você poderá configurar permissões customizadas, logos do workspace e integrações premium aqui.">
+                    </app-empty-state>
                 </div>
             </mat-tab>
         </mat-tab-group>
