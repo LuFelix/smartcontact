@@ -11,6 +11,11 @@ import { MembersListViewComponent } from '../../components/members-list-view/mem
 import { MemberInvitationDialogComponent } from '../../components/member-invitation-dialog/member-invitation-dialog';
 import { ResourceDelegationDialogComponent } from '../../components/resource-delegation-dialog/resource-delegation-dialog';
 
+// Shared UI Components
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { SearchBarComponent } from '../../../shared/components/search-bar/search-bar.component';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+
 // Material
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -41,7 +46,10 @@ import { FormsModule } from '@angular/forms';
     MatDividerModule,
     MatCardModule,
     MembersCardListComponent,
-    MembersListViewComponent
+    MembersListViewComponent,
+    PageHeaderComponent,
+    SearchBarComponent,
+    EmptyStateComponent
   ],
   templateUrl: './team-manager.html',
   styleUrl: './team-manager.scss'
