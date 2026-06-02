@@ -1,0 +1,42 @@
+<h2 mat-dialog-title>Promover para Equipe</h2>
+
+<mat-dialog-content>
+    <div class="promotion-content">
+        <div class="user-preview">
+            <div class="info">
+                <h3>{{ data.user.name }}</h3>
+                <p>{{ data.user.email }}</p>
+            </div>
+        </div>
+
+        <p class="instruction">
+            Selecione o cargo que este membro ocupará na equipe do workspace. 
+            Ao promover, um perfil de membro será criado automaticamente.
+        </p>
+
+        <form [formGroup]="promotionForm">
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Cargo na Equipe</mat-label>
+                <mat-select formControlName="roleId" placeholder="Escolha um cargo">
+                    @for (role of availableRoles$ | async; track role.id) {
+                        <mat-option [value]="role.id">
+                            {{ role.name | titlecase }}
+                        </mat-option>
+                    }
+                </mat-select>
+                @if (promotionForm.get('roleId')?.hasError('required')) {
+                    <mat-error>O cargo é obrigatório para promoção.</mat-error>
+                }
+            </mat-form-field>
+        </form>
+    </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Cancelar</button>
+    <button mat-flat-button color="primary" 
+            (click)="confirm()" 
+            [disabled]="promotionForm.invalid">
+        Confirmar Promoção
+    </button>
+</mat-dialog-actions>
