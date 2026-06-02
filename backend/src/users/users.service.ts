@@ -379,6 +379,62 @@ export class UsersService {
         await this.usersRepository.update(userId, { profilePictureUrl: pictureUrl });
     }
 
+    async promoteToTeam(id: string, roleId: string, currentUser: any): Promise<User> {
+        const user = await this.usersRepository.findOne({
+            where: { id },
+            relations: ['role', 'profile', 'tags']
+        });
+
+        if (!user) {
+            throw new NotFoundException(`Usuário com ID ${id} não encontrado`);
+        }
+
+        const isTenantAdmin = currentUser?.role === 'administrador';
+        if (!currentUser?.isSuperAdmin && !isTenantAdmin) {
+             throw new BadRequestException('Apenas administradores podem promover usuários.');
+        }
+
+        const targetRole = await this.rolesService.findOne(roleId, currentUser);
+        if (!targetRole) {
+            throw new BadRequestException('Cargo inválido.');
+        }
+
+        if (targetRole.name?.toLowerCase() === 'contato') {
+            throw new BadRequestException('Não é possível promover um membro para a função de contato. Escolha um cargo de equipe.');
+        }
+
+        // Promover vincula o usuário ao tenant do administrador (caso ainda não esteja)
+        user.tenantId = currentUser.tenantId;
+        user.ownerId = currentUser.sub;
+        user.role = targetRole;
+
+        // Força a criação do Profile
+        let existingProfile = await this.profilesService.findByUserId(user.id);
+        if (!existingProfile) {
+            existingProfile = await this.profilesService.create({
+                userId: user.id,
+                ownerId: user.ownerId!,
+                tenantId: user.tenantId!,
+                profilePictureUrl: user.profilePictureUrl || undefined
+            });
+            user.profile = existingProfile;
+        }
+
+        // Força a criação da Tag
+        if (!user.tags || user.tags.length === 0) {
+            const newTag = await this.tagsService.createDefaultTag(
+                user.id,
+                user.ownerId!,
+                user.tenantId!
+            );
+            user.tags = [newTag];
+        }
+
+        await this.usersRepository.save(user);
+
+        return this.findByEmail(user.email) as Promise<User>;
+    }
+
     async setVerificationData(userId: string, code: string, expires: Date): Promise<void> {
         await this.usersRepository.update(userId, {
             verificationCode: code,
