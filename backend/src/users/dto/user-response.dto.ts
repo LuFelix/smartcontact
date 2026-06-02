@@ -33,7 +33,9 @@ export class UserRespondeDto {
     this.cpf = user.cpf ?? null;
     this.isVerified = user.isVerified;
     
-    this.role = user.role ? user.role.name : undefined;
+    // Pega a role da primeira membership (ou poderia receber o tenantId do contexto para ser mais preciso)
+    const activeMembership = user.memberships && user.memberships.length > 0 ? user.memberships[0] : null;
+    this.role = activeMembership && activeMembership.role ? activeMembership.role.name : undefined;
     
     this.phones = user.phones || [];
     this.addresses = user.addresses || [];
