@@ -21,10 +21,10 @@
             <div class="badge-row">
               @if (isTeamMember(user)) {
                   <span class="badge-item member-badge">Equipe</span>
-              } @else if (user.profile) {
+              } @else if (isUserRole(user)) {
                   <span class="badge-item user-badge">Usuário SC</span>
-              } @else {
-                  <span class="badge-item lead-badge">Lead / Contato</span>
+              } @else if (isContact(user)) {
+                  <span class="badge-item lead-badge">Contato</span>
               }
             </div>
           </mat-card-subtitle>

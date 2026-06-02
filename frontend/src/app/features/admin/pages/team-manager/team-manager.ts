@@ -92,10 +92,9 @@ export class TeamManagerComponent implements OnInit {
       .pipe(finalize(() => this.isLoadingMembers = false))
       .subscribe({
         next: (res) => {
-            // Filtro por Cargo: Consideramos membro qualquer um que não seja apenas um 'contato'.
-            // Isso permite que usuários promovidos apareçam mesmo antes de completarem o perfil.
+            // Filtro por Cargo: Consideramos membro da equipe quem tem role diferente de 'contato' e 'usuario'.
             this.members = res.data.filter((u: FullUserResponse) => 
-                u.role && u.role.name?.toLowerCase() !== 'contato'
+                u.role && u.role.name?.toLowerCase() !== 'contato' && u.role.name?.toLowerCase() !== 'usuario'
             );
         },
         error: () => this.snackBar.open('Erro ao carregar membros.', 'Fechar')
