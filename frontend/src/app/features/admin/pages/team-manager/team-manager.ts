@@ -92,10 +92,9 @@ export class TeamManagerComponent implements OnInit {
       .pipe(finalize(() => this.isLoadingMembers = false))
       .subscribe({
         next: (res) => {
-            // Filtro por Cargo: Consideramos membro da equipe quem tem role diferente de 'contato' e 'usuario'.
-            this.members = res.data.filter((u: FullUserResponse) => 
-                u.role && u.role.name?.toLowerCase() !== 'contato' && u.role.name?.toLowerCase() !== 'usuario'
-            );
+            // Filtro por Estrutura: Membro da equipe é aquele que possui um Profile
+            // (Isso distingue contatos convertidos a "usuários" de verdadeiros membros do workspace)
+            this.members = res.data.filter((u: FullUserResponse) => !!u.profile);
         },
         error: () => this.snackBar.open('Erro ao carregar membros.', 'Fechar')
       });

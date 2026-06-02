@@ -334,8 +334,16 @@
                 </mat-tab>
 
                 <!-- TAB 5: TAGS & QR -->
-                <mat-tab label="Tags & QR">
-                    <div class="tab-padding">
+                <mat-tab label="Tags & QR" [disabled]="!user?.profile && !data.isCreation">
+                    <div class="tab-padding position-relative">
+                        <!-- Overlay para não membros -->
+                        @if (!user?.profile && !data.isCreation) {
+                            <div class="disabled-overlay">
+                                <mat-icon>lock</mat-icon>
+                                <p>Apenas Membros da Equipe possuem controle de Tags e Perfil Público.</p>
+                            </div>
+                        }
+
                         <!-- SEÇÃO 0: CONFIGURAÇÕES DA TAG E QR CODE -->
                         @if (userForm.get('tagSettings.id')?.value) {
                             <mat-card class="section-card no-shadow tag-management-section">

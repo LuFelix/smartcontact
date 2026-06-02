@@ -118,9 +118,7 @@ export class UsersListComponent {
   }
 
   isTeamMember(user: User): boolean {
-    if (!user.role || !user.role.name) return false;
-    const roleName = user.role.name.toLowerCase();
-    return roleName !== 'contato' && roleName !== 'usuario';
+    return !!user.profile;
   }
 
   /**

@@ -275,4 +275,39 @@ mat-dialog-title {
 .items-center { align-items: center; }
 .gap-3 { gap: 12px; }
 
-.img-hidden { display: none !important; }
+.position-relative {
+    position: relative;
+}
+
+.disabled-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(var(--mat-sys-surface-container-rgb), 0.8);
+    backdrop-filter: blur(2px);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--mat-sys-on-surface-variant);
+    text-align: center;
+    padding: 24px;
+    border-radius: 12px;
+
+    mat-icon {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+    }
+
+    p {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+}
