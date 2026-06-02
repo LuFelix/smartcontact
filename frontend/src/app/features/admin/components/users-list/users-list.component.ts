@@ -108,21 +108,16 @@ export class UsersListComponent {
     return colors[index];
   }
 
-  /**
-   * 1. NATUREZA: CONTATO / LEAD (Fichário)
-   * Registros importados ou capturados que não possuem perfil na plataforma.
-   */
-  isLead(user: User): boolean {
-    // Um lead no SmartContact é definido pela AUSÊNCIA de um perfil (Profile).
-    return !user.profile;
+  isContact(user: User): boolean {
+    return user.role?.name?.toLowerCase() === 'contato';
   }
 
-  /**
-   * 2. NATUREZA: MEMBRO DA EQUIPE
-   * Usuários que possuem uma função (Role) definida que não seja 'contato'.
-   */
+  isUserRole(user: User): boolean {
+    return user.role?.name?.toLowerCase() === 'usuario';
+  }
+
   isTeamMember(user: User): boolean {
-    return !!user.role && user.role.name?.toLowerCase() !== 'contato';
+    return !!user.profile;
   }
 
   /**
