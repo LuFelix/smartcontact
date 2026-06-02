@@ -217,7 +217,7 @@ export class RolesService {
         }
 
         // 5. Reatribuir usuários
-        if (role.users && role.users.length > 0) {
+        if (role.memberships && role.memberships.length > 0) {
             await this.rolesRepository.manager
                 .createQueryBuilder()
                 .update('User')

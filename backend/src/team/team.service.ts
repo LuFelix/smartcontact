@@ -115,10 +115,10 @@ export class TeamService {
   async acceptInvitation(token: string, currentUser: any): Promise<{ message: string }> {
     const invitation = await this.resolveInvitation(token);
     
-    // Buscar o usuário logado para garantir que ele existe e obter seus dados atuais
+    // Buscar o usuário logado com suas memberships
     const user = await this.userRepository.findOne({ 
         where: { id: currentUser.sub },
-        relations: ['role']
+        relations: ['memberships']
     });
 
     if (!user) {
@@ -126,24 +126,14 @@ export class TeamService {
     }
 
     // SEGURANÇA: Se o usuário já pertence ao tenant do convite, não faz nada
-    if (user.tenantId === invitation.tenantId) {
+    const alreadyMember = user.memberships?.some(m => m.tenantId === invitation.tenantId);
+    if (alreadyMember) {
         return { message: 'Você já faz parte desta equipe.' };
     }
 
-    // SEGURANÇA: Se o usuário é um Administrador (e não está apenas trocando de tenant por convite legítimo)
-    // podemos querer bloquear para evitar perda de acesso acidental ao seu próprio tenant.
-    if (user.role?.name === 'administrador' && !currentUser.isSuperAdmin) {
-        // Se for um admin real, avisamos que ele perderá o controle da sua empresa atual
-        // Mas por simplicidade de fluxo B2B, vamos apenas permitir se o tenantId for diferente.
-        // O ideal é que admins não aceitem convites de outros.
-        console.warn(`[TeamService] Admin ${user.email} aceitando convite para outro tenant.`);
-    }
-
-    // Atualizar o usuário para o novo Tenant e Role
-    await this.userRepository.update(user.id, {
-      tenantId: invitation.tenantId,
-      role: { id: invitation.roleId } as any,
-    });
+    // Criar o novo vínculo de membership
+    // (Opcional: se o convite exigir criação de perfil, faríamos aqui)
+    await this.usersService.createMembershipForUser(user.id, invitation.tenantId, invitation.roleId);
 
     return { message: 'Você entrou na equipe com sucesso!' };
   }
@@ -156,17 +146,23 @@ export class TeamService {
           throw new BadRequestException('Apenas administradores podem remover membros da equipe.');
       }
 
-      const member = await this.userRepository.findOne({ where: { id: memberId } });
+      // Busca o usuário e checa se ele tem membership no tenant do admin
+      const member = await this.userRepository.findOne({ 
+          where: { id: memberId },
+          relations: ['memberships']
+      });
+
       if (!member) {
           throw new NotFoundException('Membro não encontrado.');
       }
 
-      if (member.tenantId !== currentUser.tenantId) {
+      const hasMembership = member.memberships?.some(m => m.tenantId === currentUser.tenantId);
+      if (!hasMembership) {
           throw new BadRequestException('Este usuário não pertence à sua equipe.');
       }
 
       // Demite da equipe: Remove o Profile e altera a Role para 'usuario',
-      // mas preserva o tenantId para que continue listado no fichário de contatos.
+      // mas preserva o vínculo (Membership) para que continue listado no fichário de contatos.
       await this.usersService.demoteFromTeam(memberId, currentUser);
   }
 }

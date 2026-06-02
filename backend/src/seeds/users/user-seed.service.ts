@@ -61,11 +61,9 @@ export class UserSeedService {
         password: hashedPassword,
         isVerified: true,
         isActive: true,
-        role: defaultRole,
         ownerId: admin.id, 
-        tenantId: admin.tenantId,
         phones: [
-            { number: randomPhone, isWhatsapp: Math.random() > 0.3, isMain: true, ownerId: admin.id, tenantId: admin.tenantId }
+            { number: randomPhone, isWhatsapp: Math.random() > 0.3, isMain: true, ownerId: admin.id, tenantId: admin.memberships[0].tenantId }
         ],
         addresses: [
             {
@@ -78,32 +76,27 @@ export class UserSeedService {
                 tag: 'HOME' as any,
                 isMain: true,
                 ownerId: admin.id,
-                tenantId: admin.tenantId
+                tenantId: admin.memberships[0].tenantId
             }
         ]
       };
 
       if (!user) {
         // Usa o usersService.create para garantir o ciclo de vida completo
-        user = await this.usersService.create(data as any, admin);
+        // Passa o admin como currentUser para herdar o tenantId
+        user = await this.usersService.create(data as any, { 
+            sub: admin.id, 
+            tenantId: admin.memberships[0].tenantId 
+        });
         this.logger.log(`Usuário '${userData.name}' criado via UsersService.`);
       } else {
-        this.userRepository.merge(user, data);
+        const { role, tenantId, ...updateData } = data as any; // Ignora role/tenantId na atualização direta
+        this.userRepository.merge(user, updateData);
         if (!user.username) {
             user.username = username;
         }
         user = await this.userRepository.save(user);
         this.logger.log(`Usuário '${userData.name}' atualizado.`);
-
-        // GARANTE QUE O USUÁRIO TENHA UM PROFILE
-        const profile = await this.profilesService.findByUserId(user.id);
-        if (!profile) {
-            await this.profilesService.create({
-                userId: user.id,
-                ownerId: admin.id,
-                tenantId: admin.tenantId as string
-            });
-        }
       }
 
       if (user && (!user.tags || user.tags.length === 0)) {
@@ -111,7 +104,7 @@ export class UserSeedService {
               uuid: `test-tag-${emailBase}`,
               userId: user.id,
               ownerId: admin.id,
-              tenantId: admin.tenantId as string,
+              tenantId: admin.memberships[0].tenantId,
               nfcRedirectMode: RedirectMode.PROFILE,
               qrRedirectMode: RedirectMode.PROFILE,
               isActive: true

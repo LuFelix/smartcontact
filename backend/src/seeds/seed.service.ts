@@ -7,6 +7,7 @@ import { Role } from 'src/roles/entities/role.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Tag, RedirectMode } from 'src/tags/entities/tag.entity';
 import { Tenant } from 'src/tenants/entities/tenant.entity';
+import { Membership } from 'src/memberships/entities/membership.entity';
 import { UserSeedService } from './users/user-seed.service';
 import { ProfilesService } from 'src/profiles/profiles.service';
 
@@ -24,6 +25,8 @@ export class SeedService {
     private readonly tagRepository: Repository<Tag>,
     @InjectRepository(Tenant)
     private readonly tenantRepository: Repository<Tenant>,
+    @InjectRepository(Membership)
+    private readonly membershipRepository: Repository<Membership>,
     private readonly userSeedService: UserSeedService,
     private readonly profilesService: ProfilesService,
   ) {}
@@ -33,10 +36,6 @@ export class SeedService {
 
     // 0. Garante que o Tenant Master existe
     await this.seedDefaultTenant();
-
-    // 0.1. "Database Doctor": Garante que todos os tenants usados por usuários existam
-    // Isso é CRUCIAL para evitar erros de FK em convites e logs.
-    await this.fixMissingTenants();
 
     // 1. Garante que todos os usuários tenham usernames (Migração retroativa)
     await this.userSeedService.migrateUsernames();
@@ -71,29 +70,6 @@ export class SeedService {
     }
   }
 
-  /**
-   * Varre a tabela de usuários e cria registros de Tenant para qualquer ID que não exista.
-   * Isso evita erros de chave estrangeira em ambientes com dados "sujos".
-   */
-  private async fixMissingTenants(): Promise<void> {
-    const users = await this.userRepository.find({ select: ['tenantId'] });
-    const uniqueTenantIds = [...new Set(users.map(u => u.tenantId).filter(id => !!id))];
-
-    for (const tenantId of uniqueTenantIds) {
-      const exists = await this.tenantRepository.findOne({ where: { id: tenantId! } });
-      if (!exists) {
-        this.logger.warn(`Tenant ID ${tenantId} encontrado em usuários mas não na tabela de Tenants. Corrigindo...`);
-        const newTenant = this.tenantRepository.create({
-          id: tenantId!,
-          name: `Tenant Recuperado (${tenantId?.substring(0, 8)})`,
-          slug: `recovered-${tenantId?.substring(0, 8)}`,
-          isActive: true
-        });
-        await this.tenantRepository.save(newTenant);
-      }
-    }
-  }
-
   private async seedRoles(): Promise<Role | undefined> {
     const rolesToCreate = ['administrador', 'contato', 'usuario'];
     let adminRole: Role | undefined;
@@ -119,7 +95,7 @@ export class SeedService {
 
     let admin = await this.userRepository.findOne({ 
         where: { email: adminEmail },
-        relations: ['phones', 'addresses']
+        relations: ['phones', 'addresses', 'memberships']
     });
 
     const salt = await bcrypt.genSalt();
@@ -132,9 +108,7 @@ export class SeedService {
         cpf: '00000000000',
         password: hashedPassword,
         isVerified: true,
-        role: adminRole,
         ownerId: this.TIWEB_ID,
-        tenantId: this.TIWEB_ID,
         phones: [
             { number: '00000000000', isWhatsapp: true, isMain: true, ownerId: this.TIWEB_ID, tenantId: this.TIWEB_ID }
         ],
@@ -165,13 +139,25 @@ export class SeedService {
     }
 
     // GARANTE QUE O ADMIN TENHA UM PROFILE
-    const adminProfile = await this.profilesService.findByUserId(admin.id);
+    let adminProfile = await this.profilesService.findByUserId(admin.id);
     if (!adminProfile) {
-        await this.profilesService.create({
+        adminProfile = await this.profilesService.create({
             userId: admin.id,
             ownerId: this.TIWEB_ID,
             tenantId: this.TIWEB_ID
         });
+    }
+
+    // GARANTE QUE O ADMIN TENHA O VINCULO DE MEMBERSHIP
+    const adminMembership = await this.membershipRepository.findOne({ where: { userId: admin.id, tenantId: this.TIWEB_ID } });
+    if (!adminMembership) {
+        const newMembership = this.membershipRepository.create({
+            userId: admin.id,
+            tenantId: this.TIWEB_ID,
+            roleId: adminRole.id,
+            profileId: adminProfile.id
+        });
+        await this.membershipRepository.save(newMembership);
     }
 
     const adminTag = await this.tagRepository.findOne({ where: { userId: admin.id } });
