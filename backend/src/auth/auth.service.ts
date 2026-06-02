@@ -7,6 +7,7 @@ import { ProfilesService } from 'src/profiles/profiles.service';
 import { TeamService } from 'src/team/team.service';
 import { RolesService } from 'src/roles/roles.service';
 import { TenantsService } from 'src/tenants/tenants.service';
+import { MembershipsService } from 'src/memberships/memberships.service';
 import { LoginDto, MinimalRegisterDto } from './dto/auth.dto';
 import { GoogleLoginDto } from './dto/google-token.dto';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -26,6 +27,7 @@ export class AuthService {
     private readonly mailerService: MailerService,
     private readonly rolesService: RolesService,
     private readonly tenantsService: TenantsService,
+    private readonly membershipsService: MembershipsService,
     @Inject(forwardRef(() => TeamService))
     private readonly teamService: TeamService
     
@@ -242,6 +244,8 @@ export class AuthService {
                   tenantId: m.tenantId,
                   profilePictureUrl: payloadGoogle.picture
               });
+              // Atualiza o membership para referenciar o profile recém-criado
+              await this.membershipsService.updateProfileId(user.id, m.tenantId, profile.id);
           }
 
           if (profile && payloadGoogle.picture && profile.profilePictureUrl !== payloadGoogle.picture) {
