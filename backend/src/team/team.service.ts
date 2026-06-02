@@ -165,11 +165,8 @@ export class TeamService {
           throw new BadRequestException('Este usuário não pertence à sua equipe.');
       }
 
-      // Desvincular do Tenant (setar tenantId para null)
-      // Nota: Em um sistema B2B real, poderíamos mover para um tenant 'LIXO' ou apenas remover o acesso.
-      await this.userRepository.update(memberId, { 
-          tenantId: null,
-          role: { id: null } as any
-      });
+      // Demite da equipe: Remove o Profile e altera a Role para 'usuario',
+      // mas preserva o tenantId para que continue listado no fichário de contatos.
+      await this.usersService.demoteFromTeam(memberId, currentUser);
   }
 }

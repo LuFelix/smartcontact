@@ -379,6 +379,32 @@ export class UsersService {
         await this.usersRepository.update(userId, { profilePictureUrl: pictureUrl });
     }
 
+    async demoteFromTeam(id: string, currentUser: any): Promise<void> {
+        const user = await this.usersRepository.findOne({
+            where: { id },
+            relations: ['role']
+        });
+
+        if (!user) {
+            throw new NotFoundException(`Usuário com ID ${id} não encontrado`);
+        }
+
+        const isTenantAdmin = currentUser?.role === 'administrador';
+        if (!currentUser?.isSuperAdmin && !isTenantAdmin) {
+             throw new BadRequestException('Apenas administradores podem remover usuários da equipe.');
+        }
+
+        // Rebaixa o cargo para usuário comum (acesso ao sistema, mas fora da equipe)
+        const targetRole = await this.rolesService.findOneByName('usuario');
+        if (targetRole) {
+            user.role = targetRole;
+            await this.usersRepository.save(user);
+        }
+
+        // Remove o perfil público, efetivando a saída da equipe (isTeamMember = false)
+        await this.profilesService.removeByUserId(user.id);
+    }
+
     async setVerificationData(userId: string, code: string, expires: Date): Promise<void> {
         await this.usersRepository.update(userId, {
             verificationCode: code,

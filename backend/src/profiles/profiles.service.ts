@@ -39,4 +39,8 @@ export class ProfilesService {
     Object.assign(profile, data);
     return this.profileRepository.save(profile);
   }
+
+  async removeByUserId(userId: string): Promise<void> {
+    await this.profileRepository.delete({ userId });
+  }
 }
