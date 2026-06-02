@@ -67,7 +67,7 @@
             }
           }
 
-          @if (authService.hasRole('administrador') && user.role?.name?.toLowerCase() === 'contato') {
+          @if (authService.hasRole('administrador') && !isTeamMember(user)) {
             <button mat-icon-button color="primary" 
                     class="icon-align-fix"
                     (click)="promoteUser.emit(user)" 
