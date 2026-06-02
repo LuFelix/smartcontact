@@ -260,33 +260,15 @@ export class UsersService {
         const isSystemAdmin = currentUser?.isSuperAdmin;
         const isTenantAdmin = currentUser?.role === 'administrador';
 
-        // REGRA DE PROMOÇÃO: Se um Admin de Tenant está editando um Lead (sem profile) 
-        // e atribuindo uma nova Role (diferente de contato), permitimos a promoção.
-        let isPromotingLead = false;
-        
-        if (isTenantAdmin && !user.profile && updateUserDto.roleId) {
-            // Busca a role pretendida para checar o nome
-            const targetRole = await this.rolesService.findOne(updateUserDto.roleId, currentUser);
-            if (targetRole && targetRole.name?.toLowerCase() !== 'contato') {
-                isPromotingLead = true;
-            }
-        }
-
-        if (!isSystemAdmin && !isPromotingLead && currentUser?.tenantId && user.tenantId !== currentUser?.tenantId) {
+        if (!isSystemAdmin && currentUser?.tenantId && user.tenantId !== currentUser?.tenantId) {
              throw new BadRequestException('Acesso negado: Este usuário pertence a outra organização.');
         }
 
         const isOwner = user.ownerId === currentUser?.sub;
         const isOwnProfile = user.id === currentUser?.sub;
 
-        if (!isSystemAdmin && !isPromotingLead && !isOwner && !isOwnProfile) {
+        if (!isSystemAdmin && !isOwner && !isOwnProfile && !isTenantAdmin) {
              throw new BadRequestException('Você não tem permissão para editar este usuário.');
-        }
-
-        // Se estiver promovendo o lead, vincula ele ao tenant do admin que está promovendo
-        if (isPromotingLead) {
-            user!.tenantId = currentUser.tenantId;
-            user!.ownerId = currentUser.sub;
         }
 
         if (updateUserDto.email && updateUserDto.email !== user!.email) {
@@ -310,30 +292,6 @@ export class UsersService {
 
         const { roleId, phones, addresses, secondaryEmails, links, tags, ...userUpdateData } = updateUserDto;
         this.usersRepository.merge(user!, userUpdateData);
-
-        // Se estiver promovendo o lead, além de mudar o tenantId (feito acima), 
-        // agora forçamos a criação do Profile e da Tag caso não existam.
-        if (isPromotingLead) {
-            let existingProfile = await this.profilesService.findByUserId(user!.id);
-            if (!existingProfile) {
-                existingProfile = await this.profilesService.create({
-                    userId: user!.id,
-                    ownerId: user!.ownerId!,
-                    tenantId: user!.tenantId!,
-                    profilePictureUrl: user!.profilePictureUrl || undefined
-                });
-                user!.profile = existingProfile; // VINCULA NO OBJETO EM MEMÓRIA
-            }
-            
-            if (!user!.tags || user!.tags.length === 0) {
-                const newTag = await this.tagsService.createDefaultTag(
-                    user!.id,
-                    user!.ownerId!,
-                    user!.tenantId!
-                );
-                user!.tags = [newTag]; // VINCULA NO OBJETO EM MEMÓRIA
-            }
-        }
 
         const cleanItems = (items: any[]) => items.map(item => {
             const { id: itemId, ...rest } = item;
