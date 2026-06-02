@@ -39,6 +39,11 @@ export class UserSeedService {
     const salt = await bcrypt.genSalt();
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    // Garante extração segura do tenantId
+    const adminTenantId = admin.memberships && admin.memberships.length > 0 
+        ? admin.memberships[0].tenantId 
+        : 'aebfbdfa-0088-4bf1-9bee-36529cfc3866'; // TIWEB_ID como fallback
+
     for (const [index, userData] of usersData.entries()) {
       const emailBase = userData.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f|]/g, "").replace(/\s+/g, '-');
       const email = `${emailBase}@smartcontact.tiweb.app.br`;
@@ -63,7 +68,7 @@ export class UserSeedService {
         isActive: true,
         ownerId: admin.id, 
         phones: [
-            { number: randomPhone, isWhatsapp: Math.random() > 0.3, isMain: true, ownerId: admin.id, tenantId: admin.memberships[0].tenantId }
+            { number: randomPhone, isWhatsapp: Math.random() > 0.3, isMain: true, ownerId: admin.id, tenantId: adminTenantId }
         ],
         addresses: [
             {
@@ -76,7 +81,7 @@ export class UserSeedService {
                 tag: 'HOME' as any,
                 isMain: true,
                 ownerId: admin.id,
-                tenantId: admin.memberships[0].tenantId
+                tenantId: adminTenantId
             }
         ]
       };
@@ -86,7 +91,7 @@ export class UserSeedService {
         // Passa o admin como currentUser para herdar o tenantId
         user = await this.usersService.create(data as any, { 
             sub: admin.id, 
-            tenantId: admin.memberships[0].tenantId 
+            tenantId: adminTenantId 
         });
         this.logger.log(`Usuário '${userData.name}' criado via UsersService.`);
       } else {
@@ -104,7 +109,7 @@ export class UserSeedService {
               uuid: `test-tag-${emailBase}`,
               userId: user.id,
               ownerId: admin.id,
-              tenantId: admin.memberships[0].tenantId,
+              tenantId: adminTenantId,
               nfcRedirectMode: RedirectMode.PROFILE,
               qrRedirectMode: RedirectMode.PROFILE,
               isActive: true
