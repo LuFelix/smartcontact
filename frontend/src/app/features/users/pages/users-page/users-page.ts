@@ -5,7 +5,6 @@ import { FormControl, FormGroup, ReactiveFormsModule, FormBuilder } from '@angul
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { UserDetailsModalComponent,UserModalData } from '../../../admin/components/user-details/user-details-modal.component';
-import { PromotionDialogComponent } from '../../../admin/components/promotion-dialog/promotion-dialog';
 import { CommonModule } from '@angular/common'; 
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -178,31 +177,6 @@ export class UsersPage implements OnInit {
         this.snackBar.open('Usuário atualizado com sucesso!', 'OK', { duration: 3000 });
       }
     });
-  }
-
-  onPromoteUser(user: User): void {
-      const dialogRef = this.dialog.open(PromotionDialogComponent, {
-          width: '500px',
-          data: { user }
-      });
-
-      dialogRef.afterClosed().subscribe(roleId => {
-          if (roleId) {
-              this.isLoading = true;
-              this.userService.promoteToTeam(user.id, roleId)
-                  .pipe(finalize(() => this.isLoading = false))
-                  .subscribe({
-                      next: () => {
-                          this.snackBar.open(`${user.name} promovido para a equipe com sucesso!`, 'OK', { duration: 3000 });
-                          this.loadUsers();
-                      },
-                      error: (err) => {
-                          console.error(err);
-                          this.snackBar.open('Erro ao promover usuário.', 'Fechar');
-                      }
-                  });
-          }
-      });
   }
 
   deleteUser(user: User): void {

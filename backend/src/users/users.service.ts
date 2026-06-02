@@ -260,15 +260,33 @@ export class UsersService {
         const isSystemAdmin = currentUser?.isSuperAdmin;
         const isTenantAdmin = currentUser?.role === 'administrador';
 
-        if (!isSystemAdmin && currentUser?.tenantId && user.tenantId !== currentUser?.tenantId) {
+        // REGRA DE PROMOÇÃO: Se um Admin de Tenant está editando um Lead (sem profile) 
+        // e atribuindo uma nova Role (diferente de contato), permitimos a promoção.
+        let isPromotingLead = false;
+        
+        if (isTenantAdmin && !user.profile && updateUserDto.roleId) {
+            // Busca a role pretendida para checar o nome
+            const targetRole = await this.rolesService.findOne(updateUserDto.roleId, currentUser);
+            if (targetRole && targetRole.name?.toLowerCase() !== 'contato') {
+                isPromotingLead = true;
+            }
+        }
+
+        if (!isSystemAdmin && !isPromotingLead && currentUser?.tenantId && user.tenantId !== currentUser?.tenantId) {
              throw new BadRequestException('Acesso negado: Este usuário pertence a outra organização.');
         }
 
         const isOwner = user.ownerId === currentUser?.sub;
         const isOwnProfile = user.id === currentUser?.sub;
 
-        if (!isSystemAdmin && !isOwner && !isOwnProfile && !isTenantAdmin) {
+        if (!isSystemAdmin && !isPromotingLead && !isOwner && !isOwnProfile) {
              throw new BadRequestException('Você não tem permissão para editar este usuário.');
+        }
+
+        // Se estiver promovendo o lead, vincula ele ao tenant do admin que está promovendo
+        if (isPromotingLead) {
+            user!.tenantId = currentUser.tenantId;
+            user!.ownerId = currentUser.sub;
         }
 
         if (updateUserDto.email && updateUserDto.email !== user!.email) {
@@ -292,6 +310,30 @@ export class UsersService {
 
         const { roleId, phones, addresses, secondaryEmails, links, tags, ...userUpdateData } = updateUserDto;
         this.usersRepository.merge(user!, userUpdateData);
+
+        // Se estiver promovendo o lead, além de mudar o tenantId (feito acima), 
+        // agora forçamos a criação do Profile e da Tag caso não existam.
+        if (isPromotingLead) {
+            let existingProfile = await this.profilesService.findByUserId(user!.id);
+            if (!existingProfile) {
+                existingProfile = await this.profilesService.create({
+                    userId: user!.id,
+                    ownerId: user!.ownerId!,
+                    tenantId: user!.tenantId!,
+                    profilePictureUrl: user!.profilePictureUrl || undefined
+                });
+                user!.profile = existingProfile; // VINCULA NO OBJETO EM MEMÓRIA
+            }
+            
+            if (!user!.tags || user!.tags.length === 0) {
+                const newTag = await this.tagsService.createDefaultTag(
+                    user!.id,
+                    user!.ownerId!,
+                    user!.tenantId!
+                );
+                user!.tags = [newTag]; // VINCULA NO OBJETO EM MEMÓRIA
+            }
+        }
 
         const cleanItems = (items: any[]) => items.map(item => {
             const { id: itemId, ...rest } = item;
@@ -335,62 +377,6 @@ export class UsersService {
 
     async updateProfilePicture(userId: string, pictureUrl: string): Promise<void> {
         await this.usersRepository.update(userId, { profilePictureUrl: pictureUrl });
-    }
-
-    async promoteToTeam(id: string, roleId: string, currentUser: any): Promise<User> {
-        const user = await this.usersRepository.findOne({
-            where: { id },
-            relations: ['role', 'profile', 'tags']
-        });
-
-        if (!user) {
-            throw new NotFoundException(`Usuário com ID ${id} não encontrado`);
-        }
-
-        const isTenantAdmin = currentUser?.role === 'administrador';
-        if (!currentUser?.isSuperAdmin && !isTenantAdmin) {
-             throw new BadRequestException('Apenas administradores podem promover usuários.');
-        }
-
-        const targetRole = await this.rolesService.findOne(roleId, currentUser);
-        if (!targetRole) {
-            throw new BadRequestException('Cargo inválido.');
-        }
-
-        if (targetRole.name?.toLowerCase() === 'contato') {
-            throw new BadRequestException('Não é possível promover um membro para a função de contato. Escolha um cargo de equipe.');
-        }
-
-        // Promover vincula o usuário ao tenant do administrador (caso ainda não esteja)
-        user.tenantId = currentUser.tenantId;
-        user.ownerId = currentUser.sub;
-        user.role = targetRole;
-
-        // Força a criação do Profile
-        let existingProfile = await this.profilesService.findByUserId(user.id);
-        if (!existingProfile) {
-            existingProfile = await this.profilesService.create({
-                userId: user.id,
-                ownerId: user.ownerId!,
-                tenantId: user.tenantId!,
-                profilePictureUrl: user.profilePictureUrl || undefined
-            });
-            user.profile = existingProfile;
-        }
-
-        // Força a criação da Tag
-        if (!user.tags || user.tags.length === 0) {
-            const newTag = await this.tagsService.createDefaultTag(
-                user.id,
-                user.ownerId!,
-                user.tenantId!
-            );
-            user.tags = [newTag];
-        }
-
-        await this.usersRepository.save(user);
-
-        return this.findByEmail(user.email) as Promise<User>;
     }
 
     async setVerificationData(userId: string, code: string, expires: Date): Promise<void> {

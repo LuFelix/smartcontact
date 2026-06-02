@@ -416,6 +416,20 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
             return;
         }
 
+        // --- LÓGICA DE PROMOÇÃO (UX) ---
+        // Só pedimos confirmação se a Role foi alterada (dirty) E a role original era 'contato'.
+        const wasContact = this.user?.role?.name?.toLowerCase() === 'contato';
+        const isRoleChanged = this.roleIdControl.dirty;
+
+        if (!this.data.isCreation && wasContact && isRoleChanged && this.roleIdControl.value) {
+            const confirmed = confirm(
+                'Você está prestes a PROMOVER este contato para sua EQUIPE.\n\n' +
+                'Isso criará um perfil real e permitirá que você delegue recursos a ele. ' +
+                'Deseja continuar?'
+            );
+            if (!confirmed) return;
+        }
+
         this.isSaving = true;
         const rawData = this.userForm.getRawValue();
         const { tagSettings, name, email, cpf, isActive, roleId, password } = rawData;

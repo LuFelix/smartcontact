@@ -77,16 +77,4 @@ export class UsersController {
         return this.usersService.update(id, updateUserDto, currentUser); 
     }
 
-    @Post(':id/promote')
-    @Roles('administrador')
-    @ApiOperation({ summary: 'Promover contato para membro da equipe' })
-    @ApiParam({ name: 'id', type: String })
-    @ApiBody({ schema: { type: 'object', properties: { roleId: { type: 'string' } } } })
-    async promoteToTeam(
-        @Param('id', ParseUUIDPipe) id: string,
-        @Body('roleId') roleId: string,
-        @GetUser() currentUser: any
-    ) {
-        return this.usersService.promoteToTeam(id, roleId, currentUser);
-    }
 }

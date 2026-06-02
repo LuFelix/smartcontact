@@ -63,10 +63,6 @@ export class UserService {
     return this.http.patch<User>(`${this.ITEM_PATH}/${userId}/role`, { roleName });
   }
 
-  promoteToTeam(userId: string, roleId: string): Observable<User> {
-    return this.http.post<User>(`${this.ITEM_PATH}/${userId}/promote`, { roleId });
-  }
-
   deleteUser(id: string): Observable<void> {
     return this.http.delete<void>(`${this.ITEM_PATH}/${id}`);
   }

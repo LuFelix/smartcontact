@@ -67,15 +67,6 @@
             }
           }
 
-          @if (authService.hasRole('administrador') && !isTeamMember(user)) {
-            <button mat-icon-button color="primary" 
-                    class="icon-align-fix"
-                    (click)="promoteUser.emit(user)" 
-                    matTooltip="Promover para Equipe">
-                <mat-icon>group_add</mat-icon>
-            </button>
-          }
-
           <button mat-icon-button 
                   class="action-button-favorite icon-align-fix"
                   (click)="toggleFavorite(user)" 
