@@ -417,9 +417,11 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
         }
 
         // --- LÓGICA DE PROMOÇÃO (UX) ---
-        // Se é uma edição, o usuário não tem perfil (é um Lead) e foi selecionada uma Role,
-        // pedimos confirmação para evitar "adoções" acidentais.
-        if (!this.data.isCreation && !this.user?.profile && this.roleIdControl.value) {
+        // Só pedimos confirmação se a Role foi alterada (dirty) E a role original era 'contato'.
+        const wasContact = this.user?.role?.name?.toLowerCase() === 'contato';
+        const isRoleChanged = this.roleIdControl.dirty;
+
+        if (!this.data.isCreation && wasContact && isRoleChanged && this.roleIdControl.value) {
             const confirmed = confirm(
                 'Você está prestes a PROMOVER este contato para sua EQUIPE.\n\n' +
                 'Isso criará um perfil real e permitirá que você delegue recursos a ele. ' +
