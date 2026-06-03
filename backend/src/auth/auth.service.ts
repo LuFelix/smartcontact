@@ -82,7 +82,7 @@ export class AuthService {
 
     try {
       await this.mailerService.sendMail({
-      to: user.email,
+      to: user.email as string,
       subject: 'Seu código de verificação',
       text: `Olá ${user.name}, seu código de verificação é: ${code}.`,
     });
@@ -95,7 +95,7 @@ export class AuthService {
        }
   }
 
-  return user.email;
+  return user.email as string;
     
 }
   async verifyEmailCode(email: string, code: string): Promise<{ message: string }> {

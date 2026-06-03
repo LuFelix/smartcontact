@@ -183,7 +183,7 @@ export class UsersService {
         });
 
         // RETORNA O USUÁRIO COMPLETO COM RELAÇÕES CARREGADAS
-        return this.findByEmail(savedUser.email) as Promise<User>;
+        return this.findByEmail(savedUser.email as string) as Promise<User>;
     }
 
     private injectLegacyProps(user: User | null, currentUser?: any): User | null {
@@ -418,7 +418,7 @@ export class UsersService {
 
         await this.usersRepository.save(user!);
 
-        const updatedUser = await this.findByEmail(user!.email, currentUser); console.log(`[DEBUG] Final Role in response: ${updatedUser?.memberships?.[0]?.role?.name}`); return updatedUser as User;
+        const updatedUser = await this.findByEmail(user!.email as string, currentUser); console.log(`[DEBUG] Final Role in response: ${updatedUser?.memberships?.[0]?.role?.name}`); return updatedUser as User;
     }
 
     async updateProfilePicture(userId: string, pictureUrl: string): Promise<void> {
