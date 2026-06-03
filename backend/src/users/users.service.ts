@@ -175,37 +175,49 @@ export class UsersService {
         return this.findByEmail(savedUser.email) as Promise<User>;
     }
 
-    private injectLegacyProps(user: User | null): User | null {
-        if (user) {
-            const activeMembership = user.memberships?.[0];
+    private injectLegacyProps(user: User | null, currentUser?: any): User | null {
+        if (user && user.memberships && user.memberships.length > 0) {
+            let activeMembership = user.memberships[0]; // fallback
+            
+            // Se tiver currentUser, tenta buscar a membership no tenant desse admin/contexto
+            if (currentUser?.tenantId) {
+                const tenantMembership = user.memberships.find(m => m.tenantId === currentUser.tenantId);
+                if (tenantMembership) {
+                    activeMembership = tenantMembership;
+                }
+            }
+
             (user as any).role = activeMembership?.role;
             (user as any).tenantId = activeMembership?.tenantId;
+            if (!user.profile && activeMembership?.profile) {
+                user.profile = activeMembership.profile;
+            }
         }
         return user;
     }
 
-    async findByCpf(cpf: string): Promise<User | null> {
+    async findByCpf(cpf: string, currentUser?: any): Promise<User | null> {
         const user = await this.usersRepository.findOne({ 
             where: { cpf }, 
-            relations: ['memberships', 'memberships.role', 'phones', 'addresses', 'tags', 'profile'] 
+            relations: ['memberships', 'memberships.role', 'memberships.profile', 'phones', 'addresses', 'tags', 'profile'] 
         });
-        return this.injectLegacyProps(user);
+        return this.injectLegacyProps(user, currentUser);
     }
 
-    async findByEmail(email: string): Promise<User | null> {
+    async findByEmail(email: string, currentUser?: any): Promise<User | null> {
         const user = await this.usersRepository.findOne({ 
             where: { email }, 
-            relations: ['memberships', 'memberships.role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile'] 
+            relations: ['memberships', 'memberships.role', 'memberships.profile', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile'] 
         });
-        return this.injectLegacyProps(user);
+        return this.injectLegacyProps(user, currentUser);
     }
 
-    async findByUsername(username: string): Promise<User | null> {
+    async findByUsername(username: string, currentUser?: any): Promise<User | null> {
         const user = await this.usersRepository.findOne({ 
             where: { username }, 
-            relations: ['memberships', 'memberships.role', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile'] 
+            relations: ['memberships', 'memberships.role', 'memberships.profile', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile'] 
         });
-        return this.injectLegacyProps(user);
+        return this.injectLegacyProps(user, currentUser);
     }
 
     async findById(userId: string, currentUser?: any): Promise<User | null> {
@@ -268,7 +280,7 @@ export class UsersService {
             skip,
             take: limit ?? undefined,
             where,
-            relations: ['memberships', 'memberships.role', 'memberships.tenant', 'memberships.profile', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'tagAccesses', 'tagAccesses.tag'],
+            relations: ['memberships', 'memberships.role', 'memberships.tenant', 'memberships.profile', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile', 'tagAccesses', 'tagAccesses.tag'],
         };
 
         const [users, total] = await this.usersRepository.findAndCount(findOptions);
@@ -283,6 +295,9 @@ export class UsersService {
             // Injeta propriedades de compatibilidade legada para o frontend
             (user as any).role = activeMembership?.role;
             (user as any).tenantId = activeMembership?.tenantId;
+            if (!user.profile && activeMembership?.profile) {
+                user.profile = activeMembership.profile;
+            }
 
             if (isSystemAdmin || isOwnProfile || isOwner || isTenantAdmin) {
                 return user; 
@@ -339,8 +354,10 @@ export class UsersService {
         // --- ATUALIZAÇÃO DE ROLE (Via Membership) ---
         if (updateUserDto.roleId) {
             const membership = user.memberships?.find(m => m.tenantId === targetTenantId);
+            console.log(`[DEBUG] Update Role: targetTenantId=${targetTenantId}, foundMembership=${!!membership}, newRoleId=${updateUserDto.roleId}`);
             if (membership) {
                 await this.membershipsService.updateRole(user.id, targetTenantId, updateUserDto.roleId);
+                console.log(`[DEBUG] Role updated successfully via membershipsService.`);
             } else if (isTenantAdmin || isSystemAdmin) {
                 // Se não tem membership mas o admin está editando, criamos o vínculo
                 await this.membershipsService.create({
@@ -348,6 +365,9 @@ export class UsersService {
                     tenantId: targetTenantId,
                     roleId: updateUserDto.roleId
                 });
+                console.log(`[DEBUG] New membership created successfully.`);
+            } else {
+                console.log(`[DEBUG] Could not update role: User is not admin and membership not found.`);
             }
         }
 
@@ -387,7 +407,7 @@ export class UsersService {
 
         await this.usersRepository.save(user!);
 
-        return this.findByEmail(user!.email) as Promise<User>;
+        const updatedUser = await this.findByEmail(user!.email, currentUser); console.log(`[DEBUG] Final Role in response: ${updatedUser?.memberships?.[0]?.role?.name}`); return updatedUser as User;
     }
 
     async updateProfilePicture(userId: string, pictureUrl: string): Promise<void> {
@@ -430,8 +450,7 @@ export class UsersService {
         const membership = user.memberships?.find(m => m.tenantId === tenantId);
         if (membership?.profileId) {
             await this.profilesService.removeByUserId(user.id);
-            // O MembershipsService deve ser atualizado para limpar o profileId ou o removeByUserId deve lidar com isso.
-            // Por simplicidade aqui, vamos apenas desvincular o profile do membership se possível.
+            await this.membershipsService.updateProfileId(user.id, tenantId, null);
         }
     }
 
