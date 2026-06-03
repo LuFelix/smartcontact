@@ -26,7 +26,9 @@
                     <mat-icon>edit</mat-icon>
                 </button>
                 
-                @if (role.name !== 'administrador' && role.name !== 'usuario') {
+                @if (role.name.toLowerCase().trim() !== 'administrador' && 
+                     role.name.toLowerCase().trim() !== 'usuario' && 
+                     role.name.toLowerCase().trim() !== 'contato') {
                     <button mat-icon-button color="warn" (click)="deleteRole.emit(role)" matTooltip="Excluir">
                         <mat-icon>delete_outline</mat-icon>
                     </button>

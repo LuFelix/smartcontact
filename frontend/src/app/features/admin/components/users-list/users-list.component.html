@@ -11,7 +11,7 @@
         <mat-card-header>
           <div mat-card-avatar class="user-avatar-container" [style.background-color]="getAvatarColor(user.name)">
             @if (getAvatar(user); as avatarUrl) {
-                <img [src]="avatarUrl" (error)="handleImageError($event)">
+                <img [src]="avatarUrl" (error)="handleImageError($event)" referrerpolicy="no-referrer">
             }
             <span class="letter-placeholder">{{ getInitial(user.name) }}</span>
           </div>
