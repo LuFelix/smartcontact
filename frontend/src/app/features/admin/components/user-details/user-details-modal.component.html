@@ -1,7 +1,7 @@
 <h2 mat-dialog-title class="flex items-center gap-3">
     <div class="header-avatar" [style.background-color]="getAvatarColor()">
         @if (getAvatar(); as avatarUrl) {
-            <img [src]="avatarUrl" (error)="handleImageError($event)">
+            <img [src]="avatarUrl" (error)="handleImageError($event)" referrerpolicy="no-referrer">
         }
         <span class="letter-placeholder">{{ getInitial() }}</span>
     </div>

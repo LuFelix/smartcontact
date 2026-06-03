@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, Index } from 'typeorm';
-import { User } from 'src/users/entities/user.entity';
+import { Membership } from '../../memberships/entities/membership.entity';
 
 @Entity('tenants')
 export class Tenant {
@@ -15,6 +15,9 @@ export class Tenant {
 
   @Column({ default: true })
   isActive!: boolean;
+
+  @OneToMany(() => Membership, (membership) => membership.tenant)
+  memberships!: Membership[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

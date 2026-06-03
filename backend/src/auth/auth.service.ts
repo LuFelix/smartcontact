@@ -7,6 +7,7 @@ import { ProfilesService } from 'src/profiles/profiles.service';
 import { TeamService } from 'src/team/team.service';
 import { RolesService } from 'src/roles/roles.service';
 import { TenantsService } from 'src/tenants/tenants.service';
+import { MembershipsService } from 'src/memberships/memberships.service';
 import { LoginDto, MinimalRegisterDto } from './dto/auth.dto';
 import { GoogleLoginDto } from './dto/google-token.dto';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -26,6 +27,7 @@ export class AuthService {
     private readonly mailerService: MailerService,
     private readonly rolesService: RolesService,
     private readonly tenantsService: TenantsService,
+    private readonly membershipsService: MembershipsService,
     @Inject(forwardRef(() => TeamService))
     private readonly teamService: TeamService
     
@@ -40,23 +42,8 @@ export class AuthService {
    const expires = new Date();
    expires.setMinutes(expires.getMinutes() + 15);
 
-   let tenantId = uuidv4();
-
-   // SE NÃO HOUVER CONVITE, CRIAMOS UM NOVO TENANT NO BANCO
-   if (!registerDto.invitationToken) {
-       const tenantName = `${registerDto.name}'s Workspace`;
-       const tenantSlug = `ws-${uuidv4().substring(0, 8)}`;
-       const newTenant = await this.tenantsService.create(tenantName, tenantSlug);
-       tenantId = newTenant.id;
-       console.log(`[AuthService] Novo Tenant criado: ${tenantId}`);
-   }
-   
-   // BUSCA DINÂMICA DA ROLE DE ADMINISTRADOR
-   const adminRole = await this.rolesService.findOneByName('administrador');
-   if (!adminRole) {
-       throw new InternalServerErrorException('Configuração de sistema incompleta: Role administrador não encontrada.');
-   }
-   let roleId = adminRole.id;
+   let tenantId: string | null = null;
+   let roleId: string | null = null;
 
    // 2. Se houver token de convite, resolvemos para pegar o Tenant e Role de destino
    if (registerDto.invitationToken) {
@@ -65,12 +52,16 @@ export class AuthService {
            tenantId = invitation.tenantId;
            roleId = invitation.roleId;
        } catch (error) {
-           console.warn(`[AuthService] Convite inválido ou expirado ignorado: ${registerDto.invitationToken}`);
-           // Se o convite for inválido, seguimos com a criação de um novo tenant para não travar o cadastro?
-           // Ou barramos? O usuário disse: "os que não existem deveria ser passada a informação".
-           // Mas aqui é sobre o token. Se o token falhar, talvez devêssemos avisar.
+           console.warn(`[AuthService] Convite inválido ou expirado: ${registerDto.invitationToken}`);
            throw new BadRequestException('O convite utilizado é inválido ou expirou.');
        }
+   } else {
+       // BUSCA DINÂMICA DA ROLE DE ADMINISTRADOR para novo tenant pessoal (criado no UsersService)
+       const adminRole = await this.rolesService.findOneByName('administrador');
+       if (!adminRole) {
+           throw new InternalServerErrorException('Configuração de sistema incompleta: Role administrador não encontrada.');
+       }
+       roleId = adminRole.id;
    }
 
    const createUserDto = {
@@ -80,12 +71,12 @@ export class AuthService {
        roleId: roleId
    };
 
-    const newTenantContext = {
-        tenantId: tenantId,
+    const registrationContext = {
+        tenantId: tenantId, // Se null, UsersService cuidará de criar um pessoal
         sub: null 
     };
 
-    const user = await this.usersService.create(createUserDto, newTenantContext);
+    const user = await this.usersService.create(createUserDto, registrationContext);
 
     await this.usersService.setVerificationData(user.id, code, expires);
 
@@ -157,14 +148,17 @@ export class AuthService {
         throw new UnauthorizedException('Por favor, verifique seu e-mail antes de acessar o sistema.');
       }
 
+      // Escolhe o workspace ativo (por enquanto o primeiro da lista)
+      const activeMembership = user.memberships && user.memberships.length > 0 ? user.memberships[0] : null;
+
       const payload = { 
           sub: user.id, 
           name: user.name, 
           email: user.email, 
           username: user.username,
-          role: user.role?.name || 'usuario',
+          role: activeMembership?.role?.name || 'usuario',
           ownerId: user.ownerId,
-          tenantId: user.tenantId,
+          tenantId: activeMembership?.tenantId || null,
           isSuperAdmin: user.isSuperAdmin,
           picture: user.profile?.profilePictureUrl
       };
@@ -186,7 +180,6 @@ export class AuthService {
     try {
       const { token, accessToken } = loginDto;
       
-      // Valida o token com o servidor do Google
       const ticket = await this.googleClient.verifyIdToken({
         idToken: token,
         audience: process.env.GOOGLE_CLIENT_ID,
@@ -197,19 +190,11 @@ export class AuthService {
         throw new UnauthorizedException('Token do Google inválido');
       }
 
-      // Busca o usuário no banco (pelo e-mail que o Google garantiu que é dele)
       let user = await this.usersService.findByEmail(payloadGoogle.email);
 
-      // Se o usuário não existe, faz o "Silent Registration"
       if (!user) {
-        let tenantId = uuidv4();
-        
-        // BUSCA DINÂMICA DA ROLE DE ADMINISTRADOR
-        const adminRole = await this.rolesService.findOneByName('administrador');
-        if (!adminRole) {
-            throw new InternalServerErrorException('Configuração de sistema incompleta: Role administrador não encontrada.');
-        }
-        let roleId = adminRole.id;
+        let tenantId: string | null = null;
+        let roleId: string | null = null;
 
         if (loginDto.invitationToken) {
             try {
@@ -217,62 +202,60 @@ export class AuthService {
                 tenantId = invitation.tenantId;
                 roleId = invitation.roleId;
             } catch (error) {
-                console.warn(`[AuthService Google] Convite inválido ignorado: ${loginDto.invitationToken}`);
+                console.warn(`[AuthService Google] Convite inválido: ${loginDto.invitationToken}`);
             }
-        } else {
-            // SE NÃO HOUVER CONVITE, CRIAMOS UM NOVO TENANT NO BANCO
-            const tenantName = `${payloadGoogle.name}'s Workspace (Google)`;
-            const tenantSlug = `google-${uuidv4().substring(0, 8)}`;
-            const newTenant = await this.tenantsService.create(tenantName, tenantSlug);
-            tenantId = newTenant.id;
-            console.log(`[AuthService Google] Novo Tenant criado: ${tenantId}`);
+        }
+
+        if (!roleId) {
+            const adminRole = await this.rolesService.findOneByName('administrador');
+            if (!adminRole) {
+                throw new InternalServerErrorException('Configuração de sistema incompleta: Role administrador não encontrada.');
+            }
+            roleId = adminRole.id;
         }
 
         const newUserContext = {
-            tenantId: tenantId,
+            tenantId: tenantId, // Se null, criará um pessoal
             sub: null
         };
         
         user = await this.usersService.create({
           email: payloadGoogle.email,
           name: payloadGoogle.name || 'Usuário Google',
-          password: Math.random().toString(36).slice(-10), // Senha aleatória "dummy"
+          password: Math.random().toString(36).slice(-10),
           roleId: roleId
         }, newUserContext, payloadGoogle.picture);
 
-        // Como o Google já validou o e-mail, marcamos como verificado direto
         await this.usersService.markEmailAsVerified(user.id);
-        
-        // Recarrega o usuário para pegar as roles/relações corretamente
         user = await this.usersService.findByEmail(payloadGoogle.email);
       } else {
-          // Se o usuário já existe, sincroniza o perfil e o avatar
-          
-          // 1. SYNC NO USER (Direto via repositório para evitar side-effects de promoção no service)
           if (payloadGoogle.picture && user.profilePictureUrl !== payloadGoogle.picture) {
               await this.usersService.updateProfilePicture(user.id, payloadGoogle.picture);
           }
 
-          // 2. SYNC NO PROFILE
           let profile = await this.profilesService.findByUserId(user.id);
-          if (!profile) {
+          
+          // Se já tem membership mas não tem profile, criamos no primeiro membership disponível
+          if (!profile && user.memberships && user.memberships.length > 0) {
+              const m = user.memberships[0];
               profile = await this.profilesService.create({
                   userId: user.id,
                   ownerId: user.ownerId!,
-                  tenantId: user.tenantId!,
+                  tenantId: m.tenantId,
                   profilePictureUrl: payloadGoogle.picture
               });
-          } else if (payloadGoogle.picture && profile.profilePictureUrl !== payloadGoogle.picture) {
+              // Atualiza o membership para referenciar o profile recém-criado
+              await this.membershipsService.updateProfileId(user.id, m.tenantId, profile.id);
+          }
+
+          if (profile && payloadGoogle.picture && profile.profilePictureUrl !== payloadGoogle.picture) {
               await this.profilesService.update(user.id, { profilePictureUrl: payloadGoogle.picture });
           }
 
-          // Se o usuário já existe mas não tem Tag (correção de botão sumido)
           if (!user.tags || user.tags.length === 0) {
               await this.usersService.ensureHasDefaultTag(user);
           }
 
-          // RECARREGA O USUÁRIO para garantir que o profile (e a nova foto) 
-          // entrem no payload do JWT abaixo
           user = await this.usersService.findByEmail(payloadGoogle.email);
       }
 
@@ -280,18 +263,17 @@ export class AuthService {
         throw new InternalServerErrorException('Erro ao processar ou criar usuário via Google');
       }
       
-      // PRIORIDADE DE FOTO PARA O JWT: Profile -> User Column -> Google Token (Fallback final)
       const finalPicture = user.profile?.profilePictureUrl || user.profilePictureUrl || payloadGoogle.picture;
+      const activeMembership = user.memberships && user.memberships.length > 0 ? user.memberships[0] : null;
 
-      // Gera o JWT com o MESMO payload do seu login por senha
       const payload = { 
         sub: user.id, 
         name: user.name, 
         email: user.email, 
         username: user.username,
-        role: user.role?.name || 'USER', 
+        role: activeMembership?.role?.name || 'usuario', 
         ownerId: user.ownerId,
-        tenantId: user.tenantId,
+        tenantId: activeMembership?.tenantId || null,
         isSuperAdmin: user.isSuperAdmin,
         picture: finalPicture
       };
@@ -301,12 +283,8 @@ export class AuthService {
       };
 
     } catch (error: unknown) {
-        // 1. Verificamos se o erro é uma instância de Error para acessar .message
         const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-        
         console.error('[AuthService Google] Erro:', errorMessage);
-
-        // 2. Lançamos a exceção do NestJS
         throw new UnauthorizedException('Falha na autenticação com Google');
     }
   }

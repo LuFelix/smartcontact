@@ -144,10 +144,10 @@ export class RolesService {
     async update(id: string, updateRoleDto: UpdateRoleDto, currentUser: any): Promise<Role> {
         const existingRole = await this.findOne(id, currentUser);
 
-        // 1. Proteção contra alteração de roles do sistema
+        // 1. Proteção contra alteração de roles do sistema (hardcoded)
         if (this.PROTECTED_ROLES.includes(existingRole.name)) {
             if (updateRoleDto.name && updateRoleDto.name.trim().toLowerCase().replace(/\s+/g, '_') !== existingRole.name) {
-                throw new BadRequestException('As funções estruturais do sistema não podem ser renomeadas.');
+                throw new BadRequestException('As funções de sistema (administrador, usuario, contato) são fixas e não podem ser renomeadas. Apenas a descrição pode ser editada.');
             }
         }
 
@@ -200,9 +200,9 @@ export class RolesService {
              throw new BadRequestException('Acesso negado: Esta função pertence a outra organização.');
         }
 
-        // 2. Proteção de roles do sistema
+        // 2. Proteção de roles do sistema (hardcoded)
         if (this.PROTECTED_ROLES.includes(role.name)) {
-            throw new BadRequestException('As funções estruturais do sistema não podem ser excluídas.');
+            throw new BadRequestException('As funções de sistema (administrador, usuario, contato) são fixas e não podem ser excluídas.');
         }
 
         // 3. Proteção de Dono
@@ -217,7 +217,7 @@ export class RolesService {
         }
 
         // 5. Reatribuir usuários
-        if (role.users && role.users.length > 0) {
+        if (role.memberships && role.memberships.length > 0) {
             await this.rolesRepository.manager
                 .createQueryBuilder()
                 .update('User')

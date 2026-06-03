@@ -15,6 +15,7 @@ import { TenantsModule } from './tenants/tenants.module';
 import { TeamModule } from './team/team.module';
 import { TagsModule } from './tags/tags.module';
 import { InteractionLogsModule } from './interaction-logs/interaction-logs.module';
+import { MembershipsModule } from './memberships/memberships.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { InteractionLogsModule } from './interaction-logs/interaction-logs.modul
     }),
     AuthModule,
     TenantsModule,
+    MembershipsModule,
     RolesModule,
     UsersModule,
     ProfilesModule,

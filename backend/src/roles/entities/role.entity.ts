@@ -1,5 +1,5 @@
 // roles/entities/role.entity.ts
-import { User } from 'src/users/entities/user.entity';
+import { Membership } from '../../memberships/entities/membership.entity';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, Index } from 'typeorm';
 
 /**
@@ -31,10 +31,10 @@ export class Role {
   description!: string;
 
   /**
-   * Lista de usuários que pertencem a esta 'role'.
+   * Lista de vínculos de membros que utilizam esta 'role'.
    */
-  @OneToMany(() => User, user => user.role)
-  users!: User[];
+  @OneToMany(() => Membership, (membership) => membership.role)
+  memberships!: Membership[];
 
   @Column({ type: 'uuid', name: 'tenant_id', nullable: true })
   @Index()

@@ -11,8 +11,10 @@ import { UserLink } from './entities/user-link.entity';
 import { Tag } from 'src/tags/entities/tag.entity';
 import { UsersController } from './users.controller';
 import { RolesService } from 'src/roles/roles.service';
-import { ProfilesModule } from 'src/profiles/profiles.module';
-import { TagsModule } from 'src/tags/tags.module';
+import { ProfilesModule } from '../profiles/profiles.module';
+import { TagsModule } from '../tags/tags.module';
+import { MembershipsModule } from '../memberships/memberships.module';
+import { TenantsModule } from '../tenants/tenants.module';
 import { GoogleContactsService } from './integrations/google-contacts/google-contacts.service';
 import { GoogleContactsController } from './integrations/google-contacts/google-contacts.controller';
 
@@ -21,6 +23,8 @@ import { GoogleContactsController } from './integrations/google-contacts/google-
     TypeOrmModule.forFeature([User, Role, Phone, Address, UserEmail, UserLink, Tag]),
     ProfilesModule,
     TagsModule,
+    MembershipsModule,
+    TenantsModule,
   ],
   controllers: [UsersController, GoogleContactsController],
   providers: [UsersService, RolesService, GoogleContactsService],

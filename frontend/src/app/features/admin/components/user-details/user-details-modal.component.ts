@@ -423,8 +423,9 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
 
         if (!this.data.isCreation && wasContact && isRoleChanged && this.roleIdControl.value) {
             const confirmed = confirm(
-                'Você está prestes a PROMOVER este contato para sua EQUIPE.\n\n' +
-                'Isso criará um perfil real e permitirá que você delegue recursos a ele. ' +
+                'Você está alterando este contato para um USUÁRIO do sistema.\n\n' +
+                'Isso permitirá que ele faça login na plataforma com os próprios dados, ' +
+                'mas ele continuará sendo um contato isolado e NÃO fará parte da sua equipe comercial.\n\n' +
                 'Deseja continuar?'
             );
             if (!confirmed) return;

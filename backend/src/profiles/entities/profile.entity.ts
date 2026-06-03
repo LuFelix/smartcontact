@@ -35,7 +35,7 @@ export class Profile {
   @Index()
   ownerId!: string | null;
 
-  @OneToOne(() => User)
+  @OneToOne(() => User, user => user.profile)
   @JoinColumn({ name: 'user_id' })
   user!: User;
 

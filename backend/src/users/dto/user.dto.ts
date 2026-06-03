@@ -124,7 +124,7 @@ export class CreateUserDto {
   @ApiProperty({ required: false, example: 'uuid-here' })
   @IsOptional()
   @IsUUID()
-  roleId?: string;
+  roleId?: string | null;
 
   @ApiProperty({ example: true, required: false })
   @IsOptional()
