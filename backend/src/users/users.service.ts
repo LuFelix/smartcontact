@@ -362,26 +362,6 @@ export class UsersService {
             updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
         }
 
-        // --- ATUALIZAÇÃO DE ROLE (Via Membership) ---
-        if (updateUserDto.roleId) {
-            const membership = user.memberships?.find(m => m.tenantId === targetTenantId);
-            console.log(`[DEBUG] Update Role: targetTenantId=${targetTenantId}, foundMembership=${!!membership}, newRoleId=${updateUserDto.roleId}`);
-            if (membership) {
-                await this.membershipsService.updateRole(user.id, targetTenantId, updateUserDto.roleId);
-                console.log(`[DEBUG] Role updated successfully via membershipsService.`);
-            } else if (isTenantAdmin || isSystemAdmin) {
-                // Se não tem membership mas o admin está editando, criamos o vínculo
-                await this.membershipsService.create({
-                    userId: user.id,
-                    tenantId: targetTenantId,
-                    roleId: updateUserDto.roleId
-                });
-                console.log(`[DEBUG] New membership created successfully.`);
-            } else {
-                console.log(`[DEBUG] Could not update role: User is not admin and membership not found.`);
-            }
-        }
-
         const { roleId, phones, addresses, secondaryEmails, links, tags, ...userUpdateData } = updateUserDto;
         this.usersRepository.merge(user!, userUpdateData);
 
@@ -418,7 +398,24 @@ export class UsersService {
 
         await this.usersRepository.save(user!);
 
-        const updatedUser = await this.findByEmail(user!.email as string, currentUser); console.log(`[DEBUG] Final Role in response: ${updatedUser?.memberships?.[0]?.role?.name}`); return updatedUser as User;
+        // --- ATUALIZAÇÃO DE ROLE (Via Membership) ---
+        // Fazemos após o save do usuário para garantir que não haja conflitos de relação em cache
+        if (updateUserDto.roleId) {
+            const membership = user.memberships?.find(m => m.tenantId === targetTenantId);
+            if (membership) {
+                await this.membershipsService.updateRole(user.id, targetTenantId, updateUserDto.roleId);
+            } else if (isTenantAdmin || isSystemAdmin) {
+                await this.membershipsService.create({
+                    userId: user.id,
+                    tenantId: targetTenantId,
+                    roleId: updateUserDto.roleId
+                });
+            }
+        }
+
+        // FORÇA O RECARREGAMENTO TOTAL DO BANCO para garantir que as novas memberships/roles sejam lidas
+        const updatedUser = await this.findByEmail(user!.email as string, currentUser); 
+        return updatedUser as User;
     }
 
     async updateProfilePicture(userId: string, pictureUrl: string): Promise<void> {
