@@ -129,11 +129,11 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
     private initForm(): void {
         this.userForm = this.fb.group({
             name: ['', Validators.required],
-            email: ['', [Validators.required, Validators.email]],
+            email: ['', [Validators.email]], // Removido Validators.required fixo
             cpf: [''],
             password: [
                 '', 
-                this.data.isCreation ? [Validators.required, Validators.minLength(8)] : []
+                this.data.isCreation ? [Validators.minLength(8)] : [] // Senha não obrigatória para contatos
             ],
             isActive: [true],
             roleId: this.roleIdControl,
@@ -411,6 +411,23 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     saveUser(): void {
+        // --- VALIDAÇÃO DINÂMICA DE E-MAIL ---
+        const emailControl = this.userForm.get('email');
+        const passwordValue = this.userForm.get('password')?.value;
+        const roleId = this.roleIdControl.value;
+        
+        // Se houver intenção de criar conta real (com senha) ou atribuir cargo administrativo/sistema, o e-mail é obrigatório.
+        // Como o ID da role pode variar, verificamos se há algum cargo selecionado que não seja a role atual se for 'contato'.
+        const isPromoting = this.roleIdControl.dirty && this.user?.role?.name?.toLowerCase() === 'contato';
+        const isCreatingWithPassword = this.data.isCreation && passwordValue && passwordValue.length > 0;
+
+        if (isCreatingWithPassword || isPromoting) {
+            emailControl?.setValidators([Validators.required, Validators.email]);
+        } else {
+            emailControl?.setValidators([Validators.email]);
+        }
+        emailControl?.updateValueAndValidity();
+
         if (this.userForm.invalid) {
             this.userForm.markAllAsTouched();
             return;
