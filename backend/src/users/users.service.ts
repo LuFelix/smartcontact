@@ -41,12 +41,16 @@ export class UsersService {
      * Resolve colisões adicionando um sufixo numérico.
      */
     async generateUniqueUsername(name: string): Promise<string> {
-        const baseUsername = name
+        let baseUsername = name
             .toLowerCase()
             .normalize("NFD")
             .replace(/[\u0300-\u036f]/g, "") // Remove acentos
             .replace(/[^a-z0-9]/g, "") // Mantém apenas letras e números
             .substring(0, 30); // Limita o tamanho
+
+        if (!baseUsername) {
+            baseUsername = 'user';
+        }
 
         let username = baseUsername;
         let counter = 1;
@@ -72,9 +76,16 @@ export class UsersService {
         let tenantId = currentUser?.tenantId;
         const ownerId = currentUser?.sub || this.TIWEB_ID;
 
-        const emailExists = await this.usersRepository.findOne({ where: { email } });
-        if (emailExists) {
-            throw new BadRequestException('Usuário com este e-mail já existe');
+        if (email) {
+            const emailExists = await this.usersRepository.findOne({ where: { email } });
+            if (emailExists) {
+                throw new BadRequestException('Usuário com este e-mail já existe');
+            }
+        }
+
+        // REGRAS DE INTEGRIDADE: Contas reais (com senha) DEVEM ter e-mail
+        if (password && password.length > 0 && !email) {
+            throw new BadRequestException('Um endereço de e-mail é obrigatório para contas com acesso ao sistema.');
         }
 
         if (cpf === "" || cpf === undefined) {
@@ -88,7 +99,7 @@ export class UsersService {
             }
         }
 
-        const hashedPassword = await bcrypt.hash(password || '', 10);
+        const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
 
         // Se não houver tenant no contexto (auto-cadastro), criamos um novo
         if (!tenantId) {
