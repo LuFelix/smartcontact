@@ -20,15 +20,15 @@ export class User {
     name!: string;
 
     @Index({ unique: true }) 
-    @Column({ length: 100, nullable: false, unique: true })
-    email!: string;
+    @Column({ length: 100, nullable: true, unique: true })
+    email!: string | null;
 
     @Index({ unique: true })
     @Column({ type: 'varchar', length: 11, unique: true, nullable: true }) 
     cpf!: string | null;
 
-    @Column({ type: 'varchar', length: 100, nullable: false })
-    password!: string;
+    @Column({ type: 'varchar', length: 100, nullable: true })
+    password!: string | null;
 
     @CreateDateColumn()
     createdAt!: Date;
