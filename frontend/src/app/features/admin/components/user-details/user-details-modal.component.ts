@@ -450,7 +450,7 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
 
         this.isSaving = true;
         const rawData = this.userForm.getRawValue();
-        const { tagSettings, name, email, cpf, isActive, roleId, password } = rawData;
+        const { tagSettings, name, email, cpf, isActive, password } = rawData;
 
         const payload: any = {
             name,
