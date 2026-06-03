@@ -67,6 +67,25 @@
             }
           }
 
+          @if (authService.hasRole('administrador')) {
+            <!-- Ações de Ciclo de Vida da Equipe -->
+            @if (!isTeamMember(user)) {
+                <button mat-icon-button color="primary" 
+                        class="icon-align-fix"
+                        (click)="promoteUser.emit(user)" 
+                        matTooltip="Adicionar à Equipe">
+                    <mat-icon>person_add</mat-icon>
+                </button>
+            } @else {
+                <button mat-icon-button color="warn" 
+                        class="icon-align-fix"
+                        (click)="deleteUser.emit(user)" 
+                        matTooltip="Remover da Equipe">
+                    <mat-icon>person_remove</mat-icon>
+                </button>
+            }
+          }
+
           <button mat-icon-button 
                   class="action-button-favorite icon-align-fix"
                   (click)="toggleFavorite(user)" 
