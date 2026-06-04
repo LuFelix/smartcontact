@@ -191,14 +191,15 @@ export class UsersPage implements OnInit {
       }
 
       this.isLoading = true;
-      this.userService.promoteToTeam(user.id, 'REMOVE') // TODO: Criar método demote ou usar endpoint específico
+      // Chamamos o endpoint de atualização de cargo para 'usuario' e o backend lidará com a saída da equipe (limpeza de profile)
+      this.userService.updateUserRole(user.id, 'usuario')
           .pipe(finalize(() => this.isLoading = false))
           .subscribe({
               next: () => {
                   this.snackBar.open(`${user.name} removido da equipe com sucesso.`, 'OK', { duration: 3000 });
                   this.loadUsers();
               },
-              error: (err) => {
+              error: (err: any) => {
                   console.error(err);
                   this.snackBar.open('Erro ao remover da equipe.', 'Fechar');
               }
