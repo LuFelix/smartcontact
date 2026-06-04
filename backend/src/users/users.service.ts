@@ -422,7 +422,7 @@ export class UsersService {
         await this.usersRepository.update(userId, { profilePictureUrl: pictureUrl });
     }
 
-    async promoteToTeam(id: string, roleId: string, currentUser: any): Promise<User> {
+    async promoteToTeam(id: string, roleId: string, currentUser: any, email?: string): Promise<User> {
         const user = await this.usersRepository.findOne({
             where: { id },
             relations: ['memberships', 'profile', 'tags']
@@ -447,6 +447,21 @@ export class UsersService {
         }
 
         const targetTenantId = currentUser.tenantId || this.TIWEB_ID;
+
+        // Se informou um novo e-mail (ou o e-mail obrigatório da promoção)
+        if (email) {
+            if (user.email && user.email !== email) {
+                // Checa se o novo e-mail já existe em outro usuário
+                const existing = await this.usersRepository.findOne({ where: { email } });
+                if (existing) throw new BadRequestException('Este e-mail já está em uso por outro usuário.');
+            }
+            user.email = email;
+            user.isVerified = true; // Ao promover manualmente, o admin valida o canal
+        }
+
+        if (!user.email) {
+            throw new BadRequestException('Um endereço de e-mail é obrigatório para promoção à equipe.');
+        }
 
         // Atualiza a Role no membership (ou cria se não existir)
         const membership = user.memberships?.find(m => m.tenantId === targetTenantId);
@@ -482,6 +497,8 @@ export class UsersService {
                 targetTenantId
             );
         }
+
+        await this.usersRepository.save(user);
 
         return this.findByEmail(user.email as string, currentUser) as Promise<User>;
     }
