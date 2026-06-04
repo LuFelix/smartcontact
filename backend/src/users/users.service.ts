@@ -425,7 +425,7 @@ export class UsersService {
     async promoteToTeam(id: string, roleId: string, currentUser: any, email?: string): Promise<User> {
         const user = await this.usersRepository.findOne({
             where: { id },
-            relations: ['memberships', 'profile']
+            relations: ['memberships']
         });
 
         if (!user) {
