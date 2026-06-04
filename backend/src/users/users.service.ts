@@ -425,7 +425,7 @@ export class UsersService {
     async promoteToTeam(id: string, roleId: string, currentUser: any, email?: string): Promise<User> {
         const user = await this.usersRepository.findOne({
             where: { id },
-            relations: ['memberships', 'profile', 'tags']
+            relations: ['memberships', 'profile']
         });
 
         if (!user) {
@@ -456,7 +456,7 @@ export class UsersService {
                 if (existing) throw new BadRequestException('Este e-mail já está em uso por outro usuário.');
             }
             user.email = email;
-            user.isVerified = true; // Ao promover manualmente, o admin valida o canal
+            user.isVerified = true; 
         }
 
         if (!user.email) {
@@ -489,8 +489,9 @@ export class UsersService {
             await this.membershipsService.updateProfileId(user.id, targetTenantId, existingProfile.id);
         }
 
-        // Força a criação da Tag
-        if (!user.tags || user.tags.length === 0) {
+        // Força a criação da Tag (Verificação via Repositório para evitar erros de relação NOT NULL no save(user))
+        const hasTag = await this.tagRepository.findOne({ where: { userId: user.id } });
+        if (!hasTag) {
             await this.tagsService.createDefaultTag(
                 user.id,
                 currentUser.sub,
@@ -498,6 +499,7 @@ export class UsersService {
             );
         }
 
+        // Salva as mudanças no usuário (email e isVerified)
         await this.usersRepository.save(user);
 
         return this.findByEmail(user.email as string, currentUser) as Promise<User>;
