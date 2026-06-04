@@ -422,6 +422,70 @@ export class UsersService {
         await this.usersRepository.update(userId, { profilePictureUrl: pictureUrl });
     }
 
+    async promoteToTeam(id: string, roleId: string, currentUser: any): Promise<User> {
+        const user = await this.usersRepository.findOne({
+            where: { id },
+            relations: ['memberships', 'profile', 'tags']
+        });
+
+        if (!user) {
+            throw new NotFoundException(`Usuário com ID ${id} não encontrado`);
+        }
+
+        const isTenantAdmin = currentUser?.role === 'administrador';
+        if (!currentUser?.isSuperAdmin && !isTenantAdmin) {
+             throw new BadRequestException('Apenas administradores podem promover usuários.');
+        }
+
+        const targetRole = await this.rolesService.findOne(roleId, currentUser);
+        if (!targetRole) {
+            throw new BadRequestException('Cargo inválido.');
+        }
+
+        if (targetRole.name?.toLowerCase() === 'contato') {
+            throw new BadRequestException('Não é possível promover um membro para a função de contato. Escolha um cargo de equipe.');
+        }
+
+        const targetTenantId = currentUser.tenantId || this.TIWEB_ID;
+
+        // Atualiza a Role no membership (ou cria se não existir)
+        const membership = user.memberships?.find(m => m.tenantId === targetTenantId);
+        if (membership) {
+            await this.membershipsService.updateRole(user.id, targetTenantId, targetRole.id);
+        } else {
+            await this.membershipsService.create({
+                userId: user.id,
+                tenantId: targetTenantId,
+                roleId: targetRole.id
+            });
+        }
+
+        // Força a criação do Profile
+        let existingProfile = await this.profilesService.findByUserId(user.id);
+        if (!existingProfile) {
+            existingProfile = await this.profilesService.create({
+                userId: user.id,
+                ownerId: currentUser.sub,
+                tenantId: targetTenantId,
+                profilePictureUrl: user.profilePictureUrl || undefined
+            });
+            
+            // Vincula o profileId no membership
+            await this.membershipsService.updateProfileId(user.id, targetTenantId, existingProfile.id);
+        }
+
+        // Força a criação da Tag
+        if (!user.tags || user.tags.length === 0) {
+            await this.tagsService.createDefaultTag(
+                user.id,
+                currentUser.sub,
+                targetTenantId
+            );
+        }
+
+        return this.findByEmail(user.email as string, currentUser) as Promise<User>;
+    }
+
     async createMembershipForUser(userId: string, tenantId: string, roleId: string, profileId?: string | null): Promise<void> {
         await this.membershipsService.create({
             userId,

@@ -179,6 +179,32 @@ export class UsersPage implements OnInit {
     });
   }
 
+  onPromoteUser(user: User): void {
+      // Para adicionar à equipe, abrimos a modal de detalhes
+      // A modal agora tem lógica para exigir e-mail se mudar para cargo de sistema.
+      this.openUserDetails(user.id);
+  }
+
+  onDemoteUser(user: User): void {
+      if (!confirm(`Tem certeza que deseja remover "${user.name}" da equipe?\nEsta pessoa continuará existindo como seu contato.`)) {
+          return;
+      }
+
+      this.isLoading = true;
+      this.userService.promoteToTeam(user.id, 'REMOVE') // TODO: Criar método demote ou usar endpoint específico
+          .pipe(finalize(() => this.isLoading = false))
+          .subscribe({
+              next: () => {
+                  this.snackBar.open(`${user.name} removido da equipe com sucesso.`, 'OK', { duration: 3000 });
+                  this.loadUsers();
+              },
+              error: (err) => {
+                  console.error(err);
+                  this.snackBar.open('Erro ao remover da equipe.', 'Fechar');
+              }
+          });
+  }
+
   deleteUser(user: User): void {
     if (!confirm(`Tem certeza que deseja excluir o usuário "${user.name}"?`)) {
       return;
