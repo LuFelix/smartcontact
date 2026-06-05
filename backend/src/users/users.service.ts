@@ -460,24 +460,31 @@ export class UsersService {
             throw new BadRequestException('Role administrador não encontrada no sistema.');
         }
 
-        const profile = await this.profilesService.create({
-            userId: user.id,
-            ownerId: user.id, // O próprio usuário é dono do seu tenant
-            tenantId: newTenant.id,
-            profilePictureUrl: user.profilePictureUrl || undefined
-        });
+        let existingProfile = await this.profilesService.findByUserId(user.id);
+        if (!existingProfile) {
+            existingProfile = await this.profilesService.create({
+                userId: user.id,
+                ownerId: user.id, // O próprio usuário é dono do seu tenant
+                tenantId: newTenant.id,
+                profilePictureUrl: user.profilePictureUrl || undefined
+            });
+        }
 
-        await this.tagsService.createDefaultTag(
-            user.id,
-            user.id,
-            newTenant.id
-        );
+        // Verifica e cria a tag apenas se não existir
+        const hasTag = await this.tagRepository.findOne({ where: { userId: user.id } });
+        if (!hasTag) {
+            await this.tagsService.createDefaultTag(
+                user.id,
+                user.id,
+                newTenant.id
+            );
+        }
 
         await this.membershipsService.create({
             userId: user.id,
             tenantId: newTenant.id,
             roleId: adminRole.id,
-            profileId: profile.id
+            profileId: existingProfile.id
         });
 
         return this.findByEmail(user.email as string) as Promise<User>;
