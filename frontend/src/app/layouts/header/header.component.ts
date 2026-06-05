@@ -57,6 +57,7 @@ export class HeaderComponent implements OnInit {
   loadWorkspaces() {
     this.authService.getMyWorkspaces().subscribe({
       next: (data) => {
+        console.log('[Header] Workspaces carregados:', data);
         this.workspaces.set(data);
         // Se houver workspaces mas nenhum ativo, define o primeiro
         if (data.length > 0 && !this.activeTenantId()) {

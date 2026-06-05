@@ -63,42 +63,32 @@ export class InteractionLogsService {
   async findLeadsByOwner(currentUser: any): Promise<InteractionLog[]> {
       const { sub: userId, tenantId, role, isSuperAdmin } = currentUser;
 
+      console.log(`[InteractionLogsService] Buscando leads. Tenant: ${tenantId}. User: ${userId}. Role: ${role}`);
+
+      const queryBuilder = this.interactionLogRepository.createQueryBuilder('log')
+          .leftJoinAndSelect('log.tag', 'tag')
+          .leftJoinAndSelect('tag.user', 'tagUser')
+          .leftJoinAndSelect('log.capturedByUser', 'capturedByUser')
+          .leftJoinAndSelect('capturedByUser.profile', 'capturedProfile')
+          .where('log.interaction_type = :type', { type: InteractionType.LEAD })
+          .orderBy('log.accessedAt', 'DESC');
+
       // 1. Super Admin vê tudo
       if (isSuperAdmin) {
-          return this.interactionLogRepository.find({
-              where: { interactionType: InteractionType.LEAD },
-              relations: ['tag', 'tag.user', 'capturedByUser', 'capturedByUser.profile'],
-              order: { accessedAt: 'DESC' }
-          });
+          return queryBuilder.getMany();
       }
 
       // 2. Admin do Tenant vê todos os leads do seu tenant
       if (role === 'administrador') {
-          return this.interactionLogRepository.find({
-              where: { 
-                  interactionType: InteractionType.LEAD,
-                  tag: { tenantId } 
-              },
-              relations: ['tag', 'tag.user', 'capturedByUser', 'capturedByUser.profile'],
-              order: { accessedAt: 'DESC' }
-          });
+          queryBuilder.andWhere('tag.tenantId = :tenantId', { tenantId });
+          return queryBuilder.getMany();
       }
 
       // 3. Outros (Tutor/Colaborador): Visão restrita (ABAC)
-      // Membros só vêem os leads que ELES mesmos capturaram ou de tags que eles possuem (ownerId)
-      return this.interactionLogRepository.find({
-          where: [
-              { 
-                  interactionType: InteractionType.LEAD,
-                  capturedByUserId: userId
-              },
-              { 
-                  interactionType: InteractionType.LEAD,
-                  tag: { ownerId: userId } 
-              }
-          ],
-          relations: ['tag', 'tag.user', 'capturedByUser', 'capturedByUser.profile'],
-          order: { accessedAt: 'DESC' }
-      });
+      queryBuilder.andWhere(qb => {
+          return '(log.capturedByUserId = :userId OR tag.ownerId = :userId)';
+      }, { userId });
+
+      return queryBuilder.getMany();
   }
 }

@@ -22,7 +22,7 @@
             </button>
             <mat-menu #workspaceMenu="matMenu" class="workspace-menu">
                 <div class="menu-title">Meus Workspaces</div>
-                @for (ws of workspaces(); track ws.id) {
+                @for (ws of workspaces(); track ws.tenantId) {
                     <button mat-menu-item (click)="switchWorkspace(ws.tenantId)" [class.active-ws]="ws.tenantId === activeTenantId()">
                         <div class="ws-item-content">
                             <span class="ws-name">{{ ws.tenant?.name }}</span>

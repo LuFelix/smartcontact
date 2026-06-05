@@ -275,31 +275,48 @@ export class UsersService {
         const tenantId = currentUser?.tenantId || this.TIWEB_ID;
         const isSystemAdmin = currentUser?.isSuperAdmin;
 
-        const where: any = {};
-        
-        // Agora o filtro de tenant é feito através da relação de memberships
+        console.log(`[UsersService] Listando usuários. Tenant solicitado: ${tenantId}. SuperAdmin: ${isSystemAdmin}`);
+
+        const queryBuilder = this.usersRepository.createQueryBuilder('user')
+            .leftJoinAndSelect('user.memberships', 'membership')
+            .leftJoinAndSelect('membership.role', 'role')
+            .leftJoinAndSelect('membership.tenant', 'tenant')
+            .leftJoinAndSelect('membership.profile', 'membershipProfile')
+            .leftJoinAndSelect('user.phones', 'phone')
+            .leftJoinAndSelect('user.addresses', 'address')
+            .leftJoinAndSelect('user.tags', 'tag')
+            .leftJoinAndSelect('user.profile', 'profile')
+            .orderBy('user.name', 'ASC');
+
         if (!isSystemAdmin && tenantId) {
-            where.memberships = { tenantId };
+            // Garante que o usuário listado tenha um vínculo com o tenant solicitado
+            queryBuilder.where(qb => {
+                const subQuery = qb.subQuery()
+                    .select('m.user_id')
+                    .from('memberships', 'm')
+                    .where('m.tenant_id = :tenantId', { tenantId })
+                    .getQuery();
+                return 'user.id IN ' + subQuery;
+            });
         }
 
-        if (name) where.name = ILike(`%${name}%`);
-        if (email) where.email = Like(`%${email}%`);
-        if (cpf) where.cpf = Like(`%${cpf}%`);
+        if (name) {
+            queryBuilder.andWhere('user.name ILIKE :name', { name: `%${name}%` });
+        }
+        if (email) {
+            queryBuilder.andWhere('user.email LIKE :email', { email: `%${email}%` });
+        }
+        if (cpf) {
+            queryBuilder.andWhere('user.cpf LIKE :cpf', { cpf: `%${cpf}%` });
+        }
 
-        const findOptions: FindManyOptions<User> = {
-            order: { name: 'ASC' },
-            skip,
-            take: limit ?? undefined,
-            where,
-            relations: ['memberships', 'memberships.role', 'memberships.tenant', 'memberships.profile', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile', 'tagAccesses', 'tagAccesses.tag'],
-        };
-
-        const [users, total] = await this.usersRepository.findAndCount(findOptions);
+        const [users, total] = await queryBuilder
+            .skip(skip)
+            .take(limit ?? 10)
+            .getManyAndCount();
 
         const data = users.map(user => {
-            const isOwner = user.ownerId === currentUser?.sub;
             const isOwnProfile = user.id === currentUser?.sub;
-            
             const activeMembership = user.memberships?.find(m => m.tenantId === tenantId);
             const isTenantAdmin = activeMembership && currentUser?.role === 'administrador';
 
@@ -310,11 +327,11 @@ export class UsersService {
                 user.profile = activeMembership.profile;
             }
 
-            if (isSystemAdmin || isOwnProfile || isOwner || isTenantAdmin) {
+            if (isSystemAdmin || isOwnProfile || isTenantAdmin) {
                 return user; 
             }
 
-            const { phones, addresses, secondaryEmails, links, ...basicInfo } = user;
+            const { phones, addresses, ...basicInfo } = user;
             return basicInfo as User;
         });
 
