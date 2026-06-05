@@ -289,4 +289,8 @@ export class AuthService {
     }
   }
 
+  async getMyWorkspaces(userId: string) {
+    return this.membershipsService.findByUser(userId);
+  }
+
 }

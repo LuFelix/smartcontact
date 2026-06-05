@@ -1,4 +1,4 @@
-import { Component, inject, Input, Output, EventEmitter } from '@angular/core';
+import { Component, inject, Input, Output, EventEmitter, OnInit, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
@@ -23,24 +23,56 @@ import { ThemeService } from '../../core/services/theme.service';
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss'
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   private themeService = inject(ThemeService);
-  
+
   darkMode = this.themeService.darkMode;
-  
+
   // Public Signals
   userName = this.authService.userName;
   userPicture = this.authService.userPicture;
+  activeTenantId = this.authService.activeTenantId;
+
+  workspaces = signal<any[]>([]);
+
+  currentWorkspace = computed(() => {
+    const activeId = this.activeTenantId();
+    return this.workspaces().find(w => w.tenantId === activeId)?.tenant;
+  });
 
   @Input() sidenavOpen: boolean = true;
   @Output() toggleSidenav = new EventEmitter<void>();
 
   notificationCount = 5;
 
+  ngOnInit() {
+    this.loadWorkspaces();
+  }
+
+  loadWorkspaces() {
+    this.authService.getMyWorkspaces().subscribe({
+      next: (data) => {
+        this.workspaces.set(data);
+        // Se houver workspaces mas nenhum ativo, define o primeiro
+        if (data.length > 0 && !this.activeTenantId()) {
+            this.authService.switchTenant(data[0].tenantId);
+        }
+      },
+      error: (err) => console.error('Erro ao carregar workspaces:', err)
+    });
+  }
+
+  switchWorkspace(tenantId: string) {
+    this.authService.switchTenant(tenantId);
+    // Recarrega a página ou notifica para resetar o estado dos componentes
+    window.location.reload(); 
+  }
+
   get profileImage(): string | null {
-    const url = this.userPicture();
+...
+
     if (url && typeof url === 'string' && url.length > 5) {
         return url.startsWith('http') ? url : `http://localhost:3000/${url}`;
     }

@@ -3,7 +3,8 @@ import {
   Controller,
   Post,
   Body,
-  
+  Get,
+  UseGuards,
   
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
@@ -13,10 +14,13 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { LoginDto, MinimalRegisterDto, VerifyEmailDto } from './dto/auth.dto';
 import { Public } from './decorators/public.decorator';
 import { GoogleLoginDto } from './dto/google-token.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { GetUser } from './decorators/get-user.decorator';
 
 
 @ApiTags('Auth')
@@ -64,5 +68,11 @@ export class AuthController {
     };
   }
 
-  
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Get('my-workspaces')
+  @ApiOperation({ summary: 'Listar meus workspaces (Memberships)' })
+  async myWorkspaces(@GetUser() currentUser: any) {
+    return this.authService.getMyWorkspaces(currentUser.sub);
+  }
 }

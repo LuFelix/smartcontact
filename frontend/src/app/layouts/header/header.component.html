@@ -12,8 +12,31 @@
       </span>
     </div>
 
+    <!-- Context Switcher (Workspaces) -->
+    @if (workspaces().length > 0) {
+        <div class="workspace-switcher-container">
+            <button mat-button [matMenuTriggerFor]="workspaceMenu" class="workspace-btn">
+                <mat-icon>business</mat-icon>
+                <span class="workspace-name">{{ currentWorkspace()?.name || 'Selecionar Workspace' }}</span>
+                <mat-icon>expand_more</mat-icon>
+            </button>
+            <mat-menu #workspaceMenu="matMenu" class="workspace-menu">
+                <div class="menu-title">Meus Workspaces</div>
+                @for (ws of workspaces(); track ws.id) {
+                    <button mat-menu-item (click)="switchWorkspace(ws.tenantId)" [class.active-ws]="ws.tenantId === activeTenantId()">
+                        <div class="ws-item-content">
+                            <span class="ws-name">{{ ws.tenant?.name }}</span>
+                            <span class="ws-role">{{ ws.role?.name | titlecase }}</span>
+                        </div>
+                    </button>
+                }
+            </mat-menu>
+        </div>
+    }
+
     <!-- Espaçador para empurrar itens para a direita -->
     <span class="spacer"></span>
+...
 
     <!-- Botão de Notificações (Exemplo) -->
     <button mat-icon-button (click)="toggleDarkMode()" aria-label="Alternar modo escuro" class="theme-toggle-button">
