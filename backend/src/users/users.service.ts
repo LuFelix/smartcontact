@@ -156,10 +156,12 @@ export class UsersService {
         // 2. CRIAR O VÍNCULO DE MEMBERSHIP
         let profileId: string | null = null;
         
-        // CRIAÇÃO AUTOMÁTICA DE PROFILE E TAG (Apenas para Contas Reais/SaaS)
-        const isRealAccount = !!createUserDto.password && createUserDto.password.length > 0;
+        // CRIAÇÃO AUTOMÁTICA DE PROFILE E TAG
+        // Mudança Crítica: Criamos profile para QUALQUER conta que não seja 'contato',
+        // mesmo que não tenha senha (membro convidado que ainda não aceitou).
+        const isTeamRole = assignedRole.name?.toLowerCase() !== 'contato';
 
-        if (isRealAccount) {
+        if (isTeamRole) {
             const profile = await this.profilesService.create({
                 userId: savedUser.id,
                 ownerId: savedUser.ownerId!,
@@ -489,19 +491,7 @@ export class UsersService {
             throw new BadRequestException('Um endereço de e-mail é obrigatório para promoção à equipe.');
         }
 
-        // Atualiza a Role no membership (ou cria se não existir)
-        const membership = user.memberships?.find(m => m.tenantId === targetTenantId);
-        if (membership) {
-            await this.membershipsService.updateRole(user.id, targetTenantId, targetRole.id);
-        } else {
-            await this.membershipsService.create({
-                userId: user.id,
-                tenantId: targetTenantId,
-                roleId: targetRole.id
-            });
-        }
-
-        // Força a criação do Profile
+        // Força a criação do Profile ANTES de vincular no Membership
         let existingProfile = await this.profilesService.findByUserId(user.id);
         if (!existingProfile) {
             existingProfile = await this.profilesService.create({
@@ -510,9 +500,19 @@ export class UsersService {
                 tenantId: targetTenantId,
                 profilePictureUrl: user.profilePictureUrl || undefined
             });
-            
-            // Vincula o profileId no membership
-            await this.membershipsService.updateProfileId(user.id, targetTenantId, existingProfile.id);
+        }
+
+        // Atualiza a Role e o Profile no membership (ou cria se não existir)
+        const membership = user.memberships?.find(m => m.tenantId === targetTenantId);
+        if (membership) {
+            await this.membershipsService.updateRoleAndProfile(user.id, targetTenantId, targetRole.id, existingProfile.id);
+        } else {
+            await this.membershipsService.create({
+                userId: user.id,
+                tenantId: targetTenantId,
+                roleId: targetRole.id,
+                profileId: existingProfile.id
+            });
         }
 
         // Força a criação da Tag (Verificação via Repositório para evitar erros de relação NOT NULL no save(user))

@@ -45,6 +45,14 @@ export class MembershipsService {
     return this.membershipRepository.update(membership.id, { roleId });
   }
 
+  async updateRoleAndProfile(userId: string, tenantId: string, roleId: string, profileId: string | null) {
+    const membership = await this.findByUserAndTenant(userId, tenantId);
+    if (!membership) {
+      throw new NotFoundException('Vínculo não encontrado neste workspace.');
+    }
+    return this.membershipRepository.update(membership.id, { roleId, profileId });
+  }
+
   async updateProfileId(userId: string, tenantId: string, profileId: string | null) {
     const membership = await this.findByUserAndTenant(userId, tenantId);
     if (!membership) {
