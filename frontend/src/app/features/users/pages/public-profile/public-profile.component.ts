@@ -60,7 +60,7 @@ export class PublicProfileComponent implements OnInit {
   constructor() {
     this.leadForm = this.fb.group({
       name: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]],
+      email: ['', [Validators.email]],
       phone: [''],
       note: ['', [Validators.maxLength(50)]]
     });
