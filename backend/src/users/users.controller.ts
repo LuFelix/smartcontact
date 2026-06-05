@@ -59,4 +59,46 @@ export class UsersController {
     remove(@Param('id', ParseUUIDPipe) id: string, @GetUser() currentUser?: any) { 
         return this.usersService.remove(id, currentUser); 
     }
+
+    @Get(':id')
+    @ApiOperation({ summary: 'Busca um usuário por ID' })
+    @ApiParam({ name: 'id', type: String })
+    @ApiResponse({ status: 200, description: 'Usuário encontrado' })
+    @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
+    async findById(@Param('id', ParseUUIDPipe) id: string, @GetUser() currentUser?: any) { 
+        const user = await this.usersService.findById(id, currentUser); 
+        if (!user) {
+            throw new NotFoundException(`Usuário com ID ${id} não encontrado`);
+        }
+        return user;
+    }
+
+    @Patch(':id')
+    @ApiOperation({ summary: 'Atualiza parcialmente um usuário' })
+    @ApiParam({ name: 'id', type: String })
+    @ApiBody({ type: UpdateUserDto })
+    @ApiResponse({ status: 200, description: 'Usuário atualizado com sucesso' })
+    @ApiResponse({ status: 400, description: 'Dados inválidos ou duplicados' })
+    @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
+    async update( 
+        @Param('id', ParseUUIDPipe) id: string, 
+        @Body() updateUserDto: UpdateUserDto,
+        @GetUser() currentUser?: any
+    ){
+        return this.usersService.update(id, updateUserDto, currentUser); 
+    }
+
+    @Post(':id/promote')
+    @Roles('administrador')
+    @ApiOperation({ summary: 'Promover contato para membro da equipe' })
+    @ApiParam({ name: 'id', type: String })
+    @ApiBody({ schema: { type: 'object', properties: { roleId: { type: 'string' }, email: { type: 'string' } } } })
+    async promoteToTeam(
+        @Param('id', ParseUUIDPipe) id: string,
+        @Body('roleId') roleId: string,
+        @Body('email') email: string,
+        @GetUser() currentUser: any
+    ) {
+        return this.usersService.promoteToTeam(id, roleId, currentUser, email);
+    }
 }

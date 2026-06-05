@@ -325,8 +325,8 @@ export class UsersService {
 
             // Injeta propriedades de compatibilidade legada para o frontend
             // CRITICAL: Garantimos que role e profile sejam injetados ANTES do filtro de permissão
-            (user as any).role = activeMembership?.role;
-            (user as any).tenantId = activeMembership?.tenantId;
+            (user as any).role = activeMembership?.role || { id: '', name: 'usuario' };
+            (user as any).tenantId = activeMembership?.tenantId || tenantId;
             
             // Se o usuário não tem um perfil global mas tem um específico para este tenant
             if (!user.profile && activeMembership?.profile) {
