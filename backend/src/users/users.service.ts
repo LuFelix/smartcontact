@@ -324,22 +324,22 @@ export class UsersService {
             const activeMembership = user.memberships?.find(m => m.tenantId === tenantId);
             const isTenantAdmin = activeMembership && currentUser?.role === 'administrador';
 
-            // Injeta propriedades de compatibilidade legada para o frontend
-            // CRITICAL: Garantimos que role e profile sejam injetados ANTES do filtro de permissão
+            // Injeta propriedades de compatibilidade legada para o frontend baseadas no CONTEXTO
+            // Priorizamos SEMPRE o que está no vínculo (Membership) para este tenant
             (user as any).role = activeMembership?.role || { id: '', name: 'usuario' };
             (user as any).tenantId = activeMembership?.tenantId || tenantId;
             
-            // Se o usuário não tem um perfil global mas tem um específico para este tenant
-            if (!user.profile && activeMembership?.profile) {
-                user.profile = activeMembership.profile;
-            }
+            // SOBRESCREVEMOS o profile global pelo profile do vínculo
+            // Isso garante que se o vínculo for 'desligado' (profileId null), 
+            // o frontend pare de ver este usuário como membro da equipe deste workspace.
+            user.profile = activeMembership?.profile || undefined;
 
             // Filtro de Segurança ABAC: Admins e Donos vêem tudo, outros vêem básico
             if (isSystemAdmin || isOwnProfile || isTenantAdmin) {
                 return user; 
             }
 
-            // Oculta dados sensíveis para não-admins, mas mantém o perfil/role para o card não quebrar
+            // Oculta dados sensíveis para não-admins
             const { phones, addresses, secondaryEmails, links, ...basicInfo } = user;
             return basicInfo as User;
         });
