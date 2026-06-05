@@ -21,15 +21,30 @@
                 <mat-icon>expand_more</mat-icon>
             </button>
             <mat-menu #workspaceMenu="matMenu" class="workspace-menu">
-                <div class="menu-title">Meus Workspaces</div>
-                @for (ws of workspaces(); track ws.tenantId) {
-                    <button mat-menu-item (click)="switchWorkspace(ws.tenantId)" [class.active-ws]="ws.tenantId === activeTenantId()">
-                        <div class="ws-item-content">
-                            <span class="ws-name">{{ ws.tenant?.name }}</span>
-                            <span class="ws-role">{{ ws.role?.name | titlecase }}</span>
-                        </div>
-                    </button>
+                @if (myWorkspaces().length > 0) {
+                    <div class="menu-title">Meus Workspaces</div>
+                    @for (ws of myWorkspaces(); track ws.tenantId) {
+                        <button mat-menu-item (click)="switchWorkspace(ws.tenantId)" [class.active-ws]="ws.tenantId === activeTenantId()">
+                            <div class="ws-item-content">
+                                <span class="ws-name">{{ ws.tenant?.name }}</span>
+                                <span class="ws-role">{{ ws.role?.name | titlecase }}</span>
+                            </div>
+                        </button>
+                    }
                 }
+
+                @if (sharedWorkspaces().length > 0) {
+                    <div class="menu-title" [class.mt-2]="myWorkspaces().length > 0">Compartilhados Comigo</div>
+                    @for (ws of sharedWorkspaces(); track ws.tenantId) {
+                        <button mat-menu-item (click)="switchWorkspace(ws.tenantId)" [class.active-ws]="ws.tenantId === activeTenantId()">
+                            <div class="ws-item-content">
+                                <span class="ws-name">{{ ws.tenant?.name }}</span>
+                                <span class="ws-role">{{ ws.role?.name | titlecase }}</span>
+                            </div>
+                        </button>
+                    }
+                }
+
                 <mat-divider></mat-divider>
                 <button mat-menu-item disabled class="add-workspace-btn">
                     <mat-icon>add_circle_outline</mat-icon>

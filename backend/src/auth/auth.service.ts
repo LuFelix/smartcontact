@@ -297,7 +297,15 @@ export class AuthService {
   }
 
   async getMyWorkspaces(userId: string) {
-    return this.membershipsService.findTeamWorkspacesByUser(userId);
+    const workspaces = await this.membershipsService.findTeamWorkspacesByUser(userId);
+    const user = await this.usersService.findById(userId);
+    
+    // Para identificar se é "Dono" do workspace, verificamos se o ownerId do perfil é igual ao userId
+    // Fallback: Verifica se o nome do tenant foi gerado automaticamente com o nome do usuário (Workspace Pessoal)
+    return workspaces.map(ws => ({
+        ...ws,
+        isOwner: ws.profile?.ownerId === userId || (user && ws.tenant.name.startsWith(user.name))
+    }));
   }
 
 }

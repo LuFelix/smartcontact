@@ -67,6 +67,11 @@
         text-transform: uppercase;
         color: var(--mat-sys-on-surface-variant);
         letter-spacing: 0.5px;
+
+        &.mt-2 {
+            margin-top: 8px;
+            border-top: 1px solid var(--mat-sys-outline-variant);
+        }
     }
 
     .active-ws {

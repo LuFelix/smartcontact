@@ -40,6 +40,14 @@ export class HeaderComponent implements OnInit {
 
   workspaces = signal<any[]>([]);
 
+  myWorkspaces = computed(() => {
+    return this.workspaces().filter(ws => ws.isOwner);
+  });
+
+  sharedWorkspaces = computed(() => {
+    return this.workspaces().filter(ws => !ws.isOwner);
+  });
+
   currentWorkspace = computed(() => {
     const activeId = this.activeTenantId();
     const list = this.workspaces();

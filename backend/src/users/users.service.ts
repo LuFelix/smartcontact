@@ -610,8 +610,8 @@ export class UsersService {
 
         const tenantId = currentUser.tenantId || this.TIWEB_ID;
 
-        // 1. Rebaixa o cargo para CONTATO no workspace específico (perde acesso de login)
-        const targetRole = await this.rolesService.findOneByName('contato');
+        // 1. Rebaixa o cargo para USUARIO no workspace específico (mantém acesso ao painel como usuário padrão)
+        const targetRole = await this.rolesService.findOneByName('usuario');
         if (targetRole) {
             await this.membershipsService.updateRole(user.id, tenantId, targetRole.id);
         }
