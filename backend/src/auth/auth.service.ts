@@ -229,42 +229,52 @@ export class AuthService {
         await this.usersService.markEmailAsVerified(user.id);
         user = await this.usersService.findByEmail(payloadGoogle.email);
       } else {
+          // O usuário já existe no banco (pode ter sido criado como lead ou já ter conta).
+          
+          // Atualiza a foto se necessário
           if (payloadGoogle.picture && user.profilePictureUrl !== payloadGoogle.picture) {
               await this.usersService.updateProfilePicture(user.id, payloadGoogle.picture);
+              user.profilePictureUrl = payloadGoogle.picture;
           }
 
-          let profile = await this.profilesService.findByUserId(user.id);
-          
-          // Se já tem membership mas não tem profile, criamos no primeiro membership disponível
-          if (!profile && user.memberships && user.memberships.length > 0) {
-              const m = user.memberships[0];
-              profile = await this.profilesService.create({
-                  userId: user.id,
-                  ownerId: user.ownerId!,
-                  tenantId: m.tenantId,
-                  profilePictureUrl: payloadGoogle.picture
-              });
-              // Atualiza o membership para referenciar o profile recém-criado
-              await this.membershipsService.updateProfileId(user.id, m.tenantId, profile.id);
+          // Busca todos os vínculos para saber se ele tem acesso a algum workspace real
+          const teamWorkspaces = await this.membershipsService.findTeamWorkspacesByUser(user.id);
+
+          // Se ele tiver convite pendente, tentamos resolver ANTES de criar o solo tenant
+          let acceptedInvite = false;
+          if (loginDto.invitationToken) {
+              try {
+                  const invitation = await this.teamService.resolveInvitation(loginDto.invitationToken);
+                  const alreadyMember = user.memberships?.some(m => m.tenantId === invitation.tenantId);
+                  if (!alreadyMember) {
+                      await this.usersService.createMembershipForUser(user.id, invitation.tenantId, invitation.roleId);
+                      acceptedInvite = true;
+                  }
+              } catch (error) {
+                  console.warn(`[AuthService Google] Convite inválido ou expirado no fluxo de conta existente: ${loginDto.invitationToken}`);
+              }
           }
 
-          if (profile && payloadGoogle.picture && profile.profilePictureUrl !== payloadGoogle.picture) {
-              await this.profilesService.update(user.id, { profilePictureUrl: payloadGoogle.picture });
+          // Se ele não aceitou um convite AGORA, e NÃO TEM NENHUM workspace onde seja admin/user,
+          // significa que ele era apenas um LEAD passivo em bancos de terceiros.
+          // DEVEMOS isolá-lo criando seu próprio Tenant Solo.
+          if (!acceptedInvite && teamWorkspaces.length === 0) {
+              user = await this.usersService.provisionPersonalWorkspace(user);
+          } else {
+              // Apenas recarrega as relações atualizadas
+              user = await this.usersService.findByEmail(payloadGoogle.email);
           }
-
-          if (!user.tags || user.tags.length === 0) {
-              await this.usersService.ensureHasDefaultTag(user);
-          }
-
-          user = await this.usersService.findByEmail(payloadGoogle.email);
       }
 
       if (!user) {
         throw new InternalServerErrorException('Erro ao processar ou criar usuário via Google');
       }
+
+      // O tenant ativo inicial será o primeiro workspace VÁLIDO (não-contato)
+      const validWorkspaces = await this.membershipsService.findTeamWorkspacesByUser(user.id);
+      const activeMembership = validWorkspaces.length > 0 ? validWorkspaces[0] : null;
       
-      const finalPicture = user.profile?.profilePictureUrl || user.profilePictureUrl || payloadGoogle.picture;
-      const activeMembership = user.memberships && user.memberships.length > 0 ? user.memberships[0] : null;
+      const finalPicture = activeMembership?.profile?.profilePictureUrl || user.profilePictureUrl || payloadGoogle.picture;
 
       const payload = { 
         sub: user.id, 
@@ -290,7 +300,7 @@ export class AuthService {
   }
 
   async getMyWorkspaces(userId: string) {
-    return this.membershipsService.findByUser(userId);
+    return this.membershipsService.findTeamWorkspacesByUser(userId);
   }
 
 }

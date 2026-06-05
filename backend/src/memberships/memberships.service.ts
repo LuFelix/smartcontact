@@ -22,6 +22,15 @@ export class MembershipsService {
     });
   }
 
+  async findTeamWorkspacesByUser(userId: string) {
+    const memberships = await this.membershipRepository.find({
+      where: { userId },
+      relations: ['tenant', 'role', 'profile'],
+    });
+    // Retorna apenas os workspaces onde o usuário é administrador ou usuario (exclui contato)
+    return memberships.filter(m => m.role && m.role.name.toLowerCase() !== 'contato');
+  }
+
   async findByUserAndTenant(userId: string, tenantId: string) {
     return this.membershipRepository.findOne({
       where: { userId, tenantId },

@@ -446,6 +446,43 @@ export class UsersService {
         return updatedUser as User;
     }
 
+    /**
+     * Provisiona um Workspace Pessoal (Solo Tenant) para um usuário existente.
+     * Usado quando um usuário que era apenas "lead/contato" faz login pela primeira vez.
+     */
+    async provisionPersonalWorkspace(user: User): Promise<User> {
+        const tenantName = `${user.name}'s Workspace`;
+        const tenantSlug = `ws-${await this.generateUniqueUsername(user.name)}`;
+        const newTenant = await this.tenantsService.create(tenantName, tenantSlug);
+        
+        const adminRole = await this.rolesService.findOneByName('administrador');
+        if (!adminRole) {
+            throw new BadRequestException('Role administrador não encontrada no sistema.');
+        }
+
+        const profile = await this.profilesService.create({
+            userId: user.id,
+            ownerId: user.id, // O próprio usuário é dono do seu tenant
+            tenantId: newTenant.id,
+            profilePictureUrl: user.profilePictureUrl || undefined
+        });
+
+        await this.tagsService.createDefaultTag(
+            user.id,
+            user.id,
+            newTenant.id
+        );
+
+        await this.membershipsService.create({
+            userId: user.id,
+            tenantId: newTenant.id,
+            roleId: adminRole.id,
+            profileId: profile.id
+        });
+
+        return this.findByEmail(user.email as string) as Promise<User>;
+    }
+
     async updateProfilePicture(userId: string, pictureUrl: string): Promise<void> {
         await this.usersRepository.update(userId, { profilePictureUrl: pictureUrl });
     }
