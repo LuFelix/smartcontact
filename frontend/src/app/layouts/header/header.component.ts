@@ -8,7 +8,7 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { CommonModule } from '@angular/common'; 
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
-import { environment } from '../../../environments/environment';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-header',
