@@ -288,8 +288,9 @@ export class UsersService {
             .leftJoinAndSelect('user.profile', 'profile')
             .orderBy('user.name', 'ASC');
 
-        if (!isSystemAdmin && tenantId) {
+        if (tenantId) {
             // Filtro de isolamento: Apenas usuários que têm vínculo com o tenant ativo
+            // Mesmo para SuperAdmin, a LISTA deve ser filtrada pelo contexto atual.
             queryBuilder.andWhere(qb => {
                 const subQuery = qb.subQuery()
                     .select('m.user_id')

@@ -142,8 +142,16 @@ export class TeamService {
    * Remove um membro da equipe (desvincula do Tenant).
    */
   async removeMember(memberId: string, currentUser: any): Promise<void> {
-      if (currentUser.role !== 'administrador' && !currentUser.isSuperAdmin) {
+      const { tenantId, name, role, isSuperAdmin } = currentUser;
+
+      console.log(`[TeamService] Tentativa de remover membro. Alvo ID: ${memberId}. Requisitante: ${name}. Role: ${role}. Tenant Context: ${tenantId}`);
+
+      if (role !== 'administrador' && !isSuperAdmin) {
           throw new BadRequestException('Apenas administradores podem remover membros da equipe.');
+      }
+
+      if (!tenantId) {
+          throw new BadRequestException('Contexto de Workspace não identificado no cabeçalho X-Tenant-ID.');
       }
 
       // Busca o usuário e checa se ele tem membership no tenant do admin
@@ -156,13 +164,15 @@ export class TeamService {
           throw new NotFoundException('Membro não encontrado.');
       }
 
-      const hasMembership = member.memberships?.some(m => m.tenantId === currentUser.tenantId);
-      if (!hasMembership) {
-          throw new BadRequestException('Este usuário não pertence à sua equipe.');
+      const hasMembership = member.memberships?.some(m => m.tenantId === tenantId);
+      
+      console.log(`[TeamService] Membro encontrado: ${member.name}. Vínculos: ${member.memberships?.map(m => m.tenantId).join(', ')}. Match com context: ${hasMembership}`);
+
+      if (!hasMembership && !isSuperAdmin) {
+          throw new BadRequestException('Este usuário não pertence à equipe deste Workspace.');
       }
 
-      // Demite da equipe: Remove o Profile e altera a Role para 'usuario',
-      // mas preserva o vínculo (Membership) para que continue listado no fichário de contatos.
+      // Demite da equipe: Remove o Profile e altera a Role para 'usuario'
       await this.usersService.demoteFromTeam(memberId, currentUser);
   }
 }
