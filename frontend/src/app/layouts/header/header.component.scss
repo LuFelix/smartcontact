@@ -90,6 +90,17 @@
             opacity: 0.7;
         }
     }
+
+    .add-workspace-btn {
+        opacity: 0.6;
+        mat-icon {
+            color: var(--mat-sys-primary);
+        }
+        span {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+    }
 }
 
 .brand-container {

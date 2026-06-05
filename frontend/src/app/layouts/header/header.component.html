@@ -30,13 +30,17 @@
                         </div>
                     </button>
                 }
+                <mat-divider></mat-divider>
+                <button mat-menu-item disabled class="add-workspace-btn">
+                    <mat-icon>add_circle_outline</mat-icon>
+                    <span>Criar Novo Workspace (Premium)</span>
+                </button>
             </mat-menu>
         </div>
     }
 
     <!-- Espaçador para empurrar itens para a direita -->
     <span class="spacer"></span>
-...
 
     <!-- Botão de Notificações (Exemplo) -->
     <button mat-icon-button (click)="toggleDarkMode()" aria-label="Alternar modo escuro" class="theme-toggle-button">
