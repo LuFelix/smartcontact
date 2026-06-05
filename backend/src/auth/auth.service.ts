@@ -237,28 +237,25 @@ export class AuthService {
               user.profilePictureUrl = payloadGoogle.picture;
           }
 
-          // Busca todos os vínculos para saber se ele tem acesso a algum workspace real
-          const teamWorkspaces = await this.membershipsService.findTeamWorkspacesByUser(user.id);
-
-          // Se ele tiver convite pendente, tentamos resolver ANTES de criar o solo tenant
-          let acceptedInvite = false;
+          // Se ele tiver convite pendente, tentamos resolver
           if (loginDto.invitationToken) {
               try {
                   const invitation = await this.teamService.resolveInvitation(loginDto.invitationToken);
                   const alreadyMember = user.memberships?.some(m => m.tenantId === invitation.tenantId);
                   if (!alreadyMember) {
                       await this.usersService.createMembershipForUser(user.id, invitation.tenantId, invitation.roleId);
-                      acceptedInvite = true;
                   }
               } catch (error) {
                   console.warn(`[AuthService Google] Convite inválido ou expirado no fluxo de conta existente: ${loginDto.invitationToken}`);
               }
           }
 
-          // Se ele não aceitou um convite AGORA, e NÃO TEM NENHUM workspace onde seja admin/user,
-          // significa que ele era apenas um LEAD passivo em bancos de terceiros.
-          // DEVEMOS isolá-lo criando seu próprio Tenant Solo.
-          if (!acceptedInvite && teamWorkspaces.length === 0) {
+          // PARADIGMA GOOGLE DRIVE:
+          // Todo usuário que faz login no sistema (não é mais apenas um contato) 
+          // DEVE ter o seu próprio Workspace (Tenant Solo) onde ele é o dono (ownerId).
+          const hasPersonalWorkspace = user.ownerId === user.id && user.memberships?.some(m => m.profile?.ownerId === user.id);
+          
+          if (!hasPersonalWorkspace) {
               user = await this.usersService.provisionPersonalWorkspace(user);
           } else {
               // Apenas recarrega as relações atualizadas

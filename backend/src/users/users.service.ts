@@ -452,6 +452,13 @@ export class UsersService {
      * Usado quando um usuário que era apenas "lead/contato" faz login pela primeira vez.
      */
     async provisionPersonalWorkspace(user: User): Promise<User> {
+        // "Reivindica" a conta: Se o usuário era um lead capturado por terceiros, 
+        // ao fazer login ele passa a ser o dono da própria conta.
+        if (user.ownerId !== user.id) {
+            await this.usersRepository.update(user.id, { ownerId: user.id });
+            user.ownerId = user.id;
+        }
+
         const tenantName = `${user.name}'s Workspace`;
         const uniqueSuffix = Math.random().toString(36).substring(2, 8);
         const tenantSlug = `ws-${await this.generateUniqueUsername(user.name)}-${uniqueSuffix}`;
