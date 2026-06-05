@@ -104,7 +104,8 @@ export class UsersService {
         // Se não houver tenant no contexto (auto-cadastro), criamos um novo
         if (!tenantId) {
             const tenantName = `${createUserDto.name}'s Workspace`;
-            const tenantSlug = `ws-${await this.generateUniqueUsername(createUserDto.name)}`;
+            const uniqueSuffix = Math.random().toString(36).substring(2, 8);
+            const tenantSlug = `ws-${await this.generateUniqueUsername(createUserDto.name)}-${uniqueSuffix}`;
             const newTenant = await this.tenantsService.create(tenantName, tenantSlug);
             tenantId = newTenant.id;
         }
@@ -452,7 +453,8 @@ export class UsersService {
      */
     async provisionPersonalWorkspace(user: User): Promise<User> {
         const tenantName = `${user.name}'s Workspace`;
-        const tenantSlug = `ws-${await this.generateUniqueUsername(user.name)}`;
+        const uniqueSuffix = Math.random().toString(36).substring(2, 8);
+        const tenantSlug = `ws-${await this.generateUniqueUsername(user.name)}-${uniqueSuffix}`;
         const newTenant = await this.tenantsService.create(tenantName, tenantSlug);
         
         const adminRole = await this.rolesService.findOneByName('administrador');
@@ -601,8 +603,8 @@ export class UsersService {
 
         const tenantId = currentUser.tenantId || this.TIWEB_ID;
 
-        // 1. Rebaixa o cargo para usuário comum no workspace específico
-        const targetRole = await this.rolesService.findOneByName('usuario');
+        // 1. Rebaixa o cargo para CONTATO no workspace específico (perde acesso de login)
+        const targetRole = await this.rolesService.findOneByName('contato');
         if (targetRole) {
             await this.membershipsService.updateRole(user.id, tenantId, targetRole.id);
         }
