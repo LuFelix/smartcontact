@@ -42,7 +42,9 @@ export class HeaderComponent implements OnInit {
 
   currentWorkspace = computed(() => {
     const activeId = this.activeTenantId();
-    return this.workspaces().find(w => w.tenantId === activeId)?.tenant;
+    const list = this.workspaces();
+    if (!activeId || list.length === 0) return null;
+    return list.find(w => w.tenantId === activeId)?.tenant || null;
   });
 
   @Input() sidenavOpen: boolean = true;

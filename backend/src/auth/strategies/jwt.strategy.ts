@@ -25,8 +25,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         const headerTenantId = req.headers['x-tenant-id'];
         const tenantId = headerTenantId || payload.tenantId;
 
+        console.log(`[JwtStrategy] Validando req: ${req.url}. Header Tenant: ${headerTenantId}. Payload Tenant: ${payload.tenantId}`);
+
         // 2. Se for Super Admin, ele ignora as travas de role por tenant
         if (payload.isSuperAdmin) {
+            console.log(`[JwtStrategy] Usuário é SuperAdmin: ${payload.sub}`);
             return { 
                 sub: payload.sub, 
                 name: payload.name, 
@@ -44,10 +47,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             const membership = await this.membershipsService.findByUserAndTenant(payload.sub, tenantId);
             
             if (!membership) {
-                // O usuário está logado mas tentando acessar um tenant que não tem vínculo
-                console.warn(`[JwtStrategy] Acesso negado: Usuário ${payload.sub} não tem vínculo com tenant ${tenantId}`);
+                console.warn(`[JwtStrategy] Acesso negado: Usuário ${payload.sub} sem vínculo com tenant ${tenantId}`);
                 throw new UnauthorizedException('Você não tem acesso a este Workspace.');
             }
+
+            console.log(`[JwtStrategy] Usuário ${payload.sub} no Tenant ${tenantId} resolvido como: ${membership.role?.name}`);
 
             return { 
                 sub: payload.sub, 

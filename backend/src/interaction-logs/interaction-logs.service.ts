@@ -63,7 +63,7 @@ export class InteractionLogsService {
   async findLeadsByOwner(currentUser: any): Promise<InteractionLog[]> {
       const { sub: userId, tenantId, role, isSuperAdmin } = currentUser;
 
-      console.log(`[InteractionLogsService] Buscando leads. Tenant: ${tenantId}. User: ${userId}. Role: ${role}`);
+      console.log(`[InteractionLogsService] Buscando leads. Tenant Context: ${tenantId}. User: ${userId}`);
 
       const queryBuilder = this.interactionLogRepository.createQueryBuilder('log')
           .leftJoinAndSelect('log.tag', 'tag')
@@ -73,18 +73,24 @@ export class InteractionLogsService {
           .where('log.interaction_type = :type', { type: InteractionType.LEAD })
           .orderBy('log.accessedAt', 'DESC');
 
-      // 1. Super Admin vê tudo
+      // 1. Super Admin vê tudo (Global)
       if (isSuperAdmin) {
           return queryBuilder.getMany();
       }
 
-      // 2. Admin do Tenant vê todos os leads do seu tenant
+      // 2. Filtro obrigatório de Tenant para todos os outros casos
+      if (!tenantId) {
+          return []; // Sem tenant no contexto, não retorna nada por segurança
+      }
+
+      queryBuilder.andWhere('tag.tenantId = :tId', { tId: tenantId });
+
+      // 3. Se for Admin do Tenant, vê tudo do tenant (já filtrado acima)
       if (role === 'administrador') {
-          queryBuilder.andWhere('tag.tenantId = :tenantId', { tenantId });
           return queryBuilder.getMany();
       }
 
-      // 3. Outros (Tutor/Colaborador): Visão restrita (ABAC)
+      // 4. Outros (Tutor/Colaborador): Visão restrita ABAC dentro do tenant
       queryBuilder.andWhere(qb => {
           return '(log.capturedByUserId = :userId OR tag.ownerId = :userId)';
       }, { userId });

@@ -275,10 +275,10 @@ export class UsersService {
         const tenantId = currentUser?.tenantId || this.TIWEB_ID;
         const isSystemAdmin = currentUser?.isSuperAdmin;
 
-        console.log(`[UsersService] Listando usuários. Tenant solicitado: ${tenantId}. SuperAdmin: ${isSystemAdmin}`);
+        console.log(`[UsersService] Listando usuários. Tenant: ${tenantId}. SuperAdmin: ${isSystemAdmin}`);
 
         const queryBuilder = this.usersRepository.createQueryBuilder('user')
-            .leftJoinAndSelect('user.memberships', 'membership')
+            .leftJoinAndSelect('user.memberships', 'membership', 'membership.tenantId = :tId', { tId: tenantId })
             .leftJoinAndSelect('membership.role', 'role')
             .leftJoinAndSelect('membership.tenant', 'tenant')
             .leftJoinAndSelect('membership.profile', 'membershipProfile')
@@ -289,15 +289,16 @@ export class UsersService {
             .orderBy('user.name', 'ASC');
 
         if (!isSystemAdmin && tenantId) {
-            // Garante que o usuário listado tenha um vínculo com o tenant solicitado
-            queryBuilder.where(qb => {
+            // Filtro de isolamento: Apenas usuários que têm vínculo com o tenant ativo
+            queryBuilder.andWhere(qb => {
                 const subQuery = qb.subQuery()
                     .select('m.user_id')
                     .from('memberships', 'm')
-                    .where('m.tenant_id = :tenantId', { tenantId })
+                    .where('m.tenant_id = :tId', { tId: tenantId })
                     .getQuery();
                 return 'user.id IN ' + subQuery;
             });
+            queryBuilder.setParameter('tId', tenantId);
         }
 
         if (name) {
@@ -317,21 +318,28 @@ export class UsersService {
 
         const data = users.map(user => {
             const isOwnProfile = user.id === currentUser?.sub;
+            
+            // Localiza a membership específica deste tenant solicitado
             const activeMembership = user.memberships?.find(m => m.tenantId === tenantId);
             const isTenantAdmin = activeMembership && currentUser?.role === 'administrador';
 
             // Injeta propriedades de compatibilidade legada para o frontend
+            // CRITICAL: Garantimos que role e profile sejam injetados ANTES do filtro de permissão
             (user as any).role = activeMembership?.role;
             (user as any).tenantId = activeMembership?.tenantId;
+            
+            // Se o usuário não tem um perfil global mas tem um específico para este tenant
             if (!user.profile && activeMembership?.profile) {
                 user.profile = activeMembership.profile;
             }
 
+            // Filtro de Segurança ABAC: Admins e Donos vêem tudo, outros vêem básico
             if (isSystemAdmin || isOwnProfile || isTenantAdmin) {
                 return user; 
             }
 
-            const { phones, addresses, ...basicInfo } = user;
+            // Oculta dados sensíveis para não-admins, mas mantém o perfil/role para o card não quebrar
+            const { phones, addresses, secondaryEmails, links, ...basicInfo } = user;
             return basicInfo as User;
         });
 
