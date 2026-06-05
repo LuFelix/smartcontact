@@ -548,18 +548,15 @@ export class UsersService {
 
         const tenantId = currentUser.tenantId || this.TIWEB_ID;
 
-        // Rebaixa o cargo para usuário comum no workspace específico
+        // 1. Rebaixa o cargo para usuário comum no workspace específico
         const targetRole = await this.rolesService.findOneByName('usuario');
         if (targetRole) {
             await this.membershipsService.updateRole(user.id, tenantId, targetRole.id);
         }
 
-        // Remove o perfil público deste vínculo (efetivando a saída da equipe comercial)
-        const membership = user.memberships?.find(m => m.tenantId === tenantId);
-        if (membership?.profileId) {
-            await this.profilesService.removeByUserId(user.id);
-            await this.membershipsService.updateProfileId(user.id, tenantId, null);
-        }
+        // 2. Remove o vínculo do perfil deste workspace (tirando o status de membro da equipe)
+        // NÃO removemos a entidade Profile do banco, pois o usuário pode usá-la em outros tenants.
+        await this.membershipsService.updateProfileId(user.id, tenantId, null);
     }
 
     async setVerificationData(userId: string, code: string, expires: Date): Promise<void> {
