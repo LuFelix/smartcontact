@@ -5,6 +5,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, FormBuilder } from '@angul
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { UserDetailsModalComponent,UserModalData } from '../../../admin/components/user-details/user-details-modal.component';
+import { PromotionDialogComponent } from '../../../admin/components/promotion-dialog/promotion-dialog';
 import { CommonModule } from '@angular/common'; 
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -42,7 +43,8 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
       MatIconModule,
       UsersListComponent,
       MatTooltipModule,
-      PageHeaderComponent
+      PageHeaderComponent,
+      PromotionDialogComponent
     ],
   templateUrl: './users-page.html',
   styleUrl: './users-page.scss'
@@ -177,6 +179,52 @@ export class UsersPage implements OnInit {
         this.snackBar.open('Usuário atualizado com sucesso!', 'OK', { duration: 3000 });
       }
     });
+  }
+
+  onPromoteUser(user: User): void {
+      const dialogRef = this.dialog.open(PromotionDialogComponent, {
+          width: '500px',
+          data: { user }
+      });
+
+      dialogRef.afterClosed().subscribe(result => {
+          if (result && result.roleId) {
+              this.isLoading = true;
+              this.userService.promoteToTeam(user.id, result.roleId, result.email)
+                  .pipe(finalize(() => this.isLoading = false))
+                  .subscribe({
+                      next: () => {
+                          this.snackBar.open(`${user.name} adicionado à equipe com sucesso!`, 'OK', { duration: 3000 });
+                          this.loadUsers();
+                      },
+                      error: (err: any) => {
+                          console.error(err);
+                          this.snackBar.open(err.error?.message || 'Erro ao adicionar à equipe.', 'Fechar');
+                      }
+                  });
+          }
+      });
+  }
+
+  onDemoteUser(user: User): void {
+      if (!confirm(`Tem certeza que deseja remover "${user.name}" da equipe?\nEsta pessoa continuará existindo como seu contato.`)) {
+          return;
+      }
+
+      this.isLoading = true;
+      // Rebaixamos para 'usuario' e o backend se encarrega de limpar o Profile e manter o contato.
+      this.userService.demoteFromTeam(user.id)
+          .pipe(finalize(() => this.isLoading = false))
+          .subscribe({
+              next: () => {
+                  this.snackBar.open(`${user.name} removido da equipe com sucesso.`, 'OK', { duration: 3000 });
+                  this.loadUsers();
+              },
+              error: (err: any) => {
+                  console.error(err);
+                  this.snackBar.open('Erro ao remover da equipe.', 'Fechar');
+              }
+          });
   }
 
   deleteUser(user: User): void {

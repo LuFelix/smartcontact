@@ -29,7 +29,7 @@ export class UserRespondeDto {
   constructor(user: User) {
     this.id = user.id;
     this.name = user.name;
-    this.email = user.email;
+    this.email = user.email as string;
     this.cpf = user.cpf ?? null;
     this.isVerified = user.isVerified;
     

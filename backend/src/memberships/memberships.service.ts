@@ -42,9 +42,7 @@ export class MembershipsService {
     if (!membership) {
       throw new NotFoundException('Vínculo não encontrado neste workspace.');
     }
-    membership.roleId = roleId;
-    membership.role = null as any; // Limpa a relação carregada para forçar o uso do novo roleId
-    return this.membershipRepository.save(membership);
+    return this.membershipRepository.update(membership.id, { roleId });
   }
 
   async updateProfileId(userId: string, tenantId: string, profileId: string | null) {
@@ -52,7 +50,6 @@ export class MembershipsService {
     if (!membership) {
       throw new NotFoundException('Vínculo não encontrado neste workspace.');
     }
-    membership.profileId = profileId;
-    return this.membershipRepository.save(membership);
+    return this.membershipRepository.update(membership.id, { profileId });
   }
 }

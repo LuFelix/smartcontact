@@ -38,6 +38,8 @@ export class UsersListComponent {
   @Output() editUser = new EventEmitter<User>();
   @Output() deleteUser = new EventEmitter<User>();
   @Output() toggleFavoriteAction = new EventEmitter<User>();
+  @Output() promoteUser = new EventEmitter<User>();
+  @Output() demoteUser = new EventEmitter<User>();
 
   public authService = inject(AuthService);
 

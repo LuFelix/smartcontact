@@ -23,7 +23,7 @@
       <header class="profile-header">
         <div class="avatar-wrapper" [style.background-color]="getAvatarColor(tagData.user.name)">
           @if (profileImage; as avatarUrl) {
-            <img [src]="avatarUrl" class="avatar-img" (error)="handleImageError($event)">
+            <img [src]="avatarUrl" class="avatar-img" (error)="handleImageError($event)" referrerpolicy="no-referrer">
           }
           <span class="letter-placeholder">{{ getInitial(tagData.user.name) }}</span>
         </div>

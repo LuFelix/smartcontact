@@ -41,12 +41,16 @@ export class UsersService {
      * Resolve colisões adicionando um sufixo numérico.
      */
     async generateUniqueUsername(name: string): Promise<string> {
-        const baseUsername = name
+        let baseUsername = name
             .toLowerCase()
             .normalize("NFD")
             .replace(/[\u0300-\u036f]/g, "") // Remove acentos
             .replace(/[^a-z0-9]/g, "") // Mantém apenas letras e números
             .substring(0, 30); // Limita o tamanho
+
+        if (!baseUsername) {
+            baseUsername = 'user';
+        }
 
         let username = baseUsername;
         let counter = 1;
@@ -72,9 +76,16 @@ export class UsersService {
         let tenantId = currentUser?.tenantId;
         const ownerId = currentUser?.sub || this.TIWEB_ID;
 
-        const emailExists = await this.usersRepository.findOne({ where: { email } });
-        if (emailExists) {
-            throw new BadRequestException('Usuário com este e-mail já existe');
+        if (email) {
+            const emailExists = await this.usersRepository.findOne({ where: { email } });
+            if (emailExists) {
+                throw new BadRequestException('Usuário com este e-mail já existe');
+            }
+        }
+
+        // REGRAS DE INTEGRIDADE: Contas reais (com senha) DEVEM ter e-mail
+        if (password && password.length > 0 && !email) {
+            throw new BadRequestException('Um endereço de e-mail é obrigatório para contas com acesso ao sistema.');
         }
 
         if (cpf === "" || cpf === undefined) {
@@ -88,7 +99,7 @@ export class UsersService {
             }
         }
 
-        const hashedPassword = await bcrypt.hash(password || '', 10);
+        const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
 
         // Se não houver tenant no contexto (auto-cadastro), criamos um novo
         if (!tenantId) {
@@ -172,7 +183,7 @@ export class UsersService {
         });
 
         // RETORNA O USUÁRIO COMPLETO COM RELAÇÕES CARREGADAS
-        return this.findByEmail(savedUser.email) as Promise<User>;
+        return this.findByEmail(savedUser.email as string) as Promise<User>;
     }
 
     private injectLegacyProps(user: User | null, currentUser?: any): User | null {
@@ -351,26 +362,6 @@ export class UsersService {
             updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
         }
 
-        // --- ATUALIZAÇÃO DE ROLE (Via Membership) ---
-        if (updateUserDto.roleId) {
-            const membership = user.memberships?.find(m => m.tenantId === targetTenantId);
-            console.log(`[DEBUG] Update Role: targetTenantId=${targetTenantId}, foundMembership=${!!membership}, newRoleId=${updateUserDto.roleId}`);
-            if (membership) {
-                await this.membershipsService.updateRole(user.id, targetTenantId, updateUserDto.roleId);
-                console.log(`[DEBUG] Role updated successfully via membershipsService.`);
-            } else if (isTenantAdmin || isSystemAdmin) {
-                // Se não tem membership mas o admin está editando, criamos o vínculo
-                await this.membershipsService.create({
-                    userId: user.id,
-                    tenantId: targetTenantId,
-                    roleId: updateUserDto.roleId
-                });
-                console.log(`[DEBUG] New membership created successfully.`);
-            } else {
-                console.log(`[DEBUG] Could not update role: User is not admin and membership not found.`);
-            }
-        }
-
         const { roleId, phones, addresses, secondaryEmails, links, tags, ...userUpdateData } = updateUserDto;
         this.usersRepository.merge(user!, userUpdateData);
 
@@ -407,11 +398,111 @@ export class UsersService {
 
         await this.usersRepository.save(user!);
 
-        const updatedUser = await this.findByEmail(user!.email, currentUser); console.log(`[DEBUG] Final Role in response: ${updatedUser?.memberships?.[0]?.role?.name}`); return updatedUser as User;
+        // --- ATUALIZAÇÃO DE ROLE (Via Membership) ---
+        // Fazemos após o save do usuário para garantir que não haja conflitos de relação em cache
+        if (updateUserDto.roleId) {
+            const membership = user.memberships?.find(m => m.tenantId === targetTenantId);
+            if (membership) {
+                await this.membershipsService.updateRole(user.id, targetTenantId, updateUserDto.roleId);
+            } else if (isTenantAdmin || isSystemAdmin) {
+                await this.membershipsService.create({
+                    userId: user.id,
+                    tenantId: targetTenantId,
+                    roleId: updateUserDto.roleId
+                });
+            }
+        }
+
+        // FORÇA O RECARREGAMENTO TOTAL DO BANCO para garantir que as novas memberships/roles sejam lidas
+        const updatedUser = await this.findByEmail(user!.email as string, currentUser); 
+        return updatedUser as User;
     }
 
     async updateProfilePicture(userId: string, pictureUrl: string): Promise<void> {
         await this.usersRepository.update(userId, { profilePictureUrl: pictureUrl });
+    }
+
+    async promoteToTeam(id: string, roleId: string, currentUser: any, email?: string): Promise<User> {
+        const user = await this.usersRepository.findOne({
+            where: { id },
+            relations: ['memberships']
+        });
+
+        if (!user) {
+            throw new NotFoundException(`Usuário com ID ${id} não encontrado`);
+        }
+
+        const isTenantAdmin = currentUser?.role === 'administrador';
+        if (!currentUser?.isSuperAdmin && !isTenantAdmin) {
+             throw new BadRequestException('Apenas administradores podem promover usuários.');
+        }
+
+        const targetRole = await this.rolesService.findOne(roleId, currentUser);
+        if (!targetRole) {
+            throw new BadRequestException('Cargo inválido.');
+        }
+
+        if (targetRole.name?.toLowerCase() === 'contato') {
+            throw new BadRequestException('Não é possível promover um membro para a função de contato. Escolha um cargo de equipe.');
+        }
+
+        const targetTenantId = currentUser.tenantId || this.TIWEB_ID;
+
+        // Se informou um novo e-mail (ou o e-mail obrigatório da promoção)
+        if (email) {
+            if (user.email && user.email !== email) {
+                // Checa se o novo e-mail já existe em outro usuário
+                const existing = await this.usersRepository.findOne({ where: { email } });
+                if (existing) throw new BadRequestException('Este e-mail já está em uso por outro usuário.');
+            }
+            user.email = email;
+            user.isVerified = true; 
+        }
+
+        if (!user.email) {
+            throw new BadRequestException('Um endereço de e-mail é obrigatório para promoção à equipe.');
+        }
+
+        // Atualiza a Role no membership (ou cria se não existir)
+        const membership = user.memberships?.find(m => m.tenantId === targetTenantId);
+        if (membership) {
+            await this.membershipsService.updateRole(user.id, targetTenantId, targetRole.id);
+        } else {
+            await this.membershipsService.create({
+                userId: user.id,
+                tenantId: targetTenantId,
+                roleId: targetRole.id
+            });
+        }
+
+        // Força a criação do Profile
+        let existingProfile = await this.profilesService.findByUserId(user.id);
+        if (!existingProfile) {
+            existingProfile = await this.profilesService.create({
+                userId: user.id,
+                ownerId: currentUser.sub,
+                tenantId: targetTenantId,
+                profilePictureUrl: user.profilePictureUrl || undefined
+            });
+            
+            // Vincula o profileId no membership
+            await this.membershipsService.updateProfileId(user.id, targetTenantId, existingProfile.id);
+        }
+
+        // Força a criação da Tag (Verificação via Repositório para evitar erros de relação NOT NULL no save(user))
+        const hasTag = await this.tagRepository.findOne({ where: { userId: user.id } });
+        if (!hasTag) {
+            await this.tagsService.createDefaultTag(
+                user.id,
+                currentUser.sub,
+                targetTenantId
+            );
+        }
+
+        // Salva as mudanças no usuário (email e isVerified)
+        await this.usersRepository.save(user);
+
+        return this.findByEmail(user.email as string, currentUser) as Promise<User>;
     }
 
     async createMembershipForUser(userId: string, tenantId: string, roleId: string, profileId?: string | null): Promise<void> {
