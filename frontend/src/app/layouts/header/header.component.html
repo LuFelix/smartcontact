@@ -54,7 +54,7 @@
       <!-- Foto/Ícone do Usuário -->
       <div class="header-avatar" [style.background-color]="getAvatarColor()">
         @if (profileImage; as avatarUrl) {
-            <img [src]="avatarUrl" (error)="handleImageError($event)">
+            <img [src]="avatarUrl" (error)="handleImageError($event)" referrerpolicy="no-referrer">
         }
         <span class="letter-placeholder">{{ getInitial() }}</span>
       </div>
