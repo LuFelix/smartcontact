@@ -24,13 +24,24 @@ export class TeamService {
    */
   async addMember(createMemberDto: CreateMemberDto, currentUser: any): Promise<User> {
     const { name, email, password, roleId } = createMemberDto;
+    const emailNormalized = email?.trim().toLowerCase();
 
     // Apenas administradores de tenant podem convidar membros
     if (currentUser.role !== 'administrador' && !currentUser.isSuperAdmin) {
       throw new BadRequestException('Apenas administradores podem adicionar membros à equipe.');
     }
 
-    // Criamos o contexto do novo usuário:
+    // Verifica se o usuário já existe globalmente pelo e-mail
+    const existingUser = await this.usersService.findByEmail(emailNormalized);
+    if (existingUser) {
+        console.log(`[TeamService] Usuário já existe (${emailNormalized}). Promovendo ao Workspace: ${currentUser.tenantId}`);
+        // Se já existe, não criamos um novo. Apenas o promovemos (vinculamos) ao Workspace atual.
+        // O método promoteToTeam já lida com a criação atômica do Profile e Role.
+        return this.usersService.promoteToTeam(existingUser.id, roleId, currentUser, emailNormalized);
+    }
+
+    console.log(`[TeamService] Criando novo usuário (${emailNormalized}) no Workspace: ${currentUser.tenantId}`);
+    // Criamos o contexto do novo usuário se não existir:
     // 1. tenantId: Sempre o mesmo do administrador que o convidou.
     // 2. sub (quem criou): O administrador logado.
     const newUserContext = {
@@ -40,7 +51,7 @@ export class TeamService {
 
     const userDto = {
       name,
-      email,
+      email: emailNormalized,
       password,
       roleId,
       isActive: true
