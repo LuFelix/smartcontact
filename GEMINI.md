@@ -10,59 +10,51 @@ O **SmartContact** resolve a fricção do networking físico através de **Cart�
 
 ---
 
-## 🎨 2. Padrões de Interface (CRÍTICO)
+## 🏗️ 2. Arquitetura Multi-Tenant N:N (CRÍTICO)
+O sistema opera em um paradigma Multi-Tenant N:N (estilo Google Drive).
+
+### 🔑 Identidade vs Contexto
+- **Usuários são Globais:** Um único e-mail permite login no sistema todo.
+- **Permissões são Locais:** As roles e o acesso a recursos são definidos pela tabela pivot `memberships`.
+- **Contexto Dinâmico:** O Backend resolve a role do usuário em tempo real via `JwtStrategy` baseada no header `X-Tenant-ID`.
+
+### 👥 Tipos de Membros no Workspace
+1. **Dono (Owner):** Criador do Workspace.
+2. **Equipe (Member):** Possui um `profile_id` vinculado na membership. Aparece na gestão de equipe.
+3. **Usuário Standard:** Possui membership no tenant mas `profile_id` é null. Acesso apenas ao painel básico.
+4. **Contato (Lead):** Role 'contato'. Sem senha. Capturado via perfil público.
+
+---
+
+## 🎨 3. Padrões de Interface (CRÍTICO)
 
 ### 🌓 Theming e Cores
 - **Regra:** NUNCA use cores fixas (Hexadecimal, RGB, RGBA ou nomes de cores).
 - **Padrão:** Use estritamente os **Design Tokens** do Angular Material 3.
-- **Exemplos:** 
-    - Fundo: `var(--mat-sys-surface)` ou `var(--mat-sys-surface-container-low)`
-    - Texto: `var(--mat-sys-on-surface)` ou `var(--mat-sys-on-surface-variant)`
-    - Primária: `var(--mat-sys-primary)`
-- **Por que:** O sistema alterna entre Light e Dark Mode e o uso de cores fixas quebra o visual.
 
 ### 🖼️ Modais e Layout
-- **Dimensões:** As modais administrativas devem ser espaçosas para evitar claustrofobia visual.
-- **Largura Padrão:** Entre **900px e 1000px**.
-- **Abertura:** Sempre use `panelClass: 'large-abac-modal'` (ou similar) e `{ autoFocus: false }` para evitar scroll automático.
-- **Scrollbars:** Evite barras de rolagem externas na modal. Use `max-height: 75vh` e aplique `overflow-y: auto` apenas na lista interna de dados.
+- **Dimensões:** As modais administrativas devem ser espaçosas (900px-1000px).
+- **Abertura:** Sempre use `panelClass: 'large-abac-modal'` e `{ autoFocus: false }`.
 
 ---
 
-## 🛠️ 3. Estado Atual da Missão (Passo a Passo)
+## 🛠️ 4. Estado Atual da Missão (Passo a Passo)
 
-- [x] **PASSO A (Issue #123):** Motor de convites via Token e QR Code (OK).
-- [x] **PASSO B (Issue #124):** Roteamento independente (NFC vs QR Code) na entidade Tag (OK).
-- [x] **PASSO C (Issue #106):** Trava ABAC (Vendedores só acessam o que lhes foi delegado) (OK).
-- [x] **PASSO D (Issue #118/126):** UI de Gestão de Equipe e Refinamento da Modal ABAC (OK).
-- [x] **PASSO E (Issue #95):** Refatoração de Links para Usar Username (OK).
-- [x] **PASSO F (Issue #133):** Refatoração da Modal de Usuário para Tabs (OK).
-- [x] **PASSO G (Issue #132):** Refinamento da Modal ABAC e Remoção de Redundância (OK).
-- [x] **PASSO H (Issue #125):** Painel ABAC com Configuração Separada de Fluxos NFC/QR (OK).
-- [x] **PASSO I (Issue #15):** Integração do Botão 'Salvar Contato' com vCard (OK).
-
----
-
-## 🛠️ 3.1 Fase 1.5: Pit Stop de UX (Passo a Passo)
-- [x] **PASSO J (Issue #143):** Bugfix UX: Estabilidade da Modal e Ícones (OK).
-- [x] **PASSO K (Issue #141):** Separação Lógica entre Contatos e Equipe (OK).
-- [x] **PASSO L (Issue #144):** Restauração da Visão Geral da Equipe (OK).
-- [x] **PASSO M (Issue #142):** Filtros de Busca Avançada e Integridade de Backend (OK).
+- [x] **PASSO G (Issue #132):** Refinamento da Modal ABAC (OK).
+- [x] **PASSO H (Issue #125):** Painel ABAC com Configuração NFC/QR (OK).
+- [x] **PASSO I (Issue #15):** Integração 'Salvar Contato' com vCard (OK).
+- [x] **PASSO N (Issue #164):** Context Switcher e Arquitetura Multi-Tenant N:N (OK).
 - [ ] **PRÓXIMO PASSO:** Refatoração de UI e Estabilização de UX.
 
 ---
 
-## ⚠️ 4. Erros a Não Repetir (Lições Aprendidas)
-
-1. **Redundância:** Não colocar gestão de Roles dentro de "Gestão de Equipe". Roles são globais e ficam no menu lateral. Equipe foca em Membros e Recursos (Tags).
-2. **Área de Clique:** Em listas Master-Detail (como a de Tags na modal), a linha inteira deve ser a área de clique para o preview, deixando o checkbox isolado apenas para a ação de seleção/delegação.
-3. **Builds:** Não rodar `npm run build` ou similares sem necessidade, para economizar contexto e tokens. O usuário validará visualmente.
-4. **EXECUÇÂO** NUNCA SAIR EXECUTANDO COMANDOS E CRIAÇÃO DE CÓDIGO AUTOMATICAMENTE SEM SEGUIR O PROTOCOLO.
-
-
+## ⚠️ 5. Erros a Não Repetir (Lições Aprendidas)
+1. **Vazamento de Dados:** SEMPRE filtrar queries por `tenant_id` usando QueryBuilder no backend.
+2. **Promoção de Membros:** Se o usuário já existe globalmente, use `promoteToTeam` em vez de tentar criar um novo.
+3. **Rebaixamento:** Ao remover da equipe, rebaixe para role 'usuario' e limpe o `profile_id`, mas NÃO delete o usuário.
 
 ---
 
-## 📄 5. Protocolos de Branch
-1. **Encerramento de Branch** Siga rigorosamente o arquivo `manual-protocolos.md` na raiz para Abertura, Fechamento e Faxina de Issues.
-2. **Encerramento de Branch** Sempre perguntar se o código tem erros ou se ainda há algum ajuste antes de encerrar a branch com o commit de encerramento padrão ouro.
+## 📄 6. Protocolos
+1. **Rigor:** Leia sempre `manual-protocolos.md` e `DOCUMENTACAO_ARQUITETURA.md`.
+2. **Branches:** Siga o Protocolo Padrão Ouro para abertura e fechamento.

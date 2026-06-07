@@ -219,14 +219,25 @@ export class AuthService {
             sub: null
         };
         
-        user = await this.usersService.create({
-          email: payloadGoogle.email,
-          name: payloadGoogle.name || 'Usuário Google',
-          password: Math.random().toString(36).slice(-10),
-          roleId: roleId
-        }, newUserContext, payloadGoogle.picture);
+        try {
+            user = await this.usersService.create({
+              email: payloadGoogle.email,
+              name: payloadGoogle.name || 'Usuário Google',
+              password: Math.random().toString(36).slice(-10),
+              roleId: roleId
+            }, newUserContext, payloadGoogle.picture);
 
-        await this.usersService.markEmailAsVerified(user.id);
+            await this.usersService.markEmailAsVerified(user.id);
+        } catch (error: any) {
+            // Se falhar por e-mail já existente, significa que outra requisição paralela criou o usuário
+            if (error.message?.includes('já existe') || error.detail?.includes('already exists')) {
+                user = await this.usersService.findByEmail(payloadGoogle.email);
+            } else {
+                throw error;
+            }
+        }
+        
+        // Recarrega as relações completas após criação ou recuperação paralela
         user = await this.usersService.findByEmail(payloadGoogle.email);
       } else {
           // O usuário já existe no banco (pode ter sido criado como lead ou já ter conta).
@@ -249,22 +260,28 @@ export class AuthService {
                   console.warn(`[AuthService Google] Convite inválido ou expirado no fluxo de conta existente: ${loginDto.invitationToken}`);
               }
           }
-
-          // PARADIGMA GOOGLE DRIVE:
-          // Todo usuário que faz login no sistema (não é mais apenas um contato) 
-          // DEVE ter o seu próprio Workspace (Tenant Solo) onde ele é o dono (ownerId).
-          const hasPersonalWorkspace = user.ownerId === user.id && user.memberships?.some(m => m.profile?.ownerId === user.id);
-          
-          if (!hasPersonalWorkspace) {
-              user = await this.usersService.provisionPersonalWorkspace(user);
-          } else {
-              // Apenas recarrega as relações atualizadas
-              user = await this.usersService.findByEmail(payloadGoogle.email);
-          }
       }
 
       if (!user) {
         throw new InternalServerErrorException('Erro ao processar ou criar usuário via Google');
+      }
+
+      // PARADIGMA GOOGLE DRIVE (Unificado para Novos e Existentes):
+      // Todo usuário que faz login no sistema DEVE ter o seu próprio Workspace (Tenant Solo) onde ele é o dono (ownerId).
+      // A verificação robusta olha se ele tem uma membership onde ele possui um profile próprio.
+      const hasPersonalWorkspace = user?.ownerId === user?.id && user?.memberships?.some(m => m.profile?.ownerId === user?.id);
+      
+      if (!hasPersonalWorkspace) {
+          console.log(`[AuthService Google] Provisionando workspace pessoal para: ${user.email}`);
+          user = await this.usersService.provisionPersonalWorkspace(user);
+      } else {
+          console.log(`[AuthService Google] Usuário já possui workspace pessoal: ${user.email}`);
+          // Apenas recarrega para garantir que as relações de memberships e profiles estejam frescas
+          user = await this.usersService.findByEmail(payloadGoogle.email);
+      }
+
+      if (!user) {
+        throw new InternalServerErrorException('Erro fatal ao recuperar dados do usuário após provisionamento.');
       }
 
       // O tenant ativo inicial será o primeiro workspace VÁLIDO (não-contato)
