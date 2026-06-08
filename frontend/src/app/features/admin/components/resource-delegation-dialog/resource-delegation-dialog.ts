@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialogRef, MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,9 +8,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { TagService } from '../../../../core/services/tag.service';
 import { UserService } from '../../../../core/services/user.service';
-import { Tag, FullUserResponse } from '../../../shared/models/users.models';
+import { Tag, FullUserResponse, TechnologyType } from '../../../shared/models/users.models';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { finalize, forkJoin } from 'rxjs';
+import * as QRCode from 'qrcode';
 
 @Component({
   selector: 'app-resource-delegation-dialog',
@@ -34,10 +35,15 @@ export class ResourceDelegationDialogComponent implements OnInit {
   private snackBar = inject(MatSnackBar);
   public data = inject<{ member: FullUserResponse }>(MAT_DIALOG_DATA);
 
+  @ViewChild('qrcodeCanvas') qrcodeCanvas!: ElementRef<HTMLCanvasElement>;
+
   tags: Tag[] = [];
   isLoading = true;
   selectedTagIds: Set<string> = new Set();
   isSaving = false;
+  
+  focusedTag: Tag | null = null;
+  focusedTagUrl: string | null = null;
 
   ngOnInit(): void {
     this.loadData();
@@ -46,7 +52,6 @@ export class ResourceDelegationDialogComponent implements OnInit {
   loadData(): void {
     this.isLoading = true;
     
-    // Dispara as duas chamadas em paralelo (Todos os recursos + Permissões do usuário)
     forkJoin({
       allTags: this.tagService.findAll(),
       userTags: this.userService.getUserTags(this.data.member.id)
@@ -55,7 +60,6 @@ export class ResourceDelegationDialogComponent implements OnInit {
     .subscribe({
       next: (result) => {
         this.tags = result.allTags;
-        // Inicializa o Set com os IDs que vieram do banco
         this.selectedTagIds = new Set(result.userTags);
       },
       error: (err) => {
@@ -72,6 +76,35 @@ export class ResourceDelegationDialogComponent implements OnInit {
       } else {
           this.selectedTagIds.add(tagId);
       }
+  }
+
+  previewTag(tag: Tag): void {
+    if (this.focusedTag?.id === tag.id) {
+        this.focusedTag = null;
+        this.focusedTagUrl = null;
+        return;
+    }
+
+    this.focusedTag = tag;
+    
+    // Resolve URL exactly like TagDialogComponent
+    if ((tag.technologyType === TechnologyType.LINK || tag.technologyType === TechnologyType.TRILHA) && tag.value) {
+      this.focusedTagUrl = tag.value.startsWith('http') ? tag.value : 'https://' + tag.value;
+    } else {
+      this.focusedTagUrl = window.location.origin + '/t/' + tag.uuid;
+    }
+
+    setTimeout(() => {
+        if (this.qrcodeCanvas && this.focusedTagUrl) {
+            QRCode.toCanvas(this.qrcodeCanvas.nativeElement, this.focusedTagUrl, {
+                width: 200,
+                margin: 2,
+                color: { dark: '#000000', light: '#ffffff' }
+            }, (error: Error | null | undefined) => {
+                if (error) console.error(error);
+            });
+        }
+    });
   }
 
   save(): void {
