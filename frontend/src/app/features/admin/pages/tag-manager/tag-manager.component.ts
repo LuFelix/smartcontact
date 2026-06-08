@@ -145,7 +145,10 @@ export class TagManagerComponent implements OnInit {
 
   openTagDialog(tag?: Tag): void {
     const dialogRef = this.dialog.open(TagDialogComponent, {
-      width: tag ? '800px' : '500px',
+      width: '900px',
+      maxWidth: '95vw',
+      panelClass: 'large-abac-modal',
+      autoFocus: false,
       data: { tag }
     });
 
