@@ -1,94 +1,55 @@
-<h2 mat-dialog-title>Gerenciar Acessos (ABAC)</h2>
+<h2 mat-dialog-title>Permissões de {{ data.member.name }}</h2>
 
 <mat-dialog-content>
     <div class="delegation-layout">
-        <!-- Coluna Esquerda: Listagem -->
-        <div class="selection-column">
-            <div class="header-info">
-                <p class="helper-text">Selecione as Tags para delegar ou clique nelas para visualizar o QR Code.</p>
+        <p class="helper-text">
+            Selecione quais recursos do Workspace este membro tem permissão para gerenciar e visualizar.
+        </p>
+
+        @if (isLoading) {
+            <div class="loading-container">
+                <mat-spinner diameter="40"></mat-spinner>
+                <p>Carregando recursos...</p>
             </div>
-
-            @if (isLoading) {
-                <div class="loading-container">
-                    <mat-spinner diameter="40"></mat-spinner>
-                    <p>Carregando recursos...</p>
-                </div>
-            }
-
+        } @else {
             <div class="tag-list">
                 @for (tag of tags; track tag.id) {
-                    <div class="tag-row" [class.active-row]="focusedTag?.id === tag.id">
+                    <div class="tag-row" (click)="toggleTag(tag.id)">
                         <div class="checkbox-area">
                             <mat-checkbox 
                                 [checked]="selectedTagIds.has(tag.id)" 
                                 (change)="toggleTag(tag.id)"
-                                color="primary">
+                                color="primary"
+                                (click)="$event.stopPropagation()">
                             </mat-checkbox>
                         </div>
                         
-                        <div class="content-area" (click)="previewTag(tag)">
+                        <div class="content-area">
                             <div class="text-group">
-                                <span class="tag-uuid">{{ tag.uuid }}</span>
-                                <span class="tag-owner">Dono: {{ tag.user?.name || 'Não atribuído' }}</span>
+                                <span class="tag-name">{{ tag.name || 'Recurso sem nome' }}</span>
+                                <span class="tag-meta">
+                                    <mat-icon class="tech-icon">{{ getIcon(tag.technologyType) }}</mat-icon>
+                                    {{ getTechLabel(tag.technologyType) }}
+                                </span>
                             </div>
-                            <mat-icon class="view-indicator" *ngIf="focusedTag?.id === tag.id">qr_code_2</mat-icon>
                         </div>
                     </div>
                 } @empty {
-                    <div class="no-tags">Nenhuma tag disponível no workspace.</div>
+                    <div class="no-tags">
+                        <mat-icon>inventory_2</mat-icon>
+                        <p>Nenhum recurso cadastrado no workspace ainda.</p>
+                    </div>
                 }
             </div>
-        </div>
-
-        <!-- Coluna Direita: Preview QR Code -->
-        <div class="preview-column" [class.has-content]="focusedTag">
-            @if (focusedTag) {
-                <div class="qr-preview-card">
-                    <div class="card-header">
-                        <h3>Identidade da Tag</h3>
-                        <button mat-icon-button (click)="focusedTag = null">
-                            <mat-icon>close</mat-icon>
-                        </button>
-                    </div>
-                    
-                    <div class="qr-canvas-container">
-                        <canvas #qrcodeCanvas></canvas>
-                    </div>
-
-                    <div class="url-display">
-                        <span class="url-label">Link Público:</span>
-                        <div class="url-value">{{ focusedTagUrl }}</div>
-                    </div>
-                    
-                    <div class="metadata-grid">
-                        <div class="meta-item">
-                            <span class="meta-label">UUID</span>
-                            <span class="meta-value">{{ focusedTag.uuid }}</span>
-                        </div>
-                        <div class="meta-item">
-                            <span class="meta-label">Proprietário</span>
-                            <span class="meta-value">{{ focusedTag.user?.name || 'Sem proprietário' }}</span>
-                        </div>
-                    </div>
-                </div>
-            } @else {
-                <div class="empty-state">
-                    <div class="icon-circle">
-                        <mat-icon>center_focus_weak</mat-icon>
-                    </div>
-                    <h4>Nenhuma Tag Selecionada</h4>
-                    <p>Clique em uma tag da lista à esquerda para visualizar seu QR Code e detalhes técnicos.</p>
-                </div>
-            }
-        </div>
+        }
     </div>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
-    <button mat-button mat-dialog-close>Cancelar</button>
+    <button mat-button mat-dialog-close [disabled]="isSaving">Cancelar</button>
     <button mat-flat-button color="primary" 
             (click)="save()" 
-            [disabled]="isSaving">
+            [disabled]="isSaving || isLoading">
         {{ isSaving ? 'Salvando...' : 'Salvar Alterações' }}
     </button>
 </mat-dialog-actions>
