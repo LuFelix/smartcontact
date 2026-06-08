@@ -234,8 +234,20 @@ export class TagDialogComponent implements AfterViewInit {
 
   get previewUrl(): string {
     if (!this.data.tag) return '';
-    return `${window.location.origin}/t/${this.data.tag.uuid}`;
+
+    const type = this.tagForm.get('technologyType')?.value;
+    const value = this.tagForm.get('value')?.value;
+
+    // Se for um link ou trilha genérica, o QR Code DEVE apontar direto para o destino final (o campo 'value')
+    if ((type === TechnologyType.LINK || type === TechnologyType.TRILHA) && value) {
+      // Garante que o valor tem http/https
+      return value.startsWith('http') ? value : \`https://\${value}\`;
+    }
+
+    // Para QR Codes virtuais de sistema, usa a rota de resolução interna
+    return \`\${window.location.origin}/t/\${this.data.tag.uuid}\`;
   }
+
 
   ngAfterViewInit() {
     if (this.showQrPreview) {
