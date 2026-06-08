@@ -26,10 +26,13 @@ export class TagsService {
           throw new BadRequestException('Tenant ID (Workspace) não fornecido no cabeçalho.');
       }
 
-      // Verificar se UID já existe para este tenant (Apenas se for fornecido)
-      if (createTagDto.uid) {
+      // Sanitização do UID: Se vier string vazia ou só espaços, vira null
+      const sanitizedUid = createTagDto.uid?.trim() || null;
+
+      // Verificar se UID já existe para este tenant (Apenas se for fornecido e não nulo)
+      if (sanitizedUid) {
           const existing = await this.tagRepository.findOne({
-              where: { uid: createTagDto.uid, tenantId }
+              where: { uid: sanitizedUid, tenantId }
           });
 
           if (existing) {
@@ -39,6 +42,7 @@ export class TagsService {
 
       const tag = this.tagRepository.create({
           ...createTagDto,
+          uid: sanitizedUid,
           uuid: uuidv4(),
           tenantId,
           ownerId: userId,
@@ -335,16 +339,21 @@ export class TagsService {
       if (!tag) throw new NotFoundException('Recurso não encontrado.');
 
       // 2. Aplica atualizações permitidas
-      if (updateData.uid) {
-          // Verificar se UID já existe para este tenant (se mudou)
-          if (updateData.uid !== tag.uid) {
-              const existing = await this.tagRepository.findOne({
-                  where: { uid: updateData.uid, tenantId }
-              });
-              if (existing) {
-                  throw new BadRequestException('Já existe um recurso cadastrado com este UID neste Workspace.');
+      if (updateData.uid !== undefined) {
+          // Sanitização do UID: Se vier string vazia ou só espaços, vira null
+          const sanitizedUid = updateData.uid?.trim() || null;
+
+          // Verificar se UID já existe para este tenant (se mudou e se não é nulo)
+          if (sanitizedUid !== tag.uid) {
+              if (sanitizedUid) {
+                  const existing = await this.tagRepository.findOne({
+                      where: { uid: sanitizedUid, tenantId }
+                  });
+                  if (existing) {
+                      throw new BadRequestException('Já existe um recurso cadastrado com este UID neste Workspace.');
+                  }
               }
-              tag.uid = updateData.uid;
+              tag.uid = sanitizedUid;
           }
       }
 
