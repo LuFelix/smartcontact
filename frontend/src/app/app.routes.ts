@@ -87,6 +87,12 @@ export const routes: Routes = [
                 title: 'SmartContact - Gestão de Equipe'
             },
             {
+                path: 'tags',
+                loadComponent: () => import('./features/admin/pages/tag-manager/tag-manager.component').then(m => m.TagManagerComponent),
+                canActivate: [authGuard],
+                title: 'SmartContact - Gestão de Tags'
+            },
+            {
                 path: 'leads',
                 loadComponent: () => import('./features/users/pages/leads-page/leads-page').then(m => m.LeadsPage),
                 canActivate: [authGuard],

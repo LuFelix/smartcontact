@@ -20,7 +20,22 @@ export enum RedirectMode {
   CUSTOM_URL = 'CUSTOM_URL',
 }
 
+export enum TechnologyType {
+  NFC_HF = 'NFC_HF',
+  RFID_UHF = 'RFID_UHF',
+  QR_CODE = 'QR_CODE',
+  LINK = 'LINK',
+  TRILHA = 'TRILHA',
+}
+
+export enum ApplicationType {
+  REDIRECT = 'REDIRECT',
+  ASSET_COUNTING = 'ASSET_COUNTING',
+  ACCESS_CONTROL = 'ACCESS_CONTROL',
+}
+
 @Entity('tags')
+@Index(['uid', 'tenantId'], { unique: true })
 export class Tag {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -28,6 +43,35 @@ export class Tag {
   @Column({ unique: true })
   @Index({ unique: true })
   uuid!: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  uid!: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  name!: string | null;
+
+  @Column({
+    type: 'enum',
+    enum: TechnologyType,
+    default: TechnologyType.NFC_HF,
+    name: 'technology_type',
+  })
+  technologyType!: TechnologyType;
+
+  @Column({
+    type: 'enum',
+    enum: ApplicationType,
+    default: ApplicationType.REDIRECT,
+    name: 'application_type',
+  })
+  applicationType!: ApplicationType;
+
+  @Column({ type: 'varchar', nullable: true })
+  value!: string | null;
+
+  @Column({ type: 'boolean', default: false, name: 'is_resource' })
+  @Index()
+  isResource!: boolean;
 
   @Column({
     type: 'enum',
@@ -58,9 +102,9 @@ export class Tag {
   @Column({ type: 'uuid', name: 'user_id' })
   userId!: string;
 
-  @Column({ type: 'uuid', name: 'tenant_id', nullable: true })
+  @Column({ type: 'uuid', name: 'tenant_id' })
   @Index()
-  tenantId!: string | null;
+  tenantId!: string;
 
   @Column({ type: 'uuid', name: 'owner_id', nullable: true })
   @Index()

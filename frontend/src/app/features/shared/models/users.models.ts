@@ -55,14 +55,35 @@ export enum RedirectMode {
   CUSTOM_URL = 'CUSTOM_URL',
 }
 
+export enum TechnologyType {
+  NFC_HF = 'NFC_HF',
+  RFID_UHF = 'RFID_UHF',
+  QR_CODE = 'QR_CODE',
+  LINK = 'LINK',
+  TRILHA = 'TRILHA',
+}
+
+export enum ApplicationType {
+  REDIRECT = 'REDIRECT',
+  ASSET_COUNTING = 'ASSET_COUNTING',
+  ACCESS_CONTROL = 'ACCESS_CONTROL',
+}
+
 export interface Tag {
   id: string;
   uuid: string;
+  uid?: string | null;
+  name?: string | null;
+  technologyType: TechnologyType;
+  applicationType: ApplicationType;
+  value?: string | null;
+  isResource: boolean;
   nfcRedirectMode: RedirectMode;
   nfcCustomUrl?: string | null;
   qrRedirectMode: RedirectMode;
   qrCustomUrl?: string | null;
   userId: string;
+  tenantId: string;
   isActive: boolean;
   user?: User;
 }

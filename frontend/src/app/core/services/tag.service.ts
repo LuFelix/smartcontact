@@ -32,6 +32,27 @@ export class TagService {
   }
 
   /**
+   * Cadastra uma nova tag no estoque.
+   */
+  create(tagData: Partial<Tag>): Observable<Tag> {
+      return this.http.post<Tag>(this.API_URL, tagData);
+  }
+
+  /**
+   * Atualiza as configurações de uma tag.
+   */
+  update(tagId: string, tagData: Partial<Tag>): Observable<Tag> {
+      return this.http.patch<Tag>(`${this.API_URL}/${tagId}`, tagData);
+  }
+
+  /**
+   * Remove uma tag do estoque.
+   */
+  delete(tagId: string): Observable<void> {
+      return this.http.delete<void>(`${this.API_URL}/${tagId}`);
+  }
+
+  /**
    * Delega acesso a uma tag específica para outro usuário.
    */
   grantAccess(tagId: string, userId: string): Observable<any> {

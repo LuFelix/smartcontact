@@ -45,6 +45,9 @@ export class SideNavComponent {
     // Gestão de Equipe (Workspace)
     { link: '/app/team', label: 'Gestão de Equipe', icon: 'group_add', requiredPermission: 'VIEW_DASHBOARD' },
 
+    // Gestão de Tags (Hardware)
+    { link: '/app/tags', label: 'Gestão de Tags', icon: 'nfc', requiredPermission: 'VIEW_DASHBOARD' },
+
     // Meus Leads (CRM) - Removido ou renomeado se redundante, mantendo por enquanto conforme pedido
     { link: '/app/leads', label: 'Meus Leads', icon: 'person_search', requiredPermission: 'VIEW_DASHBOARD' },
   ];

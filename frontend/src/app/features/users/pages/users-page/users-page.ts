@@ -43,8 +43,7 @@ import { PageHeaderComponent } from '../../../shared/components/page-header/page
       MatIconModule,
       UsersListComponent,
       MatTooltipModule,
-      PageHeaderComponent,
-      PromotionDialogComponent
+      PageHeaderComponent
     ],
   templateUrl: './users-page.html',
   styleUrl: './users-page.scss'
