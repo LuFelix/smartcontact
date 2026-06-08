@@ -32,6 +32,13 @@ export class TagService {
   }
 
   /**
+   * Lista os recursos do Workspace delegados ao usuário logado.
+   */
+  getMyDelegated(): Observable<Tag[]> {
+      return this.http.get<Tag[]>(`${this.API_URL}/my-delegated`);
+  }
+
+  /**
    * Cadastra uma nova tag no estoque.
    */
   create(tagData: Partial<Tag>): Observable<Tag> {
