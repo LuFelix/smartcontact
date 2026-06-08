@@ -5,6 +5,7 @@ import { Public } from 'src/auth/decorators/public.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
+import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
 
 @ApiTags('Tags')
@@ -30,10 +31,33 @@ export class TagsController {
 
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
+  @Post()
+  @ApiOperation({ summary: 'Cadastra uma nova tag no estoque do Workspace (Apenas Admin)' })
+  @ApiBody({ type: CreateTagDto })
+  async create(
+      @Body() createTagDto: CreateTagDto,
+      @GetUser() currentUser: any
+  ) {
+      return this.tagsService.create(createTagDto, currentUser);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
   @Get()
   @ApiOperation({ summary: 'Lista todas as tags acessíveis para o usuário logado (Multi-Tenant + ABAC)' })
   async findAll(@GetUser() currentUser: any) {
       return this.tagsService.findAll(currentUser);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Delete(':id')
+  @ApiOperation({ summary: 'Remove uma tag do estoque (Apenas Admin)' })
+  async remove(
+      @Param('id', ParseUUIDPipe) tagId: string,
+      @GetUser() currentUser: any
+  ) {
+      return this.tagsService.remove(tagId, currentUser);
   }
 
   @ApiBearerAuth()

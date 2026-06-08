@@ -1,9 +1,11 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import { Tag, RedirectMode } from './entities/tag.entity';
+import { Tag, RedirectMode, TechnologyType, ApplicationType } from './entities/tag.entity';
 import { UserTagAccess } from './entities/user-tag-access.entity';
 import { v4 as uuidv4 } from 'uuid';
+import { CreateTagDto } from './dto/create-tag.dto';
+import { UpdateTagDto } from './dto/update-tag.dto';
 
 @Injectable()
 export class TagsService {
@@ -14,6 +16,30 @@ export class TagsService {
     private readonly accessRepository: Repository<UserTagAccess>,
   ) {}
 
+  async create(createTagDto: CreateTagDto, currentUser: any): Promise<Tag> {
+      const { tenantId, sub: userId } = currentUser;
+
+      // Verificar se UID já existe para este tenant
+      const existing = await this.tagRepository.findOne({
+          where: { uid: createTagDto.uid, tenantId }
+      });
+
+      if (existing) {
+          throw new BadRequestException('Já existe uma tag cadastrada com este UID neste Workspace.');
+      }
+
+      const tag = this.tagRepository.create({
+          ...createTagDto,
+          uuid: uuidv4(), // Mantemos o uuid interno para resoluções de link
+          tenantId,
+          ownerId: userId,
+          userId, // Por padrão, o criador é o dono
+          isActive: true
+      });
+
+      return this.tagRepository.save(tag);
+  }
+
   async createDefaultTag(userId: string, ownerId: string, tenantId: string): Promise<Tag> {
       const tag = this.tagRepository.create({
           uuid: uuidv4(),
@@ -22,7 +48,10 @@ export class TagsService {
           tenantId,
           nfcRedirectMode: RedirectMode.PROFILE,
           qrRedirectMode: RedirectMode.PROFILE,
-          isActive: true
+          isActive: true,
+          technologyType: TechnologyType.NFC_HF,
+          applicationType: ApplicationType.REDIRECT,
+          name: 'Tag de Usuário'
       });
       return this.tagRepository.save(tag);
   }
@@ -234,9 +263,27 @@ export class TagsService {
   }
 
   /**
-   * Atualiza as configurações de redirecionamento de uma Tag específica.
+   * Remove uma Tag (Apenas Admin).
    */
-  async update(tagId: string, updateData: any, currentUser: any): Promise<Tag> {
+  async remove(tagId: string, currentUser: any): Promise<void> {
+      const { tenantId, role } = currentUser;
+
+      if (role !== 'administrador') {
+          throw new ForbiddenException('Apenas administradores podem remover tags do estoque.');
+      }
+
+      const tag = await this.tagRepository.findOne({ where: { id: tagId, tenantId } });
+      if (!tag) {
+          throw new NotFoundException('Tag não encontrada no seu ambiente.');
+      }
+
+      await this.tagRepository.remove(tag);
+  }
+
+  /**
+   * Atualiza as configurações de uma Tag específica.
+   */
+  async update(tagId: string, updateData: UpdateTagDto, currentUser: any): Promise<Tag> {
       // 1. Valida Permissão ABAC
       await this.validateAccess(tagId, currentUser);
 
@@ -244,6 +291,24 @@ export class TagsService {
       if (!tag) throw new NotFoundException('Tag não encontrada.');
 
       // 2. Aplica atualizações permitidas
+      if (updateData.uid) {
+          // Verificar se UID já existe para este tenant (se mudou)
+          if (updateData.uid !== tag.uid) {
+              const existing = await this.tagRepository.findOne({
+                  where: { uid: updateData.uid, tenantId: currentUser.tenantId }
+              });
+              if (existing) {
+                  throw new BadRequestException('Já existe uma tag cadastrada com este UID neste Workspace.');
+              }
+              tag.uid = updateData.uid;
+          }
+      }
+
+      if (updateData.name) tag.name = updateData.name;
+      if (updateData.technologyType) tag.technologyType = updateData.technologyType;
+      if (updateData.applicationType) tag.applicationType = updateData.applicationType;
+      if (updateData.value !== undefined) tag.value = updateData.value;
+
       if (updateData.nfcRedirectMode) tag.nfcRedirectMode = updateData.nfcRedirectMode;
       if (updateData.nfcCustomUrl !== undefined) tag.nfcCustomUrl = updateData.nfcCustomUrl;
       if (updateData.qrRedirectMode) tag.qrRedirectMode = updateData.qrRedirectMode;
