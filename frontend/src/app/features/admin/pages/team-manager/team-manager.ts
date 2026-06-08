@@ -110,7 +110,8 @@ export class TeamManagerComponent implements OnInit {
           width: '900px',
           maxWidth: '95vw',
           data: { member },
-          panelClass: 'large-abac-modal'
+          panelClass: 'large-abac-modal',
+          autoFocus: false
       });
       // ABAC logic handles assignment
   }

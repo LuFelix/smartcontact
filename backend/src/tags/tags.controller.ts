@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Patch, Param, Body, NotFoundException, UseGuards, Query, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Patch, Param, Body, NotFoundException, UseGuards, Query, ParseUUIDPipe, Headers } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { TagsService } from './tags.service';
 import { Public } from 'src/auth/decorators/public.decorator';
@@ -36,17 +36,32 @@ export class TagsController {
   @ApiBody({ type: CreateTagDto })
   async create(
       @Body() createTagDto: CreateTagDto,
-      @GetUser() currentUser: any
+      @GetUser() currentUser: any,
+      @Headers('x-tenant-id') tenantId: string
   ) {
-      return this.tagsService.create(createTagDto, currentUser);
+      return this.tagsService.create(createTagDto, currentUser, tenantId);
   }
 
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'))
   @Get()
   @ApiOperation({ summary: 'Lista todas as tags acessíveis para o usuário logado (Multi-Tenant + ABAC)' })
-  async findAll(@GetUser() currentUser: any) {
-      return this.tagsService.findAll(currentUser);
+  async findAll(
+      @GetUser() currentUser: any,
+      @Headers('x-tenant-id') tenantId: string
+  ) {
+      return this.tagsService.findAll(currentUser, tenantId);
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard('jwt'))
+  @Get('my-delegated')
+  @ApiOperation({ summary: 'Lista os recursos do Workspace delegados ao usuário logado' })
+  async findMyDelegated(
+      @GetUser() currentUser: any,
+      @Headers('x-tenant-id') tenantId: string
+  ) {
+      return this.tagsService.findMyDelegated(currentUser, tenantId);
   }
 
   @ApiBearerAuth()
@@ -55,9 +70,10 @@ export class TagsController {
   @ApiOperation({ summary: 'Remove uma tag do estoque (Apenas Admin)' })
   async remove(
       @Param('id', ParseUUIDPipe) tagId: string,
-      @GetUser() currentUser: any
+      @GetUser() currentUser: any,
+      @Headers('x-tenant-id') tenantId: string
   ) {
-      return this.tagsService.remove(tagId, currentUser);
+      return this.tagsService.remove(tagId, currentUser, tenantId);
   }
 
   @ApiBearerAuth()
@@ -66,9 +82,10 @@ export class TagsController {
   @ApiOperation({ summary: 'Lista os usuários que têm acesso a uma tag específica (Apenas Admin)' })
   async getDelegations(
       @Param('id', ParseUUIDPipe) tagId: string,
-      @GetUser() currentUser: any
+      @GetUser() currentUser: any,
+      @Headers('x-tenant-id') tenantId: string
   ) {
-      return this.tagsService.getDelegations(tagId, currentUser);
+      return this.tagsService.getDelegations(tagId, currentUser, tenantId);
   }
 
   @ApiBearerAuth()
@@ -78,9 +95,10 @@ export class TagsController {
   async grantAccess(
       @Param('id', ParseUUIDPipe) tagId: string,
       @Param('userId', ParseUUIDPipe) targetUserId: string,
-      @GetUser() currentUser: any
+      @GetUser() currentUser: any,
+      @Headers('x-tenant-id') tenantId: string
   ) {
-      return this.tagsService.grantAccess(tagId, targetUserId, currentUser);
+      return this.tagsService.grantAccess(tagId, targetUserId, currentUser, tenantId);
   }
 
   @ApiBearerAuth()
@@ -90,9 +108,10 @@ export class TagsController {
   async revokeAccess(
       @Param('id', ParseUUIDPipe) tagId: string,
       @Param('userId', ParseUUIDPipe) targetUserId: string,
-      @GetUser() currentUser: any
+      @GetUser() currentUser: any,
+      @Headers('x-tenant-id') tenantId: string
   ) {
-      return this.tagsService.revokeAccess(tagId, targetUserId, currentUser);
+      return this.tagsService.revokeAccess(tagId, targetUserId, currentUser, tenantId);
   }
 
   @ApiBearerAuth()
@@ -103,8 +122,9 @@ export class TagsController {
   async update(
       @Param('id', ParseUUIDPipe) tagId: string,
       @Body() updateTagDto: UpdateTagDto,
-      @GetUser() currentUser: any
+      @GetUser() currentUser: any,
+      @Headers('x-tenant-id') tenantId: string
   ) {
-      return this.tagsService.update(tagId, updateTagDto, currentUser);
+      return this.tagsService.update(tagId, updateTagDto, currentUser, tenantId);
   }
 }

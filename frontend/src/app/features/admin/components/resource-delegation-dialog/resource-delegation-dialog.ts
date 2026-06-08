@@ -7,9 +7,10 @@ import { MatListModule } from '@angular/material/list';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
 import { TagService } from '../../../../core/services/tag.service';
-import { Tag, FullUserResponse } from '../../../shared/models/users.models';
+import { UserService } from '../../../../core/services/user.service';
+import { Tag, FullUserResponse, TechnologyType } from '../../../shared/models/users.models';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { finalize } from 'rxjs';
+import { finalize, forkJoin } from 'rxjs';
 import * as QRCode from 'qrcode';
 
 @Component({
@@ -29,6 +30,7 @@ import * as QRCode from 'qrcode';
 })
 export class ResourceDelegationDialogComponent implements OnInit {
   private tagService = inject(TagService);
+  private userService = inject(UserService);
   private dialogRef = inject(MatDialogRef<ResourceDelegationDialogComponent>);
   private snackBar = inject(MatSnackBar);
   public data = inject<{ member: FullUserResponse }>(MAT_DIALOG_DATA);
@@ -39,30 +41,33 @@ export class ResourceDelegationDialogComponent implements OnInit {
   isLoading = true;
   selectedTagIds: Set<string> = new Set();
   isSaving = false;
+  
   focusedTag: Tag | null = null;
   focusedTagUrl: string | null = null;
 
   ngOnInit(): void {
-    this.loadTags();
+    this.loadData();
   }
 
-  loadTags(): void {
+  loadData(): void {
     this.isLoading = true;
-    this.tagService.findAll()
-      .pipe(finalize(() => this.isLoading = false))
-      .subscribe({
-        next: (res) => {
-            this.tags = res;
-            if (this.data.member.tagAccesses) {
-                this.data.member.tagAccesses.forEach(access => {
-                    if (access.tag) {
-                        this.selectedTagIds.add(access.tag.id);
-                    }
-                });
-            }
-        },
-        error: () => this.snackBar.open('Erro ao carregar tags.', 'Fechar')
-      });
+    
+    forkJoin({
+      allTags: this.tagService.findAll(),
+      userTags: this.userService.getUserTags(this.data.member.id)
+    })
+    .pipe(finalize(() => this.isLoading = false))
+    .subscribe({
+      next: (result) => {
+        this.tags = result.allTags;
+        this.selectedTagIds = new Set(result.userTags);
+      },
+      error: (err) => {
+        console.error(err);
+        this.snackBar.open('Erro ao carregar permissões.', 'Fechar');
+        this.dialogRef.close();
+      }
+    });
   }
 
   toggleTag(tagId: string): void {
@@ -74,69 +79,71 @@ export class ResourceDelegationDialogComponent implements OnInit {
   }
 
   previewTag(tag: Tag): void {
-      if (this.focusedTag?.id === tag.id) {
-          this.focusedTag = null;
-          this.focusedTagUrl = null;
-          return;
-      }
+    if (this.focusedTag?.id === tag.id) {
+        this.focusedTag = null;
+        this.focusedTagUrl = null;
+        return;
+    }
 
-      this.focusedTag = tag;
-      const baseUrl = window.location.origin;
-      const identifier = tag.user?.username ? tag.user.username : tag.uuid;
-      this.focusedTagUrl = `${baseUrl}/t/${identifier}`;
+    this.focusedTag = tag;
+    
+    // Resolve URL exactly like TagDialogComponent
+    if ((tag.technologyType === TechnologyType.LINK || tag.technologyType === TechnologyType.TRILHA) && tag.value) {
+      this.focusedTagUrl = tag.value.startsWith('http') ? tag.value : 'https://' + tag.value;
+    } else {
+      this.focusedTagUrl = window.location.origin + '/t/' + tag.uuid;
+    }
 
-      setTimeout(() => {
-          if (this.qrcodeCanvas && this.focusedTagUrl) {
-              QRCode.toCanvas(this.qrcodeCanvas.nativeElement, this.focusedTagUrl, {
-                  width: 180,
-                  margin: 2
-              }, (error: Error | null | undefined) => {
-                  if (error) console.error(error);
-              });
-          }
-      });
+    setTimeout(() => {
+        if (this.qrcodeCanvas && this.focusedTagUrl) {
+            QRCode.toCanvas(this.qrcodeCanvas.nativeElement, this.focusedTagUrl, {
+                width: 200,
+                margin: 2,
+                color: { dark: '#000000', light: '#ffffff' }
+            }, (error: Error | null | undefined) => {
+                if (error) console.error(error);
+            });
+        }
+    });
   }
 
   save(): void {
       this.isSaving = true;
+      const finalTagIds = Array.from(this.selectedTagIds);
       
-      // Como o endpoint grantAccess adiciona, precisaríamos revogar os desmarcados também.
-      // O ideal seria que a action enviasse o array final. 
-      // Por simplicidade, assumiremos que grantAccess pode ser chamado pros selecionados
-      // e criaremos promises para grant e revoke baseado no estado original
-      
-      const originalSelected = new Set<string>();
-      if (this.data.member.tagAccesses) {
-          this.data.member.tagAccesses.forEach(a => {
-              if (a.tag) originalSelected.add(a.tag.id);
+      this.userService.updateUserTags(this.data.member.id, finalTagIds)
+          .pipe(finalize(() => this.isSaving = false))
+          .subscribe({
+              next: () => {
+                  this.snackBar.open('Acessos delegados com sucesso!', 'OK', { duration: 3000 });
+                  this.dialogRef.close(true);
+              },
+              error: (err) => {
+                  console.error(err);
+                  this.snackBar.open('Erro ao salvar permissões.', 'Fechar');
+              }
           });
-      }
+  }
 
-      const promises: Promise<any>[] = [];
+  getIcon(tech: string): string {
+    const icons: any = {
+      'NFC_HF': 'nfc',
+      'RFID_UHF': 'settings_input_antenna',
+      'QR_CODE': 'qr_code',
+      'LINK': 'link',
+      'TRILHA': 'auto_stories'
+    };
+    return icons[tech] || 'tag';
+  }
 
-      // Concede acesso aos novos
-      Array.from(this.selectedTagIds).forEach(tagId => {
-          if (!originalSelected.has(tagId)) {
-              promises.push(this.tagService.grantAccess(tagId, this.data.member.id).toPromise());
-          }
-      });
-
-      // Revoga acesso dos desmarcados
-      Array.from(originalSelected).forEach(tagId => {
-          if (!this.selectedTagIds.has(tagId)) {
-              promises.push(this.tagService.revokeAccess(tagId, this.data.member.id).toPromise());
-          }
-      });
-
-      Promise.all(promises)
-          .then(() => {
-              this.snackBar.open('Acessos delegados com sucesso!', 'OK', { duration: 3000 });
-              this.dialogRef.close(true);
-          })
-          .catch(err => {
-              console.error(err);
-              this.snackBar.open('Erro ao delegar acessos.', 'Fechar');
-          })
-          .finally(() => this.isSaving = false);
+  getTechLabel(tech: string): string {
+    const labels: any = {
+      'NFC_HF': 'Tag NFC',
+      'RFID_UHF': 'RFID UHF',
+      'QR_CODE': 'QR Code',
+      'LINK': 'Link',
+      'TRILHA': 'Trilha'
+    };
+    return labels[tech] || tech;
   }
 }

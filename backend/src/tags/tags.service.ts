@@ -19,8 +19,12 @@ export class TagsService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async create(createTagDto: CreateTagDto, currentUser: any): Promise<Tag> {
-      const { tenantId, sub: userId } = currentUser;
+  async create(createTagDto: CreateTagDto, currentUser: any, tenantId: string): Promise<Tag> {
+      const { sub: userId } = currentUser;
+
+      if (!tenantId) {
+          throw new BadRequestException('Tenant ID (Workspace) não fornecido no cabeçalho.');
+      }
 
       // Verificar se UID já existe para este tenant (Apenas se for fornecido)
       if (createTagDto.uid) {
@@ -67,13 +71,18 @@ export class TagsService {
   /**
    * Lista apenas os recursos genéricos (ativos) do Workspace.
    */
-  async findAll(currentUser: any): Promise<Tag[]> {
-      const { tenantId, isSuperAdmin } = currentUser;
+  async findAll(currentUser: any, tenantId: string): Promise<Tag[]> {
+      const { isSuperAdmin } = currentUser;
+
+      if (!tenantId) {
+          throw new BadRequestException('Tenant ID (Workspace) não fornecido no cabeçalho.');
+      }
 
       // 1. Super Admin vê tudo globalmente (recursos de todos)
+      // Porém, como estamos filtrando por tenantId, ele verá apenas os do tenant solicitado.
       if (isSuperAdmin) {
           return this.tagRepository.find({ 
-              where: { isResource: true },
+              where: { tenantId, isResource: true },
               relations: ['user'] 
           });
       }
@@ -86,10 +95,34 @@ export class TagsService {
   }
 
   /**
+   * Lista os recursos do Workspace que foram especificamente delegados ao usuário logado.
+   */
+  async findMyDelegated(currentUser: any, tenantId: string): Promise<Tag[]> {
+      const { sub: userId } = currentUser;
+
+      if (!tenantId) {
+          throw new BadRequestException('Tenant ID (Workspace) não fornecido no cabeçalho.');
+      }
+
+      return this.tagRepository.createQueryBuilder('tag')
+          .innerJoin('user_resources_permissions', 'urp', 'tag.id = urp.tag_id')
+          .leftJoinAndSelect('tag.user', 'user')
+          .where('urp.user_id = :userId', { userId })
+          .andWhere('urp.tenant_id = :tenantId', { tenantId })
+          .andWhere('tag.tenantId = :tenantId', { tenantId })
+          .andWhere('tag.isResource = :isResource', { isResource: true })
+          .getMany();
+  }
+
+  /**
    * Delega o acesso de uma Tag a um sub-usuário (ex: dar uma turma para um Tutor).
    */
-  async grantAccess(tagId: string, targetUserId: string, currentUser: any) {
-      const { sub: granterId, tenantId, role } = currentUser;
+  async grantAccess(tagId: string, targetUserId: string, currentUser: any, tenantId: string) {
+      const { sub: granterId, role } = currentUser;
+
+      if (!tenantId) {
+          throw new BadRequestException('Tenant ID (Workspace) não fornecido no cabeçalho.');
+      }
 
       // Apenas Admins podem delegar recursos
       if (role !== 'administrador') {
@@ -98,7 +131,7 @@ export class TagsService {
 
       const tag = await this.tagRepository.findOne({ where: { id: tagId, tenantId } });
       if (!tag) {
-          throw new NotFoundException('Tag não encontrada no seu ambiente.');
+          throw new NotFoundException('Recurso não encontrado neste ambiente.');
       }
 
       const existingAccess = await this.accessRepository.findOne({
@@ -122,8 +155,12 @@ export class TagsService {
   /**
    * Revoga o acesso de uma Tag previamente delegada a um sub-usuário.
    */
-  async revokeAccess(tagId: string, targetUserId: string, currentUser: any) {
-      const { tenantId, role } = currentUser;
+  async revokeAccess(tagId: string, targetUserId: string, currentUser: any, tenantId: string) {
+      const { role } = currentUser;
+
+      if (!tenantId) {
+          throw new BadRequestException('Tenant ID (Workspace) não fornecido no cabeçalho.');
+      }
 
       // Apenas Admins podem revogar recursos
       if (role !== 'administrador') {
@@ -144,8 +181,12 @@ export class TagsService {
   /**
    * Lista os usuários que receberam acesso delegado a uma Tag específica.
    */
-  async getDelegations(tagId: string, currentUser: any) {
-      const { tenantId, role } = currentUser;
+  async getDelegations(tagId: string, currentUser: any, tenantId: string) {
+      const { role } = currentUser;
+
+      if (!tenantId) {
+          throw new BadRequestException('Tenant ID (Workspace) não fornecido no cabeçalho.');
+      }
 
       if (role !== 'administrador') {
           throw new ForbiddenException('Apenas administradores podem ver as delegações.');
@@ -227,15 +268,19 @@ export class TagsService {
   /**
    * Verifica se um usuário tem permissão para gerenciar/visualizar uma tag específica.
    */
-  async validateAccess(tagId: string, currentUser: any): Promise<void> {
-      const { sub: userId, tenantId, role, isSuperAdmin } = currentUser;
+  async validateAccess(tagId: string, currentUser: any, tenantId: string): Promise<void> {
+      const { sub: userId, role, isSuperAdmin } = currentUser;
+
+      if (!tenantId) {
+          throw new BadRequestException('Tenant ID (Workspace) não fornecido no cabeçalho.');
+      }
 
       if (isSuperAdmin) return;
 
       const tag = await this.tagRepository.findOne({ where: { id: tagId } });
-      if (!tag) throw new NotFoundException('Tag não encontrada.');
+      if (!tag) throw new NotFoundException('Recurso não encontrado.');
 
-      // Bloqueio Multi-Tenant
+      // Bloqueio Multi-Tenant usando o header explícito
       if (tag.tenantId !== tenantId) {
           throw new ForbiddenException('Acesso negado: Este recurso pertence a outra organização.');
       }
@@ -249,23 +294,27 @@ export class TagsService {
       });
 
       if (tag.ownerId !== userId && !hasDelegatedAccess) {
-          throw new ForbiddenException('Você não tem permissão para acessar este recurso (Tag/Turma).');
+          throw new ForbiddenException('Você não tem permissão para acessar este recurso.');
       }
   }
 
   /**
    * Remove uma Tag (Apenas Admin).
    */
-  async remove(tagId: string, currentUser: any): Promise<void> {
-      const { tenantId, role } = currentUser;
+  async remove(tagId: string, currentUser: any, tenantId: string): Promise<void> {
+      const { role } = currentUser;
+
+      if (!tenantId) {
+          throw new BadRequestException('Tenant ID (Workspace) não fornecido no cabeçalho.');
+      }
 
       if (role !== 'administrador') {
-          throw new ForbiddenException('Apenas administradores podem remover tags do estoque.');
+          throw new ForbiddenException('Apenas administradores podem remover recursos do estoque.');
       }
 
       const tag = await this.tagRepository.findOne({ where: { id: tagId, tenantId } });
       if (!tag) {
-          throw new NotFoundException('Tag não encontrada no seu ambiente.');
+          throw new NotFoundException('Recurso não encontrado no seu ambiente.');
       }
 
       await this.tagRepository.remove(tag);
@@ -274,22 +323,26 @@ export class TagsService {
   /**
    * Atualiza as configurações de uma Tag específica.
    */
-  async update(tagId: string, updateData: UpdateTagDto, currentUser: any): Promise<Tag> {
+  async update(tagId: string, updateData: UpdateTagDto, currentUser: any, tenantId: string): Promise<Tag> {
+      if (!tenantId) {
+          throw new BadRequestException('Tenant ID (Workspace) não fornecido no cabeçalho.');
+      }
+
       // 1. Valida Permissão ABAC
-      await this.validateAccess(tagId, currentUser);
+      await this.validateAccess(tagId, currentUser, tenantId);
 
       const tag = await this.tagRepository.findOne({ where: { id: tagId } });
-      if (!tag) throw new NotFoundException('Tag não encontrada.');
+      if (!tag) throw new NotFoundException('Recurso não encontrado.');
 
       // 2. Aplica atualizações permitidas
       if (updateData.uid) {
           // Verificar se UID já existe para este tenant (se mudou)
           if (updateData.uid !== tag.uid) {
               const existing = await this.tagRepository.findOne({
-                  where: { uid: updateData.uid, tenantId: currentUser.tenantId }
+                  where: { uid: updateData.uid, tenantId }
               });
               if (existing) {
-                  throw new BadRequestException('Já existe uma tag cadastrada com este UID neste Workspace.');
+                  throw new BadRequestException('Já existe um recurso cadastrado com este UID neste Workspace.');
               }
               tag.uid = updateData.uid;
           }

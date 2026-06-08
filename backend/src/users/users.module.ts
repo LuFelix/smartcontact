@@ -8,6 +8,7 @@ import { Phone } from './entities/phone.entity';
 import { Address } from './entities/address.entity';
 import { UserEmail } from './entities/user-email.entity';
 import { UserLink } from './entities/user-link.entity';
+import { UserResourcePermission } from './entities/user-resource-permission.entity';
 import { Tag } from 'src/tags/entities/tag.entity';
 import { UsersController } from './users.controller';
 import { RolesService } from 'src/roles/roles.service';
@@ -20,7 +21,7 @@ import { GoogleContactsController } from './integrations/google-contacts/google-
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Role, Phone, Address, UserEmail, UserLink, Tag]),
+    TypeOrmModule.forFeature([User, Role, Phone, Address, UserEmail, UserLink, Tag, UserResourcePermission]),
     ProfilesModule,
     TagsModule,
     MembershipsModule,
