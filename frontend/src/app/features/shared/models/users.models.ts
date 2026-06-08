@@ -59,6 +59,8 @@ export enum TechnologyType {
   NFC_HF = 'NFC_HF',
   RFID_UHF = 'RFID_UHF',
   QR_CODE = 'QR_CODE',
+  LINK = 'LINK',
+  TRILHA = 'TRILHA',
 }
 
 export enum ApplicationType {
@@ -75,6 +77,7 @@ export interface Tag {
   technologyType: TechnologyType;
   applicationType: ApplicationType;
   value?: string | null;
+  isResource: boolean;
   nfcRedirectMode: RedirectMode;
   nfcCustomUrl?: string | null;
   qrRedirectMode: RedirectMode;

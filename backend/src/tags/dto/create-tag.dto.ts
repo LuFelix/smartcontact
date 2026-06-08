@@ -3,10 +3,10 @@ import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { TechnologyType, ApplicationType } from '../entities/tag.entity';
 
 export class CreateTagDto {
-  @ApiProperty({ description: 'O ID físico gravado no hardware (UID NFC ou EPC RFID)' })
-  @IsNotEmpty()
+  @ApiPropertyOptional({ description: 'O ID físico gravado no hardware (UID NFC ou EPC RFID)' })
+  @IsOptional()
   @IsString()
-  uid!: string;
+  uid?: string;
 
   @ApiProperty({ description: 'Nome amigável para a Tag' })
   @IsNotEmpty()

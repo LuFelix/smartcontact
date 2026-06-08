@@ -24,6 +24,8 @@ export enum TechnologyType {
   NFC_HF = 'NFC_HF',
   RFID_UHF = 'RFID_UHF',
   QR_CODE = 'QR_CODE',
+  LINK = 'LINK',
+  TRILHA = 'TRILHA',
 }
 
 export enum ApplicationType {
@@ -66,6 +68,10 @@ export class Tag {
 
   @Column({ type: 'varchar', nullable: true })
   value!: string | null;
+
+  @Column({ type: 'boolean', default: false, name: 'is_resource' })
+  @Index()
+  isResource!: boolean;
 
   @Column({
     type: 'enum',
