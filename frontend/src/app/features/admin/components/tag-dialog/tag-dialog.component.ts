@@ -88,7 +88,7 @@ import * as QRCode from 'qrcode';
           </div>
 
           <div class="url-display">
-            <span class="url-label">Link Público do Sistema:</span>
+            <span class="url-label">Link de Destino:</span>
             <div class="url-value">{{ previewUrl }}</div>
           </div>
           
@@ -234,20 +234,16 @@ export class TagDialogComponent implements AfterViewInit {
 
   get previewUrl(): string {
     if (!this.data.tag) return '';
-
+    
     const type = this.tagForm.get('technologyType')?.value;
     const value = this.tagForm.get('value')?.value;
 
-    // Se for um link ou trilha genérica, o QR Code DEVE apontar direto para o destino final (o campo 'value')
     if ((type === TechnologyType.LINK || type === TechnologyType.TRILHA) && value) {
-      // Garante que o valor tem http/https
-      return value.startsWith('http') ? value : \`https://\${value}\`;
+      return value.startsWith('http') ? value : 'https://' + value;
     }
 
-    // Para QR Codes virtuais de sistema, usa a rota de resolução interna
-    return \`\${window.location.origin}/t/\${this.data.tag.uuid}\`;
+    return window.location.origin + '/t/' + this.data.tag.uuid;
   }
-
 
   ngAfterViewInit() {
     if (this.showQrPreview) {
@@ -282,9 +278,8 @@ export class TagDialogComponent implements AfterViewInit {
     const url = canvas.toDataURL('image/png');
     const link = document.createElement('a');
     
-    // Normaliza o nome do recurso para o arquivo baixado
     const resourceName = (this.data.tag?.name || 'recurso').toLowerCase().replace(/[^a-z0-9]/g, '-');
-    link.download = `qr-${resourceName}.png`;
+    link.download = 'qr-' + resourceName + '.png';
     link.href = url;
     link.click();
   }
