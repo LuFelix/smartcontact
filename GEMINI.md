@@ -44,7 +44,11 @@ O sistema opera em um paradigma Multi-Tenant N:N (estilo Google Drive).
 - [x] **PASSO H (Issue #125):** Painel ABAC com Configuração NFC/QR (OK).
 - [x] **PASSO I (Issue #15):** Integração 'Salvar Contato' com vCard (OK).
 - [x] **PASSO N (Issue #164):** Context Switcher e Arquitetura Multi-Tenant N:N (OK).
-- [ ] **PRÓXIMO PASSO:** Refatoração de UI e Estabilização de UX.
+- [x] **PASSO O (Issue #156):** Estabilização - Auto-verificação, Prompt Promoção, Visibilidade Básica (OK - no remoto).
+- [ ] **PRÓXIMO PASSO (Issue #158):** Fluxo Avançado de Promoção Explícita.
+  - Frontend: Separação visual badges [CONTATO]/[USUÁRIO]/[EQUIPE], Botão "Promover para Equipe", Modal confirmação (Admin/Colaborador).
+  - Backend: Endpoint `POST /users/:id/promote`, Criação atômica Profile+Tag, Ajuste `UsersService.findAll` e `TeamService`.
+- [ ] **PASSO POSTERIOR:** Refatoração de UI e Estabilização de UX.
 
 ---
 

@@ -334,13 +334,13 @@
                 </mat-tab>
 
                 <!-- TAB 5: TAGS & QR -->
-                <mat-tab label="Tags & QR" [disabled]="!user?.profile && !data.isCreation">
+                <mat-tab label="Tags & QR" [disabled]="!(user?.profile || user?.isTenantOwner) && !data.isCreation">
                     <div class="tab-padding position-relative">
                         <!-- Overlay para não membros -->
-                        @if (!user?.profile && !data.isCreation) {
+                        @if (!(user?.profile || user?.isTenantOwner) && !data.isCreation) {
                             <div class="disabled-overlay">
                                 <mat-icon>lock</mat-icon>
-                                <p>Apenas Membros da Equipe possuem controle de Tags e Perfil Público.</p>
+                                <p>Apenas Membros da Equipe e Donos do Workspace possuem controle de Tags e Perfil Público.</p>
                             </div>
                         }
 
