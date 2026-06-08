@@ -75,7 +75,7 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
     @ViewChild('qrcodeCanvas') qrcodeCanvas!: ElementRef<HTMLCanvasElement>;
     @ViewChild('qrSelect') qrSelect!: MatSelect;
 
-    user: User | null = { profile: undefined, isTenantOwner: false };
+    user: User | null = { id: '', name: '', email: '', profile: undefined, isTenantOwner: false };
     userForm!: FormGroup;
     roleIdControl = new FormControl<string | null>(null, Validators.required);
     availableRoles$!: Observable<Role[]>;
