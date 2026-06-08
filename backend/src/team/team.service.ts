@@ -2,6 +2,7 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UsersService } from '../users/users.service';
+import { TenantsService } from '../tenants/tenants.service';
 import { CreateMemberDto } from './dto/create-member.dto';
 import { User } from '../users/entities/user.entity';
 import { GroupInvitation } from './entities/group-invitation.entity';
@@ -12,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 export class TeamService {
   constructor(
     private readonly usersService: UsersService,
+    private readonly tenantsService: TenantsService,
     @InjectRepository(GroupInvitation)
     private readonly invitationRepository: Repository<GroupInvitation>,
     @InjectRepository(User)
@@ -23,6 +25,8 @@ export class TeamService {
    * O novo usuário herda o tenantId do administrador logado.
    */
   async addMember(createMemberDto: CreateMemberDto, currentUser: any): Promise<User> {
+      // ... (rest of addMember)
+
     const { name, email, password, roleId } = createMemberDto;
     const emailNormalized = email?.trim().toLowerCase();
 
@@ -72,7 +76,50 @@ export class TeamService {
     }
 
     // Usamos o findAll do UsersService que já possui o filtro por tenantId
-    return this.usersService.findAll(1, 100, undefined, undefined, undefined, currentUser);
+    const result = await this.usersService.findAll(1, 100, undefined, undefined, undefined, currentUser);
+
+    // O Dono do Tenant (Owner) pode não estar na tabela de memberships com um profile válido.
+    // Vamos garantir que o criador do Tenant esteja na lista e marcado com a role 'owner'.
+    
+    // Para identificar o dono do Tenant de forma determinística, usamos o fato de que
+    // o criador original do Workspace tem ownerId = id.
+    // Buscamos qual usuário associado a esse tenant preenche esse requisito.
+    const allMembers = result.data;
+    let owner = allMembers.find(u => u.ownerId === u.id);
+
+    // Se ele não estiver no resultado do findAll (por ex: não tem membership ou foi filtrado),
+    // vamos buscar no banco de dados e injetar.
+    if (!owner) {
+        // Tentamos extrair o ID do dono a partir da slug do tenant (ws-USERID)
+        const tenant = await this.tenantsService.findById(tenantId);
+        let ownerIdToFetch = currentUser.sub; // Fallback para o usuário logado se for admin
+
+        if (tenant && tenant.slug.startsWith('ws-')) {
+            const possibleId = tenant.slug.replace('ws-', '').substring(0, 36);
+            // Um UUID tem 36 caracteres, se couber, podemos tentar usá-lo.
+            if (possibleId.length === 36) {
+                ownerIdToFetch = possibleId;
+            }
+        }
+
+        owner = await this.usersService.findById(ownerIdToFetch, currentUser);
+        
+        if (owner && !allMembers.some(u => u.id === owner!.id)) {
+            result.data.unshift(owner);
+            result.total += 1;
+        }
+    }
+
+    // Marca explicitamente o usuário como 'owner' para proteção no Frontend
+    if (owner) {
+        // Garante que o owner tenha um profile para passar no filtro do Angular (!!u.profile)
+        if (!owner.profile) {
+            owner.profile = { id: 'owner-profile', name: owner.name, ownerId: owner.id, userId: owner.id } as any;
+        }
+        (owner as any).role = { id: 'role-owner', name: 'owner' };
+    }
+
+    return result;
   }
 
   /**

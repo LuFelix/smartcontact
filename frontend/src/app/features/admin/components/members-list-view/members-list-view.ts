@@ -65,4 +65,8 @@ export class MembersListViewComponent {
   handleImageError(event: any): void {
       event.target.classList.add('img-hidden');
   }
+
+  isOwner(member: FullUserResponse): boolean {
+    return member.role?.name === 'owner';
+  }
 }
