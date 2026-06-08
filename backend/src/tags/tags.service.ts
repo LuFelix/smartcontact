@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Tag, RedirectMode, TechnologyType, ApplicationType } from './entities/tag.entity';
 import { UserTagAccess } from './entities/user-tag-access.entity';
+import { User } from 'src/users/entities/user.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
@@ -14,6 +15,8 @@ export class TagsService {
     private readonly tagRepository: Repository<Tag>,
     @InjectRepository(UserTagAccess)
     private readonly accessRepository: Repository<UserTagAccess>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
   async create(createTagDto: CreateTagDto, currentUser: any): Promise<Tag> {
@@ -41,6 +44,7 @@ export class TagsService {
   }
 
   async createDefaultTag(userId: string, ownerId: string, tenantId: string): Promise<Tag> {
+      const user = await this.userRepository.findOne({ where: { id: userId } });
       const tag = this.tagRepository.create({
           uuid: uuidv4(),
           userId,
@@ -49,9 +53,9 @@ export class TagsService {
           nfcRedirectMode: RedirectMode.PROFILE,
           qrRedirectMode: RedirectMode.PROFILE,
           isActive: true,
-          technologyType: TechnologyType.NFC_HF,
+          technologyType: TechnologyType.QR_CODE,
           applicationType: ApplicationType.REDIRECT,
-          name: 'Tag de Usuário'
+          name: `Cartão: ${user?.name || 'Novo Membro'}`
       });
       return this.tagRepository.save(tag);
   }

@@ -4,9 +4,10 @@ import { TagsService } from './tags.service';
 import { TagsController } from './tags.controller';
 import { Tag } from './entities/tag.entity';
 import { UserTagAccess } from './entities/user-tag-access.entity';
+import { User } from 'src/users/entities/user.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Tag, UserTagAccess])],
+  imports: [TypeOrmModule.forFeature([Tag, UserTagAccess, User])],
   controllers: [TagsController],
   providers: [TagsService],
   exports: [TagsService],

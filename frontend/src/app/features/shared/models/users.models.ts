@@ -58,6 +58,7 @@ export enum RedirectMode {
 export enum TechnologyType {
   NFC_HF = 'NFC_HF',
   RFID_UHF = 'RFID_UHF',
+  QR_CODE = 'QR_CODE',
 }
 
 export enum ApplicationType {

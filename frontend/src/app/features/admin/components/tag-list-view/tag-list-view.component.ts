@@ -85,6 +85,18 @@ import { Tag } from '../../../shared/models/users.models';
   styles: [`
     .table-container { background: white; border-radius: 8px; overflow: hidden; position: relative; min-height: 200px; }
     table { width: 100%; }
+    .virtual-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: #757575;
+      font-size: 12px;
+      font-style: italic;
+    }
+    .virtual-label mat-icon { font-size: 16px; width: 16px; height: 16px; }
+    .name-container { display: flex; flex-direction: column; }
+    .tag-name { font-weight: 500; }
+    .owner-email { color: #757575; font-size: 11px; }
     .loading-shade {
       position: absolute;
       top: 0; left: 0; bottom: 0; right: 0;
@@ -101,6 +113,9 @@ import { Tag } from '../../../shared/models/users.models';
       font-weight: 500;
       text-transform: uppercase;
     }
+    .nfc_hf { background: #E3F2FD; color: #1976D2; }
+    .rfid_uhf { background: #F3E5F5; color: #7B1FA2; }
+    .qr_code { background: #ECEFF1; color: #455A64; }
     .redirect { background: #E3F2FD; color: #1976D2; }
     .asset_counting { background: #F3E5F5; color: #7B1FA2; }
     .access_control { background: #E8F5E9; color: #388E3C; }
