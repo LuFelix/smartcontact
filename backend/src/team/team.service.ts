@@ -102,7 +102,8 @@ export class TeamService {
             }
         }
 
-        owner = await this.usersService.findById(ownerIdToFetch, currentUser);
+        const found = await this.usersService.findById(ownerIdToFetch, currentUser);
+        owner = found ?? undefined;
         
         if (owner && !allMembers.some(u => u.id === owner!.id)) {
             result.data.unshift(owner);
