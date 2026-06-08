@@ -44,6 +44,9 @@ export class SeedService {
 
     if (adminRole) {
       const admin = await this.seedAdminUser(adminRole);
+
+      // 2. Define o owner_id do Tenant Master (após o admin ser criado)
+      await this.tenantRepository.update(this.TIWEB_ID, { ownerId: admin.id });
       
       const contatoRole = await this.roleRepository.findOne({ where: { name: 'contato' } });
       if (contatoRole && admin) {
@@ -63,8 +66,7 @@ export class SeedService {
         id: this.TIWEB_ID,
         name: 'TIWEB Master',
         slug: 'tiweb',
-        isActive: true,
-        ownerId: this.TIWEB_ID
+        isActive: true
       });
       await this.tenantRepository.save(tenant);
       this.logger.log('Tenant Master (TIWEB) criado.');
