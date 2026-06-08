@@ -1,4 +1,3 @@
-// users/users.service.ts
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
@@ -13,6 +12,7 @@ import { TagsService } from 'src/tags/tags.service';
 import { Tag } from 'src/tags/entities/tag.entity';
 import { MembershipsService } from '../memberships/memberships.service';
 import { TenantsService } from '../tenants/tenants.service';
+import { UserResourcePermission } from './entities/user-resource-permission.entity';
 
 @Injectable()
 export class UsersService {
@@ -28,6 +28,9 @@ export class UsersService {
 
         @InjectRepository(Tag)
         private readonly tagRepository: Repository<Tag>,
+
+        @InjectRepository(UserResourcePermission)
+        private readonly userResourcePermissionRepository: Repository<UserResourcePermission>,
 
         private readonly rolesService: RolesService,
         private readonly profilesService: ProfilesService,
@@ -742,6 +745,45 @@ export class UsersService {
         for (const user of users) {
             const username = await this.generateUniqueUsername(user.name);
             await this.usersRepository.update(user.id, { username });
+        }
+    }
+
+    /**
+     * Lista IDs das tags/recursos delegados a um usuário no workspace atual
+     */
+    async getUserTags(userId: string, currentUser: any): Promise<string[]> {
+        const tenantId = currentUser?.tenantId || this.TIWEB_ID;
+        
+        const permissions = await this.userResourcePermissionRepository.find({
+            where: { userId, tenantId }
+        });
+
+        return permissions.map(p => p.tagId);
+    }
+
+    /**
+     * Atualiza tags/recursos delegados a um usuário no workspace atual em lote
+     */
+    async updateUserTags(userId: string, tagIds: string[], currentUser: any): Promise<void> {
+        const tenantId = currentUser?.tenantId || this.TIWEB_ID;
+        const isTenantAdmin = currentUser?.role === 'administrador';
+        const isSystemAdmin = currentUser?.isSuperAdmin;
+
+        if (!isSystemAdmin && !isTenantAdmin) {
+            throw new ForbiddenException('Apenas administradores podem gerenciar recursos delegados.');
+        }
+
+        // Limpa permissões antigas neste tenant
+        await this.userResourcePermissionRepository.delete({ userId, tenantId });
+
+        // Insere as novas se houver
+        if (tagIds && tagIds.length > 0) {
+            const newPermissions = tagIds.map(tagId => this.userResourcePermissionRepository.create({
+                userId,
+                tagId,
+                tenantId
+            }));
+            await this.userResourcePermissionRepository.save(newPermissions);
         }
     }
 }
