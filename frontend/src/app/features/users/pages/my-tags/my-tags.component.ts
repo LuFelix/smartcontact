@@ -125,47 +125,8 @@ export class QrViewDialogComponent implements AfterViewInit {
     MyTagsListViewComponent,
     MyTagsCardListComponent
   ],
-  template: `
-    <div class="my-tags-container">
-      <app-page-header title="Meus Recursos (Tags)">
-        <div header-actions>
-          <button mat-stroked-button (click)="layoutService.toggleLayout()" class="toggle-btn" type="button">
-            <mat-icon>{{ layoutService.layout() === 'moderno' ? 'view_list' : 'grid_view' }}</mat-icon>
-            {{ layoutService.layout() === 'moderno' ? 'Ver em Lista' : 'Ver em Cards' }}
-          </button>
-        </div>
-      </app-page-header>
-
-      <div class="content-container">
-        @if (!isLoading && displayTags.length === 0) {
-          <app-empty-state
-            icon="auto_stories"
-            title="Nenhum recurso delegado"
-            message="Você ainda não possui recursos ou tags delegados neste Workspace.">
-          </app-empty-state>
-        } @else {
-          @if (layoutService.layout() === 'moderno') {
-            <app-my-tags-card-list
-              [tags]="displayTags"
-              [isLoading]="isLoading"
-              (viewQr)="openQrModal($event)">
-            </app-my-tags-card-list>
-          } @else {
-            <app-my-tags-list-view
-              [tags]="displayTags"
-              [isLoading]="isLoading"
-              (viewQr)="openQrModal($event)">
-            </app-my-tags-list-view>
-          }
-        }
-      </div>
-    </div>
-  `,
-  styles: [`
-    .my-tags-container { padding: 24px; }
-    .content-container { margin-top: 24px; }
-    .toggle-btn { margin-right: 12px; }
-  `]
+  templateUrl: './my-tags.component.html',
+  styleUrl: './my-tags.component.scss'
 })
 export class MyTagsComponent implements OnInit {
   private tagService = inject(TagService);
