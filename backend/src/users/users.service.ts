@@ -502,9 +502,25 @@ export class UsersService {
         }
 
         const tenantName = `${user.name}'s Workspace`;
-        const uniqueSuffix = Math.random().toString(36).substring(2, 8);
-        const tenantSlug = `ws-${await this.generateUniqueUsername(user.name)}-${uniqueSuffix}`;
-        const newTenant = await this.tenantsService.create(tenantName, tenantSlug);
+        
+        // TRAVA CONTRA RACE CONDITION: Utilizamos uma slug determinística baseada no ID do usuário.
+        // Como a coluna 'slug' tem restrição UNIQUE no PostgreSQL, requisições concorrentes 
+        // tentarão inserir o mesmo valor e o banco rejeitará (erro 23505), evitando Workspaces duplicados.
+        const tenantSlug = `ws-${user.id}`.substring(0, 50);
+
+        let newTenant;
+        try {
+            newTenant = await this.tenantsService.create(tenantName, tenantSlug);
+        } catch (error: any) {
+            // Código 23505: unique_violation no PostgreSQL
+            if (error.code === '23505' || (error.message && error.message.includes('unique'))) {
+                console.log(`[UsersService] Race Condition Evitada: O Tenant pessoal de ${user.email} já está sendo criado por outra requisição concorrente.`);
+                // Pequeno delay para garantir que a requisição vencedora termine de montar as memberships e tags
+                await new Promise(resolve => setTimeout(resolve, 500));
+                return this.findByEmail(user.email as string) as Promise<User>;
+            }
+            throw error;
+        }
         
         const adminRole = await this.rolesService.findOneByName('administrador');
         if (!adminRole) {
