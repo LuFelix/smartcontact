@@ -63,7 +63,8 @@ export class SeedService {
         id: this.TIWEB_ID,
         name: 'TIWEB Master',
         slug: 'tiweb',
-        isActive: true
+        isActive: true,
+        ownerId: this.TIWEB_ID
       });
       await this.tenantRepository.save(tenant);
       this.logger.log('Tenant Master (TIWEB) criado.');

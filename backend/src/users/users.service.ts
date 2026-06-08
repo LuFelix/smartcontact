@@ -108,12 +108,14 @@ export class UsersService {
         const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
 
         // Se não houver tenant no contexto (auto-cadastro), criamos um novo
+        let isNewTenant = false;
         if (!tenantId) {
             const tenantName = `${createUserDto.name}'s Workspace`;
             const uniqueSuffix = Math.random().toString(36).substring(2, 8);
             const tenantSlug = `ws-${await this.generateUniqueUsername(createUserDto.name)}-${uniqueSuffix}`;
             const newTenant = await this.tenantsService.create(tenantName, tenantSlug);
             tenantId = newTenant.id;
+            isNewTenant = true;
         }
 
         let assignedRole;
@@ -165,6 +167,11 @@ export class UsersService {
             ownerId = savedUser.id;
             await this.usersRepository.update(savedUser.id, { ownerId });
             savedUser.ownerId = ownerId;
+        }
+
+        // Se criamos um novo tenant, definimos o ownerId do tenant
+        if (isNewTenant && tenantId) {
+            await this.tenantsService.update(tenantId, { ownerId: savedUser.id });
         }
 
         // 2. CRIAR O VÍNCULO DE MEMBERSHIP
@@ -516,7 +523,7 @@ export class UsersService {
 
         let newTenant;
         try {
-            newTenant = await this.tenantsService.create(tenantName, tenantSlug);
+            newTenant = await this.tenantsService.create(tenantName, tenantSlug, user.id);
         } catch (error: any) {
             // Código 23505: unique_violation no PostgreSQL
             if (error.code === '23505' || (error.message && error.message.includes('unique'))) {
