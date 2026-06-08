@@ -1,21 +1,28 @@
 import { Component, Inject, inject, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog, MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { TagService } from '../../../../core/services/tag.service';
 import { AuthService } from '../../../../core/services/auth.service';
+import { LayoutService } from '../../../../core/services/layout.service';
 import { Tag, TechnologyType } from '../../../shared/models/users.models';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import * as QRCode from 'qrcode';
+
+// Dumb Components
+import { MyTagsListViewComponent } from '../../components/my-tags-list-view/my-tags-list-view.component';
+import { MyTagsCardListComponent } from '../../components/my-tags-card-list/my-tags-card-list.component';
+
+export interface DisplayTag extends Tag {
+  qrDataUrl?: string;
+  resolvedUrl?: string;
+}
 
 // ============================================================================
 // MODAL DE VISUALIZAÇÃO AMPLIADA DO QR CODE
@@ -103,68 +110,53 @@ export class QrViewDialogComponent implements AfterViewInit {
 }
 
 // ============================================================================
-// COMPONENTE PRINCIPAL: VITRINE DE TAGS DELEGADAS
+// COMPONENTE PRINCIPAL (SMART): VITRINE DE TAGS DELEGADAS
 // ============================================================================
 @Component({
   selector: 'app-my-tags',
   standalone: true,
   imports: [
     CommonModule,
-    MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatTooltipModule,
-    MatProgressSpinnerModule,
     MatSnackBarModule,
     PageHeaderComponent,
-    EmptyStateComponent
+    EmptyStateComponent,
+    MyTagsListViewComponent,
+    MyTagsCardListComponent
   ],
   template: `
     <div class="my-tags-container">
       <app-page-header title="Meus Recursos (Tags)">
+        <div header-actions>
+          <button mat-stroked-button (click)="layoutService.toggleLayout()" class="toggle-btn" type="button">
+            <mat-icon>{{ layoutService.layout() === 'moderno' ? 'view_list' : 'grid_view' }}</mat-icon>
+            {{ layoutService.layout() === 'moderno' ? 'Ver em Lista' : 'Ver em Cards' }}
+          </button>
+        </div>
       </app-page-header>
 
       <div class="content-container">
-        @if (isLoading) {
-          <div class="loading-state">
-            <mat-spinner diameter="40"></mat-spinner>
-            <p>Carregando seus recursos...</p>
-          </div>
-        } @else if (tags.length === 0) {
+        @if (!isLoading && displayTags.length === 0) {
           <app-empty-state
             icon="auto_stories"
             title="Nenhum recurso delegado"
             message="Você ainda não possui recursos ou tags delegados neste Workspace.">
           </app-empty-state>
         } @else {
-          <div class="cards-grid">
-            <mat-card *ngFor="let tag of tags" class="resource-card mat-elevation-z2">
-              <mat-card-header>
-                <div mat-card-avatar class="icon-avatar" [ngClass]="tag.technologyType.toLowerCase()">
-                  <mat-icon>{{ getIcon(tag.technologyType) }}</mat-icon>
-                </div>
-                <mat-card-title>{{ tag.name || 'Recurso sem nome' }}</mat-card-title>
-                <mat-card-subtitle>{{ getTechLabel(tag.technologyType) }}</mat-card-subtitle>
-              </mat-card-header>
-
-              <mat-card-content>
-                <div class="mini-qr-container" (click)="openQrModal(tag)">
-                   <!-- Renderização de Mini QR gerada programaticamente no canvas -->
-                   <canvas [id]="'qr-' + tag.id" class="mini-qr-canvas"></canvas>
-                   <div class="overlay-hint">
-                     <mat-icon>zoom_in</mat-icon>
-                     <span>Ampliar</span>
-                   </div>
-                </div>
-              </mat-card-content>
-
-              <mat-card-actions align="end">
-                <button mat-button color="primary" (click)="openQrModal(tag)" type="button">
-                  <mat-icon>visibility</mat-icon> Visualizar / Baixar
-                </button>
-              </mat-card-actions>
-            </mat-card>
-          </div>
+          @if (layoutService.layout() === 'moderno') {
+            <app-my-tags-card-list
+              [tags]="displayTags"
+              [isLoading]="isLoading"
+              (viewQr)="openQrModal($event)">
+            </app-my-tags-card-list>
+          } @else {
+            <app-my-tags-list-view
+              [tags]="displayTags"
+              [isLoading]="isLoading"
+              (viewQr)="openQrModal($event)">
+            </app-my-tags-list-view>
+          }
         }
       </div>
     </div>
@@ -172,95 +164,26 @@ export class QrViewDialogComponent implements AfterViewInit {
   styles: [`
     .my-tags-container { padding: 24px; }
     .content-container { margin-top: 24px; }
-    .loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 300px; color: var(--mat-sys-outline); gap: 16px; }
-    
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 24px;
-    }
-    .resource-card {
-      border-radius: 12px;
-      background: var(--mat-sys-surface-container-low);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .icon-avatar {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-    }
-    /* Cores das Tecnologias */
-    .nfc_hf { color: var(--mat-sys-on-primary-container); background: var(--mat-sys-primary-container); }
-    .rfid_uhf { color: var(--mat-sys-on-tertiary-container); background: var(--mat-sys-tertiary-container); }
-    .qr_code { color: var(--mat-sys-on-secondary-container); background: var(--mat-sys-secondary-container); }
-    .link { color: var(--mat-sys-on-primary-container); background: var(--mat-sys-primary-container); }
-    .trilha { color: var(--mat-sys-on-tertiary-container); background: var(--mat-sys-tertiary-container); }
-
-    .mini-qr-container {
-      position: relative;
-      margin: 16px auto;
-      width: 140px;
-      height: 140px;
-      background: white;
-      padding: 8px;
-      border-radius: 8px;
-      box-shadow: var(--mat-sys-level1);
-      cursor: pointer;
-      overflow: hidden;
-    }
-    .mini-qr-canvas {
-      width: 100% !important;
-      height: 100% !important;
-    }
-    .overlay-hint {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.6);
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      transition: opacity 0.2s ease;
-      border-radius: 8px;
-    }
-    .mini-qr-container:hover .overlay-hint {
-      opacity: 1;
-    }
-    .overlay-hint mat-icon { font-size: 32px; width: 32px; height: 32px; margin-bottom: 4px; }
-    
-    mat-card-actions {
-      margin-top: auto;
-      padding: 8px 16px;
-      border-top: 1px solid var(--mat-sys-outline-variant);
-      background: var(--mat-sys-surface-container-lowest);
-    }
+    .toggle-btn { margin-right: 12px; }
   `]
 })
 export class MyTagsComponent implements OnInit {
   private tagService = inject(TagService);
   private authService = inject(AuthService);
+  public layoutService = inject(LayoutService);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
 
-  tags: Tag[] = [];
+  displayTags: DisplayTag[] = [];
   isLoading = true;
 
   constructor() {
-    // Reage à mudança de workspace no cabeçalho
     toObservable(this.authService.activeTenantId).subscribe(() => {
       this.loadMyTags();
     });
   }
 
-  ngOnInit(): void {
-    // A chamada inicial já é coberta pelo toObservable do constructor
-  }
+  ngOnInit(): void {}
 
   loadMyTags(): void {
     this.isLoading = true;
@@ -268,9 +191,11 @@ export class MyTagsComponent implements OnInit {
       .pipe(finalize(() => this.isLoading = false))
       .subscribe({
         next: (data) => {
-          this.tags = data;
-          // Agendar a renderização dos QRs para o próximo ciclo (após o DOM do ngFor existir)
-          setTimeout(() => this.renderMiniQRs(), 100);
+          this.displayTags = data.map(tag => ({
+            ...tag,
+            resolvedUrl: this.getResolvedUrl(tag)
+          }));
+          this.generateAllQrDataUrls();
         },
         error: (err) => {
           console.error(err);
@@ -286,54 +211,32 @@ export class MyTagsComponent implements OnInit {
     return window.location.origin + '/t/' + tag.uuid;
   }
 
-  renderMiniQRs() {
-    this.tags.forEach(tag => {
-      const canvasId = 'qr-' + tag.id;
-      const canvasEl = document.getElementById(canvasId) as HTMLCanvasElement;
-      if (canvasEl) {
-        QRCode.toCanvas(canvasEl, this.getResolvedUrl(tag), {
+  generateAllQrDataUrls() {
+    this.displayTags.forEach(tag => {
+      if (tag.resolvedUrl) {
+        QRCode.toDataURL(tag.resolvedUrl, {
           width: 140,
           margin: 1,
           color: { dark: '#000000', light: '#ffffff' }
-        }, (err) => {
-          if (err) console.error('Erro no Mini QR', err);
+        }, (err, url) => {
+          if (!err) {
+            tag.qrDataUrl = url;
+          }
         });
       }
     });
   }
 
-  openQrModal(tag: Tag): void {
+  openQrModal(tag: DisplayTag): void {
     this.dialog.open(QrViewDialogComponent, {
       data: {
         name: tag.name || 'Recurso',
-        url: this.getResolvedUrl(tag)
+        url: tag.resolvedUrl
       },
       width: '450px',
       maxWidth: '95vw',
       panelClass: 'large-abac-modal',
       autoFocus: false
     });
-  }
-
-  getIcon(tech: string): string {
-    const icons: any = {
-      'NFC_HF': 'nfc',
-      'RFID_UHF': 'settings_input_antenna',
-      'QR_CODE': 'qr_code',
-      'LINK': 'link',
-      'TRILHA': 'auto_stories'
-    };
-    return icons[tech] || 'tag';
-  }
-
-  getTechLabel(tech: string): string {
-    const labels: any = {
-      'NFC_HF': 'Tag NFC',
-      'RFID_UHF': 'RFID UHF',
-      'QR_CODE': 'QR Code',
-      'LINK': 'Link Seguro',
-      'TRILHA': 'Trilha de Conhecimento'
-    };
-    return labels[tech] || tech;
   }
 }
