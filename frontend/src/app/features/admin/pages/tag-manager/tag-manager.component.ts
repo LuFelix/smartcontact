@@ -40,63 +40,8 @@ import { TagDialogComponent } from '../../components/tag-dialog/tag-dialog.compo
     SearchBarComponent,
     EmptyStateComponent
   ],
-  template: `
-    <div class="manager-container">
-      <app-page-header title="Gestão de Recursos do Workspace">
-        <div header-actions>
-          <button mat-stroked-button (click)="layoutService.toggleLayout()" class="toggle-btn">
-            <mat-icon>{{ layoutService.layout() === 'moderno' ? 'view_list' : 'grid_view' }}</mat-icon>
-            {{ layoutService.layout() === 'moderno' ? 'Ver em Lista' : 'Ver em Cards' }}
-          </button>
-          
-          <button *ngIf="isAdmin" mat-flat-button color="primary" (click)="openTagDialog()">
-            <mat-icon>add</mat-icon> Cadastrar Nova Tag
-          </button>
-        </div>
-      </app-page-header>
-
-      <div class="content-container">
-        <div class="filters">
-          <app-search-bar 
-            placeholder="Buscar por UID ou Nome..." 
-            (search)="searchTerm = $event">
-          </app-search-bar>
-        </div>
-
-        @if (!isLoading && filteredTags.length === 0) {
-          <app-empty-state
-            [icon]="searchTerm ? 'search_off' : 'inventory_2'"
-            [title]="searchTerm ? 'Nenhuma tag encontrada' : 'Estoque vazio'"
-            [message]="searchTerm ? 'Tente ajustar sua busca.' : 'Nenhuma tag cadastrada neste Workspace.'">
-          </app-empty-state>
-        } @else {
-          @if (layoutService.layout() === 'moderno') {
-            <app-tag-card-list
-              [tags]="filteredTags"
-              [isLoading]="isLoading"
-              [isAdmin]="isAdmin"
-              (editTag)="openTagDialog($event)"
-              (deleteTag)="deleteTag($event)">
-            </app-tag-card-list>
-          } @else {
-            <app-tag-list-view
-              [tags]="filteredTags"
-              [isLoading]="isLoading"
-              [isAdmin]="isAdmin"
-              (editTag)="openTagDialog($event)"
-              (deleteTag)="deleteTag($event)">
-            </app-tag-list-view>
-          }
-        }
-      </div>
-    </div>
-  `,
-  styles: [`
-    .manager-container { padding: 24px; }
-    .content-container { margin-top: 24px; display: flex; flex-direction: column; gap: 24px; }
-    .toggle-btn { margin-right: 12px; }
-    .filters { display: flex; align-items: center; justify-content: flex-start; }
-  `]
+  templateUrl: './tag-manager.component.html',
+  styleUrl: './tag-manager.component.scss'
 })
 export class TagManagerComponent implements OnInit {
   private tagService = inject(TagService);
