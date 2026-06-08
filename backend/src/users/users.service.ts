@@ -290,6 +290,12 @@ export class UsersService {
             const activeMembership = user.memberships?.find(m => m.tenantId === currentUser?.tenantId) || user.memberships?.[0];
             (user as any).role = activeMembership?.role;
             (user as any).tenantId = activeMembership?.tenantId;
+            user.profile = activeMembership?.profile || undefined;
+
+            const isTenantOwner = activeMembership 
+                && activeMembership.role?.name === 'administrador' 
+                && user.ownerId === user.id;
+            (user as any).isTenantOwner = isTenantOwner;
         }
 
         return user;
