@@ -75,7 +75,7 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
     @ViewChild('qrcodeCanvas') qrcodeCanvas!: ElementRef<HTMLCanvasElement>;
     @ViewChild('qrSelect') qrSelect!: MatSelect;
 
-    user: User | null = { profile: null, isTenantOwner: false } as any;
+    user: User | null = { profile: null, isTenantOwner: false };
     userForm!: FormGroup;
     roleIdControl = new FormControl<string | null>(null, Validators.required);
     availableRoles$!: Observable<Role[]>;
@@ -316,7 +316,7 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
             }))
             .subscribe(loadedUser => {
                 this.user = loadedUser;
-                (this.user as any).isTenantOwner = loadedUser.isTenantOwner;
+                this.user.isTenantOwner = loadedUser.isTenantOwner;
                 this.userForm.patchValue({
                     name: loadedUser.name,
                     email: loadedUser.email,

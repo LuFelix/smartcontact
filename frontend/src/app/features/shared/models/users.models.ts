@@ -130,6 +130,7 @@ export interface User {
   links?: UserLink[];
   tags?: Tag[];
   profilePictureUrl?: string;
+  isTenantOwner?: boolean;
 }
 
 // --- Interface para Registro (Usada pelo AuthService) ---
@@ -178,6 +179,7 @@ export interface FullUserResponse {
   tags?: Tag[];
   tagAccesses?: { id: string, tag: Tag }[];
   profilePictureUrl?: string;
+  isTenantOwner?: boolean;
 }
 export interface Lead {
   id: string;
