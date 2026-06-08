@@ -14,6 +14,10 @@ export class TenantsService {
     return this.tenantRepository.findOne({ where: { slug } });
   }
 
+  async findById(id: string): Promise<Tenant | null> {
+    return this.tenantRepository.findOne({ where: { id } });
+  }
+
   async create(name: string, slug: string): Promise<Tenant> {
     const tenant = this.tenantRepository.create({ name, slug });
     return this.tenantRepository.save(tenant);
