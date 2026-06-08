@@ -46,6 +46,7 @@ import { Tag, TechnologyType, ApplicationType } from '../../../shared/models/use
           <mat-form-field appearance="outline">
             <mat-label>Tecnologia</mat-label>
             <mat-select formControlName="technologyType">
+              <mat-option [value]="techTypes.QR_CODE">QR Code / Link Virtual</mat-option>
               <mat-option [value]="techTypes.NFC_HF">NFC HF (13.56 MHz)</mat-option>
               <mat-option [value]="techTypes.RFID_UHF">RFID UHF (Long Alcance)</mat-option>
             </mat-select>

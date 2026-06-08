@@ -31,18 +31,29 @@ import { Tag } from '../../../shared/models/users.models';
       <mat-card *ngFor="let tag of tags" class="tag-card mat-elevation-z2">
         <mat-card-header>
           <div mat-card-avatar class="tag-icon-container" [ngClass]="tag.technologyType.toLowerCase()">
-            <mat-icon>{{ tag.technologyType === 'NFC_HF' ? 'nfc' : 'settings_input_antenna' }}</mat-icon>
+            <mat-icon>{{ getIcon(tag.technologyType) }}</mat-icon>
           </div>
           <mat-card-title>{{ tag.name || 'Sem nome' }}</mat-card-title>
-          <mat-card-subtitle>UID: <code>{{ tag.uid || '---' }}</code></mat-card-subtitle>
+          <mat-card-subtitle>
+            <span *ngIf="tag.uid">UID: <code>{{ tag.uid }}</code></span>
+            <span *ngIf="!tag.uid" class="virtual-badge">
+              <mat-icon>qr_code</mat-icon> QR / Virtual
+            </span>
+          </mat-card-subtitle>
         </mat-card-header>
 
         <mat-card-content>
           <div class="tag-details">
+            <div class="detail-item" *ngIf="tag.user">
+              <span class="label">Dono:</span>
+              <span class="owner-name">{{ tag.user.name }}</span>
+            </div>
             <div class="detail-item">
               <span class="label">Tecnologia:</span>
               <mat-chip-set>
-                <mat-chip>{{ tag.technologyType === 'NFC_HF' ? 'NFC HF' : 'RFID UHF' }}</mat-chip>
+                <mat-chip [ngClass]="tag.technologyType.toLowerCase()">
+                  {{ getTechLabel(tag.technologyType) }}
+                </mat-chip>
               </mat-chip-set>
             </div>
             <div class="detail-item">
@@ -97,9 +108,20 @@ import { Tag } from '../../../shared/models/users.models';
     }
     .nfc_hf { color: #1976D2; background: #E3F2FD; }
     .rfid_uhf { color: #7B1FA2; background: #F3E5F5; }
+    .qr_code { color: #455A64; background: #ECEFF1; }
+    .virtual-badge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: #757575;
+      font-size: 11px;
+      font-style: italic;
+    }
+    .virtual-badge mat-icon { font-size: 14px; width: 14px; height: 14px; }
     .tag-details { padding: 16px 0; display: flex; flex-direction: column; gap: 12px; }
     .detail-item { display: flex; justify-content: space-between; align-items: center; }
     .label { color: #757575; font-size: 13px; font-weight: 500; }
+    .owner-name { font-size: 13px; font-weight: 500; color: #333; }
     .app-badge {
       padding: 4px 12px;
       border-radius: 16px;
@@ -118,6 +140,24 @@ export class TagCardListComponent {
   @Input() isAdmin = false;
   @Output() editTag = new EventEmitter<Tag>();
   @Output() deleteTag = new EventEmitter<Tag>();
+
+  getIcon(tech: string): string {
+    const icons: any = {
+      'NFC_HF': 'nfc',
+      'RFID_UHF': 'settings_input_antenna',
+      'QR_CODE': 'qr_code'
+    };
+    return icons[tech] || 'tag';
+  }
+
+  getTechLabel(tech: string): string {
+    const labels: any = {
+      'NFC_HF': 'NFC HF',
+      'RFID_UHF': 'RFID UHF',
+      'QR_CODE': 'QR Code'
+    };
+    return labels[tech] || tech;
+  }
 
   getAppLabel(app: string): string {
     const labels: any = {
