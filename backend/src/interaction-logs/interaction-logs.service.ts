@@ -63,42 +63,32 @@ export class InteractionLogsService {
   async findLeadsByOwner(currentUser: any): Promise<InteractionLog[]> {
       const { sub: userId, tenantId, role, isSuperAdmin } = currentUser;
 
-      // 1. Super Admin vê tudo
-      if (isSuperAdmin) {
-          return this.interactionLogRepository.find({
-              where: { interactionType: InteractionType.LEAD },
-              relations: ['tag', 'tag.user', 'capturedByUser', 'capturedByUser.profile'],
-              order: { accessedAt: 'DESC' }
-          });
+      console.log(`[InteractionLogsService] Buscando leads. Tenant Context: ${tenantId}. User: ${userId}. SuperAdmin: ${isSuperAdmin}`);
+
+      const queryBuilder = this.interactionLogRepository.createQueryBuilder('log')
+          .leftJoinAndSelect('log.tag', 'tag')
+          .leftJoinAndSelect('tag.user', 'tagUser')
+          .leftJoinAndSelect('log.capturedByUser', 'capturedByUser')
+          .leftJoinAndSelect('capturedByUser.profile', 'capturedProfile')
+          .where('log.interaction_type = :type', { type: InteractionType.LEAD })
+          .orderBy('log.accessedAt', 'DESC');
+
+      // 1. Filtro OBRIGATÓRIO de Tenant (Contexto)
+      // Mesmo para SuperAdmin, a interface deve respeitar o workspace selecionado no Header.
+      if (tenantId) {
+          queryBuilder.andWhere('tag.tenantId = :tId', { tId: tenantId });
+      } else if (!isSuperAdmin) {
+          // Se não tem tenant E não é SuperAdmin, bloqueia por segurança
+          return [];
       }
 
-      // 2. Admin do Tenant vê todos os leads do seu tenant
-      if (role === 'administrador') {
-          return this.interactionLogRepository.find({
-              where: { 
-                  interactionType: InteractionType.LEAD,
-                  tag: { tenantId } 
-              },
-              relations: ['tag', 'tag.user', 'capturedByUser', 'capturedByUser.profile'],
-              order: { accessedAt: 'DESC' }
-          });
+      // 2. Filtro de Segurança ABAC (Se não for Admin do Tenant nem SuperAdmin)
+      if (!isSuperAdmin && role !== 'administrador') {
+          queryBuilder.andWhere(qb => {
+              return '(log.capturedByUserId = :userId OR tag.ownerId = :userId)';
+          }, { userId });
       }
 
-      // 3. Outros (Tutor/Colaborador): Visão restrita (ABAC)
-      // Membros só vêem os leads que ELES mesmos capturaram ou de tags que eles possuem (ownerId)
-      return this.interactionLogRepository.find({
-          where: [
-              { 
-                  interactionType: InteractionType.LEAD,
-                  capturedByUserId: userId
-              },
-              { 
-                  interactionType: InteractionType.LEAD,
-                  tag: { ownerId: userId } 
-              }
-          ],
-          relations: ['tag', 'tag.user', 'capturedByUser', 'capturedByUser.profile'],
-          order: { accessedAt: 'DESC' }
-      });
+      return queryBuilder.getMany();
   }
 }

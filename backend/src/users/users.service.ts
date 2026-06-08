@@ -1,5 +1,5 @@
 // users/users.service.ts
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { FindManyOptions, ILike, Like, Repository, DeepPartial, IsNull } from 'typeorm';
@@ -74,7 +74,10 @@ export class UsersService {
         
         // 1. Identificar ou Criar o Tenant (Empresa) e o Owner (Dono)
         let tenantId = currentUser?.tenantId;
-        const ownerId = currentUser?.sub || this.TIWEB_ID;
+        // Se houver sub no contexto, o ownerId é quem está criando.
+        // Se for auto-cadastro (sem sub), o ownerId SERÁ o id do próprio usuário após o save.
+        // Por enquanto, usamos null se for auto-cadastro para sabermos que precisamos atualizar depois.
+        let ownerId = currentUser?.sub || null;
 
         if (email) {
             const emailExists = await this.usersRepository.findOne({ where: { email } });
@@ -104,7 +107,8 @@ export class UsersService {
         // Se não houver tenant no contexto (auto-cadastro), criamos um novo
         if (!tenantId) {
             const tenantName = `${createUserDto.name}'s Workspace`;
-            const tenantSlug = `ws-${await this.generateUniqueUsername(createUserDto.name)}`;
+            const uniqueSuffix = Math.random().toString(36).substring(2, 8);
+            const tenantSlug = `ws-${await this.generateUniqueUsername(createUserDto.name)}-${uniqueSuffix}`;
             const newTenant = await this.tenantsService.create(tenantName, tenantSlug);
             tenantId = newTenant.id;
         }
@@ -153,26 +157,43 @@ export class UsersService {
         const user = this.usersRepository.create(userData);
         const savedUser = await this.usersRepository.save(user);
 
+        // Se for auto-cadastro (ownerId era null), o usuário agora é o dono de si mesmo
+        if (!ownerId) {
+            ownerId = savedUser.id;
+            await this.usersRepository.update(savedUser.id, { ownerId });
+            savedUser.ownerId = ownerId;
+        }
+
         // 2. CRIAR O VÍNCULO DE MEMBERSHIP
         let profileId: string | null = null;
         
-        // CRIAÇÃO AUTOMÁTICA DE PROFILE E TAG (Apenas para Contas Reais/SaaS)
-        const isRealAccount = !!createUserDto.password && createUserDto.password.length > 0;
+        // CRIAÇÃO AUTOMÁTICA DE PROFILE E TAG
+        // Mudança Crítica: Criamos profile para QUALQUER conta que não seja 'contato',
+        // mesmo que não tenha senha (membro convidado que ainda não aceitou).
+        const isTeamRole = assignedRole.name?.toLowerCase() !== 'contato';
 
-        if (isRealAccount) {
-            const profile = await this.profilesService.create({
-                userId: savedUser.id,
-                ownerId: savedUser.ownerId!,
-                tenantId: tenantId,
-                profilePictureUrl: profilePictureUrl
-            });
+        if (isTeamRole) {
+            // Verifica se o perfil já existe (idempotência)
+            let profile = await this.profilesService.findByUserId(savedUser.id);
+            if (!profile) {
+                profile = await this.profilesService.create({
+                    userId: savedUser.id,
+                    ownerId: ownerId as string, // Usa o ownerId resolvido (quem convidou ou o próprio usuário)
+                    tenantId: tenantId,
+                    profilePictureUrl: profilePictureUrl
+                });
+            }
             profileId = profile.id;
 
-            await this.tagsService.createDefaultTag(
-                savedUser.id,
-                savedUser.ownerId!,
-                tenantId
-            );
+            // Verifica se a tag já existe (idempotência)
+            const hasTag = await this.tagRepository.findOne({ where: { userId: savedUser.id, tenantId } });
+            if (!hasTag) {
+                await this.tagsService.createDefaultTag(
+                    savedUser.id,
+                    ownerId as string,
+                    tenantId
+                );
+            }
         }
 
         await this.membershipsService.create({
@@ -216,8 +237,9 @@ export class UsersService {
     }
 
     async findByEmail(email: string, currentUser?: any): Promise<User | null> {
+        const emailNormalized = email?.trim().toLowerCase();
         const user = await this.usersRepository.findOne({ 
-            where: { email }, 
+            where: { email: emailNormalized }, 
             relations: ['memberships', 'memberships.role', 'memberships.profile', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile'] 
         });
         return this.injectLegacyProps(user, currentUser);
@@ -275,45 +297,80 @@ export class UsersService {
         const tenantId = currentUser?.tenantId || this.TIWEB_ID;
         const isSystemAdmin = currentUser?.isSuperAdmin;
 
-        const where: any = {};
-        
-        // Agora o filtro de tenant é feito através da relação de memberships
-        if (!isSystemAdmin && tenantId) {
-            where.memberships = { tenantId };
+        console.log(`[UsersService] Listando usuários. Tenant: ${tenantId}. SuperAdmin: ${isSystemAdmin}`);
+
+        // SEGURANÇA: Se não for SuperAdmin, verifica se o usuário tem membership no tenant solicitado
+        if (!isSystemAdmin && currentUser?.sub) {
+            const hasMembership = await this.membershipsService.findByUserAndTenant(currentUser.sub, tenantId);
+            if (!hasMembership) {
+                console.warn(`[UsersService] Bloqueio de acesso: Usuário ${currentUser.sub} tentou listar dados do tenant ${tenantId} sem possuir vínculo.`);
+                throw new ForbiddenException('Acesso negado: Você não pertence a esta organização.');
+            }
         }
 
-        if (name) where.name = ILike(`%${name}%`);
-        if (email) where.email = Like(`%${email}%`);
-        if (cpf) where.cpf = Like(`%${cpf}%`);
+        const queryBuilder = this.usersRepository.createQueryBuilder('user')
+            .leftJoinAndSelect('user.memberships', 'membership', 'membership.tenantId = :tId', { tId: tenantId })
+            .leftJoinAndSelect('membership.role', 'role')
+            .leftJoinAndSelect('membership.tenant', 'tenant')
+            .leftJoinAndSelect('membership.profile', 'membershipProfile')
+            .leftJoinAndSelect('user.phones', 'phone')
+            .leftJoinAndSelect('user.addresses', 'address')
+            .leftJoinAndSelect('user.tags', 'tag', 'tag.tenantId = :tId', { tId: tenantId })
+            .leftJoinAndSelect('user.profile', 'profile')
+            .orderBy('user.name', 'ASC');
 
-        const findOptions: FindManyOptions<User> = {
-            order: { name: 'ASC' },
-            skip,
-            take: limit ?? undefined,
-            where,
-            relations: ['memberships', 'memberships.role', 'memberships.tenant', 'memberships.profile', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile', 'tagAccesses', 'tagAccesses.tag'],
-        };
+        if (tenantId) {
+            // Filtro de isolamento: Apenas usuários que têm vínculo com o tenant ativo
+            // Mesmo para SuperAdmin, a LISTA deve ser filtrada pelo contexto atual.
+            queryBuilder.andWhere(qb => {
+                const subQuery = qb.subQuery()
+                    .select('m.user_id')
+                    .from('memberships', 'm')
+                    .where('m.tenant_id = :tId', { tId: tenantId })
+                    .getQuery();
+                return 'user.id IN ' + subQuery;
+            });
+            queryBuilder.setParameter('tId', tenantId);
+        }
 
-        const [users, total] = await this.usersRepository.findAndCount(findOptions);
+        if (name) {
+            queryBuilder.andWhere('user.name ILIKE :name', { name: `%${name}%` });
+        }
+        if (email) {
+            queryBuilder.andWhere('user.email LIKE :email', { email: `%${email}%` });
+        }
+        if (cpf) {
+            queryBuilder.andWhere('user.cpf LIKE :cpf', { cpf: `%${cpf}%` });
+        }
+
+        const [users, total] = await queryBuilder
+            .skip(skip)
+            .take(limit ?? 10)
+            .getManyAndCount();
 
         const data = users.map(user => {
-            const isOwner = user.ownerId === currentUser?.sub;
             const isOwnProfile = user.id === currentUser?.sub;
             
+            // Localiza a membership específica deste tenant solicitado
             const activeMembership = user.memberships?.find(m => m.tenantId === tenantId);
             const isTenantAdmin = activeMembership && currentUser?.role === 'administrador';
 
-            // Injeta propriedades de compatibilidade legada para o frontend
-            (user as any).role = activeMembership?.role;
-            (user as any).tenantId = activeMembership?.tenantId;
-            if (!user.profile && activeMembership?.profile) {
-                user.profile = activeMembership.profile;
-            }
+            // Injeta propriedades de compatibilidade legada para o frontend baseadas no CONTEXTO
+            // Priorizamos SEMPRE o que está no vínculo (Membership) para este tenant
+            (user as any).role = activeMembership?.role || { id: '', name: 'usuario' };
+            (user as any).tenantId = activeMembership?.tenantId || tenantId;
+            
+            // SOBRESCREVEMOS o profile global pelo profile do vínculo
+            // Isso garante que se o vínculo for 'desligado' (profileId null), 
+            // o frontend pare de ver este usuário como membro da equipe deste workspace.
+            user.profile = activeMembership?.profile || undefined;
 
-            if (isSystemAdmin || isOwnProfile || isOwner || isTenantAdmin) {
+            // Filtro de Segurança ABAC: Admins e Donos vêem tudo, outros vêem básico
+            if (isSystemAdmin || isOwnProfile || isTenantAdmin) {
                 return user; 
             }
 
+            // Oculta dados sensíveis para não-admins
             const { phones, addresses, secondaryEmails, links, ...basicInfo } = user;
             return basicInfo as User;
         });
@@ -418,6 +475,73 @@ export class UsersService {
         return updatedUser as User;
     }
 
+    /**
+     * Provisiona um Workspace Pessoal (Solo Tenant) para um usuário existente.
+     * Usado quando um usuário que era apenas "lead/contato" faz login pela primeira vez.
+     */
+    async provisionPersonalWorkspace(user: User): Promise<User> {
+        // "Reivindica" a conta: Se o usuário era um lead capturado por terceiros, 
+        // ao fazer login ele passa a ser o dono da própria conta.
+        if (user.ownerId !== user.id) {
+            await this.usersRepository.update(user.id, { ownerId: user.id });
+            user.ownerId = user.id;
+        }
+
+        // CHECAGEM DE IDEMPOTÊNCIA: Verifica se já não foi criado um workspace pessoal em uma requisição paralela
+        // (Isso evita a criação de 6 workspaces se houver 6 requests simultâneos no primeiro login)
+        const updatedUserCheck = await this.findByEmail(user.email as string);
+        const hasPersonalWorkspace = updatedUserCheck?.ownerId === user.id && 
+                                   updatedUserCheck?.memberships?.some(m => m.profile?.ownerId === user.id);
+        
+        if (hasPersonalWorkspace) {
+            console.log(`[UsersService] Workspace pessoal já identificado para ${user.email}, abortando criação redundante.`);
+            return updatedUserCheck as User;
+        }
+
+        const tenantName = `${user.name}'s Workspace`;
+        const uniqueSuffix = Math.random().toString(36).substring(2, 8);
+        const tenantSlug = `ws-${await this.generateUniqueUsername(user.name)}-${uniqueSuffix}`;
+        const newTenant = await this.tenantsService.create(tenantName, tenantSlug);
+        
+        const adminRole = await this.rolesService.findOneByName('administrador');
+        if (!adminRole) {
+            throw new BadRequestException('Role administrador não encontrada no sistema.');
+        }
+
+        let existingProfile = await this.profilesService.findByUserId(user.id);
+        if (!existingProfile) {
+            existingProfile = await this.profilesService.create({
+                userId: user.id,
+                ownerId: user.id, // O próprio usuário é dono do seu tenant
+                tenantId: newTenant.id,
+                profilePictureUrl: user.profilePictureUrl || undefined
+            });
+        } else if (existingProfile.ownerId !== user.id) {
+            // Se o perfil já existe (ex: capturado como lead), agora o usuário toma posse dele
+            await this.profilesService.update(user.id, { ownerId: user.id });
+            existingProfile.ownerId = user.id;
+        }
+
+        // Verifica e cria a tag apenas se não existir NESTE tenant
+        const hasTag = await this.tagRepository.findOne({ where: { userId: user.id, tenantId: newTenant.id } });
+        if (!hasTag) {
+            await this.tagsService.createDefaultTag(
+                user.id,
+                user.id,
+                newTenant.id
+            );
+        }
+
+        await this.membershipsService.create({
+            userId: user.id,
+            tenantId: newTenant.id,
+            roleId: adminRole.id,
+            profileId: existingProfile.id
+        });
+
+        return this.findByEmail(user.email as string) as Promise<User>;
+    }
+
     async updateProfilePicture(userId: string, pictureUrl: string): Promise<void> {
         await this.usersRepository.update(userId, { profilePictureUrl: pictureUrl });
     }
@@ -463,19 +587,7 @@ export class UsersService {
             throw new BadRequestException('Um endereço de e-mail é obrigatório para promoção à equipe.');
         }
 
-        // Atualiza a Role no membership (ou cria se não existir)
-        const membership = user.memberships?.find(m => m.tenantId === targetTenantId);
-        if (membership) {
-            await this.membershipsService.updateRole(user.id, targetTenantId, targetRole.id);
-        } else {
-            await this.membershipsService.create({
-                userId: user.id,
-                tenantId: targetTenantId,
-                roleId: targetRole.id
-            });
-        }
-
-        // Força a criação do Profile
+        // Força a criação do Profile ANTES de vincular no Membership
         let existingProfile = await this.profilesService.findByUserId(user.id);
         if (!existingProfile) {
             existingProfile = await this.profilesService.create({
@@ -484,14 +596,26 @@ export class UsersService {
                 tenantId: targetTenantId,
                 profilePictureUrl: user.profilePictureUrl || undefined
             });
-            
-            // Vincula o profileId no membership
-            await this.membershipsService.updateProfileId(user.id, targetTenantId, existingProfile.id);
         }
 
-        // Força a criação da Tag (Verificação via Repositório para evitar erros de relação NOT NULL no save(user))
-        const hasTag = await this.tagRepository.findOne({ where: { userId: user.id } });
+        // Atualiza a Role e o Profile no membership (ou cria se não existir)
+        const membership = user.memberships?.find(m => m.tenantId === targetTenantId);
+        if (membership) {
+            await this.membershipsService.updateRoleAndProfile(user.id, targetTenantId, targetRole.id, existingProfile.id);
+        } else {
+            await this.membershipsService.create({
+                userId: user.id,
+                tenantId: targetTenantId,
+                roleId: targetRole.id,
+                profileId: existingProfile.id
+            });
+        }
+
+        // Força a criação da Tag específica para este Workspace
+        // (Verificação via Repositório para evitar erros de relação NOT NULL no save(user))
+        const hasTag = await this.tagRepository.findOne({ where: { userId: user.id, tenantId: targetTenantId } });
         if (!hasTag) {
+            console.log(`[UsersService] Criando tag padrão para o usuário ${user.id} no tenant ${targetTenantId}`);
             await this.tagsService.createDefaultTag(
                 user.id,
                 currentUser.sub,
@@ -530,19 +654,29 @@ export class UsersService {
         }
 
         const tenantId = currentUser.tenantId || this.TIWEB_ID;
+        console.log(`[UsersService] Iniciando rebaixamento de membro ${id} no tenant ${tenantId}`);
 
-        // Rebaixa o cargo para usuário comum no workspace específico
+        // 1. Rebaixa o cargo para USUARIO no workspace específico (mantém acesso ao painel como usuário padrão)
+        // Buscamos a role 'usuario' explicitamente
         const targetRole = await this.rolesService.findOneByName('usuario');
+        
         if (targetRole) {
+            console.log(`[UsersService] Rebaixando para a role: ${targetRole.name} (ID: ${targetRole.id})`);
             await this.membershipsService.updateRole(user.id, tenantId, targetRole.id);
+        } else {
+            console.error(`[UsersService] ERRO CRÍTICO: Role 'usuario' não encontrada para rebaixamento.`);
+            throw new BadRequestException('Erro interno: Role de segurança "usuario" não encontrada.');
         }
 
-        // Remove o perfil público deste vínculo (efetivando a saída da equipe comercial)
-        const membership = user.memberships?.find(m => m.tenantId === tenantId);
-        if (membership?.profileId) {
-            await this.profilesService.removeByUserId(user.id);
-            await this.membershipsService.updateProfileId(user.id, tenantId, null);
-        }
+        // 2. Remove o vínculo do perfil deste workspace (tirando o status de membro da equipe)
+        // Isso faz com que o usuário suma da listagem de "Equipe" mas continue no banco e no Workspace.
+        console.log(`[UsersService] Removendo profileId do vínculo membership no tenant ${tenantId}`);
+        await this.membershipsService.updateProfileId(user.id, tenantId, null);
+
+        // 3. Remove a Tag deste usuário vinculada a este Tenant específico
+        // Isso garante que ele não tenha um cartão de visita ativo para esta empresa após sair da equipe.
+        console.log(`[UsersService] Removendo Tag vinculada ao tenant ${tenantId} para o usuário ${id}`);
+        await this.tagRepository.delete({ userId: id, tenantId: tenantId });
     }
 
     async setVerificationData(userId: string, code: string, expires: Date): Promise<void> {
@@ -594,7 +728,10 @@ export class UsersService {
             ? user.memberships[0].tenantId 
             : this.TIWEB_ID;
             
-        await this.tagsService.createDefaultTag(user.id, user.ownerId!, tenantId);
+        const hasTag = await this.tagRepository.findOne({ where: { userId: user.id, tenantId } });
+        if (!hasTag) {
+            await this.tagsService.createDefaultTag(user.id, user.ownerId!, tenantId);
+        }
     }
 
     /**

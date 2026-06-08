@@ -41,6 +41,17 @@ export class UsersController {
         return this.usersService.findAll(page, limit, name, email, cpf, currentUser);
     }
 
+    @Delete(':id/team')
+    @Roles('administrador')
+    @ApiOperation({ summary: 'Remover usuário da equipe (mantém no fichário)' })
+    @ApiParam({ name: 'id', type: String })
+    async demoteFromTeam(
+        @Param('id', ParseUUIDPipe) id: string,
+        @GetUser() currentUser: any
+    ) {
+        return this.usersService.demoteFromTeam(id, currentUser);
+    }
+
     @Delete(':id')
     @Roles('administrador')
     @ApiOperation({ summary: 'Deletar um usuário (Apenas Admin)' })
@@ -89,16 +100,5 @@ export class UsersController {
         @GetUser() currentUser: any
     ) {
         return this.usersService.promoteToTeam(id, roleId, currentUser, email);
-    }
-
-    @Delete(':id/team')
-    @Roles('administrador')
-    @ApiOperation({ summary: 'Remover usuário da equipe (mantém no fichário)' })
-    @ApiParam({ name: 'id', type: String })
-    async demoteFromTeam(
-        @Param('id', ParseUUIDPipe) id: string,
-        @GetUser() currentUser: any
-    ) {
-        return this.usersService.demoteFromTeam(id, currentUser);
     }
 }

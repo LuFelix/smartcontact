@@ -1,26 +1,5 @@
 <div class="manager-container">
     <app-page-header title="Gestão de Equipe">
-        <!-- Seletor de Workspace -->
-        <div header-left-extra>
-            <mat-form-field appearance="outline" class="workspace-selector">
-                <mat-label>Workspace Selecionado</mat-label>
-                <mat-select [(value)]="selectedWorkspaceId">
-                    @for (ws of workspaces; track ws.id) {
-                        <mat-option [value]="ws.id">
-                            <div class="flex items-center gap-2">
-                                <mat-icon class="ws-icon">{{ ws.isMain ? 'home' : 'business' }}</mat-icon>
-                                {{ ws.name }}
-                            </div>
-                        </mat-option>
-                    }
-                    <mat-divider></mat-divider>
-                    <mat-option value="new" disabled>
-                        <mat-icon>add</mat-icon> Criar Novo Workspace (Premium)
-                    </mat-option>
-                </mat-select>
-            </mat-form-field>
-        </div>
-
         <!-- Ações do Header -->
         <div header-actions>
             <button mat-stroked-button (click)="layoutService.toggleLayout()">

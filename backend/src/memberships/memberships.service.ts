@@ -22,6 +22,15 @@ export class MembershipsService {
     });
   }
 
+  async findTeamWorkspacesByUser(userId: string) {
+    const memberships = await this.membershipRepository.find({
+      where: { userId },
+      relations: ['tenant', 'role', 'profile'],
+    });
+    // Retorna apenas os workspaces onde o usuário é administrador ou usuario (exclui contato)
+    return memberships.filter(m => m.role && m.role.name.toLowerCase() !== 'contato');
+  }
+
   async findByUserAndTenant(userId: string, tenantId: string) {
     return this.membershipRepository.findOne({
       where: { userId, tenantId },
@@ -43,6 +52,14 @@ export class MembershipsService {
       throw new NotFoundException('Vínculo não encontrado neste workspace.');
     }
     return this.membershipRepository.update(membership.id, { roleId });
+  }
+
+  async updateRoleAndProfile(userId: string, tenantId: string, roleId: string, profileId: string | null) {
+    const membership = await this.findByUserAndTenant(userId, tenantId);
+    if (!membership) {
+      throw new NotFoundException('Vínculo não encontrado neste workspace.');
+    }
+    return this.membershipRepository.update(membership.id, { roleId, profileId });
   }
 
   async updateProfileId(userId: string, tenantId: string, profileId: string | null) {

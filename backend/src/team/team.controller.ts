@@ -25,7 +25,7 @@ export class TeamController {
   }
 
   @Get('members')
-  @Roles('administrador')
+  @Roles('administrador', 'usuario')
   @ApiOperation({ summary: 'Listar todos os membros do seu Workspace' })
   async listMembers(@GetUser() currentUser: any) {
     return this.teamService.listTeamMembers(currentUser);

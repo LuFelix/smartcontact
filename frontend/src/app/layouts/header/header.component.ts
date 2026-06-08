@@ -1,13 +1,15 @@
-import { Component, inject, Input, Output, EventEmitter } from '@angular/core';
+import { Component, inject, Input, Output, EventEmitter, OnInit, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu'; 
 import { MatBadgeModule } from '@angular/material/badge'; 
+import { MatDividerModule } from '@angular/material/divider';
 import { CommonModule } from '@angular/common'; 
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-header',
@@ -18,31 +20,76 @@ import { ThemeService } from '../../core/services/theme.service';
     MatIconModule,
     MatButtonModule,
     MatMenuModule,
-    MatBadgeModule
+    MatBadgeModule,
+    MatDividerModule
   ],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss'
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   private themeService = inject(ThemeService);
-  
+
   darkMode = this.themeService.darkMode;
-  
+
   // Public Signals
   userName = this.authService.userName;
   userPicture = this.authService.userPicture;
+  activeTenantId = this.authService.activeTenantId;
+
+  workspaces = signal<any[]>([]);
+
+  myWorkspaces = computed(() => {
+    return this.workspaces().filter(ws => ws.isOwner);
+  });
+
+  sharedWorkspaces = computed(() => {
+    return this.workspaces().filter(ws => !ws.isOwner);
+  });
+
+  currentWorkspace = computed(() => {
+    const activeId = this.activeTenantId();
+    const list = this.workspaces();
+    if (!activeId || list.length === 0) return null;
+    return list.find(w => w.tenantId === activeId)?.tenant || null;
+  });
 
   @Input() sidenavOpen: boolean = true;
   @Output() toggleSidenav = new EventEmitter<void>();
 
   notificationCount = 5;
 
+  ngOnInit() {
+    this.loadWorkspaces();
+  }
+
+  loadWorkspaces() {
+    this.authService.getMyWorkspaces().subscribe({
+      next: (data) => {
+        console.log('[Header] Workspaces carregados:', data);
+        this.workspaces.set(data);
+        // Se houver workspaces mas nenhum ativo, define o primeiro
+        if (data.length > 0 && !this.activeTenantId()) {
+            this.authService.switchTenant(data[0].tenantId);
+        }
+      },
+      error: (err) => console.error('Erro ao carregar workspaces:', err)
+    });
+  }
+
+  switchWorkspace(tenantId: string) {
+    this.authService.switchTenant(tenantId);
+    // Recarrega a página ou notifica para resetar o estado dos componentes
+    window.location.reload(); 
+  }
+
   get profileImage(): string | null {
     const url = this.userPicture();
     if (url && typeof url === 'string' && url.length > 5) {
-        return url.startsWith('http') ? url : `http://localhost:3000/${url}`;
+        if (url.startsWith('http')) return url;
+        const baseUrl = environment.apiUrl.replace('/api', '');
+        return `${baseUrl}/${url}`;
     }
     return null;
   }

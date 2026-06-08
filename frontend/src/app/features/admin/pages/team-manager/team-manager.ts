@@ -64,14 +64,6 @@ export class TeamManagerComponent implements OnInit {
   searchTerm: string = '';
   isLoadingMembers = true;
 
-  // Mock para Seletor de Workspace (Futuro Premium)
-  workspaces = [
-    { id: '1', name: 'Meu Workspace (Padrão)', isMain: true },
-    { id: '2', name: 'Filial São Paulo', isMain: false },
-    { id: '3', name: 'Time de Vendas External', isMain: false }
-  ];
-  selectedWorkspaceId = '1';
-
   ngOnInit(): void {
     this.loadMembers();
   }
@@ -94,9 +86,12 @@ export class TeamManagerComponent implements OnInit {
         next: (res) => {
             // Filtro por Estrutura: Membro da equipe é aquele que possui um Profile
             // (Isso distingue contatos convertidos a "usuários" de verdadeiros membros do workspace)
-            this.members = res.data.filter((u: FullUserResponse) => !!u.profile);
+            this.members = (res.data || []).filter((u: FullUserResponse) => !!u.profile);
         },
-        error: () => this.snackBar.open('Erro ao carregar membros.', 'Fechar')
+        error: (err) => {
+            console.error(err);
+            this.snackBar.open('Erro ao carregar membros.', 'Fechar');
+        }
       });
   }
 

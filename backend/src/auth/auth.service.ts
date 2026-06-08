@@ -219,52 +219,76 @@ export class AuthService {
             sub: null
         };
         
-        user = await this.usersService.create({
-          email: payloadGoogle.email,
-          name: payloadGoogle.name || 'Usuário Google',
-          password: Math.random().toString(36).slice(-10),
-          roleId: roleId
-        }, newUserContext, payloadGoogle.picture);
+        try {
+            user = await this.usersService.create({
+              email: payloadGoogle.email,
+              name: payloadGoogle.name || 'Usuário Google',
+              password: Math.random().toString(36).slice(-10),
+              roleId: roleId
+            }, newUserContext, payloadGoogle.picture);
 
-        await this.usersService.markEmailAsVerified(user.id);
+            await this.usersService.markEmailAsVerified(user.id);
+        } catch (error: any) {
+            // Se falhar por e-mail já existente, significa que outra requisição paralela criou o usuário
+            if (error.message?.includes('já existe') || error.detail?.includes('already exists')) {
+                user = await this.usersService.findByEmail(payloadGoogle.email);
+            } else {
+                throw error;
+            }
+        }
+        
+        // Recarrega as relações completas após criação ou recuperação paralela
         user = await this.usersService.findByEmail(payloadGoogle.email);
       } else {
+          // O usuário já existe no banco (pode ter sido criado como lead ou já ter conta).
+          
+          // Atualiza a foto se necessário
           if (payloadGoogle.picture && user.profilePictureUrl !== payloadGoogle.picture) {
               await this.usersService.updateProfilePicture(user.id, payloadGoogle.picture);
+              user.profilePictureUrl = payloadGoogle.picture;
           }
 
-          let profile = await this.profilesService.findByUserId(user.id);
-          
-          // Se já tem membership mas não tem profile, criamos no primeiro membership disponível
-          if (!profile && user.memberships && user.memberships.length > 0) {
-              const m = user.memberships[0];
-              profile = await this.profilesService.create({
-                  userId: user.id,
-                  ownerId: user.ownerId!,
-                  tenantId: m.tenantId,
-                  profilePictureUrl: payloadGoogle.picture
-              });
-              // Atualiza o membership para referenciar o profile recém-criado
-              await this.membershipsService.updateProfileId(user.id, m.tenantId, profile.id);
+          // Se ele tiver convite pendente, tentamos resolver
+          if (loginDto.invitationToken) {
+              try {
+                  const invitation = await this.teamService.resolveInvitation(loginDto.invitationToken);
+                  const alreadyMember = user.memberships?.some(m => m.tenantId === invitation.tenantId);
+                  if (!alreadyMember) {
+                      await this.usersService.createMembershipForUser(user.id, invitation.tenantId, invitation.roleId);
+                  }
+              } catch (error) {
+                  console.warn(`[AuthService Google] Convite inválido ou expirado no fluxo de conta existente: ${loginDto.invitationToken}`);
+              }
           }
-
-          if (profile && payloadGoogle.picture && profile.profilePictureUrl !== payloadGoogle.picture) {
-              await this.profilesService.update(user.id, { profilePictureUrl: payloadGoogle.picture });
-          }
-
-          if (!user.tags || user.tags.length === 0) {
-              await this.usersService.ensureHasDefaultTag(user);
-          }
-
-          user = await this.usersService.findByEmail(payloadGoogle.email);
       }
 
       if (!user) {
         throw new InternalServerErrorException('Erro ao processar ou criar usuário via Google');
       }
+
+      // PARADIGMA GOOGLE DRIVE (Unificado para Novos e Existentes):
+      // Todo usuário que faz login no sistema DEVE ter o seu próprio Workspace (Tenant Solo) onde ele é o dono (ownerId).
+      // A verificação robusta olha se ele tem uma membership onde ele possui um profile próprio.
+      const hasPersonalWorkspace = user?.ownerId === user?.id && user?.memberships?.some(m => m.profile?.ownerId === user?.id);
       
-      const finalPicture = user.profile?.profilePictureUrl || user.profilePictureUrl || payloadGoogle.picture;
-      const activeMembership = user.memberships && user.memberships.length > 0 ? user.memberships[0] : null;
+      if (!hasPersonalWorkspace) {
+          console.log(`[AuthService Google] Provisionando workspace pessoal para: ${user.email}`);
+          user = await this.usersService.provisionPersonalWorkspace(user);
+      } else {
+          console.log(`[AuthService Google] Usuário já possui workspace pessoal: ${user.email}`);
+          // Apenas recarrega para garantir que as relações de memberships e profiles estejam frescas
+          user = await this.usersService.findByEmail(payloadGoogle.email);
+      }
+
+      if (!user) {
+        throw new InternalServerErrorException('Erro fatal ao recuperar dados do usuário após provisionamento.');
+      }
+
+      // O tenant ativo inicial será o primeiro workspace VÁLIDO (não-contato)
+      const validWorkspaces = await this.membershipsService.findTeamWorkspacesByUser(user.id);
+      const activeMembership = validWorkspaces.length > 0 ? validWorkspaces[0] : null;
+      
+      const finalPicture = activeMembership?.profile?.profilePictureUrl || user.profilePictureUrl || payloadGoogle.picture;
 
       const payload = { 
         sub: user.id, 
@@ -287,6 +311,18 @@ export class AuthService {
         console.error('[AuthService Google] Erro:', errorMessage);
         throw new UnauthorizedException('Falha na autenticação com Google');
     }
+  }
+
+  async getMyWorkspaces(userId: string) {
+    const workspaces = await this.membershipsService.findTeamWorkspacesByUser(userId);
+    const user = await this.usersService.findById(userId);
+    
+    // Para identificar se é "Dono" do workspace, verificamos se o ownerId do perfil é igual ao userId
+    // Fallback: Verifica se o nome do tenant foi gerado automaticamente com o nome do usuário (Workspace Pessoal)
+    return workspaces.map(ws => ({
+        ...ws,
+        isOwner: ws.profile?.ownerId === userId || (user && ws.tenant.name.startsWith(user.name))
+    }));
   }
 
 }
