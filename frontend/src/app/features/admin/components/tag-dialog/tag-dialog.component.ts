@@ -23,40 +23,34 @@ import { Tag, TechnologyType, ApplicationType } from '../../../shared/models/use
     MatIconModule
   ],
   template: `
-    <h2 mat-dialog-title>{{ data.tag ? 'Editar Tag' : 'Cadastrar Nova Tag' }}</h2>
+    <h2 mat-dialog-title>{{ data.tag ? 'Editar Recurso' : 'Cadastrar Novo Recurso' }}</h2>
     <mat-dialog-content>
       <form [formGroup]="tagForm" class="tag-form">
         <div class="form-row">
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>UID Físico (NFC/RFID)</mat-label>
-            <input matInput formControlName="uid" placeholder="Ex: 04:A1:B2:C3:D4:E5:F6">
-            <mat-error *ngIf="tagForm.get('uid')?.hasError('required')">UID é obrigatório</mat-error>
-          </mat-form-field>
-        </div>
-
-        <div class="form-row">
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Nome da Tag</mat-label>
-            <input matInput formControlName="name" placeholder="Ex: Tag Portaria Norte">
-            <mat-error *ngIf="tagForm.get('name')?.hasError('required')">Nome é obrigatório</mat-error>
+            <mat-label>Nome do Recurso</mat-label>
+            <input matInput formControlName="name" placeholder="Ex: Drive Apto Luxo ou Trilha de Matemática">
+            <mat-error *ngIf="tagForm.get('name')?.hasError('required')">O nome é obrigatório</mat-error>
           </mat-form-field>
         </div>
 
         <div class="form-row split">
           <mat-form-field appearance="outline">
-            <mat-label>Tecnologia</mat-label>
+            <mat-label>Tipo de Recurso</mat-label>
             <mat-select formControlName="technologyType">
-              <mat-option [value]="techTypes.QR_CODE">QR Code / Link Virtual</mat-option>
-              <mat-option [value]="techTypes.NFC_HF">NFC HF (13.56 MHz)</mat-option>
-              <mat-option [value]="techTypes.RFID_UHF">RFID UHF (Long Alcance)</mat-option>
+              <mat-option [value]="techTypes.LINK">🔗 Link / Drive</mat-option>
+              <mat-option [value]="techTypes.TRILHA">📚 Trilha de Conteúdo</mat-option>
+              <mat-option [value]="techTypes.QR_CODE">📱 QR Code Virtual</mat-option>
+              <mat-option [value]="techTypes.NFC_HF">📟 Tag NFC (Física)</mat-option>
+              <mat-option [value]="techTypes.RFID_UHF">📡 Chip RFID (Estoque)</mat-option>
             </mat-select>
           </mat-form-field>
 
           <mat-form-field appearance="outline">
             <mat-label>Aplicação</mat-label>
             <mat-select formControlName="applicationType">
-              <mat-option [value]="appTypes.REDIRECT">Redirecionamento (NFC)</mat-option>
-              <mat-option [value]="appTypes.ASSET_COUNTING">Contagem de Ativos</mat-option>
+              <mat-option [value]="appTypes.REDIRECT">Redirecionamento Direto</mat-option>
+              <mat-option [value]="appTypes.ASSET_COUNTING">Contagem e Inventário</mat-option>
               <mat-option [value]="appTypes.ACCESS_CONTROL">Controle de Acesso</mat-option>
             </mat-select>
           </mat-form-field>
@@ -64,9 +58,17 @@ import { Tag, TechnologyType, ApplicationType } from '../../../shared/models/use
 
         <div class="form-row">
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Valor / Destino</mat-label>
-            <input matInput formControlName="value" placeholder="URL ou Identificador customizado">
-            <mat-hint>Ex: https://meulink.com ou ID de Agrupamento MAS</mat-hint>
+            <mat-label>Destino / Valor</mat-label>
+            <input matInput formControlName="value" placeholder="URL do Drive ou Identificador do MAS">
+            <mat-hint>Para LINKS, insira a URL completa (https://...)</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row" *ngIf="showUidField">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>UID Físico (Opcional)</mat-label>
+            <input matInput formControlName="uid" placeholder="ID gravado no hardware (se houver)">
+            <mat-hint>Use apenas se quiser vincular este recurso a um chip físico específico</mat-hint>
           </mat-form-field>
         </div>
       </form>
@@ -74,7 +76,7 @@ import { Tag, TechnologyType, ApplicationType } from '../../../shared/models/use
     <mat-dialog-actions align="end">
       <button mat-button (click)="onCancel()">Cancelar</button>
       <button mat-flat-button color="primary" [disabled]="tagForm.invalid" (click)="onSave()">
-        {{ data.tag ? 'Atualizar' : 'Salvar' }}
+        {{ data.tag ? 'Atualizar Recurso' : 'Salvar Recurso' }}
       </button>
     </mat-dialog-actions>
   `,
@@ -82,7 +84,7 @@ import { Tag, TechnologyType, ApplicationType } from '../../../shared/models/use
     .tag-form {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 8px;
       padding: 16px 0;
     }
     .full-width {
@@ -91,6 +93,7 @@ import { Tag, TechnologyType, ApplicationType } from '../../../shared/models/use
     .form-row {
       display: flex;
       gap: 16px;
+      margin-bottom: 8px;
     }
     .split > mat-form-field {
       flex: 1;
@@ -107,12 +110,17 @@ export class TagDialogComponent {
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: { tag?: Tag }) {
     this.tagForm = this.fb.group({
-      uid: [data.tag?.uid || '', [Validators.required]],
+      uid: [data.tag?.uid || ''],
       name: [data.tag?.name || '', [Validators.required]],
-      technologyType: [data.tag?.technologyType || TechnologyType.NFC_HF, [Validators.required]],
+      technologyType: [data.tag?.technologyType || TechnologyType.LINK, [Validators.required]],
       applicationType: [data.tag?.applicationType || ApplicationType.REDIRECT, [Validators.required]],
-      value: [data.tag?.value || ''],
+      value: [data.tag?.value || '', [Validators.required]],
     });
+  }
+
+  get showUidField(): boolean {
+    const type = this.tagForm.get('technologyType')?.value;
+    return type === TechnologyType.NFC_HF || type === TechnologyType.RFID_UHF;
   }
 
   onCancel(): void {

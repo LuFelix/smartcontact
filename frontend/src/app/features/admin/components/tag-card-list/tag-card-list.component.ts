@@ -121,6 +121,8 @@ import { Tag } from '../../../shared/models/users.models';
     .nfc_hf { color: var(--mat-sys-on-primary-container); background: var(--mat-sys-primary-container); }
     .rfid_uhf { color: var(--mat-sys-on-tertiary-container); background: var(--mat-sys-tertiary-container); }
     .qr_code { color: var(--mat-sys-on-secondary-container); background: var(--mat-sys-secondary-container); }
+    .link { color: var(--mat-sys-on-primary-container); background: var(--mat-sys-primary-container); }
+    .trilha { color: var(--mat-sys-on-tertiary-container); background: var(--mat-sys-tertiary-container); }
 
     .virtual-badge {
       display: flex;
@@ -162,6 +164,8 @@ import { Tag } from '../../../shared/models/users.models';
     .nfc_hf { background: var(--mat-sys-primary-container); color: var(--mat-sys-on-primary-container); }
     .rfid_uhf { background: var(--mat-sys-tertiary-container); color: var(--mat-sys-on-tertiary-container); }
     .qr_code { background: var(--mat-sys-secondary-container); color: var(--mat-sys-on-secondary-container); }
+    .link { background: var(--mat-sys-primary-container); color: var(--mat-sys-on-primary-container); }
+    .trilha { background: var(--mat-sys-tertiary-container); color: var(--mat-sys-on-tertiary-container); }
 
     /* Aplicações */
     .redirect { background: var(--mat-sys-primary-container); color: var(--mat-sys-on-primary-container); }
@@ -180,7 +184,9 @@ export class TagCardListComponent {
     const icons: any = {
       'NFC_HF': 'nfc',
       'RFID_UHF': 'settings_input_antenna',
-      'QR_CODE': 'qr_code'
+      'QR_CODE': 'qr_code',
+      'LINK': 'link',
+      'TRILHA': 'auto_stories'
     };
     return icons[tech] || 'tag';
   }
@@ -189,7 +195,9 @@ export class TagCardListComponent {
     const labels: any = {
       'NFC_HF': 'NFC HF',
       'RFID_UHF': 'RFID UHF',
-      'QR_CODE': 'QR Code'
+      'QR_CODE': 'QR Code',
+      'LINK': 'Link / Drive',
+      'TRILHA': 'Trilha'
     };
     return labels[tech] || tech;
   }

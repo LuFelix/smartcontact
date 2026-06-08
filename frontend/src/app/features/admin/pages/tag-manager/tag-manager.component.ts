@@ -42,7 +42,7 @@ import { TagDialogComponent } from '../../components/tag-dialog/tag-dialog.compo
   ],
   template: `
     <div class="manager-container">
-      <app-page-header title="Estoque de Tags (Recursos)">
+      <app-page-header title="Gestão de Recursos do Workspace">
         <div header-actions>
           <button mat-stroked-button (click)="layoutService.toggleLayout()" class="toggle-btn">
             <mat-icon>{{ layoutService.layout() === 'moderno' ? 'view_list' : 'grid_view' }}</mat-icon>

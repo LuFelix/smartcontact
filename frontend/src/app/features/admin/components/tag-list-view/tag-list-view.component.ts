@@ -160,6 +160,8 @@ import { Tag } from '../../../shared/models/users.models';
     .nfc_hf { background: var(--mat-sys-primary-container); color: var(--mat-sys-on-primary-container); }
     .rfid_uhf { background: var(--mat-sys-tertiary-container); color: var(--mat-sys-on-tertiary-container); }
     .qr_code { background: var(--mat-sys-surface-variant); color: var(--mat-sys-on-surface-variant); }
+    .link { background: var(--mat-sys-secondary-container); color: var(--mat-sys-on-secondary-container); }
+    .trilha { background: var(--mat-sys-tertiary-container); color: var(--mat-sys-on-tertiary-container); }
 
     /* Aplicações */
     .redirect { background: var(--mat-sys-primary-container); color: var(--mat-sys-on-primary-container); }
