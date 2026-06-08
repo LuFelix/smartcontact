@@ -33,9 +33,9 @@ import { Tag } from '../../../shared/models/users.models';
           <div mat-card-avatar class="tag-icon-container" [ngClass]="tag.technologyType.toLowerCase()">
             <mat-icon>{{ getIcon(tag.technologyType) }}</mat-icon>
           </div>
-          <mat-card-title>{{ tag.name || 'Sem nome' }}</mat-card-title>
+          <mat-card-title class="tag-title">{{ tag.name || 'Sem nome' }}</mat-card-title>
           <mat-card-subtitle>
-            <span *ngIf="tag.uid">UID: <code>{{ tag.uid }}</code></span>
+            <span *ngIf="tag.uid" class="uid-text">UID: <code>{{ tag.uid }}</code></span>
             <span *ngIf="!tag.uid" class="virtual-badge">
               <mat-icon>qr_code</mat-icon> QR / Virtual
             </span>
@@ -46,15 +46,15 @@ import { Tag } from '../../../shared/models/users.models';
           <div class="tag-details">
             <div class="detail-item" *ngIf="tag.user">
               <span class="label">Dono:</span>
-              <span class="owner-name">{{ tag.user.name }}</span>
+              <span class="owner-badge-ui">
+                <mat-icon>person</mat-icon> {{ tag.user.name }}
+              </span>
             </div>
             <div class="detail-item">
               <span class="label">Tecnologia:</span>
-              <mat-chip-set>
-                <mat-chip [ngClass]="tag.technologyType.toLowerCase()">
-                  {{ getTechLabel(tag.technologyType) }}
-                </mat-chip>
-              </mat-chip-set>
+              <span class="tech-badge" [ngClass]="tag.technologyType.toLowerCase()">
+                {{ getTechLabel(tag.technologyType) }}
+              </span>
             </div>
             <div class="detail-item">
               <span class="label">Aplicação:</span>
@@ -89,49 +89,84 @@ import { Tag } from '../../../shared/models/users.models';
     .loading-shade {
       position: absolute;
       top: 0; left: 0; bottom: 0; right: 0;
-      background: rgba(255, 255, 255, 0.7);
+      background: var(--mat-sys-surface-variant);
+      opacity: 0.6;
       z-index: 1;
       display: flex;
       align-items: center;
       justify-content: center;
       grid-column: 1 / -1;
     }
-    .tag-card { border-radius: 12px; transition: transform 0.2s; }
+    .tag-card { 
+      border-radius: 12px; 
+      transition: transform 0.2s; 
+      background: var(--mat-sys-surface-container-low);
+      color: var(--mat-sys-on-surface);
+    }
     .tag-card:hover { transform: translateY(-4px); }
+    
+    .tag-title { color: var(--mat-sys-on-surface); font-weight: 700; }
+    .uid-text { color: var(--mat-sys-on-surface-variant); }
+    
     .tag-icon-container {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #f5f5f5;
+      background: var(--mat-sys-surface-variant);
       border-radius: 50%;
-      color: #757575;
+      color: var(--mat-sys-on-surface-variant);
     }
-    .nfc_hf { color: #1976D2; background: #E3F2FD; }
-    .rfid_uhf { color: #7B1FA2; background: #F3E5F5; }
-    .qr_code { color: #455A64; background: #ECEFF1; }
+
+    /* Cores Dinâmicas para Icon Container */
+    .nfc_hf { color: var(--mat-sys-on-primary-container); background: var(--mat-sys-primary-container); }
+    .rfid_uhf { color: var(--mat-sys-on-tertiary-container); background: var(--mat-sys-tertiary-container); }
+    .qr_code { color: var(--mat-sys-on-secondary-container); background: var(--mat-sys-secondary-container); }
+
     .virtual-badge {
       display: flex;
       align-items: center;
       gap: 4px;
-      color: #757575;
+      color: var(--mat-sys-outline);
       font-size: 11px;
       font-style: italic;
     }
     .virtual-badge mat-icon { font-size: 14px; width: 14px; height: 14px; }
+    
     .tag-details { padding: 16px 0; display: flex; flex-direction: column; gap: 12px; }
     .detail-item { display: flex; justify-content: space-between; align-items: center; }
-    .label { color: #757575; font-size: 13px; font-weight: 500; }
-    .owner-name { font-size: 13px; font-weight: 500; color: #333; }
-    .app-badge {
+    .label { color: var(--mat-sys-on-surface-variant); font-size: 13px; font-weight: 500; }
+    
+    .owner-badge-ui {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--mat-sys-primary);
+      color: var(--mat-sys-on-primary);
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      box-shadow: var(--mat-sys-level1);
+    }
+    .owner-badge-ui mat-icon { font-size: 16px; width: 16px; height: 16px; }
+
+    .tech-badge, .app-badge {
       padding: 4px 12px;
       border-radius: 16px;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       text-transform: uppercase;
     }
-    .redirect { background: #E3F2FD; color: #1976D2; }
-    .asset_counting { background: #F3E5F5; color: #7B1FA2; }
-    .access_control { background: #E8F5E9; color: #388E3C; }
+
+    /* Tecnologias */
+    .nfc_hf { background: var(--mat-sys-primary-container); color: var(--mat-sys-on-primary-container); }
+    .rfid_uhf { background: var(--mat-sys-tertiary-container); color: var(--mat-sys-on-tertiary-container); }
+    .qr_code { background: var(--mat-sys-secondary-container); color: var(--mat-sys-on-secondary-container); }
+
+    /* Aplicações */
+    .redirect { background: var(--mat-sys-primary-container); color: var(--mat-sys-on-primary-container); }
+    .asset_counting { background: var(--mat-sys-tertiary-container); color: var(--mat-sys-on-tertiary-container); }
+    .access_control { background: var(--mat-sys-error-container); color: var(--mat-sys-on-error-container); }
   `]
 })
 export class TagCardListComponent {

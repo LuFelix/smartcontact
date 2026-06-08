@@ -30,24 +30,34 @@ import { Tag } from '../../../shared/models/users.models';
         <!-- UID Column -->
         <ng-container matColumnDef="uid">
           <th mat-header-cell *matHeaderCellDef> UID Físico </th>
-          <td mat-cell *matCellDef="let tag"> <code>{{ tag.uid || '---' }}</code> </td>
+          <td mat-cell *matCellDef="let tag"> 
+            <code *ngIf="tag.uid" class="uid-code">{{ tag.uid }}</code>
+            <span *ngIf="!tag.uid" class="virtual-label">
+              <mat-icon>qr_code</mat-icon> Virtual / QR
+            </span>
+          </td>
         </ng-container>
 
         <!-- Name Column -->
         <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef> Nome </th>
-          <td mat-cell *matCellDef="let tag"> {{ tag.name || 'Sem nome' }} </td>
+          <th mat-header-cell *matHeaderCellDef> Nome / Dono </th>
+          <td mat-cell *matCellDef="let tag"> 
+            <div class="name-container">
+              <span class="tag-name">{{ tag.name || 'Sem nome' }}</span>
+              <span class="owner-badge" *ngIf="tag.user">
+                <mat-icon>person</mat-icon> {{ tag.user.name }}
+              </span>
+            </div>
+          </td>
         </ng-container>
 
         <!-- Technology Column -->
         <ng-container matColumnDef="technology">
           <th mat-header-cell *matHeaderCellDef> Tecnologia </th>
           <td mat-cell *matCellDef="let tag">
-            <mat-chip-set>
-              <mat-chip [color]="tag.technologyType === 'NFC_HF' ? 'primary' : 'accent'">
-                {{ tag.technologyType === 'NFC_HF' ? 'NFC' : 'RFID UHF' }}
-              </mat-chip>
-            </mat-chip-set>
+            <span class="tech-badge" [ngClass]="tag.technologyType.toLowerCase()">
+              {{ getTechLabel(tag.technologyType) }}
+            </span>
           </td>
         </ng-container>
 
@@ -83,44 +93,84 @@ import { Tag } from '../../../shared/models/users.models';
     </div>
   `,
   styles: [`
-    .table-container { background: white; border-radius: 8px; overflow: hidden; position: relative; min-height: 200px; }
-    table { width: 100%; }
+    .table-container { 
+      background: var(--mat-sys-surface-container-lowest); 
+      border-radius: 8px; 
+      overflow: hidden; 
+      position: relative; 
+      min-height: 200px; 
+    }
+    table { width: 100%; background: transparent; }
+    
+    .uid-code {
+      background: var(--mat-sys-surface-variant);
+      color: var(--mat-sys-on-surface-variant);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
     .virtual-label {
       display: flex;
       align-items: center;
       gap: 4px;
-      color: #757575;
+      color: var(--mat-sys-outline);
       font-size: 12px;
       font-style: italic;
     }
     .virtual-label mat-icon { font-size: 16px; width: 16px; height: 16px; }
-    .name-container { display: flex; flex-direction: column; }
-    .tag-name { font-weight: 500; }
-    .owner-email { color: #757575; font-size: 11px; }
+
+    .name-container { display: flex; flex-direction: column; gap: 4px; padding: 8px 0; }
+    .tag-name { font-weight: 500; font-size: 14px; color: var(--mat-sys-on-surface); }
+    
+    .owner-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--mat-sys-secondary-container);
+      color: var(--mat-sys-on-secondary-container);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      width: fit-content;
+    }
+    .owner-badge mat-icon { font-size: 14px; width: 14px; height: 14px; }
+
     .loading-shade {
       position: absolute;
       top: 0; left: 0; bottom: 0; right: 0;
-      background: rgba(255, 255, 255, 0.7);
+      background: var(--mat-sys-surface-variant);
+      opacity: 0.6;
       z-index: 1;
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    .app-badge {
+
+    .tech-badge, .app-badge {
       padding: 4px 12px;
       border-radius: 16px;
-      font-size: 12px;
-      font-weight: 500;
+      font-size: 11px;
+      font-weight: 600;
       text-transform: uppercase;
+      display: inline-block;
     }
-    .nfc_hf { background: #E3F2FD; color: #1976D2; }
-    .rfid_uhf { background: #F3E5F5; color: #7B1FA2; }
-    .qr_code { background: #ECEFF1; color: #455A64; }
-    .redirect { background: #E3F2FD; color: #1976D2; }
-    .asset_counting { background: #F3E5F5; color: #7B1FA2; }
-    .access_control { background: #E8F5E9; color: #388E3C; }
+
+    /* Tecnologias */
+    .nfc_hf { background: var(--mat-sys-primary-container); color: var(--mat-sys-on-primary-container); }
+    .rfid_uhf { background: var(--mat-sys-tertiary-container); color: var(--mat-sys-on-tertiary-container); }
+    .qr_code { background: var(--mat-sys-surface-variant); color: var(--mat-sys-on-surface-variant); }
+
+    /* Aplicações */
+    .redirect { background: var(--mat-sys-primary-container); color: var(--mat-sys-on-primary-container); }
+    .asset_counting { background: var(--mat-sys-tertiary-container); color: var(--mat-sys-on-tertiary-container); }
+    .access_control { background: var(--mat-sys-error-container); color: var(--mat-sys-on-error-container); }
+
     .actions-buttons { display: flex; gap: 4px; }
-    .text-muted { color: #757575; font-size: 12px; font-style: italic; }
+    .text-muted { color: var(--mat-sys-outline); font-size: 12px; font-style: italic; }
+    
+    th.mat-header-cell { color: var(--mat-sys-on-surface-variant); font-weight: 700; }
+    td.mat-cell { color: var(--mat-sys-on-surface); }
   `]
 })
 export class TagListViewComponent {
@@ -131,6 +181,15 @@ export class TagListViewComponent {
   @Output() deleteTag = new EventEmitter<Tag>();
 
   displayedColumns: string[] = ['uid', 'name', 'technology', 'application', 'actions'];
+
+  getTechLabel(tech: string): string {
+    const labels: any = {
+      'NFC_HF': 'NFC HF',
+      'RFID_UHF': 'RFID UHF',
+      'QR_CODE': 'QR Code'
+    };
+    return labels[tech] || tech;
+  }
 
   getAppLabel(app: string): string {
     const labels: any = {
