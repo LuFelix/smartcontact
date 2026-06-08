@@ -1,14 +1,43 @@
-import { Component, Inject, inject, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, Inject, inject, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Tag, TechnologyType, ApplicationType } from '../../../shared/models/users.models';
 import * as QRCode from 'qrcode';
+
+@Component({
+  selector: 'app-qr-fullscreen-dialog',
+  standalone: true,
+  imports: [CommonModule, MatDialogModule, MatButtonModule, MatIconModule],
+  template: `
+    <div class="qr-fullscreen-container">
+      <div class="header">
+        <h2>{{ data.name }}</h2>
+        <button mat-icon-button mat-dialog-close type="button"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="img-wrapper">
+        <img [src]="data.qrDataUrl" alt="QR Code Ampliado">
+      </div>
+    </div>
+  `,
+  styles: [`
+    .qr-fullscreen-container { padding: 24px; display: flex; flex-direction: column; align-items: center; background: var(--mat-sys-surface); border-radius: 16px; }
+    .header { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; color: var(--mat-sys-on-surface); }
+    h2 { margin: 0; font-size: 18px; font-weight: 500; }
+    .img-wrapper { background: white; padding: 24px; border-radius: 12px; box-shadow: var(--mat-sys-level1); display: flex; justify-content: center; align-items: center; }
+    img { width: 400px; height: 400px; object-fit: contain; image-rendering: pixelated; }
+    @media (max-width: 600px) { img { width: 100%; height: auto; } }
+  `]
+})
+export class QrFullscreenDialogComponent {
+  constructor(@Inject(MAT_DIALOG_DATA) public data: { qrDataUrl: string, name: string }) {}
+}
 
 @Component({
   selector: 'app-tag-dialog',
@@ -21,7 +50,8 @@ import * as QRCode from 'qrcode';
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
-    MatIconModule
+    MatIconModule,
+    MatTooltipModule
   ],
   template: `
     <h2 mat-dialog-title>{{ data.tag ? 'Editar Recurso' : 'Cadastrar Novo Recurso' }}</h2>
@@ -92,15 +122,20 @@ import * as QRCode from 'qrcode';
             <div class="url-value">{{ previewUrl }}</div>
           </div>
           
-          <button mat-stroked-button color="primary" class="download-btn" (click)="downloadQR()">
-            <mat-icon>download</mat-icon> Baixar Imagem (PNG)
-          </button>
+          <div class="qr-actions">
+            <button mat-stroked-button color="primary" class="download-btn" (click)="downloadQR()" type="button">
+              <mat-icon>download</mat-icon> Baixar (PNG)
+            </button>
+            <button mat-icon-button color="primary" matTooltip="Ampliar QR Code" (click)="openLargeQR()" type="button">
+              <mat-icon>zoom_in</mat-icon>
+            </button>
+          </div>
         </div>
       </div>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button (click)="onCancel()">Cancelar</button>
-      <button mat-flat-button color="primary" [disabled]="tagForm.invalid" (click)="onSave()">
+      <button mat-button (click)="onCancel()" type="button">Cancelar</button>
+      <button mat-flat-button color="primary" [disabled]="tagForm.invalid" (click)="onSave()" type="button">
         {{ data.tag ? 'Atualizar Recurso' : 'Salvar Recurso' }}
       </button>
     </mat-dialog-actions>
@@ -168,9 +203,15 @@ import * as QRCode from 'qrcode';
       border-radius: 6px;
       font-family: monospace;
     }
-    .download-btn {
+    .qr-actions {
+      display: flex;
       width: 100%;
+      gap: 8px;
+      align-items: center;
       margin-top: 8px;
+    }
+    .download-btn {
+      flex: 1;
     }
     .tag-form {
       display: flex;
@@ -204,6 +245,7 @@ import * as QRCode from 'qrcode';
 export class TagDialogComponent implements AfterViewInit {
   private fb = inject(FormBuilder);
   private dialogRef = inject(MatDialogRef<TagDialogComponent>);
+  private dialog = inject(MatDialog);
   
   @ViewChild('qrcodeCanvas') qrcodeCanvas!: ElementRef<HTMLCanvasElement>;
 
@@ -270,6 +312,19 @@ export class TagDialogComponent implements AfterViewInit {
           if (error) console.error('Erro ao gerar QR Code', error);
       });
     }
+  }
+
+  openLargeQR() {
+    if (!this.qrcodeCanvas) return;
+    const url = this.qrcodeCanvas.nativeElement.toDataURL('image/png');
+    this.dialog.open(QrFullscreenDialogComponent, {
+      data: {
+        qrDataUrl: url,
+        name: this.tagForm.get('name')?.value || 'Recurso'
+      },
+      autoFocus: false,
+      panelClass: 'large-abac-modal'
+    });
   }
 
   downloadQR() {
