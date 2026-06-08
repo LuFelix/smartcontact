@@ -145,7 +145,7 @@ export class TagManagerComponent implements OnInit {
 
   openTagDialog(tag?: Tag): void {
     const dialogRef = this.dialog.open(TagDialogComponent, {
-      width: '500px',
+      width: tag ? '800px' : '500px',
       data: { tag }
     });
 
