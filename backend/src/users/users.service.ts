@@ -167,6 +167,38 @@ export class UsersService {
             ownerId = savedUser.id;
             await this.usersRepository.update(savedUser.id, { ownerId });
             savedUser.ownerId = ownerId;
+
+            // CORREÇÃO DE ISOLAMENTO DE POSSE: Itens relacionados foram salvos
+            // com ownerId: null durante cascade do save. Agora que o ownerId foi
+            // resolvido, atualizamos os itens para evitar contaminação cruzada.
+            if (phones || addresses || secondaryEmails || links) {
+                const recordWithItems = await this.usersRepository.findOne({
+                    where: { id: savedUser.id },
+                    relations: ['phones', 'addresses', 'secondaryEmails', 'links']
+                });
+                if (recordWithItems) {
+                    let needsSave = false;
+                    if (recordWithItems.phones?.length) {
+                        recordWithItems.phones.forEach(p => { p.ownerId = ownerId; });
+                        needsSave = true;
+                    }
+                    if (recordWithItems.addresses?.length) {
+                        recordWithItems.addresses.forEach(a => { a.ownerId = ownerId; });
+                        needsSave = true;
+                    }
+                    if (recordWithItems.secondaryEmails?.length) {
+                        recordWithItems.secondaryEmails.forEach(e => { e.ownerId = ownerId; });
+                        needsSave = true;
+                    }
+                    if (recordWithItems.links?.length) {
+                        recordWithItems.links.forEach(l => { l.ownerId = ownerId; });
+                        needsSave = true;
+                    }
+                    if (needsSave) {
+                        await this.usersRepository.save(recordWithItems);
+                    }
+                }
+            }
         }
 
         // Se criamos um novo tenant, definimos o ownerId do tenant
@@ -250,7 +282,7 @@ export class UsersService {
         const emailNormalized = email?.trim().toLowerCase();
         const user = await this.usersRepository.findOne({ 
             where: { email: emailNormalized }, 
-            relations: ['memberships', 'memberships.role', 'memberships.profile', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile'] 
+            relations: ['memberships', 'memberships.role', 'memberships.tenant', 'memberships.profile', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile'] 
         });
         return this.injectLegacyProps(user, currentUser);
     }
@@ -297,7 +329,10 @@ export class UsersService {
             const activeMembership = user.memberships?.find(m => m.tenantId === currentUser?.tenantId) || user.memberships?.[0];
             (user as any).role = activeMembership?.role;
             (user as any).tenantId = activeMembership?.tenantId;
-            user.profile = activeMembership?.profile || undefined;
+            // Preserva o profile carregado via relação direta user.profile
+            // se o membership não tiver profile vinculado (mesmo padrão do findAll).
+            // FALLBACK TRIPLO: 1) profile da membership, 2) profile direto, 3) profile via cast
+            user.profile = activeMembership?.profile || user.profile || (user as any).profile || undefined;
 
             const isTenantOwner = activeMembership 
                 && activeMembership.role?.name === 'administrador' 
@@ -308,7 +343,7 @@ export class UsersService {
         return user;
     }
 
-    async findAll(page?: number, limit?: number, name?: string, email?: string, cpf?: string, currentUser?: any): Promise<{ data: User[], total: number }> {
+    async findAll(page?: number, limit?: number, name?: string, email?: string, cpf?: string, currentUser?: any, excludeRoles?: string[]): Promise<{ data: User[], total: number }> {
         const skip = page && limit ? (page - 1) * limit : 0;
         const tenantId = currentUser?.tenantId || this.TIWEB_ID;
         const isSystemAdmin = currentUser?.isSuperAdmin;
@@ -359,6 +394,10 @@ export class UsersService {
             queryBuilder.andWhere('user.cpf LIKE :cpf', { cpf: `%${cpf}%` });
         }
 
+        if (excludeRoles && excludeRoles.length > 0) {
+            queryBuilder.andWhere('role.name NOT IN (:...excludeRoles)', { excludeRoles });
+        }
+
         const [users, total] = await queryBuilder
             .skip(skip)
             .take(limit ?? 10)
@@ -379,7 +418,8 @@ export class UsersService {
             // SOBRESCREVEMOS o profile global pelo profile do vínculo
             // Isso garante que se o vínculo for 'desligado' (profileId null), 
             // o frontend pare de ver este usuário como membro da equipe deste workspace.
-            user.profile = activeMembership?.profile || undefined;
+            // NOTA: FALLBACK TRIPLO: 1) profile da membership, 2) profile direto do user, 3) profile via cast
+            user.profile = activeMembership?.profile || user.profile || (user as any).profile || undefined;
 
             // Filtro de Segurança ABAC: Admins e Donos vêem tudo, outros vêem básico
             if (isSystemAdmin || isOwnProfile || isTenantAdmin) {
@@ -505,9 +545,10 @@ export class UsersService {
 
         // CHECAGEM DE IDEMPOTÊNCIA: Verifica se já não foi criado um workspace pessoal em uma requisição paralela
         // (Isso evita a criação de 6 workspaces se houver 6 requests simultâneos no primeiro login)
+        // Usa tenant.ownerId como fonte de verdade (escritura), não profile.ownerId.
         const updatedUserCheck = await this.findByEmail(user.email as string);
         const hasPersonalWorkspace = updatedUserCheck?.ownerId === user.id && 
-                                   updatedUserCheck?.memberships?.some(m => m.profile?.ownerId === user.id);
+                                   updatedUserCheck?.memberships?.some(m => m.tenant?.ownerId === user.id);
         
         if (hasPersonalWorkspace) {
             console.log(`[UsersService] Workspace pessoal já identificado para ${user.email}, abortando criação redundante.`);
@@ -563,12 +604,31 @@ export class UsersService {
             );
         }
 
+        // CRIA A MEMBERSHIP COMO ADMINISTRADOR NO WORKSPACE PESSOAL
         await this.membershipsService.create({
             userId: user.id,
             tenantId: newTenant.id,
             roleId: adminRole.id,
             profileId: existingProfile.id
         });
+
+        // CHECAGEM DEFENSIVA: Promove membership 'contato' para administrador se necessário
+        const existingMembership = await this.membershipsService.findByUserAndTenant(user.id, newTenant.id);
+        if (existingMembership) {
+            const existingRole = await this.rolesService.findOne(existingMembership.roleId);
+            if (!existingRole || existingRole.name === 'contato' || !existingMembership.profileId) {
+                console.log(`[UsersService] Promovendo membership de ${user.email} no tenant ${newTenant.id} de '${existingRole?.name}' para 'administrador'.`);
+                await this.membershipsService.updateRoleAndProfile(user.id, newTenant.id, adminRole.id, existingProfile.id);
+            }
+        }
+
+        // GARANTIA DE PROFILE: Verifica se o dono do tenant tem profileId vinculado à membership
+        // (defesa contra race condition onde membership foi criada sem profileId)
+        const membershipCheck = await this.membershipsService.findByUserAndTenant(user.id, newTenant.id);
+        if (membershipCheck && !membershipCheck.profileId) {
+            console.log(`[UsersService] Garantindo profileId na membership de ${user.email} no tenant ${newTenant.id}.`);
+            await this.membershipsService.updateProfileId(user.id, newTenant.id, existingProfile.id);
+        }
 
         return this.findByEmail(user.email as string) as Promise<User>;
     }

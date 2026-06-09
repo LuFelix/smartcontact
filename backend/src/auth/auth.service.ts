@@ -268,8 +268,9 @@ export class AuthService {
 
       // PARADIGMA GOOGLE DRIVE (Unificado para Novos e Existentes):
       // Todo usuário que faz login no sistema DEVE ter o seu próprio Workspace (Tenant Solo) onde ele é o dono (ownerId).
-      // A verificação robusta olha se ele tem uma membership onde ele possui um profile próprio.
-      const hasPersonalWorkspace = user?.ownerId === user?.id && user?.memberships?.some(m => m.profile?.ownerId === user?.id);
+      // A verificação checa o tenant.ownerId (escritura no banco) em vez de profile.ownerId,
+      // porque profiles podem ser null em memberships 'contato' vindas de sync cruzado.
+      const hasPersonalWorkspace = user?.ownerId === user?.id && user?.memberships?.some(m => m.tenant?.ownerId === user?.id);
       
       if (!hasPersonalWorkspace) {
           console.log(`[AuthService Google] Provisionando workspace pessoal para: ${user.email}`);
@@ -285,11 +286,20 @@ export class AuthService {
       }
 
       // SELEÇÃO DO WORKSPACE ATIVO:
-      // Prioriza o workspace pessoal do usuário (onde ele é owner) sobre outros workspaces.
-      // Isso garante que ao logar, o usuário sempre veja seu próprio espaço como padrão.
+      // Prioriza o workspace pessoal do usuário (slug `ws-{userId}`) sobre outros workspaces.
+      // Isso garante que ao logar, o usuário sempre veja seu próprio espaço como padrão,
+      // mesmo que haja múltiplos tenants com ownerId === user.id (ex: TIWEB seed + pessoal).
       const validWorkspaces = await this.membershipsService.findTeamWorkspacesByUser(user.id);
-      const personalWorkspace = validWorkspaces.find(m => m.tenant?.ownerId === user.id);
-      const activeMembership = personalWorkspace || (validWorkspaces.length > 0 ? validWorkspaces[0] : null);
+      // Ordena: personal workspace (slug ws-{userId}) primeiro, depois por createdAt
+      const sorted = validWorkspaces.sort((a, b) => {
+          const aIsPersonal = a.tenant?.slug?.startsWith(`ws-${user.id}`);
+          const bIsPersonal = b.tenant?.slug?.startsWith(`ws-${user.id}`);
+          if (aIsPersonal && !bIsPersonal) return -1;
+          if (!aIsPersonal && bIsPersonal) return 1;
+          return 0;
+      });
+      const personalWorkspace = sorted.find(m => m.tenant?.ownerId === user.id) || sorted[0];
+      const activeMembership = personalWorkspace;
       
       const finalPicture = activeMembership?.profile?.profilePictureUrl || user.profilePictureUrl || payloadGoogle.picture;
 

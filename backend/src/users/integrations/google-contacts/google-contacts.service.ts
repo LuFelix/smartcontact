@@ -63,7 +63,18 @@ export class GoogleContactsService {
           const email = person.emailAddresses?.[0]?.value;
           const photoUrl = person.photos?.[0]?.url;
 
-          if (!email) continue; 
+          if (!email) continue;
+
+          // IMUNIDADE DE AUTO-SINCRONIZAÇÃO: Ignora o próprio e-mail do usuário logado
+          // para evitar que o sync rebaixe o dono do Tenant para a role 'contato'.
+          // Normaliza com .trim() para evitar falsos negativos por whitespace.
+          const emailNorm = email.trim().toLowerCase();
+          const currentEmailNorm = currentUser.email?.trim().toLowerCase();
+          if (emailNorm === currentEmailNorm) {
+            this.logger.log(`[IMUNIDADE] Auto-sync ignorado: ${email} === ${currentUser.email} (user: ${currentUser.sub})`);
+            continue;
+          }
+          this.logger.debug(`[SYNC] Processando: ${email} para tenant ${currentUser.tenantId}`);
 
           const phones = person.phoneNumbers?.map((p: any) => ({
             number: p.value.replace(/\s+/g, ''),
@@ -83,10 +94,23 @@ export class GoogleContactsService {
 
           try {
             const existing = await this.usersService.findByEmail(email);
+
+            // IMUNIDADE DE AÇO: Se o contato mapeia para o próprio usuário logado
+            // (verificação por ID, imune a dot-tricks Gmail, whitespace, etc.),
+            // ignora este contato e continua para o próximo.
+            if (existing && existing.id === currentUser.sub) {
+              this.logger.log(`[IMUNIDADE DE AÇO] Contato ${email} (id: ${existing.id}) mapeia para o usuário logado. Ignorando.`);
+              continue;
+            }
+
             if (!existing) {
-              await this.usersService.create(createUserDto, currentUser, photoUrl);
+              // ISOLAMENTO DE POSSE: Cria contato SEM sub no contexto para que
+              // ownerId seja null e depois reivindicado pelo próprio usuário
+              // quando fizer login (provisionPersonalWorkspace).
+              await this.usersService.create(createUserDto, { ...currentUser, sub: null }, photoUrl);
               importedCount++;
             } else if (currentUser.tenantId) {
+              this.logger.log(`[SYNC] Contato existente: ${email} (id: ${existing.id}). Memberships: ${existing.memberships?.map(m => `${m.tenantId}:${m.role?.name}:profile${m.profileId ? 'Y' : 'N'}`).join(', ')}`);
               // Contato já existe no banco mas pode não estar vinculado ao tenant atual.
               // Cria membership com role 'contato' para garantir visibilidade no workspace.
               const alreadyMember = existing.memberships?.some(m => m.tenantId === currentUser.tenantId);
@@ -167,7 +191,7 @@ export class GoogleContactsService {
                   phones: leadData.phone ? [{ number: leadData.phone, isWhatsapp: false, isMain: true }] : [],
                   isActive: true
               };
-              await this.usersService.create(createUserDto, currentUser);
+              await this.usersService.create(createUserDto, { ...currentUser, sub: null });
               this.logger.log(`Lead ${leadData.email} sincronizado automaticamente no coffer local.`);
           } else if (currentUser.tenantId) {
               // Contato existe mas pode não estar no tenant atual

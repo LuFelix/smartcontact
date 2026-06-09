@@ -79,7 +79,11 @@ export class TeamService {
     const tenant = await this.tenantsService.findById(tenantId);
 
     // Usamos o findAll do UsersService que já possui o filtro por tenantId
-    const result = await this.usersService.findAll(1, 100, undefined, undefined, undefined, currentUser);
+    // Exclui role 'contato' para que apenas membros reais da equipe apareçam na página 1
+    const result = await this.usersService.findAll(1, 100, undefined, undefined, undefined, currentUser, ['contato']);
+
+    // DEBUG: Log para validar retorno do findAll no sync team
+    console.log(`[TeamService] Tenant ${tenantId}: ${result.data.length} usuários. OwnerId: ${tenant?.ownerId}. Members: ${result.data.map(u => `${u.email}(profile:${!!u.profile},role:${(u as any).role?.name})`).join(', ')}`);
 
     // Injeta flag visual baseada no owner_id do Tenant (afirmação no banco)
     if (tenant?.ownerId) {
