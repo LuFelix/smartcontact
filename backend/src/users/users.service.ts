@@ -301,7 +301,7 @@ export class UsersService {
 
             const isTenantOwner = activeMembership 
                 && activeMembership.role?.name === 'administrador' 
-                && user.ownerId === user.id;
+                && activeMembership.tenant?.ownerId === user.id;
             (user as any).isTenantOwner = isTenantOwner;
         }
 
@@ -623,7 +623,7 @@ export class UsersService {
         if (!existingProfile) {
             existingProfile = await this.profilesService.create({
                 userId: user.id,
-                ownerId: currentUser.sub,
+                ownerId: user.id,
                 tenantId: targetTenantId,
                 profilePictureUrl: user.profilePictureUrl || undefined
             });
@@ -649,7 +649,7 @@ export class UsersService {
             console.log(`[UsersService] Criando tag padrão para o usuário ${user.id} no tenant ${targetTenantId}`);
             await this.tagsService.createDefaultTag(
                 user.id,
-                currentUser.sub,
+                user.id,
                 targetTenantId
             );
         }
