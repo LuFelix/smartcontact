@@ -75,49 +75,22 @@ export class TeamService {
         throw new BadRequestException('Você não pertence a uma organização ativa.');
     }
 
+    // Busca o tenant para obter o owner_id (fonte de verdade)
+    const tenant = await this.tenantsService.findById(tenantId);
+
     // Usamos o findAll do UsersService que já possui o filtro por tenantId
-    const result = await this.usersService.findAll(1, 100, undefined, undefined, undefined, currentUser);
+    // Exclui role 'contato' para que apenas membros reais da equipe apareçam na página 1
+    const result = await this.usersService.findAll(1, 100, undefined, undefined, undefined, currentUser, ['contato']);
 
-    // O Dono do Tenant (Owner) pode não estar na tabela de memberships com um profile válido.
-    // Vamos garantir que o criador do Tenant esteja na lista e marcado com a role 'owner'.
-    
-    // Para identificar o dono do Tenant de forma determinística, usamos o fato de que
-    // o criador original do Workspace tem ownerId = id.
-    // Buscamos qual usuário associado a esse tenant preenche esse requisito.
-    const allMembers = result.data;
-    let owner = allMembers.find(u => u.ownerId === u.id);
+    // DEBUG: Log para validar retorno do findAll no sync team
+    console.log(`[TeamService] Tenant ${tenantId}: ${result.data.length} usuários. OwnerId: ${tenant?.ownerId}. Members: ${result.data.map(u => `${u.email}(profile:${!!u.profile},role:${(u as any).role?.name})`).join(', ')}`);
 
-    // Se ele não estiver no resultado do findAll (por ex: não tem membership ou foi filtrado),
-    // vamos buscar no banco de dados e injetar.
-    if (!owner) {
-        // Tentamos extrair o ID do dono a partir da slug do tenant (ws-USERID)
-        const tenant = await this.tenantsService.findById(tenantId);
-        let ownerIdToFetch = currentUser.sub; // Fallback para o usuário logado se for admin
-
-        if (tenant && tenant.slug.startsWith('ws-')) {
-            const possibleId = tenant.slug.replace('ws-', '').substring(0, 36);
-            // Um UUID tem 36 caracteres, se couber, podemos tentar usá-lo.
-            if (possibleId.length === 36) {
-                ownerIdToFetch = possibleId;
-            }
+    // Injeta flag visual baseada no owner_id do Tenant (afirmação no banco)
+    if (tenant?.ownerId) {
+        const ownerMember = result.data.find(u => u.id === tenant.ownerId);
+        if (ownerMember) {
+            (ownerMember as any).isTenantOwner = true;
         }
-
-        const found = await this.usersService.findById(ownerIdToFetch, currentUser);
-        owner = found ?? undefined;
-        
-        if (owner && !allMembers.some(u => u.id === owner!.id)) {
-            result.data.unshift(owner);
-            result.total += 1;
-        }
-    }
-
-    // Marca explicitamente o usuário como 'owner' para proteção no Frontend
-    if (owner) {
-        // Garante que o owner tenha um profile para passar no filtro do Angular (!!u.profile)
-        if (!owner.profile) {
-            owner.profile = { id: 'owner-profile', name: owner.name, ownerId: owner.id, userId: owner.id } as any;
-        }
-        (owner as any).role = { id: 'role-owner', name: 'owner' };
     }
 
     return result;

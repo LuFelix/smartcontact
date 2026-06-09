@@ -45,10 +45,22 @@ O sistema opera em um paradigma Multi-Tenant N:N (estilo Google Drive).
 - [x] **PASSO I (Issue #15):** Integração 'Salvar Contato' com vCard (OK).
 - [x] **PASSO N (Issue #164):** Context Switcher e Arquitetura Multi-Tenant N:N (OK).
 - [x] **PASSO O (Issue #156):** Estabilização - Auto-verificação, Prompt Promoção, Visibilidade Básica (OK - no remoto).
-- [ ] **PRÓXIMO PASSO (Issue #158):** Fluxo Avançado de Promoção Explícita.
-  - Frontend: Separação visual badges [CONTATO]/[USUÁRIO]/[EQUIPE], Botão "Promover para Equipe", Modal confirmação (Admin/Colaborador).
-  - Backend: Endpoint `POST /users/:id/promote`, Criação atômica Profile+Tag, Ajuste `UsersService.findAll` e `TeamService`.
-- [ ] **PASSO POSTERIOR:** Refatoração de UI e Estabilização de UX.
+- [x] **PASSO P (Issue #173):** Fix Tags tab permanently disabled in User Modal (OK).
+- [ ] **PRÓXIMOS PASSOS (Backlog Prioritário - issues-todo.json):**
+  - #169: Módulo de Gestão Administrativa de Tenants (Workspaces) - BE/FE
+  - #97: Motor de Recompensa e Link de Indicação (Growth Loop) - BE/DB
+  - #24: QA Homologação Performance (< 500ms) - QA/Release
+  - #23: QA Teste Físico End-to-End - QA/E2E
+  - #22: Hardware Gravação NFC Tags - Testing/Hardware
+  - #21: Infra Túnel Ngrok/Cloudflare - Infra/Testing
+  - #20: FE Modo Evento com Firebase Cloud Messaging - FE/PWA
+  - #19: FE Dashboard Analytics - FE/Dashboard
+  - #18: BE Gravação Assíncrona InteractionLog - BE/Async
+  - #17: FE Tela Gestão Tags e Redirecionamento - FE/UI-UX
+  - #11: Core Push Notifications Firebase - BE/Async
+  - #10: BE Endpoint vCard Dinâmico - BE/API
+  - #9: BE Lógica Roteamento Dinâmico Tag - BE/API
+  - #8: BE Endpoint Resolução Tag com Rate Limiting - BE/API/Security
 
 ---
 

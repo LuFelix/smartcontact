@@ -18,8 +18,13 @@ export class TenantsService {
     return this.tenantRepository.findOne({ where: { id } });
   }
 
-  async create(name: string, slug: string): Promise<Tenant> {
-    const tenant = this.tenantRepository.create({ name, slug });
+  async create(name: string, slug: string, ownerId?: string): Promise<Tenant> {
+    const tenant = this.tenantRepository.create({ name, slug, ownerId: ownerId || null });
     return this.tenantRepository.save(tenant);
+  }
+
+  async update(id: string, data: Partial<Tenant>): Promise<Tenant | null> {
+    await this.tenantRepository.update(id, data);
+    return this.findById(id);
   }
 }
