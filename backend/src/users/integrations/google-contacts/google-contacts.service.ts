@@ -1,5 +1,7 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../../users.service';
+import { RolesService } from '../../../roles/roles.service';
+import { MembershipsService } from '../../../memberships/memberships.service';
 import { CreateUserDto } from '../../dto/user.dto';
 
 @Injectable()
@@ -8,7 +10,11 @@ export class GoogleContactsService {
   private readonly PEOPLE_API_LIST_URL = 'https://people.googleapis.com/v1/people/me/connections';
   private readonly PEOPLE_API_CREATE_URL = 'https://people.googleapis.com/v1/people:createContact';
 
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly rolesService: RolesService,
+    private readonly membershipsService: MembershipsService,
+  ) {}
 
   /**
    * Importa contatos em massa do Google para o banco local (Multi-Tenant)
@@ -80,6 +86,21 @@ export class GoogleContactsService {
             if (!existing) {
               await this.usersService.create(createUserDto, currentUser, photoUrl);
               importedCount++;
+            } else if (currentUser.tenantId) {
+              // Contato já existe no banco mas pode não estar vinculado ao tenant atual.
+              // Cria membership com role 'contato' para garantir visibilidade no workspace.
+              const alreadyMember = existing.memberships?.some(m => m.tenantId === currentUser.tenantId);
+              if (!alreadyMember) {
+                const contatoRole = await this.rolesService.findOneByName('contato');
+                if (contatoRole) {
+                  await this.membershipsService.create({
+                    userId: existing.id,
+                    tenantId: currentUser.tenantId,
+                    roleId: contatoRole.id,
+                  });
+                  this.logger.log(`Contato existente ${email} vinculado ao tenant ${currentUser.tenantId} via sync.`);
+                }
+              }
             }
           } catch (err: any) {
             this.logger.warn(`Falha ao importar contato ${email}: ${err.message}`);
@@ -148,6 +169,19 @@ export class GoogleContactsService {
               };
               await this.usersService.create(createUserDto, currentUser);
               this.logger.log(`Lead ${leadData.email} sincronizado automaticamente no coffer local.`);
+          } else if (currentUser.tenantId) {
+              // Contato existe mas pode não estar no tenant atual
+              const alreadyMember = existing.memberships?.some(m => m.tenantId === currentUser.tenantId);
+              if (!alreadyMember) {
+                  const contatoRole = await this.rolesService.findOneByName('contato');
+                  if (contatoRole) {
+                      await this.membershipsService.create({
+                          userId: existing.id,
+                          tenantId: currentUser.tenantId,
+                          roleId: contatoRole.id,
+                      });
+                  }
+              }
           }
       } catch (syncErr: any) {
           this.logger.warn(`Falha na sincronização automática local do lead: ${syncErr.message}`);

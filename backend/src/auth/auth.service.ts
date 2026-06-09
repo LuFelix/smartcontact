@@ -284,9 +284,12 @@ export class AuthService {
         throw new InternalServerErrorException('Erro fatal ao recuperar dados do usuário após provisionamento.');
       }
 
-      // O tenant ativo inicial será o primeiro workspace VÁLIDO (não-contato)
+      // SELEÇÃO DO WORKSPACE ATIVO:
+      // Prioriza o workspace pessoal do usuário (onde ele é owner) sobre outros workspaces.
+      // Isso garante que ao logar, o usuário sempre veja seu próprio espaço como padrão.
       const validWorkspaces = await this.membershipsService.findTeamWorkspacesByUser(user.id);
-      const activeMembership = validWorkspaces.length > 0 ? validWorkspaces[0] : null;
+      const personalWorkspace = validWorkspaces.find(m => m.tenant?.ownerId === user.id);
+      const activeMembership = personalWorkspace || (validWorkspaces.length > 0 ? validWorkspaces[0] : null);
       
       const finalPicture = activeMembership?.profile?.profilePictureUrl || user.profilePictureUrl || payloadGoogle.picture;
 

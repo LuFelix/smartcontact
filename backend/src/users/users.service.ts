@@ -544,15 +544,14 @@ export class UsersService {
         if (!existingProfile) {
             existingProfile = await this.profilesService.create({
                 userId: user.id,
-                ownerId: user.id, // O próprio usuário é dono do seu tenant
+                ownerId: user.id,
                 tenantId: newTenant.id,
                 profilePictureUrl: user.profilePictureUrl || undefined
             });
-        } else if (existingProfile.ownerId !== user.id) {
-            // Se o perfil já existe (ex: capturado como lead), agora o usuário toma posse dele
-            await this.profilesService.update(user.id, { ownerId: user.id });
-            existingProfile.ownerId = user.id;
         }
+        // NOTA: NÃO mutamos existingProfile.ownerId aqui.
+        // O Profile é global (OneToOne com User) e compartilhado entre tenants.
+        // Sobrescrever o ownerId corromperia a cadeia de posse em outros workspaces.
 
         // Verifica e cria a tag apenas se não existir NESTE tenant
         const hasTag = await this.tagRepository.findOne({ where: { userId: user.id, tenantId: newTenant.id } });
