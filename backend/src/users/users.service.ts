@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { FindManyOptions, ILike, Like, Repository, DeepPartial, IsNull } from 'typeorm';
@@ -12,10 +12,12 @@ import { TagsService } from 'src/tags/tags.service';
 import { Tag } from 'src/tags/entities/tag.entity';
 import { MembershipsService } from '../memberships/memberships.service';
 import { TenantsService } from '../tenants/tenants.service';
+import { Tenant } from '../tenants/entities/tenant.entity';
 import { UserResourcePermission } from './entities/user-resource-permission.entity';
 
 @Injectable()
 export class UsersService {
+    private readonly logger = new Logger(UsersService.name);
     // ID do Admin/Empresa padrão para isolamento inicial
     private readonly TIWEB_ID = 'aebfbdfa-0088-4bf1-9bee-36529cfc3866';
 
@@ -31,6 +33,9 @@ export class UsersService {
 
         @InjectRepository(UserResourcePermission)
         private readonly userResourcePermissionRepository: Repository<UserResourcePermission>,
+
+        @InjectRepository(Tenant)
+        private readonly tenantsRepository: Repository<Tenant>,
 
         private readonly rolesService: RolesService,
         private readonly profilesService: ProfilesService,
@@ -536,12 +541,6 @@ export class UsersService {
      * Usado quando um usuário que era apenas "lead/contato" faz login pela primeira vez.
      */
     async provisionPersonalWorkspace(user: User): Promise<User> {
-        // "Reivindica" a conta: Se o usuário era um lead capturado por terceiros, 
-        // ao fazer login ele passa a ser o dono da própria conta.
-        if (user.ownerId !== user.id) {
-            await this.usersRepository.update(user.id, { ownerId: user.id });
-            user.ownerId = user.id;
-        }
 
         // CHECAGEM DE IDEMPOTÊNCIA: Verifica se já não foi criado um workspace pessoal em uma requisição paralela
         // (Isso evita a criação de 6 workspaces se houver 6 requests simultâneos no primeiro login)
@@ -628,6 +627,16 @@ export class UsersService {
         if (membershipCheck && !membershipCheck.profileId) {
             console.log(`[UsersService] Garantindo profileId na membership de ${user.email} no tenant ${newTenant.id}.`);
             await this.membershipsService.updateProfileId(user.id, newTenant.id, existingProfile.id);
+        }
+
+        // OPTIMISTIC LOCK: Atualiza ownerId do usuário de forma atômica, apenas se ainda for null.
+        // Se o affected for 0, significa que outra thread já venceu a corrida e definiu o ownerId.
+        const updateResult = await this.usersRepository.update({ id: user.id, ownerId: IsNull() }, { ownerId: newTenant.id });
+        if (updateResult.affected === 0) {
+            this.logger.warn(`[Race Condition] Usuário ${user.email} já recebeu um ownerId em outra thread. Limpando Tenant duplicado em memória.`);
+            await this.membershipsService.remove(user.id, newTenant.id);
+            await this.tenantsRepository.delete(newTenant.id);
+            return this.findByEmail(user.email as string) as Promise<User>;
         }
 
         return this.findByEmail(user.email as string) as Promise<User>;
