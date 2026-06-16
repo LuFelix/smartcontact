@@ -119,7 +119,7 @@ export class UsersListComponent {
   }
 
   isTeamMember(user: User): boolean {
-    return !!user.profile;
+    return user.role?.name?.toLowerCase() !== 'contato';
   }
 
   /**

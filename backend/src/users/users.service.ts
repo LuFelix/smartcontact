@@ -756,16 +756,16 @@ export class UsersService {
         const tenantId = currentUser.tenantId || this.TIWEB_ID;
         console.log(`[UsersService] Iniciando rebaixamento de membro ${id} no tenant ${tenantId}`);
 
-        // 1. Rebaixa o cargo para USUARIO no workspace específico (mantém acesso ao painel como usuário padrão)
-        // Buscamos a role 'usuario' explicitamente
-        const targetRole = await this.rolesService.findOneByName('usuario');
+        // 1. Rebaixa o cargo para CONTATO no workspace específico (remove do painel de equipe, mantém no fichário)
+        // Buscamos a role 'contato' explicitamente
+        const targetRole = await this.rolesService.findOneByName('contato');
         
         if (targetRole) {
             console.log(`[UsersService] Rebaixando para a role: ${targetRole.name} (ID: ${targetRole.id})`);
             await this.membershipsService.updateRole(user.id, tenantId, targetRole.id);
         } else {
-            console.error(`[UsersService] ERRO CRÍTICO: Role 'usuario' não encontrada para rebaixamento.`);
-            throw new BadRequestException('Erro interno: Role de segurança "usuario" não encontrada.');
+            console.error(`[UsersService] ERRO CRÍTICO: Role 'contato' não encontrada para rebaixamento.`);
+            throw new BadRequestException('Erro interno: Role de segurança "contato" não encontrada.');
         }
 
         // 2. Remove o vínculo do perfil deste workspace (tirando o status de membro da equipe)
