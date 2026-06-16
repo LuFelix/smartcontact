@@ -220,8 +220,8 @@ export class UsersService {
         const isTeamRole = assignedRole.name?.toLowerCase() !== 'contato';
 
         if (isTeamRole) {
-            // Verifica se o perfil já existe (idempotência)
-            let profile = await this.profilesService.findByUserId(savedUser.id);
+            // Verifica se o perfil já existe no tenant (idempotência)
+            let profile = await this.profilesService.findByUserIdAndTenant(savedUser.id, tenantId);
             if (!profile) {
                 profile = await this.profilesService.create({
                     userId: savedUser.id,
@@ -268,8 +268,8 @@ export class UsersService {
 
             (user as any).role = activeMembership?.role;
             (user as any).tenantId = activeMembership?.tenantId;
-            if (!user.profile && activeMembership?.profile) {
-                user.profile = activeMembership.profile;
+            if (activeMembership?.profile) {
+                (user as any).profile = activeMembership.profile;
             }
         }
         return user;
@@ -278,7 +278,7 @@ export class UsersService {
     async findByCpf(cpf: string, currentUser?: any): Promise<User | null> {
         const user = await this.usersRepository.findOne({ 
             where: { cpf }, 
-            relations: ['memberships', 'memberships.role', 'memberships.profile', 'phones', 'addresses', 'tags', 'profile'] 
+            relations: ['memberships', 'memberships.role', 'memberships.profile', 'phones', 'addresses', 'tags', 'profiles'] 
         });
         return this.injectLegacyProps(user, currentUser);
     }
@@ -287,7 +287,7 @@ export class UsersService {
         const emailNormalized = email?.trim().toLowerCase();
         const user = await this.usersRepository.findOne({ 
             where: { email: emailNormalized }, 
-            relations: ['memberships', 'memberships.role', 'memberships.tenant', 'memberships.profile', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile'] 
+            relations: ['memberships', 'memberships.role', 'memberships.tenant', 'memberships.profile', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profiles'] 
         });
         return this.injectLegacyProps(user, currentUser);
     }
@@ -295,7 +295,7 @@ export class UsersService {
     async findByUsername(username: string, currentUser?: any): Promise<User | null> {
         const user = await this.usersRepository.findOne({ 
             where: { username }, 
-            relations: ['memberships', 'memberships.role', 'memberships.profile', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile'] 
+            relations: ['memberships', 'memberships.role', 'memberships.profile', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profiles'] 
         });
         return this.injectLegacyProps(user, currentUser);
     }
@@ -334,10 +334,9 @@ export class UsersService {
             const activeMembership = user.memberships?.find(m => m.tenantId === currentUser?.tenantId) || user.memberships?.[0];
             (user as any).role = activeMembership?.role;
             (user as any).tenantId = activeMembership?.tenantId;
-            // Preserva o profile carregado via relação direta user.profile
-            // se o membership não tiver profile vinculado (mesmo padrão do findAll).
-            // FALLBACK TRIPLO: 1) profile da membership, 2) profile direto, 3) profile via cast
-            user.profile = activeMembership?.profile || user.profile || (user as any).profile || undefined;
+            // O profile contextual é o da membership ativa neste tenant
+            // FALLBACK: profile da membership ou undefined
+            (user as any).profile = activeMembership?.profile || undefined;
 
             const isTenantOwner = activeMembership 
                 && activeMembership.role?.name === 'administrador' 
@@ -372,7 +371,6 @@ export class UsersService {
             .leftJoinAndSelect('user.phones', 'phone')
             .leftJoinAndSelect('user.addresses', 'address')
             .leftJoinAndSelect('user.tags', 'tag', 'tag.tenantId = :tId', { tId: tenantId })
-            .leftJoinAndSelect('user.profile', 'profile')
             .orderBy('user.name', 'ASC');
 
         if (tenantId) {
@@ -420,11 +418,10 @@ export class UsersService {
             (user as any).role = activeMembership?.role || { id: '', name: 'usuario' };
             (user as any).tenantId = activeMembership?.tenantId || tenantId;
             
-            // SOBRESCREVEMOS o profile global pelo profile do vínculo
-            // Isso garante que se o vínculo for 'desligado' (profileId null), 
-            // o frontend pare de ver este usuário como membro da equipe deste workspace.
-            // NOTA: FALLBACK TRIPLO: 1) profile da membership, 2) profile direto do user, 3) profile via cast
-            user.profile = activeMembership?.profile || user.profile || (user as any).profile || undefined;
+            // O profile contextual é o da membership ativa neste tenant
+            // Se a membership não tiver profile (profileId null), o usuário
+            // não é mais membro da equipe e não deve ter badge de Equipe.
+            (user as any).profile = activeMembership?.profile || undefined;
 
             // Filtro de Segurança ABAC: Admins e Donos vêem tudo, outros vêem básico
             if (isSystemAdmin || isOwnProfile || isTenantAdmin) {
@@ -580,7 +577,7 @@ export class UsersService {
             throw new BadRequestException('Role administrador não encontrada no sistema.');
         }
 
-        let existingProfile = await this.profilesService.findByUserId(user.id);
+        let existingProfile = await this.profilesService.findByUserIdAndTenant(user.id, newTenant.id);
         if (!existingProfile) {
             existingProfile = await this.profilesService.create({
                 userId: user.id,
@@ -688,7 +685,7 @@ export class UsersService {
         }
 
         // Força a criação do Profile ANTES de vincular no Membership
-        let existingProfile = await this.profilesService.findByUserId(user.id);
+        let existingProfile = await this.profilesService.findByUserIdAndTenant(user.id, targetTenantId);
         if (!existingProfile) {
             existingProfile = await this.profilesService.create({
                 userId: user.id,

@@ -4,6 +4,7 @@ import { Repository, In } from 'typeorm';
 import { Tag, RedirectMode, TechnologyType, ApplicationType } from './entities/tag.entity';
 import { UserTagAccess } from './entities/user-tag-access.entity';
 import { User } from 'src/users/entities/user.entity';
+import { Profile } from 'src/profiles/entities/profile.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
@@ -17,6 +18,8 @@ export class TagsService {
     private readonly accessRepository: Repository<UserTagAccess>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Profile)
+    private readonly profileRepository: Repository<Profile>,
   ) {}
 
   async create(createTagDto: CreateTagDto, currentUser: any, tenantId: string): Promise<Tag> {
@@ -213,7 +216,6 @@ export class TagsService {
     // 1. Tenta buscar primeiro por UUID (NFC)
     let tag = await this.tagRepository.createQueryBuilder('tag')
       .leftJoinAndSelect('tag.user', 'user')
-      .leftJoinAndSelect('user.profile', 'profile')
       .leftJoinAndSelect('user.phones', 'phones')
       .leftJoinAndSelect('user.addresses', 'addresses')
       .leftJoinAndSelect('user.secondaryEmails', 'secondaryEmails')
@@ -226,7 +228,6 @@ export class TagsService {
     if (!tag) {
         tag = await this.tagRepository.createQueryBuilder('tag')
           .leftJoinAndSelect('tag.user', 'user')
-          .leftJoinAndSelect('user.profile', 'profile')
           .leftJoinAndSelect('user.phones', 'phones')
           .leftJoinAndSelect('user.addresses', 'addresses')
           .leftJoinAndSelect('user.secondaryEmails', 'secondaryEmails')
@@ -246,10 +247,14 @@ export class TagsService {
 
     // Filter sensitive data
     const { user } = tag;
+    // Carrega o profile específico deste Tenant (cada tag pertence a um tenant)
+    const profile = await this.profileRepository.findOne({ 
+        where: { userId: user.id, tenantId: tag.tenantId } 
+    });
     const publicUser = {
       name: user.name,
       email: user.email,
-      profile: user.profile,
+      profile,
       phones: user.phones,
       addresses: user.addresses,
       secondaryEmails: user.secondaryEmails,

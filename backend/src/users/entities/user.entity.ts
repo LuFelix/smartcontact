@@ -62,8 +62,8 @@ export class User {
     @Column({ type: 'varchar', name: 'profile_picture_url', nullable: true })
     profilePictureUrl!: string | null;
 
-    @OneToOne(() => Profile, (profile) => profile.user)
-    profile?: Profile;
+    @OneToMany(() => Profile, (profile) => profile.user)
+    profiles?: Profile[];
 
     @OneToMany(() => Membership, (membership) => membership.user)
     memberships!: Membership[];

@@ -160,7 +160,7 @@ export class AuthService {
           ownerId: user.ownerId,
           tenantId: activeMembership?.tenantId || null,
           isSuperAdmin: user.isSuperAdmin,
-          picture: user.profile?.profilePictureUrl
+          picture: activeMembership?.profile?.profilePictureUrl || user.profilePictureUrl
       };
       
       const token = await this.jwtService.signAsync(payload);
