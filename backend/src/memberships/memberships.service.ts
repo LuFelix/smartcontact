@@ -1,18 +1,32 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, QueryFailedError } from 'typeorm';
 import { Membership } from './entities/membership.entity';
 
 @Injectable()
 export class MembershipsService {
+  private readonly logger = new Logger(MembershipsService.name);
+
   constructor(
     @InjectRepository(Membership)
     private readonly membershipRepository: Repository<Membership>,
   ) {}
 
   async create(data: { userId: string; tenantId: string; roleId: string; profileId?: string | null }) {
-    const membership = this.membershipRepository.create(data);
-    return this.membershipRepository.save(membership);
+    try {
+      const membership = this.membershipRepository.create(data);
+      return await this.membershipRepository.save(membership);
+    } catch (err: unknown) {
+      if (err instanceof QueryFailedError) {
+        const driverError = (err as any).driverError;
+        if (driverError?.code === '23505') {
+          this.logger.warn(`[Race Condition] Membership duplicada evitada para userId=${data.userId} tenantId=${data.tenantId}. Retornando vínculo existente.`);
+          const existing = await this.findByUserAndTenant(data.userId, data.tenantId);
+          if (existing) return existing;
+        }
+      }
+      throw err;
+    }
   }
 
   async findByUser(userId: string) {
