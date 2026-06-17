@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { FindManyOptions, ILike, Like, Repository, DeepPartial, IsNull } from 'typeorm';
+import { FindManyOptions, ILike, Like, Repository, DeepPartial, IsNull, Not } from 'typeorm';
 import { CreateUserDto } from './dto/user.dto';
 import * as bcrypt from 'bcrypt';
 import { Role } from 'src/roles/entities/role.entity';
@@ -439,7 +439,7 @@ export class UsersService {
    async update(id: string, updateUserDto: UpdateUserDto, currentUser?: any): Promise<User> { 
         let user = await this.usersRepository.findOne({
             where: { id },
-            relations: ['memberships', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profile'],
+            relations: ['memberships', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profiles'],
         });
 
         if (!user) {
@@ -628,10 +628,11 @@ export class UsersService {
 
         // OPTIMISTIC LOCK: Atualiza ownerId do usuário de forma atômica, apenas se ainda for null.
         // Se o affected for 0, significa que outra thread já venceu a corrida e definiu o ownerId.
-        const updateResult = await this.usersRepository.update({ id: user.id, ownerId: IsNull() }, { ownerId: newTenant.id });
+        const updateResult = await this.usersRepository.update({ id: user.id, ownerId: Not(user.id) }, { ownerId: user.id });
         if (updateResult.affected === 0) {
-            this.logger.warn(`[Race Condition] Usuário ${user.email} já recebeu um ownerId em outra thread. Limpando Tenant duplicado em memória.`);
+            this.logger.warn(`[Race Condition] Usuário ${user.email} já recebeu um ownerId em outra thread. Limpando recursos duplicados em memória.`);
             await this.membershipsService.remove(user.id, newTenant.id);
+            await this.profilesService.removeByUserIdAndTenant(user.id, newTenant.id);
             await this.tenantsRepository.delete(newTenant.id);
             return this.findByEmail(user.email as string) as Promise<User>;
         }

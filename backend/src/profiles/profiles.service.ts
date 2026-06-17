@@ -47,4 +47,8 @@ export class ProfilesService {
   async removeByUserId(userId: string): Promise<void> {
     await this.profileRepository.delete({ userId });
   }
+
+  async removeByUserIdAndTenant(userId: string, tenantId: string): Promise<void> {
+    await this.profileRepository.delete({ userId, tenantId });
+  }
 }

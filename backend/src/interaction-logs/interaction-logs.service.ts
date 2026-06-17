@@ -69,7 +69,7 @@ export class InteractionLogsService {
           .leftJoinAndSelect('log.tag', 'tag')
           .leftJoinAndSelect('tag.user', 'tagUser')
           .leftJoinAndSelect('log.capturedByUser', 'capturedByUser')
-          .leftJoinAndSelect('capturedByUser.profile', 'capturedProfile')
+          .leftJoinAndSelect('capturedByUser.profiles', 'capturedProfile', 'capturedProfile.tenantId = :tenantId', { tenantId })
           .where('log.interaction_type = :type', { type: InteractionType.LEAD })
           .orderBy('log.accessedAt', 'DESC');
 
