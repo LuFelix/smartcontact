@@ -47,4 +47,9 @@ export class UpdateTagDto {
   @IsOptional()
   @IsString()
   qrCustomUrl?: string;
+
+  @ApiPropertyOptional({ description: 'Identificador amigável único para URL pública' })
+  @IsOptional()
+  @IsString()
+  handle?: string;
 }

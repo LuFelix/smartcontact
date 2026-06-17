@@ -91,7 +91,7 @@ export class ResourceDelegationDialogComponent implements OnInit {
     if ((tag.technologyType === TechnologyType.LINK || tag.technologyType === TechnologyType.TRILHA) && tag.value) {
       this.focusedTagUrl = tag.value.startsWith('http') ? tag.value : 'https://' + tag.value;
     } else {
-      this.focusedTagUrl = window.location.origin + '/t/' + tag.uuid;
+      this.focusedTagUrl = window.location.origin + '/t/' + (tag.handle || tag.uuid);
     }
 
     setTimeout(() => {

@@ -284,7 +284,7 @@ export class TagDialogComponent implements AfterViewInit {
       return value.startsWith('http') ? value : 'https://' + value;
     }
 
-    return window.location.origin + '/t/' + this.data.tag.uuid;
+    return window.location.origin + '/t/' + (this.data.tag.handle || this.data.tag.uuid);
   }
 
   ngAfterViewInit() {

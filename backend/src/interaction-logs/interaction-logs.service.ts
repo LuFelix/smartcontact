@@ -19,7 +19,7 @@ export class InteractionLogsService {
   /**
    * Registra uma visita simples a uma tag
    */
-  async logVisit(tagId: string, metadata: { ip: string, userAgent: string, device?: string, browser?: string }) {
+  async logVisit(tagId: string, metadata: { ip: string; userAgent: string; source?: string; tenantId?: string; device?: string; browser?: string }) {
     const log = this.interactionLogRepository.create({
       tagId,
       interactionType: InteractionType.VISIT,
@@ -27,6 +27,8 @@ export class InteractionLogsService {
       userAgent: metadata.userAgent,
       deviceType: metadata.device,
       browser: metadata.browser,
+      source: metadata.source || null,
+      tenantId: metadata.tenantId || null,
     });
     return this.interactionLogRepository.save(log);
   }
@@ -69,7 +71,7 @@ export class InteractionLogsService {
           .leftJoinAndSelect('log.tag', 'tag')
           .leftJoinAndSelect('tag.user', 'tagUser')
           .leftJoinAndSelect('log.capturedByUser', 'capturedByUser')
-          .leftJoinAndSelect('capturedByUser.profile', 'capturedProfile')
+          .leftJoinAndSelect('capturedByUser.profiles', 'capturedProfile', 'capturedProfile.tenantId = :tenantId', { tenantId })
           .where('log.interaction_type = :type', { type: InteractionType.LEAD })
           .orderBy('log.accessedAt', 'DESC');
 

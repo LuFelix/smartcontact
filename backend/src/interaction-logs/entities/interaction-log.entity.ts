@@ -66,6 +66,12 @@ export class InteractionLog {
   @Column({ type: 'varchar', name: 'browser', nullable: true })
   browser!: string | null;
 
+  @Column({ type: 'varchar', nullable: true })
+  source!: string | null;
+
+  @Column({ type: 'uuid', name: 'tenant_id', nullable: true })
+  tenantId!: string | null;
+
   @CreateDateColumn({ name: 'accessed_at' })
   accessedAt!: Date;
 }

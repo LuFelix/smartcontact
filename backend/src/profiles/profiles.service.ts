@@ -31,6 +31,10 @@ export class ProfilesService {
     return this.profileRepository.findOne({ where: { userId } });
   }
 
+  async findByUserIdAndTenant(userId: string, tenantId: string): Promise<Profile | null> {
+    return this.profileRepository.findOne({ where: { userId, tenantId } });
+  }
+
   async update(userId: string, data: Partial<Profile>): Promise<Profile> {
     const profile = await this.findByUserId(userId);
     if (!profile) {
@@ -42,5 +46,9 @@ export class ProfilesService {
 
   async removeByUserId(userId: string): Promise<void> {
     await this.profileRepository.delete({ userId });
+  }
+
+  async removeByUserIdAndTenant(userId: string, tenantId: string): Promise<void> {
+    await this.profileRepository.delete({ userId, tenantId });
   }
 }

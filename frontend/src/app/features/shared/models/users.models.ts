@@ -72,6 +72,7 @@ export enum ApplicationType {
 export interface Tag {
   id: string;
   uuid: string;
+  handle?: string | null;
   uid?: string | null;
   name?: string | null;
   technologyType: TechnologyType;

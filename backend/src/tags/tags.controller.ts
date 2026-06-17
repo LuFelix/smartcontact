@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Patch, Param, Body, NotFoundException, UseGuards, Query, ParseUUIDPipe, Headers } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Patch, Param, Body, NotFoundException, UseGuards, Query, ParseUUIDPipe, Headers, Req } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { TagsService } from './tags.service';
 import { Public } from 'src/auth/decorators/public.decorator';
@@ -7,6 +7,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
+import { Request } from 'express';
 
 @ApiTags('Tags')
 @Controller('tags')
@@ -20,9 +21,14 @@ export class TagsController {
   @ApiResponse({ status: 404, description: 'Tag not found' })
   async resolve(
     @Param('identifier') identifier: string,
-    @Query('source') source?: string
+    @Query('source') source?: string,
+    @Req() req?: Request
   ) {
-    const data = await this.tagsService.resolveTag(identifier, source);
+    const metadata = req ? {
+        ip: req.ip || req.headers['x-forwarded-for'] as string || '0.0.0.0',
+        userAgent: req.headers['user-agent'] || 'unknown',
+    } : undefined;
+    const data = await this.tagsService.resolveTag(identifier, source, metadata);
     if (!data) {
       throw new NotFoundException('Tag ou Usuário não encontrado');
     }

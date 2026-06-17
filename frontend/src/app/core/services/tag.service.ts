@@ -6,6 +6,7 @@ import { FullUserResponse, RedirectMode, Tag } from '../../features/shared/model
 
 export interface TagResolutionResponse {
   id: string;
+  handle?: string | null;
   redirectMode: RedirectMode;
   customUrl?: string;
   user: FullUserResponse;
