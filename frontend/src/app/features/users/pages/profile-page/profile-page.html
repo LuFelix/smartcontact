@@ -112,7 +112,7 @@
                         <h4>Seu QR Code Pessoal</h4>
                         <p>Aponte a câmera para testar o destino configurado acima.</p>
                         <div class="qr-actions-row">
-                            <a mat-flat-button color="primary" [routerLink]="['/t', userUsername() || activeTag.uuid]" [queryParams]="{ source: 'qr' }" target="_blank" class="test-config-btn">
+                            <a mat-flat-button color="primary" [routerLink]="['/t', activeTag.handle || userUsername() || activeTag.uuid]" [queryParams]="{ source: 'qr' }" target="_blank" class="test-config-btn">
                                 <mat-icon>open_in_new</mat-icon> Testar Configuração
                             </a>
                             <button mat-flat-button color="accent" (click)="downloadPersonalQR()" class="download-qr-btn">
@@ -150,7 +150,7 @@
                     <mat-label>Seu Username (URL Única)</mat-label>
                     <input matInput [value]="userUsername()" disabled readonly />
                     <mat-icon matSuffix matTooltip="Este é o seu identificador único para o link direto.">verified</mat-icon>
-                    <mat-hint>Seu link direto é: {{ currentHost }}/t/{{ userUsername() }}</mat-hint>
+                    <mat-hint>Seu link direto é: {{ currentHost }}/t/{{ activeTag?.handle || userUsername() }}</mat-hint>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="col-span-2">

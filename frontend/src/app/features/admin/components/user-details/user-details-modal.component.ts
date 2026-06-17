@@ -337,7 +337,7 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
                         qrRedirectMode: activeTag.qrRedirectMode,
                         qrCustomUrl: activeTag.qrCustomUrl
                     });
-                    this.generatePersonalQR(activeTag.uuid);
+                    this.generatePersonalQR(activeTag.handle || activeTag.uuid);
                 }
 
                 this.phones.clear();
@@ -405,10 +405,11 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     getPublicLinkIdentifier(): string | null {
-        if (this.user?.username) return this.user.username;
-        if (!this.user?.tags || this.user.tags.length === 0) return null;
-        const activeTag = this.user.tags.find((t: Tag) => t.isActive);
-        return activeTag ? activeTag.uuid : this.user.tags[0].uuid;
+        if (!this.user?.tags || this.user.tags.length === 0) {
+            return this.user?.username || null;
+        }
+        const activeTag = this.user.tags.find((t: Tag) => t.isActive) || this.user.tags[0];
+        return activeTag.handle || this.user?.username || activeTag.uuid;
     }
 
     saveUser(): void {
@@ -561,9 +562,8 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
             });
     }
 
-    generatePersonalQR(uuid: string): void {
+    generatePersonalQR(identifier: string): void {
         const baseUrl = window.location.origin;
-        const identifier = this.user?.username || uuid;
         const url = `${baseUrl}/t/${identifier}?source=qr`;
         
         setTimeout(() => {

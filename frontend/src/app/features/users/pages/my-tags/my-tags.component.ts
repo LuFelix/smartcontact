@@ -169,7 +169,7 @@ export class MyTagsComponent implements OnInit {
     if ((tag.technologyType === TechnologyType.LINK || tag.technologyType === TechnologyType.TRILHA) && tag.value) {
       return tag.value.startsWith('http') ? tag.value : 'https://' + tag.value;
     }
-    return window.location.origin + '/t/' + tag.uuid;
+    return window.location.origin + '/t/' + (tag.handle || tag.uuid);
   }
 
   generateAllQrDataUrls() {

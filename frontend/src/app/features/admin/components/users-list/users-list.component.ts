@@ -67,7 +67,15 @@ export class UsersListComponent {
     return activeTag ? activeTag.uuid : user.tags[0].uuid;
   }
 
+  getTagHandle(user: User): string | null {
+    if (!user.tags || user.tags.length === 0) return null;
+    const activeTag = user.tags.find((t: Tag) => t.isActive);
+    return (activeTag || user.tags[0]).handle || null;
+  }
+
   getPublicLinkIdentifier(user: User): string | null {
+    const handle = this.getTagHandle(user);
+    if (handle) return handle;
     if (user.username) return user.username;
     return this.getTagUuid(user);
   }
