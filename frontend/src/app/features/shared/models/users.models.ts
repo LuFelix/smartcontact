@@ -5,6 +5,7 @@ export interface JwtPayload {
     sub: string; // User ID (geralmente string UUID ou número como string)
     name: string;
     email: string;
+    username?: string;
     role: string;
     tenantId?: string;
     ownerId?: string;
@@ -54,13 +55,38 @@ export enum RedirectMode {
   CUSTOM_URL = 'CUSTOM_URL',
 }
 
+export enum TechnologyType {
+  NFC_HF = 'NFC_HF',
+  RFID_UHF = 'RFID_UHF',
+  QR_CODE = 'QR_CODE',
+  LINK = 'LINK',
+  TRILHA = 'TRILHA',
+}
+
+export enum ApplicationType {
+  REDIRECT = 'REDIRECT',
+  ASSET_COUNTING = 'ASSET_COUNTING',
+  ACCESS_CONTROL = 'ACCESS_CONTROL',
+}
+
 export interface Tag {
   id: string;
   uuid: string;
-  redirectMode: RedirectMode;
-  customUrl?: string | null;
+  handle?: string | null;
+  uid?: string | null;
+  name?: string | null;
+  technologyType: TechnologyType;
+  applicationType: ApplicationType;
+  value?: string | null;
+  isResource: boolean;
+  nfcRedirectMode: RedirectMode;
+  nfcCustomUrl?: string | null;
+  qrRedirectMode: RedirectMode;
+  qrCustomUrl?: string | null;
   userId: string;
+  tenantId: string;
   isActive: boolean;
+  user?: User;
 }
 
 export enum AddressTag {
@@ -89,6 +115,7 @@ export interface User {
   id: string; 
   name: string;
   email: string;
+  username?: string;
   cpf?: string;
   isActive?: boolean;
   role?: { id: string, name: string };
@@ -103,11 +130,14 @@ export interface User {
   secondaryEmails?: SecondaryEmail[];
   links?: UserLink[];
   tags?: Tag[];
+  profilePictureUrl?: string;
+  isTenantOwner?: boolean;
 }
 
 // --- Interface para Registro (Usada pelo AuthService) ---
 export interface RegistrationData {
   token?: string; 
+  invitationToken?: string;
   cpf?: string;
   name: string;
   email: string;
@@ -119,6 +149,7 @@ export interface UserData {
     id: string;         
     email: string;      
     name: string;       
+    username?: string;
     role: string;       
     firstName?: string;
     lastName?: string;
@@ -129,10 +160,11 @@ export interface UserData {
 
 // Interface completa retornada pelo backend
 export interface FullUserResponse {
-  id: string; 
-  name: string; 
+  id: string;
+  name: string;
   email: string;
-  cpf?: string; 
+  username?: string;
+  cpf?: string;
   isVerified: boolean;
   role: { id: string, name: string };
   profile?: {
@@ -146,9 +178,10 @@ export interface FullUserResponse {
   secondaryEmails?: SecondaryEmail[];
   links?: UserLink[];
   tags?: Tag[];
-  profilePictureUrl?: string; 
+  tagAccesses?: { id: string, tag: Tag }[];
+  profilePictureUrl?: string;
+  isTenantOwner?: boolean;
 }
-
 export interface Lead {
   id: string;
   leadName: string;
@@ -157,4 +190,13 @@ export interface Lead {
   leadNote?: string;
   accessedAt: string;
   tagId: string;
+  tag?: Tag;
+  capturedByUserId?: string | null;
+  capturedByUser?: {
+    id: string;
+    name: string;
+    profile?: {
+      profilePictureUrl?: string;
+    }
+  } | null;
 }

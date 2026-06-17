@@ -105,9 +105,10 @@ export class CreateUserDto {
   @IsString()
   name!: string;
 
-  @ApiProperty({ example: 'joao@email.com' })
-  @IsEmail()
-  email!: string;
+  @ApiProperty({ example: 'joao@email.com', required: false })
+  @IsEmail({}, { message: 'Formato de e-mail inválido' })
+  @IsOptional()
+  email?: string;
 
   @ApiProperty({ type: [CreateEmailDto], required: false })
   @IsOptional()
@@ -124,7 +125,7 @@ export class CreateUserDto {
   @ApiProperty({ required: false, example: 'uuid-here' })
   @IsOptional()
   @IsUUID()
-  roleId?: string;
+  roleId?: string | null;
 
   @ApiProperty({ example: true, required: false })
   @IsOptional()

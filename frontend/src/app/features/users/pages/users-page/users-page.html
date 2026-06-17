@@ -1,80 +1,78 @@
-<mat-card class="user-card">
-  
-  <mat-card-header class="custom-card-header">
-    <div>
-      <mat-card-title>Painel de Usuários</mat-card-title>
-      <mat-card-subtitle>Filtre e visualize os usuários do sistema</mat-card-subtitle>
-    </div>
-    
-    <div class="header-actions">
-      <button mat-stroked-button color="accent" (click)="syncWithGoogle()" [disabled]="isSyncing" matTooltip="Importar contatos da sua conta Google">
-        @if (isSyncing) {
-          <mat-spinner diameter="18" style="display: inline-block; margin-right: 8px;"></mat-spinner>
-        } @else {
-          <mat-icon>sync</mat-icon>
-        }
-        Sincronizar Google
-      </button>
+<div class="user-container">
+    <app-page-header title="Fichário de Contatos">
+        <div header-actions>
+            <button mat-stroked-button color="accent" (click)="syncWithGoogle()" [disabled]="isSyncing" matTooltip="Importar contatos da sua conta Google">
+                @if (isSyncing) {
+                    <mat-spinner diameter="18" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+                } @else {
+                    <mat-icon>sync</mat-icon>
+                }
+                Sincronizar Google
+            </button>
 
-      @if (authService.hasPermission('INVITE_USER')) {
-        <button mat-flat-button color="primary" (click)="openAddUserModal()" matTooltip="Convidar novo usuário">
-          <mat-icon>person_add</mat-icon> Adicionar Usuário
-        </button>
-      }
-      
-      @if (authService.hasPermission('EXPORT_USERS')) {
-        <button mat-stroked-button (click)="export()" matTooltip="Exportar lista filtrada para Excel">
-          <mat-icon>download</mat-icon> Exportar Tabela
-        </button>
-      }
-    </div>
-  </mat-card-header>
-
-  <mat-card-content>
-
-    <form [formGroup]="filterForm" class="action-bar">
-      
-      <div class="filter-group">
-        <mat-form-field appearance="outline">
-          <mat-label>Nome</mat-label>
-          <input matInput formControlName="name" placeholder="Filtrar por nome">
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>E-mail</mat-label>
-          <input matInput formControlName="email" placeholder="Filtrar por e-mail">
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>CPF</mat-label>
-          <input matInput formControlName="cpf" placeholder="Filtrar por CPF">
-        </mat-form-field>
-      </div>
-
-      <div class="action-group">
-        <button mat-stroked-button color="warn" (click)="resetFilters()" type="button">
-          <mat-icon>delete_forever</mat-icon> Limpar Filtros
-        </button>
+            @if (authService.hasPermission('INVITE_USER')) {
+                <button mat-flat-button color="primary" (click)="openAddUserModal()" matTooltip="Adicionar novo contato manual">
+                    <mat-icon>person_add</mat-icon> Adicionar Contato
+                </button>
+            }
+            
+            @if (authService.hasPermission('EXPORT_USERS')) {
+                <button mat-stroked-button (click)="export()" matTooltip="Exportar lista filtrada para Excel">
+                    <mat-icon>download</mat-icon> Exportar
+                </button>
+            }
         </div>
-    </form>
+    </app-page-header>
 
-    <app-users-list
-      [dataSource]="dataSource"
-      [isLoading]="isLoading"
-      [displayedColumns]="['name', 'email', 'actions']"
-      (viewDetails)="openUserDetails($event)"
-      (deleteUser)="deleteUser($event)">
-    </app-users-list>
+    <div class="user-content">
+        <form [formGroup]="filterForm" class="filter-bar">
+            <div class="filter-inputs">
+                <mat-form-field appearance="outline">
+                    <mat-label>Nome</mat-label>
+                    <mat-icon matPrefix>person</mat-icon>
+                    <input matInput formControlName="name" placeholder="Filtrar por nome">
+                </mat-form-field>
 
-  </mat-card-content>
+                <mat-form-field appearance="outline">
+                    <mat-label>E-mail</mat-label>
+                    <mat-icon matPrefix>email</mat-icon>
+                    <input matInput formControlName="email" placeholder="Filtrar por e-mail">
+                </mat-form-field>
 
-  <mat-card-actions class="custom-card-actions">
-    <mat-paginator 
-      [length]="totalUsers" 
-      [pageSize]="10" 
-      [pageSizeOptions]="[5, 10, 25, 100]"
-      (page)="onPageChange($event)" 
-      aria-label="Selecione a página de usuários">
-    </mat-paginator>
-  </mat-card-actions>
-</mat-card>
+                <mat-form-field appearance="outline" class="cpf-field">
+                    <mat-label>CPF</mat-label>
+                    <mat-icon matPrefix>fingerprint</mat-icon>
+                    <input matInput formControlName="cpf" placeholder="Filtrar por CPF">
+                </mat-form-field>
+            </div>
+
+            <div class="filter-actions">
+                <button mat-button color="warn" (click)="resetFilters()" type="button" [disabled]="!filterForm.dirty">
+                    <mat-icon>backspace</mat-icon> Limpar
+                </button>
+            </div>
+        </form>
+
+        <div class="table-wrapper">
+            <app-users-list
+                [dataSource]="dataSource"
+                [isLoading]="isLoading"
+                [displayedColumns]="['name', 'email', 'actions']"
+                (viewDetails)="openUserDetails($event)"
+                (promoteUser)="onPromoteUser($event)"
+                (demoteUser)="onDemoteUser($event)"
+                (deleteUser)="deleteUser($event)">
+            </app-users-list>
+        </div>
+
+        <div class="pagination-footer">
+            <mat-paginator 
+                [length]="totalUsers" 
+                [pageSize]="10" 
+                [pageSizeOptions]="[5, 10, 25, 100]"
+                (page)="onPageChange($event)" 
+                aria-label="Selecione a página de usuários">
+            </mat-paginator>
+        </div>
+    </div>
+</div>

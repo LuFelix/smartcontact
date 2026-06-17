@@ -1,0 +1,130 @@
+<h2 mat-dialog-title>Convidar para a Equipe</h2>
+
+<mat-dialog-content>
+  <mat-tab-group color="primary">
+    <!-- ABA 1: ADIÇÃO DIRETA -->
+    <mat-tab label="Adição Direta">
+      <form [formGroup]="invitationForm" class="dialog-form" (ngSubmit)="submit()">
+        <p class="description">Cadastre o membro diretamente no sistema. Ele poderá logar imediatamente com o e-mail e senha informados.</p>
+        
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nome Completo</mat-label>
+          <input matInput formControlName="name" placeholder="Ex: João Silva">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>E-mail</mat-label>
+          <input matInput formControlName="email" type="email" placeholder="email@empresa.com">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Senha Provisória</mat-label>
+          <input matInput formControlName="password" type="password">
+          <mat-hint>Mínimo 8 caracteres</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Cargo/Função</mat-label>
+          <mat-select formControlName="roleId">
+            <mat-option *ngFor="let role of roles" [value]="role.id">
+              {{ role.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <div class="actions">
+          <button mat-button mat-dialog-close type="button">Cancelar</button>
+          <button mat-flat-button color="primary" type="submit" [disabled]="invitationForm.invalid || isSubmitting">
+            {{ isSubmitting ? 'Salvando...' : 'Adicionar Membro' }}
+          </button>
+        </div>
+      </form>
+    </mat-tab>
+
+    <!-- ABA 2: QR CODE (SELF-SERVICE) -->
+    <mat-tab label="Auto-Cadastro (QR Code)">
+      <div class="qr-container">
+        <p class="description">Gere um QR Code para que o colaborador entre sozinho na equipe.</p>
+        
+        <form [formGroup]="qrForm" (ngSubmit)="generateQR()" *ngIf="!invitationLink">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Cargo Automático</mat-label>
+            <mat-select formControlName="roleId">
+              <mat-option *ngFor="let role of roles" [value]="role.id">
+                {{ role.name }}
+              </mat-option>
+            </mat-select>
+            <mat-hint>Todos que usarem este QR Code terão este cargo.</mat-hint>
+          </mat-form-field>
+
+          <button mat-flat-button color="accent" class="full-width" type="submit" [disabled]="qrForm.invalid || isSubmitting">
+            Gerar QR Code de Convite
+          </button>
+        </form>
+
+        <div class="qr-result" *ngIf="invitationLink">
+          <canvas #qrcodeCanvas></canvas>
+          <p class="invitation-url">{{ invitationLink }}</p>
+          <div class="qr-actions">
+            <button mat-stroked-button color="primary" (click)="copyLink()">
+              <mat-icon>content_copy</mat-icon> Copiar Link
+            </button>
+            <button mat-button (click)="invitationLink = null">
+              Gerar Outro
+            </button>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</mat-dialog-content>
+
+<style>
+  .dialog-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 16px;
+  }
+  .full-width {
+    width: 100%;
+  }
+  .description {
+    font-size: 0.9rem;
+    color: var(--mat-sys-on-surface-variant);
+    margin-bottom: 16px;
+  }
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .qr-container {
+    padding: 16px 0;
+    text-align: center;
+  }
+  .qr-result {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .invitation-url {
+    font-family: monospace;
+    font-size: 0.85rem;
+    background-color: var(--mat-sys-surface-container-highest);
+    color: var(--mat-sys-on-surface-variant);
+    padding: 12px;
+    border-radius: 8px;
+    word-break: break-all;
+    border: 1px solid var(--mat-sys-outline-variant);
+    margin-top: 12px;
+    display: block;
+  }
+  .qr-actions {
+    display: flex;
+    gap: 8px;
+  }
+</style>

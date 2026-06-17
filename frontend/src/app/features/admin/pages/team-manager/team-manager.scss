@@ -1,0 +1,66 @@
+.manager-container {
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+// O .manager-header manual foi removido em favor do <app-page-header>
+// Mantemos apenas as customizações específicas que ainda vivem aqui
+.workspace-selector {
+    width: 300px;
+    margin-bottom: -1.25em; // Alinha visualmente com o título
+}
+
+.manager-tabs-container {
+    background-color: var(--mat-sys-surface-container);
+    border-radius: 24px;
+    padding: 0 16px;
+    box-shadow: var(--mat-sys-level1);
+    overflow: hidden;
+
+    ::ng-deep .mat-mdc-tab-group {
+        --mdc-tab-indicator-active-indicator-color: var(--mat-sys-primary);
+        --mat-tab-header-active-label-text-color: var(--mat-sys-primary);
+    }
+}
+
+.tab-icon {
+    margin-right: 8px;
+}
+
+.tab-content {
+    padding: 24px 0;
+    min-height: 500px; // Estabiliza altura
+}
+
+.tab-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    gap: 16px;
+
+    // app-search-bar agora gerencia sua própria largura e margem
+}
+
+.ws-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    opacity: 0.7;
+}
+
+.flex { display: flex; }
+.items-center { align-items: center; }
+.gap-2 { gap: 8px; }
+
+@media (max-width: 900px) {
+    .workspace-selector { width: 100%; }
+}
+
+.section-card {
+    border-radius: 16px;
+    background-color: var(--mat-sys-surface-container-low);
+    border: 1px solid var(--mat-sys-outline-variant);
+    &.no-shadow { box-shadow: none !important; }
+}

@@ -6,6 +6,8 @@ import * as bcrypt from 'bcrypt';
 import { Role } from 'src/roles/entities/role.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Tag, RedirectMode } from 'src/tags/entities/tag.entity';
+import { Tenant } from 'src/tenants/entities/tenant.entity';
+import { Membership } from 'src/memberships/entities/membership.entity';
 import { UserSeedService } from './users/user-seed.service';
 import { ProfilesService } from 'src/profiles/profiles.service';
 
@@ -21,6 +23,10 @@ export class SeedService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Tag)
     private readonly tagRepository: Repository<Tag>,
+    @InjectRepository(Tenant)
+    private readonly tenantRepository: Repository<Tenant>,
+    @InjectRepository(Membership)
+    private readonly membershipRepository: Repository<Membership>,
     private readonly userSeedService: UserSeedService,
     private readonly profilesService: ProfilesService,
   ) {}
@@ -28,14 +34,25 @@ export class SeedService {
   async run() {
     this.logger.log('Iniciando o processo de seeding...');
 
+    // 0. Garante que o Tenant Master existe
+    await this.seedDefaultTenant();
+
+    // 1. Garante que todos os usuários tenham usernames (Migração retroativa)
+    await this.userSeedService.migrateUsernames();
+
     const adminRole = await this.seedRoles();
 
     if (adminRole) {
       const admin = await this.seedAdminUser(adminRole);
+
+      // 2. Define o owner_id do Tenant Master (após o admin ser criado)
+      if (admin) {
+        await this.tenantRepository.update(this.TIWEB_ID, { ownerId: admin.id });
+      }
       
-      const colaboradorRole = await this.roleRepository.findOne({ where: { name: 'colaborador' } });
-      if (colaboradorRole && admin) {
-          await this.userSeedService.run(colaboradorRole, admin);
+      const contatoRole = await this.roleRepository.findOne({ where: { name: 'contato' } });
+      if (contatoRole && admin) {
+          await this.userSeedService.run(contatoRole, admin);
       }
     } else {
       this.logger.error('A role "administrador" não foi encontrada ou criada.');
@@ -44,8 +61,22 @@ export class SeedService {
     this.logger.log('Seeding concluído com sucesso.');
   }
 
+  private async seedDefaultTenant(): Promise<void> {
+    const existing = await this.tenantRepository.findOne({ where: { id: this.TIWEB_ID } });
+    if (!existing) {
+      const tenant = this.tenantRepository.create({
+        id: this.TIWEB_ID,
+        name: 'TIWEB Master',
+        slug: 'tiweb',
+        isActive: true
+      });
+      await this.tenantRepository.save(tenant);
+      this.logger.log('Tenant Master (TIWEB) criado.');
+    }
+  }
+
   private async seedRoles(): Promise<Role | undefined> {
-    const rolesToCreate = ['administrador', 'colaborador', 'usuario'];
+    const rolesToCreate = ['administrador', 'contato', 'usuario'];
     let adminRole: Role | undefined;
 
     for (const roleName of rolesToCreate) {
@@ -69,7 +100,7 @@ export class SeedService {
 
     let admin = await this.userRepository.findOne({ 
         where: { email: adminEmail },
-        relations: ['phones', 'addresses']
+        relations: ['phones', 'addresses', 'memberships']
     });
 
     const salt = await bcrypt.genSalt();
@@ -82,9 +113,7 @@ export class SeedService {
         cpf: '00000000000',
         password: hashedPassword,
         isVerified: true,
-        role: adminRole,
         ownerId: this.TIWEB_ID,
-        tenantId: this.TIWEB_ID,
         phones: [
             { number: '00000000000', isWhatsapp: true, isMain: true, ownerId: this.TIWEB_ID, tenantId: this.TIWEB_ID }
         ],
@@ -115,13 +144,25 @@ export class SeedService {
     }
 
     // GARANTE QUE O ADMIN TENHA UM PROFILE
-    const adminProfile = await this.profilesService.findByUserId(admin.id);
+    let adminProfile = await this.profilesService.findByUserId(admin.id);
     if (!adminProfile) {
-        await this.profilesService.create({
+        adminProfile = await this.profilesService.create({
             userId: admin.id,
             ownerId: this.TIWEB_ID,
             tenantId: this.TIWEB_ID
         });
+    }
+
+    // GARANTE QUE O ADMIN TENHA O VINCULO DE MEMBERSHIP
+    const adminMembership = await this.membershipRepository.findOne({ where: { userId: admin.id, tenantId: this.TIWEB_ID } });
+    if (!adminMembership) {
+        const newMembership = this.membershipRepository.create({
+            userId: admin.id,
+            tenantId: this.TIWEB_ID,
+            roleId: adminRole.id,
+            profileId: adminProfile.id
+        });
+        await this.membershipRepository.save(newMembership);
     }
 
     const adminTag = await this.tagRepository.findOne({ where: { userId: admin.id } });
@@ -131,7 +172,8 @@ export class SeedService {
             userId: admin.id,
             ownerId: this.TIWEB_ID,
             tenantId: this.TIWEB_ID,
-            redirectMode: RedirectMode.PROFILE,
+            nfcRedirectMode: RedirectMode.PROFILE,
+            qrRedirectMode: RedirectMode.PROFILE,
             isActive: true
         };
         const newTag = this.tagRepository.create(newTagData);

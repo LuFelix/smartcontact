@@ -1,34 +1,44 @@
 <div class="leads-container">
-    <mat-card class="leads-card">
-        <mat-card-header class="header-with-action">
-            <div>
-                <mat-card-title>Meus Leads Capturados</mat-card-title>
-                <mat-card-subtitle>Contatos que escanearam sua tag e deixaram informações</mat-card-subtitle>
-            </div>
-            <div class="header-actions">
-                <button mat-stroked-button (click)="layoutService.toggleLayout()" class="layout-toggle-btn">
-                    <mat-icon>{{ layoutService.layout() === 'moderno' ? 'view_list' : 'grid_view' }}</mat-icon>
-                    {{ layoutService.layout() === 'moderno' ? 'Visualizar Lista' : 'Visualizar Cards' }}
-                </button>
-            </div>
-        </mat-card-header>
+    <app-page-header title="Meus Leads Capturados">
+        <div header-actions>
+            <button mat-stroked-button (click)="layoutService.toggleLayout()" class="layout-toggle-btn">
+                <mat-icon>{{ layoutService.layout() === 'moderno' ? 'view_list' : 'grid_view' }}</mat-icon>
+                {{ layoutService.layout() === 'moderno' ? 'Ver em Lista' : 'Ver em Cards' }}
+            </button>
+        </div>
+    </app-page-header>
 
-        <mat-card-content>
+    <div class="leads-content">
+        <div class="leads-actions">
+            <app-search-bar
+                placeholder="Filtrar leads..."
+                [initialValue]="searchTerm"
+                (search)="searchTerm = $event">
+            </app-search-bar>
+        </div>
+
+        @if (!isLoading && filteredLeads.length === 0) {
+            <app-empty-state
+                [icon]="searchTerm ? 'search_off' : 'contact_mail'"
+                [title]="searchTerm ? 'Nenhum lead encontrado' : 'Você ainda não possui leads'"
+                [message]="searchTerm ? 'Tente ajustar sua busca por nome, e-mail ou telefone.' : 'Compartilhe sua tag para começar a capturar contatos automaticamente.'">
+            </app-empty-state>
+        } @else {
             @if (layoutService.layout() === 'moderno') {
                 <app-leads-card-list
-                    [leads]="leads"
+                    [leads]="filteredLeads"
                     [isLoading]="isLoading"
                     [isSavingToGoogle]="isSavingToGoogle"
                     (saveToGoogle)="saveToGoogle($event)">
                 </app-leads-card-list>
             } @else {
                 <app-leads-list-view
-                    [leads]="leads"
+                    [leads]="filteredLeads"
                     [isLoading]="isLoading"
                     [isSavingToGoogle]="isSavingToGoogle"
                     (saveToGoogle)="saveToGoogle($event)">
                 </app-leads-list-view>
             }
-        </mat-card-content>
-    </mat-card>
+        }
+    </div>
 </div>

@@ -14,8 +14,8 @@ export class UserRespondeDto {
   @ApiProperty({ example: '12345678900', nullable: true })
   cpf: string | null;
 
-  @ApiProperty({ example: 'Colaborador', required: false })
-  role?: string;
+  @ApiProperty({ example: { id: 'uuid', name: 'Colaborador' }, required: false })
+  role?: { id: string, name: string };
 
   @ApiProperty({ type: 'array', items: { type: 'object' }, required: false })
   phones?: any[];
@@ -29,11 +29,20 @@ export class UserRespondeDto {
   constructor(user: User) {
     this.id = user.id;
     this.name = user.name;
-    this.email = user.email;
+    this.email = user.email as string;
     this.cpf = user.cpf ?? null;
     this.isVerified = user.isVerified;
     
-    this.role = user.role ? user.role.name : undefined;
+    // Pega a role da primeira membership (ou poderia receber o tenantId do contexto para ser mais preciso)
+    const activeMembership = user.memberships && user.memberships.length > 0 ? user.memberships[0] : null;
+    if (activeMembership && activeMembership.role) {
+      this.role = {
+        id: activeMembership.role.id,
+        name: activeMembership.role.name
+      };
+    } else {
+      this.role = undefined;
+    }
     
     this.phones = user.phones || [];
     this.addresses = user.addresses || [];

@@ -1,9 +1,13 @@
 // auth/auth.service.ts
-import { Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, UnauthorizedException, Inject, forwardRef, BadRequestException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
 import { ProfilesService } from 'src/profiles/profiles.service';
+import { TeamService } from 'src/team/team.service';
+import { RolesService } from 'src/roles/roles.service';
+import { TenantsService } from 'src/tenants/tenants.service';
+import { MembershipsService } from 'src/memberships/memberships.service';
 import { LoginDto, MinimalRegisterDto } from './dto/auth.dto';
 import { GoogleLoginDto } from './dto/google-token.dto';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -20,48 +24,78 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly profilesService: ProfilesService,
     private readonly jwtService: JwtService,
-    private readonly mailerService: MailerService
+    private readonly mailerService: MailerService,
+    private readonly rolesService: RolesService,
+    private readonly tenantsService: TenantsService,
+    private readonly membershipsService: MembershipsService,
+    @Inject(forwardRef(() => TeamService))
+    private readonly teamService: TeamService
     
   ) { }
 
  async register(registerDto: MinimalRegisterDto): Promise<string> {
-  
-    // 1. Log de entrada para comparar com o Postman
-    console.log('[DEBUG] Dados recebidos do Angular:', registerDto);
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expires = new Date();
-    expires.setMinutes(expires.getMinutes() + 15);
-    
-    // 2. Garanta que o CreateUserDto tenha o que o banco pede
-    const createUserDto = {
-        name: registerDto.name,
-        email: registerDto.email,
-        password: registerDto.password,
+   // 1. Log de entrada para comparar com o Postman
+   console.log('[DEBUG] Dados recebidos do Angular:', registerDto);
+
+   const code = Math.floor(100000 + Math.random() * 900000).toString();
+   const expires = new Date();
+   expires.setMinutes(expires.getMinutes() + 15);
+
+   let tenantId: string | null = null;
+   let roleId: string | null = null;
+
+   // 2. Se houver token de convite, resolvemos para pegar o Tenant e Role de destino
+   if (registerDto.invitationToken) {
+       try {
+           const invitation = await this.teamService.resolveInvitation(registerDto.invitationToken);
+           tenantId = invitation.tenantId;
+           roleId = invitation.roleId;
+       } catch (error) {
+           console.warn(`[AuthService] Convite inválido ou expirado: ${registerDto.invitationToken}`);
+           throw new BadRequestException('O convite utilizado é inválido ou expirou.');
+       }
+   } else {
+       // BUSCA DINÂMICA DA ROLE DE ADMINISTRADOR para novo tenant pessoal (criado no UsersService)
+       const adminRole = await this.rolesService.findOneByName('administrador');
+       if (!adminRole) {
+           throw new InternalServerErrorException('Configuração de sistema incompleta: Role administrador não encontrada.');
+       }
+       roleId = adminRole.id;
+   }
+
+   const createUserDto = {
+       name: registerDto.name,
+       email: registerDto.email,
+       password: registerDto.password,
+       roleId: roleId
+   };
+
+    const registrationContext = {
+        tenantId: tenantId, // Se null, UsersService cuidará de criar um pessoal
+        sub: null 
     };
 
-    // Novo usuário ganha um tenant próprio (empresa de um homem só)
-    const newTenantContext = {
-        tenantId: uuidv4(),
-        sub: null // Indica que é um registro público, o UsersService cuidará do owner
-    };
-
-    const user = await this.usersService.create(createUserDto, newTenantContext);
+    const user = await this.usersService.create(createUserDto, registrationContext);
 
     await this.usersService.setVerificationData(user.id, code, expires);
 
     try {
       await this.mailerService.sendMail({
-      to: user.email,
+      to: user.email as string,
       subject: 'Seu código de verificação',
       text: `Olá ${user.name}, seu código de verificação é: ${code}.`,
     });
 
   } catch (mailError: any) {
-       console.error('Falha ao enviar e-mail HostGator, mas cadastro OK:', mailError.message);
+       console.error('Falha ao enviar e-mail HostGator:', mailError.message);
+       // Se o e-mail for rejeitado por caixa inexistente (550), informamos o erro
+       if (mailError.message.includes('550') || mailError.message.includes('Mailbox does not exist')) {
+           throw new BadRequestException('Não foi possível enviar o e-mail de verificação. Verifique se o endereço está correto ou se a caixa de entrada existe.');
+       }
   }
 
-  return user.email; // O servidor vai responder 201 agora!
+  return user.email as string;
     
 }
   async verifyEmailCode(email: string, code: string): Promise<{ message: string }> {
@@ -114,15 +148,19 @@ export class AuthService {
         throw new UnauthorizedException('Por favor, verifique seu e-mail antes de acessar o sistema.');
       }
 
+      // Escolhe o workspace ativo (por enquanto o primeiro da lista)
+      const activeMembership = user.memberships && user.memberships.length > 0 ? user.memberships[0] : null;
+
       const payload = { 
           sub: user.id, 
           name: user.name, 
           email: user.email, 
-          role: user.role?.name || 'usuario',
+          username: user.username,
+          role: activeMembership?.role?.name || 'usuario',
           ownerId: user.ownerId,
-          tenantId: user.tenantId,
+          tenantId: activeMembership?.tenantId || null,
           isSuperAdmin: user.isSuperAdmin,
-          picture: user.profile?.profilePictureUrl
+          picture: activeMembership?.profile?.profilePictureUrl || user.profilePictureUrl
       };
       
       const token = await this.jwtService.signAsync(payload);
@@ -142,7 +180,6 @@ export class AuthService {
     try {
       const { token, accessToken } = loginDto;
       
-      // Valida o token com o servidor do Google
       const ticket = await this.googleClient.verifyIdToken({
         idToken: token,
         audience: process.env.GOOGLE_CLIENT_ID,
@@ -153,64 +190,129 @@ export class AuthService {
         throw new UnauthorizedException('Token do Google inválido');
       }
 
-      // Busca o usuário no banco (pelo e-mail que o Google garantiu que é dele)
       let user = await this.usersService.findByEmail(payloadGoogle.email);
 
-      // Se o usuário não existe, faz o "Silent Registration"
       if (!user) {
+        let tenantId: string | null = null;
+        let roleId: string | null = null;
+
+        if (loginDto.invitationToken) {
+            try {
+                const invitation = await this.teamService.resolveInvitation(loginDto.invitationToken);
+                tenantId = invitation.tenantId;
+                roleId = invitation.roleId;
+            } catch (error) {
+                console.warn(`[AuthService Google] Convite inválido: ${loginDto.invitationToken}`);
+            }
+        }
+
+        if (!roleId) {
+            const adminRole = await this.rolesService.findOneByName('administrador');
+            if (!adminRole) {
+                throw new InternalServerErrorException('Configuração de sistema incompleta: Role administrador não encontrada.');
+            }
+            roleId = adminRole.id;
+        }
+
         const newUserContext = {
-            tenantId: uuidv4(),
+            tenantId: tenantId, // Se null, criará um pessoal
             sub: null
         };
         
-        user = await this.usersService.create({
-          email: payloadGoogle.email,
-          name: payloadGoogle.name || 'Usuário Google',
-          password: Math.random().toString(36).slice(-10), // Senha aleatória "dummy"
-        }, newUserContext, payloadGoogle.picture);
+        try {
+            user = await this.usersService.create({
+              email: payloadGoogle.email,
+              name: payloadGoogle.name || 'Usuário Google',
+              password: Math.random().toString(36).slice(-10),
+              roleId: roleId
+            }, newUserContext, payloadGoogle.picture);
 
-        // Como o Google já validou o e-mail, marcamos como verificado direto
-        await this.usersService.markEmailAsVerified(user.id);
+            await this.usersService.markEmailAsVerified(user.id);
+        } catch (error: any) {
+            // Se falhar por e-mail já existente, significa que outra requisição paralela criou o usuário
+            if (error.message?.includes('já existe') || error.detail?.includes('already exists')) {
+                user = await this.usersService.findByEmail(payloadGoogle.email);
+            } else {
+                throw error;
+            }
+        }
         
-        // Recarrega o usuário para pegar as roles/relações corretamente
+        // Recarrega as relações completas após criação ou recuperação paralela
         user = await this.usersService.findByEmail(payloadGoogle.email);
       } else {
-          // Se o usuário já existe, sincroniza o perfil e o avatar
-          let profile = await this.profilesService.findByUserId(user.id);
-          if (!profile) {
-              profile = await this.profilesService.create({
-                  userId: user.id,
-                  ownerId: user.ownerId!,
-                  tenantId: user.tenantId!,
-                  profilePictureUrl: payloadGoogle.picture
-              });
-          } else if (payloadGoogle.picture && profile.profilePictureUrl !== payloadGoogle.picture) {
-              // Sincroniza a foto do Google caso ela tenha mudado ou estivesse vazia
-              await this.profilesService.update(user.id, { profilePictureUrl: payloadGoogle.picture });
+          // O usuário já existe no banco (pode ter sido criado como lead ou já ter conta).
+          
+          // Atualiza a foto se necessário
+          if (payloadGoogle.picture && user.profilePictureUrl !== payloadGoogle.picture) {
+              await this.usersService.updateProfilePicture(user.id, payloadGoogle.picture);
+              user.profilePictureUrl = payloadGoogle.picture;
           }
 
-          // Se o usuário já existe mas não tem Tag (correção de botão sumido)
-          if (!user.tags || user.tags.length === 0) {
-              await this.usersService.ensureHasDefaultTag(user);
+          // Se ele tiver convite pendente, tentamos resolver
+          if (loginDto.invitationToken) {
+              try {
+                  const invitation = await this.teamService.resolveInvitation(loginDto.invitationToken);
+                  const alreadyMember = user.memberships?.some(m => m.tenantId === invitation.tenantId);
+                  if (!alreadyMember) {
+                      await this.usersService.createMembershipForUser(user.id, invitation.tenantId, invitation.roleId);
+                  }
+              } catch (error) {
+                  console.warn(`[AuthService Google] Convite inválido ou expirado no fluxo de conta existente: ${loginDto.invitationToken}`);
+              }
           }
-
-          // RECARREGA O USUÁRIO para garantir que o profile (e a nova foto) 
-          // entrem no payload do JWT abaixo
-          user = await this.usersService.findByEmail(payloadGoogle.email);
       }
+
       if (!user) {
         throw new InternalServerErrorException('Erro ao processar ou criar usuário via Google');
       }
-      // Gera o JWT com o MESMO payload do seu login por senha
+
+      // PARADIGMA GOOGLE DRIVE (Unificado para Novos e Existentes):
+      // Todo usuário que faz login no sistema DEVE ter o seu próprio Workspace (Tenant Solo) onde ele é o dono (ownerId).
+      // A verificação checa o tenant.ownerId (escritura no banco) em vez de profile.ownerId,
+      // porque profiles podem ser null em memberships 'contato' vindas de sync cruzado.
+      const hasPersonalWorkspace = user?.ownerId === user?.id && user?.memberships?.some(m => m.tenant?.ownerId === user?.id);
+      
+      if (!hasPersonalWorkspace) {
+          console.log(`[AuthService Google] Provisionando workspace pessoal para: ${user.email}`);
+          user = await this.usersService.provisionPersonalWorkspace(user);
+      } else {
+          console.log(`[AuthService Google] Usuário já possui workspace pessoal: ${user.email}`);
+          // Apenas recarrega para garantir que as relações de memberships e profiles estejam frescas
+          user = await this.usersService.findByEmail(payloadGoogle.email);
+      }
+
+      if (!user) {
+        throw new InternalServerErrorException('Erro fatal ao recuperar dados do usuário após provisionamento.');
+      }
+
+      // SELEÇÃO DO WORKSPACE ATIVO:
+      // Prioriza o workspace pessoal do usuário (slug `ws-{userId}`) sobre outros workspaces.
+      // Isso garante que ao logar, o usuário sempre veja seu próprio espaço como padrão,
+      // mesmo que haja múltiplos tenants com ownerId === user.id (ex: TIWEB seed + pessoal).
+      const validWorkspaces = await this.membershipsService.findTeamWorkspacesByUser(user.id);
+      // Ordena: personal workspace (slug ws-{userId}) primeiro, depois por createdAt
+      const sorted = validWorkspaces.sort((a, b) => {
+          const aIsPersonal = a.tenant?.slug?.startsWith(`ws-${user.id}`);
+          const bIsPersonal = b.tenant?.slug?.startsWith(`ws-${user.id}`);
+          if (aIsPersonal && !bIsPersonal) return -1;
+          if (!aIsPersonal && bIsPersonal) return 1;
+          return 0;
+      });
+      const personalWorkspace = sorted.find(m => m.tenant?.ownerId === user.id) || sorted[0];
+      const activeMembership = personalWorkspace;
+      
+      const finalPicture = activeMembership?.profile?.profilePictureUrl || user.profilePictureUrl || payloadGoogle.picture;
+
       const payload = { 
         sub: user.id, 
         name: user.name, 
         email: user.email, 
-        role: user.role?.name || 'USER', // Fallback caso a role demore a carregar
+        username: user.username,
+        role: activeMembership?.role?.name || 'usuario', 
         ownerId: user.ownerId,
-        tenantId: user.tenantId,
+        tenantId: activeMembership?.tenantId || null,
         isSuperAdmin: user.isSuperAdmin,
-        picture: user.profile?.profilePictureUrl
+        picture: finalPicture
       };
 
       return {
@@ -218,14 +320,22 @@ export class AuthService {
       };
 
     } catch (error: unknown) {
-        // 1. Verificamos se o erro é uma instância de Error para acessar .message
         const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-        
         console.error('[AuthService Google] Erro:', errorMessage);
-
-        // 2. Lançamos a exceção do NestJS
         throw new UnauthorizedException('Falha na autenticação com Google');
     }
+  }
+
+  async getMyWorkspaces(userId: string) {
+    const workspaces = await this.membershipsService.findTeamWorkspacesByUser(userId);
+    const user = await this.usersService.findById(userId);
+    
+    // Para identificar se é "Dono" do workspace, verificamos se o ownerId do perfil é igual ao userId
+    // Fallback: Verifica se o nome do tenant foi gerado automaticamente com o nome do usuário (Workspace Pessoal)
+    return workspaces.map(ws => ({
+        ...ws,
+        isOwner: ws.profile?.ownerId === userId || (user && ws.tenant.name.startsWith(user.name))
+    }));
   }
 
 }

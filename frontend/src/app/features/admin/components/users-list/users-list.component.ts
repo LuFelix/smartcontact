@@ -11,6 +11,7 @@ import { MatCardModule } from '@angular/material/card';
 // Importe seu modelo de User e AuthService
 import { User, Phone, Tag } from '../../../shared/models/users.models'; 
 import { AuthService } from '../../../../core/services/auth.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-users-list',
@@ -37,6 +38,8 @@ export class UsersListComponent {
   @Output() editUser = new EventEmitter<User>();
   @Output() deleteUser = new EventEmitter<User>();
   @Output() toggleFavoriteAction = new EventEmitter<User>();
+  @Output() promoteUser = new EventEmitter<User>();
+  @Output() demoteUser = new EventEmitter<User>();
 
   public authService = inject(AuthService);
 
@@ -62,6 +65,81 @@ export class UsersListComponent {
     if (!user.tags || user.tags.length === 0) return null;
     const activeTag = user.tags.find((t: Tag) => t.isActive);
     return activeTag ? activeTag.uuid : user.tags[0].uuid;
+  }
+
+  getTagHandle(user: User): string | null {
+    if (!user.tags || user.tags.length === 0) return null;
+    const activeTag = user.tags.find((t: Tag) => t.isActive);
+    return (activeTag || user.tags[0]).handle || null;
+  }
+
+  getPublicLinkIdentifier(user: User): string | null {
+    const handle = this.getTagHandle(user);
+    if (handle) return handle;
+    if (user.username) return user.username;
+    return this.getTagUuid(user);
+  }
+
+  getAvatar(user: User): string | null {
+    // Busca a foto em todas as propriedades possíveis, validando se o valor é preenchido
+    const url = (user.profile?.profilePictureUrl && user.profile.profilePictureUrl.length > 5) ? user.profile.profilePictureUrl :
+                (user.profilePictureUrl && user.profilePictureUrl.length > 5) ? user.profilePictureUrl :
+                ((user as any).picture && (user as any).picture.length > 5) ? (user as any).picture : null;
+    
+    if (url) {
+      if (url.startsWith('http')) return url;
+      const baseUrl = environment.apiUrl.replace('/api', '');
+      return `${baseUrl}/${url}`;
+    }
+    return null;
+  }
+
+  handleImageError(event: any): void {
+      // Oculta a imagem se falhar o carregamento para revelar a letra no fundo
+      event.target.classList.add('img-hidden');
+  }
+
+  getInitial(name: string): string {
+      return name ? name.trim().charAt(0).toUpperCase() : '?';
+  }
+
+  getAvatarColor(name: string): string {
+    if (!name) return '#757575';
+    const colors = [
+      '#F44336', '#E91E63', '#9C27B0', '#673AB7', '#3F51B5',
+      '#2196F3', '#03A9F4', '#00BCD4', '#009688', '#4CAF50',
+      '#8BC34A', '#CDDC39', '#FFC107', '#FF9800', '#FF5722'
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
+  }
+
+  isContact(user: User): boolean {
+    return user.role?.name?.toLowerCase() === 'contato';
+  }
+
+  isUserRole(user: User): boolean {
+    return user.role?.name?.toLowerCase() === 'usuario';
+  }
+
+  isTeamMember(user: User): boolean {
+    return user.role?.name?.toLowerCase() !== 'contato';
+  }
+
+  /**
+   * 3. VISIBILIDADE DO PERFIL
+   * Só mostramos o link se for um usuário real (com profile) e possuir tags.
+   */
+  canViewPublicProfile(user: User): boolean {
+    // Se não tem profile, não tem o que ver publicamente.
+    if (!user.profile) return false;
+    
+    // Além do profile, precisa ter Tags vinculadas.
+    return !!(user.tags && user.tags.length > 0) || !!user.username;
   }
 
   getMainAddressInfo(user: User): { neighborhood: string, cityState: string } | null {

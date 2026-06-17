@@ -13,10 +13,17 @@ COMANDOS_UTEIS.md
 issues-enviar.smartcontact.js
 issues-ler.smartcontact.js
 issues-editar.smartcontact.js
+issues-editar-lote.smartcontact.js
 issues-todo.json
 issues-fechar.smartcontact.js
 issues-ler.smartcontact.js
 issues-todo.json
+issues-numerar.json
+plano.md
+clean-test-users.sh
+manual-protocolos.md
+GEMINI.md
+DOCUMENTACAO_ARQUITETURA.md
 
 /.docs/generated_plans
 

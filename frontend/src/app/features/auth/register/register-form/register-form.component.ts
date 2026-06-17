@@ -15,6 +15,7 @@ import { NgxMaskDirective } from 'ngx-mask';
 
 // Substitua pelo caminho real do seu AuthService
 import { AuthService } from '../../../../core/services/auth.service';
+import { TeamService } from '../../../../core/services/team.service';
 import { RegistrationData } from '../../../shared/models/auth.model';
 @Component({
   selector: 'app-register-form',
@@ -33,6 +34,7 @@ import { RegistrationData } from '../../../shared/models/auth.model';
 })
 export class RegisterFormComponent {
   private readonly authService = inject(AuthService);
+  private readonly teamService = inject(TeamService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly fb = inject(FormBuilder);
   private router = inject(Router);
@@ -77,23 +79,27 @@ export class RegisterFormComponent {
 
     this.isSubmitting.set(true);
     const rawData = this.form.getRawValue();
+    const invitationToken = sessionStorage.getItem('pending_invitation_token');
 
     const registrationData: RegistrationData = {
       name: `${rawData.firstName} ${rawData.lastName}`.trim(),
       email: rawData.email,
-      password: rawData.password
-    };
+      password: rawData.password,
+      invitationToken: invitationToken || undefined
+    } as any;
 
     this.authService.register(registrationData)
       .pipe(finalize(() => this.isSubmitting.set(false)))
       .subscribe({
         next: () => {
           this.registeredEmail.set(registrationData.email);
-          this.isRegistered.set(true);
+          this.isRegistered.set(true); // Isso deve habilitar o formulário de código de verificação no HTML
+          this.snackBar.open('Cadastro realizado! Enviamos um código para seu e-mail.', 'OK', { duration: 5000 });
         },
         error: (err) => {
           console.error(err);
-          this.snackBar.open(err.error?.message || 'Erro ao realizar cadastro.', 'Fechar', { duration: 5000 });
+          const msg = err.error?.message || 'Erro ao realizar cadastro.';
+          this.snackBar.open(msg, 'Fechar', { duration: 7000 });
         }
       });
   }
@@ -121,10 +127,39 @@ export class RegisterFormComponent {
   // 2. Chama o serviço (IMPORTANTE: precisa do .subscribe)
   this.authService.verifyEmailCode({ email: this.registeredEmail(), code }).subscribe({
     next: (response) => {
-      // Sucesso!
-      this.isSubmitting.set(false);
-      this.snackBar.open('Conta verificada com sucesso! Redirecionando...', 'OK', { duration: 3000 });
-      this.router.navigate(['/login']);
+      // Sucesso na verificação!
+      this.snackBar.open('Conta verificada com sucesso! Autenticando...', 'OK', { duration: 3000 });
+      
+      // Realizar login automático para poder aceitar o convite
+      const rawData = this.form.getRawValue();
+      this.authService.login({ identifier: rawData.email, password: rawData.password }).subscribe({
+        next: () => {
+          const pendingToken = sessionStorage.getItem('pending_invitation_token');
+          if (pendingToken) {
+            this.teamService.acceptInvitation(pendingToken).subscribe({
+              next: () => {
+                sessionStorage.removeItem('pending_invitation_token');
+                this.snackBar.open('Bem-vindo à sua nova equipe!', 'Sucesso', { duration: 3000 });
+                this.isSubmitting.set(false);
+                this.router.navigate(['/app/dashboard']);
+              },
+              error: (err) => {
+                console.error('Erro ao aceitar convite pós-cadastro:', err);
+                this.isSubmitting.set(false);
+                this.router.navigate(['/app/dashboard']); // Vai pro dashboard mesmo se o convite falhar
+              }
+            });
+          } else {
+            this.isSubmitting.set(false);
+            this.router.navigate(['/app/dashboard']);
+          }
+        },
+        error: (err) => {
+          console.error('Erro no login automático:', err);
+          this.isSubmitting.set(false);
+          this.router.navigate(['/login']);
+        }
+      });
     },
     error: (err) => {
       // Erro (Código inválido, expirado, etc)

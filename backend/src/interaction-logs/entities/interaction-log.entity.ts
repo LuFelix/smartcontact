@@ -1,4 +1,5 @@
 import { Tag } from 'src/tags/entities/tag.entity';
+import { User } from 'src/users/entities/user.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -46,6 +47,13 @@ export class InteractionLog {
   @Column({ type: 'varchar', name: 'lead_note', length: 50, nullable: true })
   leadNote!: string | null;
 
+  @ManyToOne(() => User, { nullable: true })
+  @JoinColumn({ name: 'captured_by_user_id' })
+  capturedByUser!: User | null;
+
+  @Column({ type: 'uuid', name: 'captured_by_user_id', nullable: true })
+  capturedByUserId!: string | null;
+
   @Column({ type: 'varchar', name: 'ip_address', nullable: true })
   ipAddress!: string | null;
 
@@ -57,6 +65,12 @@ export class InteractionLog {
 
   @Column({ type: 'varchar', name: 'browser', nullable: true })
   browser!: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  source!: string | null;
+
+  @Column({ type: 'uuid', name: 'tenant_id', nullable: true })
+  tenantId!: string | null;
 
   @CreateDateColumn({ name: 'accessed_at' })
   accessedAt!: Date;

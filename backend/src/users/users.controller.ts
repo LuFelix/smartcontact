@@ -1,4 +1,4 @@
-import { Body, Controller, Get, NotFoundException, Param, Patch, UseGuards, Delete, Query, ParseUUIDPipe, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, NotFoundException, Param, Patch, UseGuards, Delete, Query, ParseUUIDPipe, Post, Req, Put } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -41,6 +41,17 @@ export class UsersController {
         return this.usersService.findAll(page, limit, name, email, cpf, currentUser);
     }
 
+    @Delete(':id/team')
+    @Roles('administrador')
+    @ApiOperation({ summary: 'Remover usuário da equipe (mantém no fichário)' })
+    @ApiParam({ name: 'id', type: String })
+    async demoteFromTeam(
+        @Param('id', ParseUUIDPipe) id: string,
+        @GetUser() currentUser: any
+    ) {
+        return this.usersService.demoteFromTeam(id, currentUser);
+    }
+
     @Delete(':id')
     @Roles('administrador')
     @ApiOperation({ summary: 'Deletar um usuário (Apenas Admin)' })
@@ -77,4 +88,40 @@ export class UsersController {
         return this.usersService.update(id, updateUserDto, currentUser); 
     }
 
+    @Post(':id/promote')
+    @Roles('administrador')
+    @ApiOperation({ summary: 'Promover contato para membro da equipe' })
+    @ApiParam({ name: 'id', type: String })
+    @ApiBody({ schema: { type: 'object', properties: { roleId: { type: 'string' }, email: { type: 'string' } } } })
+    async promoteToTeam(
+        @Param('id', ParseUUIDPipe) id: string,
+        @Body('roleId') roleId: string,
+        @Body('email') email: string,
+        @GetUser() currentUser: any
+    ) {
+        return this.usersService.promoteToTeam(id, roleId, currentUser, email);
+    }
+
+    @Get(':id/tags')
+    @ApiOperation({ summary: 'Listar IDs das tags/recursos delegados a um usuário no workspace atual' })
+    @ApiParam({ name: 'id', type: String })
+    async getUserTags(
+        @Param('id', ParseUUIDPipe) id: string,
+        @GetUser() currentUser: any
+    ) {
+        return this.usersService.getUserTags(id, currentUser);
+    }
+
+    @Put(':id/tags')
+    @Roles('administrador')
+    @ApiOperation({ summary: 'Atualizar tags/recursos delegados a um usuário no workspace atual em lote' })
+    @ApiParam({ name: 'id', type: String })
+    @ApiBody({ schema: { type: 'array', items: { type: 'string' } } })
+    async updateUserTags(
+        @Param('id', ParseUUIDPipe) id: string,
+        @Body() tagIds: string[],
+        @GetUser() currentUser: any
+    ) {
+        return this.usersService.updateUserTags(id, tagIds, currentUser);
+    }
 }

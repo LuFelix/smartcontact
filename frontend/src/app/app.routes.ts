@@ -17,6 +17,15 @@ export const routes: Routes = [
     { path: '', component: LandingPage, pathMatch: 'full' }, // Rota raiz pública (Corrigido pathMatch)
     // Rota para Acesso Negado
     { path: 'unauthorized', component: UnauthorizedComponent },
+
+    // Rota para Convites (Join)
+    {
+        path: 'join/:token',
+        loadComponent: () =>
+        import('./features/auth/pages/join-page/join-page.component')
+            .then(m => m.JoinPageComponent),
+        title: 'SmartContact - Entrar na Equipe'
+    },
     
     // Rota para Perfil Público (Mini-site via Tag)
     {
@@ -69,6 +78,25 @@ export const routes: Routes = [
                 canActivate: [roleGuard],
                 data: { roles: ['administrador'] },
                 title: 'SmartContact - Gestão de Roles'
+            },
+            {
+                path: 'team',
+                loadComponent: () => import('./features/admin/pages/team-manager/team-manager').then(m => m.TeamManagerComponent),
+                canActivate: [roleGuard],
+                data: { roles: ['administrador'] },
+                title: 'SmartContact - Gestão de Equipe'
+            },
+            {
+                path: 'tags',
+                loadComponent: () => import('./features/admin/pages/tag-manager/tag-manager.component').then(m => m.TagManagerComponent),
+                canActivate: [authGuard],
+                title: 'SmartContact - Gestão de Tags'
+            },
+            {
+                path: 'my-tags',
+                loadComponent: () => import('./features/users/pages/my-tags/my-tags.component').then(m => m.MyTagsComponent),
+                canActivate: [authGuard],
+                title: 'SmartContact - Meus Recursos'
             },
             {
                 path: 'leads',

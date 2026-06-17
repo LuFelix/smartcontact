@@ -1,8 +1,16 @@
-<h2 mat-dialog-title>
-    {{ data.isCreation ? 'Novo Usuário' : 'Detalhes do Usuário' }}
-    @if (!data.isCreation && userForm.get('name')?.value) {
-        <span class="user-title-name">: {{ userForm.get('name')?.value }}</span>
-    }
+<h2 mat-dialog-title class="flex items-center gap-3">
+    <div class="header-avatar" [style.background-color]="getAvatarColor()">
+        @if (getAvatar(); as avatarUrl) {
+            <img [src]="avatarUrl" (error)="handleImageError($event)" referrerpolicy="no-referrer">
+        }
+        <span class="letter-placeholder">{{ getInitial() }}</span>
+    </div>
+    <div class="flex flex-col">
+        <span>{{ data.isCreation ? 'Novo Usuário' : 'Detalhes do Usuário' }}</span>
+        @if (!data.isCreation && userForm.get('name')?.value) {
+            <span class="user-title-name">{{ userForm.get('name')?.value }}</span>
+        }
+    </div>
 </h2>
 
 <mat-dialog-content class="dialog-content">
@@ -18,323 +26,402 @@
 
         <form [formGroup]="userForm" class="config-form" autocomplete="off">
             
-            <!-- SEÇÃO 0: CONFIGURAÇÕES DA TAG (Se existir) -->
-            @if (userForm.get('tagSettings.id')?.value) {
-                <mat-card class="section-card tag-management-section">
-                    <mat-card-header class="header-with-action">
-                        <div class="header-inner">
-                            <mat-card-title>Configurações da Tag NFC</mat-card-title>
-                            <a mat-stroked-button color="primary" [routerLink]="['/t', user?.tags?.[0]?.uuid]" target="_blank" (click)="$event.stopPropagation()">
-                                <mat-icon>visibility</mat-icon> Ver Perfil
-                            </a>
-                        </div>
-                    </mat-card-header>
-                    <mat-card-content>
-                        <div formGroupName="tagSettings" class="tag-settings-grid" style="padding: 10px 20px;">
-                            <mat-form-field appearance="outline">
-                                <mat-label>Modo de Redirecionamento</mat-label>
-                                <mat-select formControlName="redirectMode">
-                                    @for (mode of redirectModes; track mode.value) {
-                                        <mat-option [value]="mode.value">{{ mode.label }}</mat-option>
-                                    }
-                                </mat-select>
-                            </mat-form-field>
+            <mat-tab-group color="primary">
+                
+                <!-- TAB 1: GERAL -->
+                <mat-tab label="Geral">
+                    <div class="tab-padding">
+                        <!-- SEÇÃO 1: INFORMAÇÕES BÁSICAS -->
+                        <mat-card class="section-card no-shadow">
+                            <mat-card-header>
+                                <mat-card-title>Informações Pessoais</mat-card-title>
+                            </mat-card-header>
 
-                            @if (userForm.get('tagSettings.redirectMode')?.value === 'CUSTOM_URL') {
+                            <mat-card-content class="config-fields">
+                                <mat-form-field appearance="outline" class="md:col-span-2">
+                                    <mat-label>Nome Completo</mat-label>
+                                    <input matInput formControlName="name" placeholder="Ex: João da Silva" autocomplete="off">
+                                </mat-form-field>
+
                                 <mat-form-field appearance="outline">
-                                    <mat-label>URL Personalizada</mat-label>
-                                    <input matInput formControlName="customUrl" placeholder="https://exemplo.com">
-                                </mat-form-field>
-                            }
-                        </div>
-                    </mat-card-content>
-                </mat-card>
-            }
-
-            <!-- SEÇÃO 1: INFORMAÇÕES BÁSICAS -->
-            <mat-card class="section-card">
-                <mat-card-header>
-                    <mat-card-title>Informações Pessoais</mat-card-title>
-                </mat-card-header>
-
-                <mat-card-content class="config-fields">
-                    <mat-form-field appearance="outline" class="md:col-span-2">
-                        <mat-label>Nome Completo</mat-label>
-                        <input matInput formControlName="name" placeholder="Ex: João da Silva" autocomplete="off">
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline">
-                        <mat-label>CPF</mat-label>
-                        <input matInput formControlName="cpf" mask="000.000.000-00" placeholder="000.000.000-00" autocomplete="off">
-                    </mat-form-field>
-
-                    <mat-form-field appearance="outline">
-                        <mat-label>E-mail de Login</mat-label>
-                        <input matInput formControlName="email" type="email" autocomplete="off" [readonly]="!data.isCreation">
-                        @if (!data.isCreation) {
-                            <mat-icon matSuffix matTooltip="E-mail principal de acesso (Protegido).">lock</mat-icon>
-                        }
-                    </mat-form-field>
-
-                    @if (data.isCreation) {
-                        <mat-form-field appearance="outline" class="md:col-span-2">
-                            <mat-label>Senha Inicial</mat-label>
-                            <input matInput formControlName="password" type="password" autocomplete="new-password">
-                        </mat-form-field>
-                    }
-                </mat-card-content>
-            </mat-card>
-
-            <!-- SEÇÃO 2: E-MAILS ADICIONAIS -->
-            <mat-card class="section-card">
-                <mat-card-header class="header-with-action">
-                    <div class="header-inner">
-                        <mat-card-title>E-mails Adicionais</mat-card-title>
-                        <button type="button" mat-stroked-button color="primary" (click)="addSecondaryEmail()" class="add-btn">
-                            <span class="button-content-wrapper">
-                                <mat-icon>add</mat-icon> Adicionar
-                            </span>
-                        </button>
-                    </div>
-                </mat-card-header>
-
-                <mat-card-content>
-                    <div formArrayName="secondaryEmails" class="array-container">
-                        @for (email of secondaryEmails.controls; track $index) {
-                            <div [formGroupName]="$index" class="array-item-row">
-                                <mat-form-field appearance="outline" class="flex-grow">
-                                    <mat-label>E-mail Secundário</mat-label>
-                                    <input matInput formControlName="address" placeholder="outro@email.com" autocomplete="off" class="focus-target-email">
+                                    <mat-label>CPF</mat-label>
+                                    <input matInput formControlName="cpf" mask="000.000.000-00" placeholder="000.000.000-00" autocomplete="off">
                                 </mat-form-field>
 
-                                <div class="item-actions">
-                                    <button type="button" mat-icon-button 
-                                            class="icon-align-fix"
-                                            color="default"
-                                            (click)="setMainEmail($index)"
-                                            matTooltip="Tornar este o e-mail de login">
-                                        <mat-icon>swap_horiz</mat-icon>
-                                    </button>
-                                    <button type="button" mat-icon-button color="warn" class="icon-align-fix" (click)="removeSecondaryEmail($index)">
-                                        <mat-icon>delete_outline</mat-icon>
-                                    </button>
-                                </div>
-                            </div>
-                        } @empty {
-                            <p class="empty-msg">Nenhum e-mail adicional cadastrado.</p>
-                        }
-                    </div>
-                </mat-card-content>
-            </mat-card>
-
-            <!-- SEÇÃO 3: TELEFONES (FormArray) -->
-            <mat-card class="section-card">
-                <mat-card-header class="header-with-action">
-                    <div class="header-inner">
-                        <mat-card-title>Contatos Telefônicos</mat-card-title>
-                        <button type="button" mat-stroked-button color="primary" (click)="addPhone()" class="add-btn">
-                            <span class="button-content-wrapper">
-                                <mat-icon>add</mat-icon> Adicionar
-                            </span>
-                        </button>
-                    </div>
-                </mat-card-header>
-
-                <mat-card-content>
-                    <div formArrayName="phones" class="array-container">
-                        @for (phone of phones.controls; track $index) {
-                            <div [formGroupName]="$index" class="array-item-row">
-                                <mat-form-field appearance="outline" class="flex-grow">
-                                    <mat-label>Telefone / Celular</mat-label>
-                                    <input matInput formControlName="phoneNumber" mask="(00) 00000-0000" [dropSpecialCharacters]="true" placeholder="(00) 00000-0000" autocomplete="off" class="focus-target-phone">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>E-mail de Login</mat-label>
+                                    <input matInput formControlName="email" type="email" autocomplete="off" [readonly]="!data.isCreation">
+                                    @if (!data.isCreation) {
+                                        <mat-icon matSuffix matTooltip="E-mail principal de acesso (Protegido).">lock</mat-icon>
+                                    }
                                 </mat-form-field>
 
-                                <div class="item-actions">
-                                    <div class="toggle-with-label">
-                                        <mat-slide-toggle formControlName="isWhatsapp">
-                                            <mat-icon [color]="phone.get('isWhatsapp')?.value ? 'primary' : 'disabled'" class="whatsapp-status-icon">
-                                                {{ phone.get('isWhatsapp')?.value ? 'chat' : 'chat_bubble_outline' }}
-                                            </mat-icon>
-                                        </mat-slide-toggle>
-                                    </div>
+                                @if (data.isCreation) {
+                                    <mat-form-field appearance="outline" class="md:col-span-2">
+                                        <mat-label>Senha Inicial</mat-label>
+                                        <input matInput formControlName="password" type="password" autocomplete="new-password">
+                                    </mat-form-field>
+                                }
+                            </mat-card-content>
+                        </mat-card>
 
-                                    <button type="button" mat-icon-button 
-                                            class="icon-align-fix"
-                                            [color]="phone.get('isMain')?.value ? 'warn' : 'default'"
-                                            (click)="setMainPhone($index)"
-                                            matTooltip="Marcar como Principal">
-                                        <mat-icon>{{ phone.get('isMain')?.value ? 'star' : 'star_outline' }}</mat-icon>
-                                    </button>
-
-                                    <button type="button" mat-icon-button color="warn" class="icon-align-fix" (click)="removePhone($index)">
-                                        <mat-icon>delete_outline</mat-icon>
-                                    </button>
-                                </div>
-                            </div>
-                        } @empty {
-                            <p class="empty-msg">Nenhum telefone cadastrado.</p>
-                        }
-                    </div>
-                </mat-card-content>
-            </mat-card>
-
-            <!-- SEÇÃO 4: LINKS E REDES SOCIAIS (FormArray) -->
-            <mat-card class="section-card">
-                <mat-card-header class="header-with-action">
-                    <div class="header-inner">
-                        <mat-card-title>Links e Redes Sociais</mat-card-title>
-                        <button type="button" mat-stroked-button color="primary" (click)="addLink()" class="add-btn">
-                            <span class="button-content-wrapper">
-                                <mat-icon>link</mat-icon> Adicionar
-                            </span>
-                        </button>
-                    </div>
-                </mat-card-header>
-
-                <mat-card-content>
-                    <div formArrayName="links" class="array-container">
-                        @for (link of links.controls; track $index) {
-                            <div [formGroupName]="$index" class="array-item-row">
-                                <mat-form-field appearance="outline" style="width: 150px;">
-                                    <mat-label>Título</mat-label>
-                                    <input matInput formControlName="title" placeholder="Ex: Instagram" class="focus-target-link">
-                                </mat-form-field>
-
-                                <mat-form-field appearance="outline" class="flex-grow">
-                                    <mat-label>URL</mat-label>
-                                    <input matInput formControlName="url" placeholder="https://...">
-                                </mat-form-field>
-
-                                <div class="item-actions">
-                                    <button type="button" mat-icon-button color="warn" class="icon-align-fix" (click)="removeLink($index)">
-                                        <mat-icon>delete_outline</mat-icon>
-                                    </button>
-                                </div>
-                            </div>
-                        } @empty {
-                            <p class="empty-msg">Nenhum link cadastrado.</p>
-                        }
-                    </div>
-                </mat-card-content>
-            </mat-card>
-
-            <!-- SEÇÃO 5: ENDEREÇOS (FormArray) -->
-            <mat-card class="section-card">
-                <mat-card-header class="header-with-action">
-                    <div class="header-inner">
-                        <mat-card-title>Endereços</mat-card-title>
-                        <button type="button" mat-stroked-button color="primary" (click)="addAddress()" class="add-btn">
-                            <span class="button-content-wrapper">
-                                <mat-icon>add_location</mat-icon> Adicionar
-                            </span>
-                        </button>
-                    </div>
-                </mat-card-header>
-
-                <mat-card-content>
-                    <div formArrayName="addresses" class="array-container">
-                        @for (address of addresses.controls; track $index) {
-                            <div [formGroupName]="$index" class="address-item-block">
-                                <div class="address-header">
-                                    <mat-form-field appearance="outline" class="tag-select">
-                                        <mat-select formControlName="tag">
-                                            @for (tag of addressTags; track tag) {
-                                                <mat-option [value]="tag">{{ addressTagLabels[tag] }}</mat-option>
+                        <!-- SEÇÃO 6: STATUS E PERMISSÕES -->
+                        <mat-card class="section-card no-shadow">
+                            <mat-card-header>
+                                <mat-card-title>Configurações de Acesso</mat-card-title>
+                            </mat-card-header>
+                            
+                            <mat-card-content class="status-permissions-content">
+                                <div class="flex flex-col gap-6" style="padding: 0 20px 20px;">
+                                    <mat-form-field appearance="outline" class="w-full">
+                                        <mat-label>Função (Role)</mat-label>
+                                        <mat-select [formControl]="roleIdControl"> 
+                                            @for (role of availableRoles$ | async; track role.id) {
+                                                <mat-option [value]="role.id">{{ role.name }}</mat-option>
                                             }
                                         </mat-select>
                                     </mat-form-field>
                                     
-                                    <span class="spacer"></span>
+                                    <div class="status-container">
+                                        <div class="toggle-row">
+                                            <mat-slide-toggle formControlName="isActive" color="primary"> 
+                                                <span class="toggle-label">Usuário Ativo</span>
+                                            </mat-slide-toggle>
+                                        </div>
+                                    </div>
+                                </div>
+                            </mat-card-content>
+                        </mat-card>
+                    </div>
+                </mat-tab>
 
-                                    <button type="button" mat-icon-button 
-                                            class="icon-align-fix"
-                                            [color]="address.get('isMain')?.value ? 'warn' : 'default'"
-                                            (click)="setMainAddress($index)"
-                                            matTooltip="Endereço Principal">
-                                        <mat-icon>{{ address.get('isMain')?.value ? 'home' : 'home_outline' }}</mat-icon>
-                                    </button>
-
-                                    <button type="button" mat-icon-button color="warn" class="icon-align-fix" (click)="removeAddress($index)">
-                                        <mat-icon>delete_outline</mat-icon>
+                <!-- TAB 2: CONTATOS -->
+                <mat-tab label="Contatos">
+                    <div class="tab-padding">
+                        <!-- SEÇÃO 3: TELEFONES (FormArray) -->
+                        <mat-card class="section-card no-shadow">
+                            <mat-card-header class="header-with-action">
+                                <div class="header-inner">
+                                    <mat-card-title>Contatos Telefônicos</mat-card-title>
+                                    <button type="button" mat-stroked-button color="primary" (click)="addPhone()" class="add-btn">
+                                        <span class="button-content-wrapper">
+                                            <mat-icon>add</mat-icon> Adicionar
+                                        </span>
                                     </button>
                                 </div>
+                            </mat-card-header>
 
-                                <div class="address-grid">
-                                    <!-- ORDEM CORRIGIDA: CEP -> Nº -> RUA -> BAIRRO -> COMPLEMENTO -> CIDADE -> UF -->
-                                    <mat-form-field appearance="outline">
-                                        <mat-label>CEP</mat-label>
-                                        <input matInput formControlName="zipCode" mask="00000-000" [dropSpecialCharacters]="true" placeholder="00000-000" class="focus-target-address">
-                                        @if (isFetchingCep[$index]) {
-                                            <mat-spinner matSuffix [diameter]="18"></mat-spinner>
-                                        }
-                                    </mat-form-field>
+                            <mat-card-content>
+                                <div formArrayName="phones" class="array-container">
+                                    @for (phone of phones.controls; track $index) {
+                                        <div [formGroupName]="$index" class="array-item-row">
+                                            <mat-form-field appearance="outline" class="flex-grow">
+                                                <mat-label>Telefone / Celular</mat-label>
+                                                <input matInput formControlName="phoneNumber" mask="(00) 00000-0000" [dropSpecialCharacters]="true" placeholder="(00) 00000-0000" autocomplete="off" class="focus-target-phone">
+                                            </mat-form-field>
 
-                                    <mat-form-field appearance="outline">
-                                        <mat-label>Nº Residência</mat-label>
-                                        <input matInput formControlName="streetNumber" autocomplete="off">
-                                    </mat-form-field>
+                                            <div class="item-actions">
+                                                <div class="toggle-with-label">
+                                                    <mat-slide-toggle formControlName="isWhatsapp">
+                                                        <mat-icon [color]="phone.get('isWhatsapp')?.value ? 'primary' : 'disabled'" class="whatsapp-status-icon">
+                                                            {{ phone.get('isWhatsapp')?.value ? 'chat' : 'chat_bubble_outline' }}
+                                                        </mat-icon>
+                                                    </mat-slide-toggle>
+                                                </div>
 
-                                    <mat-form-field appearance="outline" class="col-span-2">
-                                        <mat-label>Logradouro/Rua</mat-label>
-                                        <input matInput formControlName="street" autocomplete="off">
-                                    </mat-form-field>
-                                    
-                                    <mat-form-field appearance="outline">
-                                        <mat-label>Bairro</mat-label>
-                                        <input matInput formControlName="neighborhood" autocomplete="off">
-                                    </mat-form-field>
+                                                <button type="button" mat-icon-button 
+                                                        class="icon-align-fix"
+                                                        [color]="phone.get('isMain')?.value ? 'warn' : 'default'"
+                                                        (click)="setMainPhone($index)"
+                                                        matTooltip="Marcar como Principal">
+                                                    <mat-icon>{{ phone.get('isMain')?.value ? 'star' : 'star_outline' }}</mat-icon>
+                                                </button>
 
-                                    <mat-form-field appearance="outline">
-                                        <mat-label>Complemento</mat-label>
-                                        <input matInput formControlName="complement" autocomplete="off">
-                                    </mat-form-field>
-
-                                    <mat-form-field appearance="outline">
-                                        <mat-label>Cidade</mat-label>
-                                        <input matInput formControlName="city" autocomplete="off">
-                                    </mat-form-field>
-                                    
-                                    <mat-form-field appearance="outline">
-                                        <mat-label>UF</mat-label>
-                                        <input matInput formControlName="state" maxlength="2" autocomplete="off">
-                                    </mat-form-field>
+                                                <button type="button" mat-icon-button color="warn" class="icon-align-fix" (click)="removePhone($index)">
+                                                    <mat-icon>delete_outline</mat-icon>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    } @empty {
+                                        <p class="empty-msg">Nenhum telefone cadastrado.</p>
+                                    }
                                 </div>
-                                <mat-divider *ngIf="!$last"></mat-divider>
+                            </mat-card-content>
+                        </mat-card>
+
+                        <!-- SEÇÃO 2: E-MAILS ADICIONAIS -->
+                        <mat-card class="section-card no-shadow">
+                            <mat-card-header class="header-with-action">
+                                <div class="header-inner">
+                                    <mat-card-title>E-mails Adicionais</mat-card-title>
+                                    <button type="button" mat-stroked-button color="primary" (click)="addSecondaryEmail()" class="add-btn">
+                                        <span class="button-content-wrapper">
+                                            <mat-icon>add</mat-icon> Adicionar
+                                        </span>
+                                    </button>
+                                </div>
+                            </mat-card-header>
+
+                            <mat-card-content>
+                                <div formArrayName="secondaryEmails" class="array-container">
+                                    @for (email of secondaryEmails.controls; track $index) {
+                                        <div [formGroupName]="$index" class="array-item-row">
+                                            <mat-form-field appearance="outline" class="flex-grow">
+                                                <mat-label>E-mail Secundário</mat-label>
+                                                <input matInput formControlName="address" placeholder="outro@email.com" autocomplete="off" class="focus-target-email">
+                                            </mat-form-field>
+
+                                            <div class="item-actions">
+                                                <button type="button" mat-icon-button 
+                                                        class="icon-align-fix"
+                                                        color="default"
+                                                        (click)="setMainEmail($index)"
+                                                        matTooltip="Tornar este o e-mail de login">
+                                                    <mat-icon>swap_horiz</mat-icon>
+                                                </button>
+                                                <button type="button" mat-icon-button color="warn" class="icon-align-fix" (click)="removeSecondaryEmail($index)">
+                                                    <mat-icon>delete_outline</mat-icon>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    } @empty {
+                                        <p class="empty-msg">Nenhum e-mail adicional cadastrado.</p>
+                                    }
+                                </div>
+                            </mat-card-content>
+                        </mat-card>
+                    </div>
+                </mat-tab>
+
+                <!-- TAB 3: ENDEREÇOS -->
+                <mat-tab label="Endereços">
+                    <div class="tab-padding">
+                        <!-- SEÇÃO 5: ENDEREÇOS (FormArray) -->
+                        <mat-card class="section-card no-shadow">
+                            <mat-card-header class="header-with-action">
+                                <div class="header-inner">
+                                    <mat-card-title>Endereços</mat-card-title>
+                                    <button type="button" mat-stroked-button color="primary" (click)="addAddress()" class="add-btn">
+                                        <span class="button-content-wrapper">
+                                            <mat-icon>add_location</mat-icon> Adicionar
+                                        </span>
+                                    </button>
+                                </div>
+                            </mat-card-header>
+
+                            <mat-card-content>
+                                <div formArrayName="addresses" class="array-container">
+                                    @for (address of addresses.controls; track $index) {
+                                        <div [formGroupName]="$index" class="address-item-block">
+                                            <div class="address-header">
+                                                <mat-form-field appearance="outline" class="tag-select">
+                                                    <mat-select formControlName="tag">
+                                                        @for (tag of addressTags; track tag) {
+                                                            <mat-option [value]="tag">{{ addressTagLabels[tag] }}</mat-option>
+                                                        }
+                                                    </mat-select>
+                                                </mat-form-field>
+                                                
+                                                <span class="spacer"></span>
+
+                                                <button type="button" mat-icon-button 
+                                                        class="icon-align-fix"
+                                                        [color]="address.get('isMain')?.value ? 'warn' : 'default'"
+                                                        (click)="setMainAddress($index)"
+                                                        matTooltip="Endereço Principal">
+                                                    <mat-icon>{{ address.get('isMain')?.value ? 'home' : 'home_outline' }}</mat-icon>
+                                                </button>
+
+                                                <button type="button" mat-icon-button color="warn" class="icon-align-fix" (click)="removeAddress($index)">
+                                                    <mat-icon>delete_outline</mat-icon>
+                                                </button>
+                                            </div>
+
+                                            <div class="address-grid">
+                                                <!-- ORDEM CORRIGIDA: CEP -> Nº -> RUA -> BAIRRO -> COMPLEMENTO -> CIDADE -> UF -->
+                                                <mat-form-field appearance="outline">
+                                                    <mat-label>CEP</mat-label>
+                                                    <input matInput formControlName="zipCode" mask="00000-000" [dropSpecialCharacters]="true" placeholder="00000-000" class="focus-target-address">
+                                                    @if (isFetchingCep[$index]) {
+                                                        <mat-spinner matSuffix [diameter]="18"></mat-spinner>
+                                                    }
+                                                </mat-form-field>
+
+                                                <mat-form-field appearance="outline">
+                                                    <mat-label>Nº Residência</mat-label>
+                                                    <input matInput formControlName="streetNumber" autocomplete="off">
+                                                </mat-form-field>
+
+                                                <mat-form-field appearance="outline" class="col-span-2">
+                                                    <mat-label>Logradouro/Rua</mat-label>
+                                                    <input matInput formControlName="street" autocomplete="off">
+                                                </mat-form-field>
+                                                
+                                                <mat-form-field appearance="outline">
+                                                    <mat-label>Bairro</mat-label>
+                                                    <input matInput formControlName="neighborhood" autocomplete="off">
+                                                </mat-form-field>
+
+                                                <mat-form-field appearance="outline">
+                                                    <mat-label>Complemento</mat-label>
+                                                    <input matInput formControlName="complement" autocomplete="off">
+                                                </mat-form-field>
+
+                                                <mat-form-field appearance="outline">
+                                                    <mat-label>Cidade</mat-label>
+                                                    <input matInput formControlName="city" autocomplete="off">
+                                                </mat-form-field>
+                                                
+                                                <mat-form-field appearance="outline">
+                                                    <mat-label>UF</mat-label>
+                                                    <input matInput formControlName="state" maxlength="2" autocomplete="off">
+                                                </mat-form-field>
+                                            </div>
+                                            <mat-divider *ngIf="!$last"></mat-divider>
+                                        </div>
+                                    } @empty {
+                                        <p class="empty-msg">Nenhum endereço cadastrado.</p>
+                                    }
+                                </div>
+                            </mat-card-content>
+                        </mat-card>
+                    </div>
+                </mat-tab>
+
+                <!-- TAB 4: SOCIAL -->
+                <mat-tab label="Social">
+                    <div class="tab-padding">
+                        <!-- SEÇÃO 4: LINKS E REDES SOCIAIS (FormArray) -->
+                        <mat-card class="section-card no-shadow">
+                            <mat-card-header class="header-with-action">
+                                <div class="header-inner">
+                                    <mat-card-title>Links e Redes Sociais</mat-card-title>
+                                    <button type="button" mat-stroked-button color="primary" (click)="addLink()" class="add-btn">
+                                        <span class="button-content-wrapper">
+                                            <mat-icon>link</mat-icon> Adicionar
+                                        </span>
+                                    </button>
+                                </div>
+                            </mat-card-header>
+
+                            <mat-card-content>
+                                <div formArrayName="links" class="array-container">
+                                    @for (link of links.controls; track $index) {
+                                        <div [formGroupName]="$index" class="array-item-row">
+                                            <mat-form-field appearance="outline" style="width: 150px;">
+                                                <mat-label>Título</mat-label>
+                                                <input matInput formControlName="title" placeholder="Ex: Instagram" class="focus-target-link">
+                                            </mat-form-field>
+
+                                            <mat-form-field appearance="outline" class="flex-grow">
+                                                <mat-label>URL</mat-label>
+                                                <input matInput formControlName="url" placeholder="https://...">
+                                            </mat-form-field>
+
+                                            <div class="item-actions">
+                                                <button type="button" mat-icon-button color="warn" class="icon-align-fix" (click)="removeLink($index)">
+                                                    <mat-icon>delete_outline</mat-icon>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    } @empty {
+                                        <p class="empty-msg">Nenhum link cadastrado.</p>
+                                    }
+                                </div>
+                            </mat-card-content>
+                        </mat-card>
+                    </div>
+                </mat-tab>
+
+                <!-- TAB 5: TAGS & QR -->
+                <mat-tab label="Tags & QR" [disabled]="!(user?.profile || user?.isTenantOwner) && !data.isCreation">
+                    <div class="tab-padding position-relative">
+                        <!-- Overlay para não membros -->
+                        @if (!(user?.profile || user?.isTenantOwner) && !data.isCreation) {
+                            <div class="disabled-overlay">
+                                <mat-icon>lock</mat-icon>
+                                <p>Apenas Membros da Equipe e Donos do Workspace possuem controle de Tags e Perfil Público.</p>
                             </div>
-                        } @empty {
-                            <p class="empty-msg">Nenhum endereço cadastrado.</p>
+                        }
+
+                        <!-- SEÇÃO 0: CONFIGURAÇÕES DA TAG E QR CODE -->
+                        @if (userForm.get('tagSettings.id')?.value) {
+                            <mat-card class="section-card no-shadow tag-management-section">
+                                <mat-card-header class="header-with-action">
+                                    <div class="header-inner">
+                                        <mat-card-title>Controle de Redirecionamento (NFC vs QR)</mat-card-title>
+                                        <a mat-flat-button color="primary" [routerLink]="['/t', getPublicLinkIdentifier()]" [queryParams]="{ source: 'qr' }" target="_blank" (click)="$event.stopPropagation()">
+                                            <mat-icon>open_in_new</mat-icon> Testar Configuração
+                                        </a>
+                                    </div>
+                                </mat-card-header>
+                                <mat-card-content>
+                                    <div formGroupName="tagSettings" class="tag-settings-dual-grid">
+                                        <!-- NFC Source -->
+                                        <div class="tag-source-group">
+                                            <h4 class="source-label"><mat-icon>contactless</mat-icon> Destino do Chip NFC</h4>
+                                            <mat-form-field appearance="outline" class="w-full">
+                                                <mat-label>Onde o NFC vai abrir?</mat-label>
+                                                <mat-select formControlName="nfcRedirectMode">
+                                                    @for (mode of redirectModes; track mode.value) {
+                                                        <mat-option [value]="mode.value">{{ mode.label }}</mat-option>
+                                                    }
+                                                </mat-select>
+                                            </mat-form-field>
+
+                                            @if (userForm.get('tagSettings.nfcRedirectMode')?.value === 'CUSTOM_URL') {
+                                                <mat-form-field appearance="outline" class="w-full fade-in">
+                                                    <mat-label>URL Personalizada (NFC)</mat-label>
+                                                    <input matInput formControlName="nfcCustomUrl" placeholder="https://exemplo.com">
+                                                </mat-form-field>
+                                            }
+                                        </div>
+
+                                        <!-- QR Source -->
+                                        <div class="tag-source-group">
+                                            <h4 class="source-label"><mat-icon>qr_code_2</mat-icon> Destino do QR Code</h4>
+                                            <mat-form-field appearance="outline" class="w-full">
+                                                <mat-label>Onde o QR vai abrir?</mat-label>
+                                                <mat-select formControlName="qrRedirectMode" #qrSelect>
+                                                    @for (mode of redirectModes; track mode.value) {
+                                                        <mat-option [value]="mode.value">{{ mode.label }}</mat-option>
+                                                    }
+                                                </mat-select>
+                                            </mat-form-field>
+
+                                            @if (userForm.get('tagSettings.qrRedirectMode')?.value === 'CUSTOM_URL') {
+                                                <mat-form-field appearance="outline" class="w-full fade-in">
+                                                    <mat-label>URL Personalizada (QR)</mat-label>
+                                                    <input matInput formControlName="qrCustomUrl" placeholder="https://exemplo.com">
+                                                </mat-form-field>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <!-- EXIBIÇÃO DO QR CODE PESSOAL -->
+                                    <div class="personal-qr-preview-container">
+                                        <div class="qr-preview-card">
+                                            <canvas #qrcodeCanvas></canvas>
+                                            <div class="qr-preview-info">
+                                                <p class="text-sm font-semibold">QR Code Pessoal</p>
+                                                <p class="text-xs text-gray-500">Este QR Code levará para o destino configurado acima.</p>
+                                                <button mat-flat-button color="accent" size="small" class="mt-2 download-qr-btn" (click)="downloadPersonalQR()">
+                                                    <mat-icon>download</mat-icon> Baixar QR
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </mat-card-content>
+                            </mat-card>
+                        } @else {
+                            <div class="no-tag-msg">
+                                <mat-icon>info</mat-icon>
+                                <p>Este usuário ainda não possui uma Tag ou QR Code vinculado.</p>
+                            </div>
                         }
                     </div>
-                </mat-card-content>
-            </mat-card>
-            
-            <!-- SEÇÃO 6: STATUS E PERMISSÕES -->
-            <mat-card class="section-card">
-                <mat-card-header>
-                    <mat-card-title>Configurações de Acesso</mat-card-title>
-                </mat-card-header>
-                
-                <mat-card-content class="status-permissions-content">
-                    <div class="flex flex-col gap-6" style="padding: 0 20px 20px;">
-                        <mat-form-field appearance="outline" class="w-full">
-                            <mat-label>Função (Role)</mat-label>
-                            <mat-select [formControl]="roleIdControl"> 
-                                @for (role of availableRoles$ | async; track role.id) {
-                                    <mat-option [value]="role.id">{{ role.name }}</mat-option>
-                                }
-                            </mat-select>
-                        </mat-form-field>
-                        
-                        <div class="status-container">
-                            <div class="toggle-row">
-                                <mat-slide-toggle formControlName="isActive" color="primary"> 
-                                    <span class="toggle-label">Usuário Ativo</span>
-                                </mat-slide-toggle>
-                            </div>
-                        </div>
-                    </div>
-                </mat-card-content>
-            </mat-card>
+                </mat-tab>
+            </mat-tab-group>
             
         </form>
     }
@@ -349,7 +436,12 @@
         </button>
     }
     
-    <button mat-button (click)="$event.stopPropagation(); dialogRef.close(false)" [disabled]="isSaving || isDeleting">Cancelar</button>
+    <button mat-button 
+            (click)="$event.stopPropagation(); dialogRef.close(true)" 
+            [disabled]="isSaving || isDeleting"
+            matTooltip="Certifique-se de salvar suas alterações antes de fechar. Você também pode usar a tecla ESC para fechar.">
+        Fechar
+    </button>
 
     <button mat-raised-button color="primary" (click)="saveUser()" [disabled]="userForm.invalid || isSaving || isDeleting">
         <span class="button-content-wrapper">

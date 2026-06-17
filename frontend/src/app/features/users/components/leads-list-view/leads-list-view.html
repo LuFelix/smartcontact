@@ -22,8 +22,32 @@
             <td mat-cell *matCellDef="let lead"> {{ lead.leadPhone || '-' }} </td>
         </ng-container>
 
+        <ng-container matColumnDef="origin">
+            <th mat-header-cell *matHeaderCellDef> Origem (Tag) </th>
+            <td mat-cell *matCellDef="let lead">
+                <span class="tag-badge">
+                    <mat-icon>nfc</mat-icon>
+                    {{ lead.tag?.uuid?.slice(0, 8) || 'Desconhecida' }}
+                </span>
+            </td>
+        </ng-container>
+
+        <ng-container matColumnDef="capturedBy">
+            <th mat-header-cell *matHeaderCellDef> Captado por </th>
+            <td mat-cell *matCellDef="let lead">
+                <div class="capturer-info" *ngIf="lead.capturedByUser">
+                    <div class="mini-avatar" [style.background-color]="getAvatarColor(lead.capturedByUser.name)">
+                        <img *ngIf="lead.capturedByUser.profile?.profilePictureUrl" [src]="lead.capturedByUser.profile?.profilePictureUrl" referrerpolicy="no-referrer">
+                        <span class="letter">{{ getInitial(lead.capturedByUser.name) }}</span>
+                    </div>
+                    <span>{{ lead.capturedByUser.name }}</span>
+                </div>
+                <span *ngIf="!lead.capturedByUser">-</span>
+            </td>
+        </ng-container>
+
         <ng-container matColumnDef="leadNote">
-            <th mat-header-cell *matHeaderCellDef> Nota/Contexto </th>
+            <th mat-header-cell *matHeaderCellDef> Nota </th>
             <td mat-cell *matCellDef="let lead"> {{ lead.leadNote || '-' }} </td>
         </ng-container>
 
@@ -38,7 +62,7 @@
                 <button mat-flat-button color="primary" 
                         (click)="saveToGoogle.emit(lead)" 
                         [disabled]="isSavingToGoogle">
-                    <mat-icon>person_add</mat-icon> Salvar no Google
+                    <mat-icon>person_add</mat-icon> Google
                 </button>
             </td>
         </ng-container>
@@ -47,7 +71,7 @@
         <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
 
         <tr class="mat-row" *matNoDataRow>
-            <td class="mat-cell no-data-msg" colspan="6">
+            <td class="mat-cell no-data-msg" colspan="8">
                 Nenhum lead encontrado.
             </td>
         </tr>

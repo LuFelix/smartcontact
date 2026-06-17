@@ -9,8 +9,8 @@
     @for (lead of leads; track lead.id) {
       <mat-card class="lead-item-card" appearance="outlined">
         <mat-card-header>
-          <div mat-card-avatar class="lead-avatar">
-            <mat-icon>person</mat-icon>
+          <div mat-card-avatar class="lead-avatar" [style.background-color]="getAvatarColor(lead.leadName)">
+            <span class="letter-placeholder">{{ getInitial(lead.leadName) }}</span>
           </div>
           <mat-card-title>{{ lead.leadName }}</mat-card-title>
           <mat-card-subtitle>{{ lead.accessedAt | date:'dd/MM/yyyy HH:mm' }}</mat-card-subtitle>

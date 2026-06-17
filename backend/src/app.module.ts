@@ -12,8 +12,10 @@ import { SeedModule } from './seeds/seed.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { ProfilesModule } from './profiles/profiles.module';
 import { TenantsModule } from './tenants/tenants.module';
+import { TeamModule } from './team/team.module';
 import { TagsModule } from './tags/tags.module';
 import { InteractionLogsModule } from './interaction-logs/interaction-logs.module';
+import { MembershipsModule } from './memberships/memberships.module';
 
 @Module({
   imports: [
@@ -52,9 +54,11 @@ import { InteractionLogsModule } from './interaction-logs/interaction-logs.modul
     }),
     AuthModule,
     TenantsModule,
+    MembershipsModule,
     RolesModule,
     UsersModule,
     ProfilesModule,
+    TeamModule,
     TagsModule,
     InteractionLogsModule,
     GlobalJwtModule,

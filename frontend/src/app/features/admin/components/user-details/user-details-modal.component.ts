@@ -1,6 +1,6 @@
 // Caminho: src/app/features/admin/components/user-details/user-details-modal.component.ts
 
-import { Component, Inject, OnInit, inject, OnDestroy } from '@angular/core';
+import { Component, Inject, OnInit, inject, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormControl, FormArray} from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { RouterModule, RouterLink } from '@angular/router';
@@ -16,13 +16,19 @@ import { UserService } from '../../../users/services/user.service';
 import { User, AddressTag, RedirectMode, Tag } from '../../../shared/models/users.models';
 import { Role } from '../../../shared/models/role.model';
 import { finalize, Observable, Subscription, debounceTime, distinctUntilChanged, filter, switchMap, catchError, of, tap } from 'rxjs';
-import { MatSelectModule } from '@angular/material/select'; 
+import { MatSelectModule, MatSelect } from '@angular/material/select'; 
 import { MatOptionModule } from '@angular/material/core';
+import { MatTabsModule } from '@angular/material/tabs';
 import { RoleService } from '../../../users/services/role.service';
+import { environment } from '../../../../environments/environment';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { A11yModule } from '@angular/cdk/a11y';
 import { CepService } from '../../../../core/utils/cep.service';
 import { NgxMaskDirective } from 'ngx-mask';
+import * as QRCode from 'qrcode';
+
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 // Interface para os dados recebidos
 export interface UserModalData {
@@ -48,21 +54,28 @@ export interface UserModalData {
         MatProgressSpinnerModule,
         MatSelectModule, 
         MatOptionModule,
+        MatTabsModule,
         MatDividerModule,
         MatTooltipModule,
+        MatSnackBarModule,
+        A11yModule,
         NgxMaskDirective
     ],
     templateUrl: './user-details-modal.component.html',
     styleUrls: ['./user-details-modal.component.scss']
 })
-export class UserDetailsModalComponent implements OnInit, OnDestroy {
+export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewInit {
     private fb = inject(FormBuilder);
     private userService = inject(UserService);
     private roleService = inject(RoleService);
     private cepService = inject(CepService);
+    private snackBar = inject(MatSnackBar);
     public dialogRef = inject(MatDialogRef<UserDetailsModalComponent>);
 
-    user: User | null = null;
+    @ViewChild('qrcodeCanvas') qrcodeCanvas!: ElementRef<HTMLCanvasElement>;
+    @ViewChild('qrSelect') qrSelect!: MatSelect;
+
+    user: User | null = { id: '', name: '', email: '', profile: undefined, isTenantOwner: false };
     userForm!: FormGroup;
     roleIdControl = new FormControl<string | null>(null, Validators.required);
     availableRoles$!: Observable<Role[]>;
@@ -104,6 +117,11 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
         }
     }
 
+    ngAfterViewInit(): void {
+        // Removida toda a lógica de foco programático para evitar flickering.
+        // A modal deve renderizar naturalmente baseada nas configurações do MatDialog.
+    }
+
     ngOnDestroy(): void {
         this.cepSubscriptions.forEach(s => s.unsubscribe());
     }
@@ -111,11 +129,11 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
     private initForm(): void {
         this.userForm = this.fb.group({
             name: ['', Validators.required],
-            email: ['', [Validators.required, Validators.email]],
+            email: ['', [Validators.email]], // Removido Validators.required fixo
             cpf: [''],
             password: [
                 '', 
-                this.data.isCreation ? [Validators.required, Validators.minLength(8)] : []
+                this.data.isCreation ? [Validators.minLength(8)] : [] // Senha não obrigatória para contatos
             ],
             isActive: [true],
             roleId: this.roleIdControl,
@@ -125,8 +143,10 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
             links: this.fb.array([]),
             tagSettings: this.fb.group({
                 id: [null],
-                redirectMode: [RedirectMode.PROFILE],
-                customUrl: ['']
+                nfcRedirectMode: [RedirectMode.PROFILE],
+                nfcCustomUrl: [''],
+                qrRedirectMode: [RedirectMode.PROFILE],
+                qrCustomUrl: ['']
             })
         });
     }
@@ -287,12 +307,16 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
         controls.forEach(c => this.phones.push(c, { emitEvent: false }));
     }
 
-    private loadUser(id: string): void {
-        this.isLoadingDetails = true;
+    private loadUser(id: string, silent = false): void {
+        if (!silent) this.isLoadingDetails = true;
+        
         this.userService.getUserById(id)
-            .pipe(finalize(() => this.isLoadingDetails = false))
+            .pipe(finalize(() => {
+                if (!silent) this.isLoadingDetails = false;
+            }))
             .subscribe(loadedUser => {
                 this.user = loadedUser;
+                this.user.isTenantOwner = loadedUser.isTenantOwner;
                 this.userForm.patchValue({
                     name: loadedUser.name,
                     email: loadedUser.email,
@@ -308,9 +332,12 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
                     const activeTag = loadedUser.tags.find((t: Tag) => t.isActive) || loadedUser.tags[0];
                     this.userForm.get('tagSettings')?.patchValue({
                         id: activeTag.id,
-                        redirectMode: activeTag.redirectMode,
-                        customUrl: activeTag.customUrl
+                        nfcRedirectMode: activeTag.nfcRedirectMode,
+                        nfcCustomUrl: activeTag.nfcCustomUrl,
+                        qrRedirectMode: activeTag.qrRedirectMode,
+                        qrCustomUrl: activeTag.qrCustomUrl
                     });
+                    this.generatePersonalQR(activeTag.handle || activeTag.uuid);
                 }
 
                 this.phones.clear();
@@ -339,25 +366,109 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
             });
     }
 
+    getAvatar(): string | null {
+        const url = (this.user?.profile?.profilePictureUrl && this.user.profile.profilePictureUrl.length > 5) ? this.user.profile.profilePictureUrl :
+                    (this.user?.profilePictureUrl && this.user.profilePictureUrl.length > 5) ? this.user.profilePictureUrl :
+                    ((this.user as any)?.picture && (this.user as any).picture.length > 5) ? (this.user as any).picture : null;
+        
+        if (url) {
+            if (url.startsWith('http')) return url;
+            const baseUrl = environment.apiUrl.replace('/api', '');
+            return `${baseUrl}/${url}`;
+        }
+        return null;
+    }
+
+    getInitial(): string {
+        const name = this.userForm.get('name')?.value || '';
+        return name ? name.trim().charAt(0).toUpperCase() : '?';
+    }
+
+    getAvatarColor(): string {
+        const name = this.userForm.get('name')?.value || '';
+        if (!name) return '#757575';
+        const colors = [
+            '#F44336', '#E91E63', '#9C27B0', '#673AB7', '#3F51B5',
+            '#2196F3', '#03A9F4', '#00BCD4', '#009688', '#4CAF50',
+            '#8BC34A', '#CDDC39', '#FFC107', '#FF9800', '#FF5722'
+        ];
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) {
+            hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        const index = Math.abs(hash) % colors.length;
+        return colors[index];
+    }
+
+    handleImageError(event: any): void {
+        event.target.classList.add('img-hidden');
+    }
+
+    getPublicLinkIdentifier(): string | null {
+        if (!this.user?.tags || this.user.tags.length === 0) {
+            return this.user?.username || null;
+        }
+        const activeTag = this.user.tags.find((t: Tag) => t.isActive) || this.user.tags[0];
+        return activeTag.handle || this.user?.username || activeTag.uuid;
+    }
+
     saveUser(): void {
+        // --- VALIDAÇÃO DINÂMICA DE E-MAIL ---
+        const emailControl = this.userForm.get('email');
+        const passwordValue = this.userForm.get('password')?.value;
+        const roleId = this.roleIdControl.value;
+        
+        // Se houver intenção de criar conta real (com senha) ou atribuir cargo administrativo/sistema, o e-mail é obrigatório.
+        // Como o ID da role pode variar, verificamos se há algum cargo selecionado que não seja a role atual se for 'contato'.
+        const isPromoting = this.roleIdControl.dirty && this.user?.role?.name?.toLowerCase() === 'contato';
+        const isCreatingWithPassword = this.data.isCreation && passwordValue && passwordValue.length > 0;
+
+        if (isCreatingWithPassword || isPromoting) {
+            emailControl?.setValidators([Validators.required, Validators.email]);
+        } else {
+            emailControl?.setValidators([Validators.email]);
+        }
+        emailControl?.updateValueAndValidity();
+
         if (this.userForm.invalid) {
             this.userForm.markAllAsTouched();
             return;
         }
 
-        this.isSaving = true;
-        const { tagSettings, ...rawData } = this.userForm.getRawValue();
+        // --- LÓGICA DE PROMOÇÃO (UX) ---
+        // Só pedimos confirmação se a Role foi alterada (dirty) E a role original era 'contato'.
+        const wasContact = this.user?.role?.name?.toLowerCase() === 'contato';
+        const isRoleChanged = this.roleIdControl.dirty;
 
-        const payload = {
-            ...rawData,
+        if (!this.data.isCreation && wasContact && isRoleChanged && this.roleIdControl.value) {
+            const confirmed = confirm(
+                'Você está alterando este contato para um USUÁRIO do sistema.\n\n' +
+                'Isso permitirá que ele faça login na plataforma com os próprios dados, ' +
+                'mas ele continuará sendo um contato isolado e NÃO fará parte da sua equipe comercial.\n\n' +
+                'Deseja continuar?'
+            );
+            if (!confirmed) return;
+        }
+
+        this.isSaving = true;
+        const rawData = this.userForm.getRawValue();
+        const { tagSettings, name, email, cpf, isActive, password } = rawData;
+
+        const payload: any = {
+            name,
+            email,
+            cpf,
+            isActive,
+            roleId,
+            password,
             phones: rawData.phones.map((p: any) => ({
-                id: p.id,
+                id: p.id || undefined,
                 number: p.phoneNumber,
                 isWhatsapp: p.isWhatsapp,
                 isMain: p.isMain
             })),
             addresses: rawData.addresses.map((a: any) => ({
-                id: a.id,
+                id: a.id || undefined,
                 street: a.street,
                 number: a.streetNumber,
                 complement: a.complement,
@@ -369,20 +480,33 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
                 isMain: a.isMain
             })),
             secondaryEmails: rawData.secondaryEmails.map((e: any) => ({
-                id: e.id,
+                id: e.id || undefined,
                 address: e.address
             })),
             links: rawData.links.map((l: any) => ({
-                id: l.id,
+                id: l.id || undefined,
                 title: l.title,
                 url: l.url
             })),
-            tags: tagSettings.id ? [{
-                id: tagSettings.id,
-                redirectMode: tagSettings.redirectMode,
-                customUrl: tagSettings.customUrl
+            tags: tagSettings.id || this.data.isCreation ? [{
+                id: tagSettings.id || undefined,
+                nfcRedirectMode: tagSettings.nfcRedirectMode,
+                nfcCustomUrl: tagSettings.nfcCustomUrl,
+                qrRedirectMode: tagSettings.qrRedirectMode,
+                qrCustomUrl: tagSettings.qrCustomUrl
             }] : []
         };
+
+        // Limpeza de IDs nulos
+        const cleanId = (obj: any) => {
+            if (obj.id === null) delete obj.id;
+            return obj;
+        };
+        payload.phones.forEach(cleanId);
+        payload.addresses.forEach(cleanId);
+        payload.secondaryEmails.forEach(cleanId);
+        payload.links.forEach(cleanId);
+        if (payload.tags.length > 0) cleanId(payload.tags[0]);
 
         if (!this.data.isCreation && !payload.password) {
             delete payload.password;
@@ -395,9 +519,27 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
             request$ = this.userService.updateUser(this.data.userId!, payload);
         }
 
+        const isCreation = this.data.isCreation;
+
         request$.pipe(finalize(() => this.isSaving = false))
             .subscribe({
-                next: () => this.dialogRef.close(true),
+                next: (savedUser) => {
+                    this.snackBar.open(
+                        isCreation ? 'Usuário criado com sucesso!' : 'Alterações salvas com sucesso!', 
+                        'OK', 
+                        { duration: 3000 }
+                    );
+                    
+                    if (isCreation && savedUser?.id) {
+                        // Se era criação, agora vira edição para permitir continuar editando
+                        this.data.isCreation = false;
+                        this.data.userId = savedUser.id;
+                        this.loadUser(savedUser.id); // Primeira vez após criação pode mostrar spinner
+                    } else {
+                        // Apenas recarrega para garantir sincronia - Silencioso para evitar blink
+                        this.loadUser(this.data.userId!, true);
+                    }
+                },
                 error: (err) => {
                     console.error('Erro ao salvar', err);
                     const msg = err.error?.message;
@@ -418,5 +560,30 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy {
                 next: () => this.dialogRef.close(true),
                 error: (err) => console.error('Erro ao excluir', err)
             });
+    }
+
+    generatePersonalQR(identifier: string): void {
+        const baseUrl = window.location.origin;
+        const url = `${baseUrl}/t/${identifier}?source=qr`;
+        
+        setTimeout(() => {
+            if (this.qrcodeCanvas) {
+                QRCode.toCanvas(this.qrcodeCanvas.nativeElement, url, {
+                    width: 180,
+                    margin: 1
+                }, (error: Error | null | undefined) => {
+                    if (error) console.error(error);
+                });
+            }
+        });
+    }
+
+    downloadPersonalQR(): void {
+        if (!this.qrcodeCanvas || !this.user) return;
+        const canvas = this.qrcodeCanvas.nativeElement;
+        const link = document.createElement('a');
+        link.download = `smartcontact-qr-${this.user.name.replace(/\s+/g, '-').toLowerCase()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
     }
 }

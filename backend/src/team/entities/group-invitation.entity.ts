@@ -3,18 +3,14 @@ import { User } from 'src/users/entities/user.entity';
 import { Tenant } from 'src/tenants/entities/tenant.entity';
 import { Role } from 'src/roles/entities/role.entity';
 
-@Entity('tenant_members')
-@Index(['user', 'tenant'], { unique: true })
-export class TenantMember {
+@Entity('group_invitations')
+export class GroupInvitation {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @ManyToOne(() => User)
-  @JoinColumn({ name: 'user_id' })
-  user!: User;
-
-  @Column({ name: 'user_id' })
-  userId!: string;
+  @Index({ unique: true })
+  @Column({ unique: true })
+  token!: string;
 
   @ManyToOne(() => Tenant)
   @JoinColumn({ name: 'tenant_id' })
@@ -30,6 +26,19 @@ export class TenantMember {
   @Column({ name: 'role_id' })
   roleId!: string;
 
-  @CreateDateColumn({ name: 'joined_at' })
-  joinedAt!: Date;
+  @Column({ name: 'expires_at' })
+  expiresAt!: Date;
+
+  @Column({ name: 'is_active', default: true })
+  isActive!: boolean;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'created_by' })
+  createdBy!: User;
+
+  @Column({ name: 'created_by' })
+  createdById!: string;
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt!: Date;
 }

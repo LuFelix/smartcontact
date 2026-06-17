@@ -1,0 +1,11 @@
+.search-field {
+  width: 100%;
+  max-width: 400px;
+  
+  // Design Token M3 alignment
+  margin-bottom: -1.25em; 
+  
+  ::ng-deep .mat-mdc-form-field-wrapper {
+    padding-bottom: 0;
+  }
+}

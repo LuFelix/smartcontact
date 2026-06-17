@@ -2,7 +2,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role } from './entities/role.entity';
-import { Repository, FindOptionsWhere } from 'typeorm';
+import { Repository, FindOptionsWhere, ILike, IsNull } from 'typeorm';
 import { CreateRoleDto } from './dto/role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 
@@ -11,7 +11,9 @@ import { UpdateRoleDto } from './dto/update-role.dto';
  */
 @Injectable()
 export class RolesService {
-    private readonly PROTECTED_ROLES = ['administrador', 'usuario'];
+    // Roles fundamentais que nascem com o sistema (Globais)
+    private readonly PROTECTED_ROLES = ['administrador', 'usuario', 'contato'];
+    private readonly SYSTEM_TENANT_ID = 'aebfbdfa-0088-4bf1-9bee-36529cfc3866'; // ID da Tiweb/Admin
 
     constructor(
         @InjectRepository(Role)
@@ -19,43 +21,40 @@ export class RolesService {
     ) { }
 
     /**
-     * Cria uma nova 'role' após validar se o nome já não está em uso.
-     * 
-     * - O nome é normalizado (sem espaços, minúsculo, com `_` entre palavras).
-     * - Verifica se já existe uma 'role' com esse nome.
-     * - Lança um erro se o nome já estiver registrado.
-     * - Cria e salva a nova entidade 'Role' no banco de dados.
-     * 
-     * @param {CreateRoleDto} createRoleDto - Dados para criação da 'role'
-     * @returns {Promise<Role>} A 'role' criada
-     * @throws {BadRequestException} Se o nome já estiver em uso
+     * Cria uma nova 'role' vinculada a um tenant.
      */
-    async create(createRoleDto: CreateRoleDto): Promise<Role> {
+    async create(createRoleDto: CreateRoleDto, currentUser: any): Promise<Role> {
         const nameNormalized = createRoleDto.name.trim().toLowerCase().replace(/\s+/g, '_');
+        const tenantId = currentUser.tenantId || this.SYSTEM_TENANT_ID;
+        const ownerId = currentUser.sub || this.SYSTEM_TENANT_ID;
 
+        // Verifica se já existe uma role com esse nome NO MESMO TENANT ou se é uma Role de Sistema
         const existingRole = await this.rolesRepository.findOne({
-            where: { name: nameNormalized },
+            where: [
+                { name: nameNormalized, tenantId },
+                { name: nameNormalized, tenantId: null } // Roles globais/sistema
+            ],
         });
 
         if (existingRole) {
-            throw new BadRequestException(`Role with name ${nameNormalized} already exists`);
+            throw new BadRequestException(`A função "${createRoleDto.name}" já existe.`);
         }
 
         const role = this.rolesRepository.create({ 
             name: nameNormalized,
-            description: createRoleDto.description
+            description: createRoleDto.description,
+            tenantId,
+            ownerId
         });
+        
         return await this.rolesRepository.save(role);
     }
 
     /**
-     * Busca todas as 'roles' com paginação.
-     * 
-     * @param {number} page - Número da página (começa em 1)
-     * @param {number} limit - Número de itens por página
-     * @returns {Promise<{ data: Role[]; total: number; page: number; limit: number; totalPages: number }>}
+     * Busca todas as 'roles' visíveis para o tenant logado.
+     * Inclui as roles globais do sistema + as customizadas do tenant.
      */
-    async findAll(page: number = 1, limit: number = 10): Promise<{
+    async findAll(page: number = 1, limit: number = 10, currentUser?: any): Promise<{
         data: Role[];
         total: number;
         page: number;
@@ -63,11 +62,27 @@ export class RolesService {
         totalPages: number;
     }> {
         const offset = (page - 1) * limit;
+        const tenantId = currentUser?.tenantId || this.SYSTEM_TENANT_ID;
+        const isSystemAdmin = currentUser?.isSuperAdmin;
+
+        let where: any = [];
+        
+        if (isSystemAdmin) {
+            // Super Admin vê TUDO de todos
+            where = {};
+        } else {
+            // Usuário comum vê as globais (tenant null) + as da sua empresa
+            where = [
+                { tenantId: tenantId },
+                { tenantId: IsNull() } // Força a exibição das roles globais de sistema
+            ];
+        }
         
         const [roles, total] = await this.rolesRepository.findAndCount({
+            where,
             skip: offset,
             take: limit,
-            order: { id: 'ASC' },
+            order: { name: 'ASC' },
         });
 
         const totalPages = Math.ceil(total / limit);
@@ -82,30 +97,32 @@ export class RolesService {
     }
 
     /**
-     * Busca uma 'role' específica pelo ID.
-     * 
-     * @param {number} id - ID da 'role' a ser buscada
-     * @returns {Promise<Role>} A 'role' encontrada
-     * @throws {NotFoundException} Se a 'role' não for encontrada
+     * Busca uma 'role' específica pelo ID com isolamento.
      */
-    async findOne(id: string): Promise<Role> {
+    async findOne(id: string, currentUser?: any): Promise<Role> {
         const role = await this.rolesRepository.findOne({
             where: { id },
         });
 
         if (!role) {
-            throw new NotFoundException(`Role with ID ${id} not found`);
+            throw new NotFoundException(`Função com ID ${id} não encontrada.`);
+        }
+
+        const isSystemAdmin = currentUser?.isSuperAdmin;
+        const isGlobalRole = !role.tenantId; // Tenant nulo = Global
+        const isTiwebRole = role.tenantId === this.SYSTEM_TENANT_ID; // Role da Tiweb (Admin original)
+
+        // Se não for admin global, só pode ver se for global, se for da Tiweb (nossa organização admin) 
+        // ou se for do próprio tenant do usuário.
+        if (!isSystemAdmin && !isGlobalRole && !isTiwebRole && role.tenantId !== currentUser?.tenantId) {
+             throw new BadRequestException('Acesso negado: Esta função pertence a outra organização.');
         }
 
         return role;
     }
 
     /**
-     * Busca uma 'role' específica pelo nome.
-     * 
-     * @param {string} name - Nome da 'role' a ser buscada
-     * @returns {Promise<Role>} A 'role' encontrada
-     * @throws {NotFoundException} Se a 'role' não for encontrada
+     * Busca uma 'role' específica pelo nome (usada internamente).
      */
     async findOneByName(name: string): Promise<Role> {
         const nameNormalized = name.trim().toLowerCase().replace(/\s+/g, '_');
@@ -122,34 +139,36 @@ export class RolesService {
     }
 
     /**
-     * Atualiza uma 'role' específica pelo ID.
-     * 
-     * @param {number} id - ID da 'role' a ser atualizada
-     * @param {UpdateRoleDto} updateRoleDto - Dados para atualização
-     * @returns {Promise<Role>} A 'role' atualizada
-     * @throws {NotFoundException} Se a 'role' não for encontrada
-     * @throws {BadRequestException} Se o novo nome já estiver em uso por outra 'role'
+     * Atualiza uma 'role' customizada.
      */
-    async update(id: string, updateRoleDto: UpdateRoleDto): Promise<Role> {
-        const existingRole = await this.findOne(id);
+    async update(id: string, updateRoleDto: UpdateRoleDto, currentUser: any): Promise<Role> {
+        const existingRole = await this.findOne(id, currentUser);
 
-        // Proteção contra renomeação de roles do sistema
+        // 1. Proteção contra alteração de roles do sistema (hardcoded)
         if (this.PROTECTED_ROLES.includes(existingRole.name)) {
             if (updateRoleDto.name && updateRoleDto.name.trim().toLowerCase().replace(/\s+/g, '_') !== existingRole.name) {
-                throw new BadRequestException('As funções estruturais do sistema não podem ser renomeadas.');
+                throw new BadRequestException('As funções de sistema (administrador, usuario, contato) são fixas e não podem ser renomeadas. Apenas a descrição pode ser editada.');
             }
         }
 
-        // Verificar se o novo nome já existe (excluindo a role atual)
+        // 2. Proteção de Dono (Só quem criou ou Admin do sistema altera customizadas)
+        const isOwner = existingRole.ownerId === currentUser.sub;
+        const isSystemAdmin = currentUser.isSuperAdmin;
+
+        if (!isSystemAdmin && !isOwner && !this.PROTECTED_ROLES.includes(existingRole.name)) {
+             throw new BadRequestException('Você não tem permissão para alterar esta função customizada.');
+        }
+
+        // Verificar se o novo nome já existe no tenant (excluindo a role atual)
         if (updateRoleDto.name) {
             const nameNormalized = updateRoleDto.name.trim().toLowerCase().replace(/\s+/g, '_');
             
-            const existingRoleWithNewName = await this.rolesRepository.findOne({
-                where: { name: nameNormalized } as FindOptionsWhere<Role>,
+            const existingDuplicate = await this.rolesRepository.findOne({
+                where: { name: nameNormalized, tenantId: existingRole.tenantId } as FindOptionsWhere<Role>,
             });
 
-            if (existingRoleWithNewName && existingRoleWithNewName.id !== id) {
-                throw new BadRequestException(`Role with name ${nameNormalized} already exists`);
+            if (existingDuplicate && existingDuplicate.id !== id) {
+                throw new BadRequestException(`A função "${nameNormalized}" já existe neste ambiente.`);
             }
 
             existingRole.name = nameNormalized;
@@ -163,17 +182,9 @@ export class RolesService {
     }
 
     /**
-     * Exclui uma 'role' específica pelo ID.
-     * 
-     * - Protege as roles 'administrador' e 'usuario' contra exclusão.
-     * - Reatribui todos os usuários da role excluída para a role 'usuario' automaticamente.
-     * 
-     * @param {string} id - ID da 'role' a ser excluída
-     * @returns {Promise<void>}
-     * @throws {NotFoundException} Se a 'role' não for encontrada
-     * @throws {BadRequestException} Se for uma role protegida
+     * Exclui uma 'role' customizada.
      */
-    async remove(id: string): Promise<void> {
+    async remove(id: string, currentUser: any): Promise<void> {
         const role = await this.rolesRepository.findOne({
             where: { id },
             relations: ['users']
@@ -183,22 +194,33 @@ export class RolesService {
             throw new NotFoundException(`Role with ID ${id} not found`);
         }
 
-        // Proteção de roles do sistema
-        if (this.PROTECTED_ROLES.includes(role.name)) {
-            throw new BadRequestException('As funções estruturais do sistema não podem ser excluídas.');
+        // 1. Proteção Multi-Tenant
+        const isSystemAdmin = currentUser.isSuperAdmin;
+        if (!isSystemAdmin && role.tenantId !== currentUser.tenantId) {
+             throw new BadRequestException('Acesso negado: Esta função pertence a outra organização.');
         }
 
-        // 1. Localizar a role de fallback ("usuario")
+        // 2. Proteção de roles do sistema (hardcoded)
+        if (this.PROTECTED_ROLES.includes(role.name)) {
+            throw new BadRequestException('As funções de sistema (administrador, usuario, contato) são fixas e não podem ser excluídas.');
+        }
+
+        // 3. Proteção de Dono
+        if (!isSystemAdmin && role.ownerId !== currentUser.sub) {
+             throw new BadRequestException('Você só pode excluir funções que você mesmo criou.');
+        }
+
+        // 4. Localizar a role de fallback ("usuario")
         const defaultRole = await this.rolesRepository.findOne({ where: { name: 'usuario' } });
         if (!defaultRole) {
              throw new BadRequestException('Função de segurança "usuario" não encontrada no sistema.');
         }
 
-        // 2. Reatribuir usuários (se houver) para a role padrão antes de excluir
-        if (role.users && role.users.length > 0) {
+        // 5. Reatribuir usuários
+        if (role.memberships && role.memberships.length > 0) {
             await this.rolesRepository.manager
                 .createQueryBuilder()
-                .update('User') // Referencia a entidade User
+                .update('User')
                 .set({ role: defaultRole })
                 .where('role_id = :id', { id })
                 .execute();
@@ -207,12 +229,6 @@ export class RolesService {
         await this.rolesRepository.remove(role);
     }
 
-    /**
-     * Verifica se uma 'role' existe pelo ID.
-     * 
-     * @param {number} id - ID da 'role' a ser verificada
-     * @returns {Promise<boolean>} True se a 'role' existir, false caso contrário
-     */
     async exists(id: string): Promise<boolean> {
         const role = await this.rolesRepository.findOne({
             where: { id },
@@ -220,18 +236,12 @@ export class RolesService {
         return !!role;
     }
 
-    /**
-     * Busca múltiplas 'roles' por IDs.
-     * 
-     * @param {number[]} ids - Array de IDs das 'roles' a serem buscadas
-     * @returns {Promise<Role[]>} Array de 'roles' encontradas
-     */
     async findByIds(ids: string[]): Promise<Role[]> {
         if (!ids || ids.length === 0) {
             return [];
         }
         return await this.rolesRepository.findBy({
-            id: ids as any, // TypeORM aceita arrays no where
+            id: ids as any,
         });
     }
 }

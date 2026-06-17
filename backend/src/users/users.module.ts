@@ -8,18 +8,25 @@ import { Phone } from './entities/phone.entity';
 import { Address } from './entities/address.entity';
 import { UserEmail } from './entities/user-email.entity';
 import { UserLink } from './entities/user-link.entity';
+import { UserResourcePermission } from './entities/user-resource-permission.entity';
+import { Tag } from 'src/tags/entities/tag.entity';
+import { Tenant } from '../tenants/entities/tenant.entity';
 import { UsersController } from './users.controller';
 import { RolesService } from 'src/roles/roles.service';
-import { ProfilesModule } from 'src/profiles/profiles.module';
-import { TagsModule } from 'src/tags/tags.module';
+import { ProfilesModule } from '../profiles/profiles.module';
+import { TagsModule } from '../tags/tags.module';
+import { MembershipsModule } from '../memberships/memberships.module';
+import { TenantsModule } from '../tenants/tenants.module';
 import { GoogleContactsService } from './integrations/google-contacts/google-contacts.service';
 import { GoogleContactsController } from './integrations/google-contacts/google-contacts.controller';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Role, Phone, Address, UserEmail, UserLink]),
+    TypeOrmModule.forFeature([User, Role, Phone, Address, UserEmail, UserLink, Tag, UserResourcePermission, Tenant]),
     ProfilesModule,
     TagsModule,
+    MembershipsModule,
+    TenantsModule,
   ],
   controllers: [UsersController, GoogleContactsController],
   providers: [UsersService, RolesService, GoogleContactsService],

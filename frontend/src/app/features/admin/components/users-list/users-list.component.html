@@ -9,11 +9,25 @@
     @for (user of dataSource.data; track user.id) {
       <mat-card class="user-item-card" appearance="outlined" (click)="viewDetails.emit(user.id)">
         <mat-card-header>
-          <div mat-card-avatar class="user-avatar">
-            <mat-icon>account_circle</mat-icon>
+          <div mat-card-avatar class="user-avatar-container" [style.background-color]="getAvatarColor(user.name)">
+            @if (getAvatar(user); as avatarUrl) {
+                <img [src]="avatarUrl" (error)="handleImageError($event)" referrerpolicy="no-referrer">
+            }
+            <span class="letter-placeholder">{{ getInitial(user.name) }}</span>
           </div>
           <mat-card-title>{{ user.name }}</mat-card-title>
-          <mat-card-subtitle>{{ user.email }}</mat-card-subtitle>
+          <mat-card-subtitle class="flex flex-col">
+            <span class="text-xs opacity-70">{{ user.email }}</span>
+            <div class="badge-row">
+              @if (isTeamMember(user)) {
+                  <span class="badge-item member-badge">Equipe</span>
+              } @else if (isUserRole(user)) {
+                  <span class="badge-item user-badge">Usuário SC</span>
+              } @else if (isContact(user)) {
+                  <span class="badge-item lead-badge">Contato</span>
+              }
+            </div>
+          </mat-card-subtitle>
         </mat-card-header>
 
         <mat-card-content class="card-summary-content">
@@ -41,14 +55,35 @@
             </button>
           }
 
-          @if (getTagUuid(user); as uuid) {
-            <a mat-icon-button color="accent" 
-               class="icon-align-fix"
-               [routerLink]="['/t', uuid]" 
-               target="_blank" 
-               matTooltip="Ver Perfil Público">
-                <mat-icon>contact_page</mat-icon>
-            </a>
+          @if (canViewPublicProfile(user)) {
+            @if (getPublicLinkIdentifier(user); as identifier) {
+                <a mat-icon-button color="accent" 
+                class="icon-align-fix"
+                [routerLink]="['/t', identifier]" 
+                target="_blank" 
+                matTooltip="Ver Perfil Público">
+                    <mat-icon>contact_page</mat-icon>
+                </a>
+            }
+          }
+
+          @if (authService.hasRole('administrador')) {
+            <!-- Ações de Ciclo de Vida da Equipe -->
+            @if (!isTeamMember(user)) {
+                <button mat-icon-button color="primary" 
+                        class="icon-align-fix"
+                        (click)="promoteUser.emit(user)" 
+                        matTooltip="Adicionar à Equipe">
+                    <mat-icon>person_add</mat-icon>
+                </button>
+            } @else {
+                <button mat-icon-button color="warn" 
+                        class="icon-align-fix"
+                        (click)="demoteUser.emit(user)" 
+                        matTooltip="Remover da Equipe">
+                    <mat-icon>person_remove</mat-icon>
+                </button>
+            }
           }
 
           <button mat-icon-button 

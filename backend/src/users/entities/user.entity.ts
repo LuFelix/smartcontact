@@ -6,6 +6,8 @@ import { Phone } from './phone.entity';
 import { Address } from './address.entity';
 import { UserEmail } from './user-email.entity';
 import { UserLink } from './user-link.entity';
+import { UserTagAccess } from '../../tags/entities/user-tag-access.entity';
+import { Membership } from '../../memberships/entities/membership.entity';
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, Index, ManyToOne, JoinColumn, OneToMany, OneToOne } from 'typeorm';
 
 @Entity()
@@ -18,19 +20,15 @@ export class User {
     name!: string;
 
     @Index({ unique: true }) 
-    @Column({ length: 100, nullable: false, unique: true })
-    email!: string;
+    @Column({ type: 'varchar', length: 100, nullable: true, unique: true })
+    email!: string | null;
 
     @Index({ unique: true })
     @Column({ type: 'varchar', length: 11, unique: true, nullable: true }) 
     cpf!: string | null;
 
-    @Column({ type: 'varchar', length: 100, nullable: false })
-    password!: string;
-
-    @ManyToOne(() => Role, role => role.users)
-    @JoinColumn({ name: 'role_id' })
-    role!: Role;
+    @Column({ type: 'varchar', length: 100, nullable: true })
+    password!: string | null;
 
     @CreateDateColumn()
     createdAt!: Date;
@@ -50,9 +48,9 @@ export class User {
     @Column({ type: 'timestamp', nullable: true })
     verificationExpires!: Date | null;
 
-    @Column({ type: 'uuid', name: 'tenant_id', nullable: true })
-    @Index()
-    tenantId!: string | null;
+    @Index({ unique: true })
+    @Column({ type: 'varchar', length: 50, unique: true, nullable: true })
+    username!: string | null;
 
     @Column({ type: 'uuid', name: 'owner_id', nullable: true })
     @Index()
@@ -61,8 +59,14 @@ export class User {
     @Column({ default: false })
     isSuperAdmin!: boolean;
 
-    @OneToOne(() => Profile, (profile) => profile.user)
-    profile?: Profile;
+    @Column({ type: 'varchar', name: 'profile_picture_url', nullable: true })
+    profilePictureUrl!: string | null;
+
+    @OneToMany(() => Profile, (profile) => profile.user)
+    profiles?: Profile[];
+
+    @OneToMany(() => Membership, (membership) => membership.user)
+    memberships!: Membership[];
 
     @OneToMany(() => Tag, (tag) => tag.user)
     tags?: Tag[];
@@ -78,4 +82,7 @@ export class User {
 
     @OneToMany(() => UserLink, (link) => link.user, { cascade: true })
     links?: UserLink[];
+
+    @OneToMany(() => UserTagAccess, (access) => access.user)
+    tagAccesses?: UserTagAccess[];
 }

@@ -75,3 +75,43 @@ textarea:focus-visible,
     outline: none !important;
     box-shadow: none !important;
 }
+
+// --- AVATAR & PLACEHOLDER STYLES (Estilo Google) ---
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    position: relative; // Necessário para sobreposição
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white; // Texto sempre branco para contraste
+    font-weight: 700;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    border: 1px solid rgba(0,0,0,0.05);
+    flex-shrink: 0; // Não deixa esmagar em listas
+    
+    img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 2; // Fica acima da letra
+    }
+
+    .letter-placeholder {
+        position: relative;
+        z-index: 1; // Fica atrás da imagem
+    }
+}
+
+.user-avatar-container, .member-avatar, .header-avatar, .lead-avatar, .role-avatar {
+    @extend .avatar-circle;
+}
+
+// Utilitário para ocultar imagens quebradas sem deixar o "alt" aparecer
+.img-hidden { display: none !important; }

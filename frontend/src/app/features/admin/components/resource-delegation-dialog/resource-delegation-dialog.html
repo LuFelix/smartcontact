@@ -1,0 +1,104 @@
+<h2 mat-dialog-title>Permissões de {{ data.member.name }}</h2>
+
+<mat-dialog-content>
+    <div class="delegation-layout">
+        <!-- Coluna Esquerda: Listagem -->
+        <div class="selection-column">
+            <div class="header-info">
+                <p class="helper-text">Selecione os recursos para delegar ou clique na linha para visualizar o QR Code.</p>
+            </div>
+
+            @if (isLoading) {
+                <div class="loading-container">
+                    <mat-spinner diameter="40"></mat-spinner>
+                    <p>Carregando recursos...</p>
+                </div>
+            } @else {
+                <div class="tag-list">
+                    @for (tag of tags; track tag.id) {
+                        <div class="tag-row" 
+                             [class.active-row]="focusedTag?.id === tag.id"
+                             (click)="previewTag(tag)">
+                            <div class="checkbox-area">
+                                <mat-checkbox 
+                                    [checked]="selectedTagIds.has(tag.id)" 
+                                    (change)="toggleTag(tag.id)"
+                                    color="primary"
+                                    (click)="$event.stopPropagation()">
+                                </mat-checkbox>
+                            </div>
+                            
+                            <div class="content-area">
+                                <div class="text-group">
+                                    <span class="tag-name">{{ tag.name || 'Recurso sem nome' }}</span>
+                                    <span class="tag-meta">
+                                        <mat-icon class="tech-icon">{{ getIcon(tag.technologyType) }}</mat-icon>
+                                        {{ getTechLabel(tag.technologyType) }}
+                                    </span>
+                                </div>
+                                <mat-icon class="view-indicator" *ngIf="focusedTag?.id === tag.id">qr_code_2</mat-icon>
+                            </div>
+                        </div>
+                    } @empty {
+                        <div class="no-tags">
+                            <mat-icon>inventory_2</mat-icon>
+                            <p>Nenhum recurso disponível no workspace.</p>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Coluna Direita: Preview QR Code -->
+        <div class="preview-column" [class.has-content]="focusedTag">
+            @if (focusedTag) {
+                <div class="qr-preview-card">
+                    <div class="card-header">
+                        <h3>QR Code do Recurso</h3>
+                        <button mat-icon-button (click)="focusedTag = null" type="button">
+                            <mat-icon>close</mat-icon>
+                        </button>
+                    </div>
+                    
+                    <div class="qr-canvas-container">
+                        <canvas #qrcodeCanvas></canvas>
+                    </div>
+
+                    <div class="url-display">
+                        <span class="url-label">Link de Destino:</span>
+                        <div class="url-value">{{ focusedTagUrl }}</div>
+                    </div>
+                    
+                    <div class="metadata-grid">
+                        <div class="meta-item">
+                            <span class="meta-label">ID Interno (UUID)</span>
+                            <span class="meta-value">{{ focusedTag.uuid }}</span>
+                        </div>
+                        <div class="meta-item" *ngIf="focusedTag.uid">
+                            <span class="meta-label">ID Físico (UID)</span>
+                            <span class="meta-value">{{ focusedTag.uid }}</span>
+                        </div>
+                    </div>
+                </div>
+            } @else {
+                <div class="empty-state">
+                    <div class="icon-circle">
+                        <mat-icon>center_focus_weak</mat-icon>
+                    </div>
+                    <h4>Nenhum Recurso Selecionado</h4>
+                    <p>Clique em uma linha da lista à esquerda para visualizar seu QR Code.</p>
+                </div>
+            }
+        </div>
+    </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close [disabled]="isSaving" type="button">Cancelar</button>
+    <button mat-flat-button color="primary" 
+            (click)="save()" 
+            [disabled]="isSaving || isLoading"
+            type="button">
+        {{ isSaving ? 'Salvando...' : 'Salvar Alterações' }}
+    </button>
+</mat-dialog-actions>

@@ -1,12 +1,13 @@
 // Caminho: src/app/features/users/pages/profile-page/profile-page.ts
 
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { Subscription, EMPTY, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap, tap, catchError, filter, finalize } from 'rxjs/operators';
+import * as QRCode from 'qrcode';
 
 // Imports do Angular Material
 import { MatCardModule } from '@angular/material/card';
@@ -28,6 +29,7 @@ import { UserData, FullUserResponse, Phone, Address, AddressTag, SecondaryEmail,
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { CepService } from '../../../../core/utils/cep.service';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-profile',
@@ -61,6 +63,15 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private cepService = inject(CepService);
 
+  @ViewChild('qrcodeCanvas') qrcodeCanvas!: ElementRef<HTMLCanvasElement>;
+
+  // Signals
+  userUsername = this.authService.userUsername;
+
+  get currentHost(): string {
+    return window.location.host;
+  }
+
   profileForm: FormGroup;
   currentUserData: FullUserResponse | null = null;
   activeTag: Tag | null = null;
@@ -70,6 +81,31 @@ export class ProfileComponent implements OnInit, OnDestroy {
   isEditing = false;
   isFetchingCep: { [key: number]: boolean } = {};
   profilePicturePreview: string | ArrayBuffer | null = null;
+
+  getInitial(): string {
+      const name = this.profileForm.get('firstName')?.value || '';
+      return name ? name.trim().charAt(0).toUpperCase() : '?';
+  }
+
+  getAvatarColor(): string {
+    const name = this.profileForm.get('firstName')?.value || '';
+    if (!name) return '#757575';
+    const colors = [
+      '#F44336', '#E91E63', '#9C27B0', '#673AB7', '#3F51B5',
+      '#2196F3', '#03A9F4', '#00BCD4', '#009688', '#4CAF50',
+      '#8BC34A', '#CDDC39', '#FFC107', '#FF9800', '#FF5722'
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
+  }
+
+  handleImageError(event: any): void {
+      event.target.classList.add('img-hidden');
+  }
   
   addressTagLabels = {
     [AddressTag.HOME]: 'Casa',
@@ -102,8 +138,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
       links: this.fb.array([]),
       tagSettings: this.fb.group({
           id: [null],
-          redirectMode: [RedirectMode.PROFILE],
-          customUrl: ['']
+          nfcRedirectMode: [RedirectMode.PROFILE],
+          nfcCustomUrl: [''],
+          qrRedirectMode: [RedirectMode.PROFILE],
+          qrCustomUrl: ['']
       })
     });
   }
@@ -313,9 +351,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
             this.activeTag = userProfile.tags.find((t: Tag) => t.isActive) || userProfile.tags[0];
             this.profileForm.get('tagSettings')?.patchValue({
                 id: this.activeTag.id,
-                redirectMode: this.activeTag.redirectMode,
-                customUrl: this.activeTag.customUrl
+                nfcRedirectMode: this.activeTag.nfcRedirectMode,
+                nfcCustomUrl: this.activeTag.nfcCustomUrl,
+                qrRedirectMode: this.activeTag.qrRedirectMode,
+                qrCustomUrl: this.activeTag.qrCustomUrl
             });
+            this.generatePersonalQR();
         }
 
         this.phones.clear();
@@ -333,16 +374,24 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.links.clear();
         if (userProfile.links) userProfile.links.forEach(l => this.addLink(l));
 
-        const avatarUrl = userProfile.profile?.profilePictureUrl;
-        if (avatarUrl) {
-            this.profilePicturePreview = avatarUrl.startsWith('http') 
-                ? avatarUrl 
-                : 'http://localhost:3000/' + avatarUrl;
+        const avatarUrl = userProfile.profile?.profilePictureUrl || userProfile.profilePictureUrl;
+        if (avatarUrl && typeof avatarUrl === 'string' && avatarUrl.length > 5) {
+            if (avatarUrl.startsWith('http')) {
+                this.profilePicturePreview = avatarUrl;
+            } else {
+                const baseUrl = environment.apiUrl.replace('/api', '');
+                this.profilePicturePreview = `${baseUrl}/${avatarUrl}`;
+            }
         } else {
             this.profilePicturePreview = null;
         }
 
         this.profileForm.disable();
+        this.phones.controls.forEach(c => c.disable());
+        this.addresses.controls.forEach(c => c.disable());
+        this.secondaryEmails.controls.forEach(c => c.disable());
+        this.links.controls.forEach(c => c.disable());
+        this.profileForm.get('tagSettings')?.disable();
       },
       error: () => {
         this.snackBar.open('Erro ao carregar seu perfil.', 'Fechar', { duration: 5000 });
@@ -374,19 +423,21 @@ export class ProfileComponent implements OnInit, OnDestroy {
     if (this.profileForm.invalid) return;
     this.isLoading = true;
 
-    const { tagSettings, ...formData } = this.profileForm.getRawValue();
-    const payload = {
-        name: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email, // Novo email principal (se trocado)
-        cpf: formData.cpf,
-        phones: formData.phones.map((p: any) => ({
-            id: p.id,
+    const rawValue = this.profileForm.getRawValue();
+    const { tagSettings, firstName, lastName, email, cpf } = rawValue;
+
+    const payload: any = {
+        name: `${firstName} ${lastName}`.trim(),
+        email: email,
+        cpf: cpf,
+        phones: rawValue.phones.map((p: any) => ({
+            id: p.id || undefined,
             number: p.phoneNumber,
             isWhatsapp: p.isWhatsapp,
             isMain: p.isMain
         })),
-        addresses: formData.addresses.map((a: any) => ({
-            id: a.id,
+        addresses: rawValue.addresses.map((a: any) => ({
+            id: a.id || undefined,
             street: a.street,
             number: a.streetNumber,
             zipCode: a.zipCode,
@@ -397,21 +448,38 @@ export class ProfileComponent implements OnInit, OnDestroy {
             tag: a.tag,
             isMain: a.isMain
         })),
-        secondaryEmails: formData.secondaryEmails.map((e: any) => ({
-            id: e.id,
+        secondaryEmails: rawValue.secondaryEmails.map((e: any) => ({
+            id: e.id || undefined,
             address: e.address
         })),
-        links: formData.links.map((l: any) => ({
-            id: l.id,
+        links: rawValue.links.map((l: any) => ({
+            id: l.id || undefined,
             title: l.title,
             url: l.url
         })),
         tags: tagSettings.id ? [{
             id: tagSettings.id,
-            redirectMode: tagSettings.redirectMode,
-            customUrl: tagSettings.customUrl
-        }] : []
+            nfcRedirectMode: tagSettings.nfcRedirectMode,
+            nfcCustomUrl: tagSettings.nfcCustomUrl,
+            qrRedirectMode: tagSettings.qrRedirectMode,
+            qrCustomUrl: tagSettings.qrCustomUrl
+        }] : [],
+        nfcRedirectMode: tagSettings.nfcRedirectMode,
+        nfcCustomUrl: tagSettings.nfcCustomUrl,
+        qrRedirectMode: tagSettings.qrRedirectMode,
+        qrCustomUrl: tagSettings.qrCustomUrl
     };
+
+    // Remover IDs nulos para evitar erro de validação UUID no backend
+    const cleanId = (obj: any) => {
+        if (obj.id === null) delete obj.id;
+        return obj;
+    };
+    payload.phones.forEach(cleanId);
+    payload.addresses.forEach(cleanId);
+    payload.secondaryEmails.forEach(cleanId);
+    payload.links.forEach(cleanId);
+    if (payload.tags.length > 0) cleanId(payload.tags[0]);
 
     this.userService.updateUser(this.currentUserData!.id, payload).pipe(
         finalize(() => this.isLoading = false)
@@ -437,5 +505,36 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   navigateToDashboard(): void {
     this.router.navigate(['/app/dashboard']);
+  }
+
+  generatePersonalQR(): void {
+      if (!this.activeTag) return;
+      const baseUrl = window.location.origin;
+      const identifier = this.activeTag?.handle || this.userUsername() || this.activeTag.uuid;
+      const url = `${baseUrl}/t/${identifier}?source=qr`;
+      
+      setTimeout(() => {
+          if (this.qrcodeCanvas) {
+              QRCode.toCanvas(this.qrcodeCanvas.nativeElement, url, {
+                  width: 250,
+                  margin: 1,
+                  color: {
+                      dark: '#000000',
+                      light: '#ffffff'
+                  }
+              }, (error: Error | null | undefined) => {
+                  if (error) console.error(error);
+              });
+          }
+      });
+  }
+
+  downloadPersonalQR(): void {
+    if (!this.qrcodeCanvas) return;
+    const canvas = this.qrcodeCanvas.nativeElement;
+    const link = document.createElement('a');
+    link.download = `smartcontact-qr-${this.activeTag?.handle || this.userUsername() || 'me'}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
   }
 }

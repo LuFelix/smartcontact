@@ -1,6 +1,6 @@
 // roles/entities/role.entity.ts
-import { User } from 'src/users/entities/user.entity';
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Membership } from '../../memberships/entities/membership.entity';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, Index } from 'typeorm';
 
 /**
  * Representa uma 'role' de usuário no sistema.
@@ -8,6 +8,7 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
  */
 
 @Entity('roles')
+@Index(['name', 'tenantId'], { unique: true })
 export class Role {
   /**
    * ID único da 'role'.
@@ -16,10 +17,10 @@ export class Role {
   id!: string;
 
   /**
-   * Nome do papel (normalizado e único).
+   * Nome do papel (normalizado).
    * Ex: "administrador", "gente_e_cultura", "colaborador", etc.
    */
-  @Column({ unique: true })
+  @Column()
   name!: string;
 
   /**
@@ -30,8 +31,16 @@ export class Role {
   description!: string;
 
   /**
-   * Lista de usuários que pertencem a esta 'role'.
+   * Lista de vínculos de membros que utilizam esta 'role'.
    */
-  @OneToMany(() => User, user => user.role)
-  users!: User[];
+  @OneToMany(() => Membership, (membership) => membership.role)
+  memberships!: Membership[];
+
+  @Column({ type: 'uuid', name: 'tenant_id', nullable: true })
+  @Index()
+  tenantId!: string | null;
+
+  @Column({ type: 'uuid', name: 'owner_id', nullable: true })
+  @Index()
+  ownerId!: string | null;
 }

@@ -1,0 +1,52 @@
+<h2 mat-dialog-title>Adicionar à Equipe</h2>
+
+<mat-dialog-content>
+    <div class="promotion-content">
+        <div class="user-preview">
+            <div class="info">
+                <h3>{{ data.user.name }}</h3>
+                <p>{{ data.user.email || 'Sem e-mail cadastrado' }}</p>
+            </div>
+        </div>
+
+        <p class="instruction">
+            Para integrar este contato à equipe, selecione o cargo desejado. 
+            Membros da equipe possuem perfil público e tags de redirecionamento.
+        </p>
+
+        <form [formGroup]="promotionForm" class="flex flex-col gap-2">
+            <!-- E-mail Obrigatório na Promoção -->
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>E-mail Corporativo</mat-label>
+                <input matInput formControlName="email" placeholder="email@empresa.com">
+                <mat-hint>Obrigatório para membros com acesso ao sistema.</mat-hint>
+                @if (promotionForm.get('email')?.hasError('required')) {
+                    <mat-error>O e-mail é obrigatório para promoção.</mat-error>
+                }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Cargo na Equipe</mat-label>
+                <mat-select formControlName="roleId" placeholder="Escolha um cargo">
+                    @for (role of availableRoles$ | async; track role.id) {
+                        <mat-option [value]="role.id">
+                            {{ role.name | titlecase }}
+                        </mat-option>
+                    }
+                </mat-select>
+                @if (promotionForm.get('roleId')?.hasError('required')) {
+                    <mat-error>O cargo é obrigatório para promoção.</mat-error>
+                }
+            </mat-form-field>
+        </form>
+    </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Cancelar</button>
+    <button mat-flat-button color="primary" 
+            (click)="confirm()" 
+            [disabled]="promotionForm.invalid">
+        Confirmar e Adicionar
+    </button>
+</mat-dialog-actions>

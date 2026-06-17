@@ -1,15 +1,26 @@
 .dialog-content {
-    padding: 12px 24px;
-    max-height: 70vh; 
+    padding: 0 24px 12px; // Top 0 because tabs provide their own spacing
+    max-height: 80vh; 
     min-width: 600px;
-    max-width: 900px;
-    overflow-y: auto;
+    max-width: 1000px; // Aumentado conforme GEMINI.md
+    overflow-y: hidden; // Permite que os scrollbars fiquem dentro das abas
 }
 
+// Estilo para o formulário que agora contém as abas
 .config-form {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+}
+
+// Padding interno para cada conteúdo de aba
+.tab-padding {
+    padding: 20px 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-height: 500px; // Fixes accordion effect: modal won't shrink too much
+    max-height: 65vh;
+    overflow-y: auto;
 }
 
 .section-card {
@@ -17,6 +28,10 @@
     background-color: var(--mat-sys-surface-container-low);
     border: 1px solid var(--mat-sys-outline-variant);
     
+    &.no-shadow {
+        box-shadow: none !important;
+    }
+
     mat-card-header {
         padding: 16px 20px 8px;
         mat-card-title {
@@ -40,17 +55,99 @@
         justify-content: space-between;
         align-items: center;
         width: 100%;
+        
+        .test-config-btn {
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            &:hover { transform: translateY(-1px); box-shadow: var(--mat-sys-level1); }
+        }
     }
 }
 
 .tag-management-section {
-    border: 1px solid var(--mat-sys-primary);
+    border: 2px dashed var(--mat-sys-primary);
     
-    .tag-settings-grid {
+    .tag-settings-dual-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 16px;
+        gap: 20px;
+        padding: 10px 20px;
+
+        @media (max-width: 600px) {
+            grid-template-columns: 1fr;
+        }
     }
+
+    .tag-source-group {
+        padding: 16px;
+        background-color: var(--mat-sys-surface-container-highest);
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .source-label {
+        margin: 0 0 8px 0;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--mat-sys-primary);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        
+        mat-icon {
+            font-size: 18px;
+            width: 18px;
+            height: 18px;
+        }
+    }
+
+    .personal-qr-preview-container {
+        display: flex;
+        justify-content: center;
+        padding-bottom: 20px;
+
+        .qr-preview-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--mat-sys-outline-variant);
+
+            canvas {
+                background: white;
+                padding: 4px;
+                border-radius: 4px;
+            }
+
+            .qr-preview-info {
+                p { margin: 0; line-height: 1.2; color: #333; }
+                .text-xs { color: #666; }
+                .download-qr-btn {
+                    font-weight: 700;
+                    margin-top: 8px;
+                    transition: transform 0.2s ease;
+                    &:hover { transform: scale(1.02); }
+                }
+            }
+        }
+    }
+}
+
+.no-tag-msg {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 40px;
+    color: var(--mat-sys-on-surface-variant);
+    
+    mat-icon { font-size: 48px; width: 48px; height: 48px; opacity: 0.5; }
+    p { margin: 0; font-style: italic; }
 }
 
 .array-container {
@@ -140,7 +237,77 @@
     margin-right: auto;
 }
 
+// Estilização GLOBAL dos botões para este componente
+button[mat-flat-button], 
+button[mat-raised-button], 
+button[mat-stroked-button] {
+    border-radius: 32px !important;
+}
+
 @media (max-width: 640px) {
     .config-fields, .address-grid { grid-template-columns: 1fr; }
     .md\:col-span-2 { grid-column: span 1; }
+    .dialog-content { min-width: 95vw; }
+}
+
+mat-dialog-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 12px !important;
+    
+    .header-avatar {
+        width: 48px;
+        height: 48px;
+        font-size: 1.5rem;
+    }
+
+    .user-title-name {
+        font-size: 0.9rem;
+        opacity: 0.7;
+        font-weight: 400;
+        margin-top: -4px;
+    }
+}
+
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.gap-3 { gap: 12px; }
+
+.position-relative {
+    position: relative;
+}
+
+.disabled-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(var(--mat-sys-surface-container-rgb), 0.8);
+    backdrop-filter: blur(2px);
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--mat-sys-on-surface-variant);
+    text-align: center;
+    padding: 24px;
+    border-radius: 12px;
+
+    mat-icon {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+    }
+
+    p {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 500;
+    }
 }

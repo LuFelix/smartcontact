@@ -48,7 +48,7 @@ export class RoleDialogComponent implements OnInit {
   }
 
   private initForm(): void {
-    const isProtected = this.isEdit && ['administrador', 'usuario'].includes(this.data.role?.name || '');
+    const isProtected = this.isEdit && ['administrador', 'usuario', 'contato'].includes(this.data.role?.name?.toLowerCase().trim() || '');
     
     this.roleForm = this.fb.group({
       name: [

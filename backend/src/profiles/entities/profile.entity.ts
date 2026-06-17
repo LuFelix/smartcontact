@@ -5,7 +5,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToOne,
+  ManyToOne,
   JoinColumn,
   Index,
 } from 'typeorm';
@@ -35,11 +35,7 @@ export class Profile {
   @Index()
   ownerId!: string | null;
 
-  @Column({ type: 'uuid', name: 'owner_id' })
-  @Index()
-  ownerId!: string;
-
-  @OneToOne(() => User)
+  @ManyToOne(() => User, (user) => user.profiles)
   @JoinColumn({ name: 'user_id' })
   user!: User;
 

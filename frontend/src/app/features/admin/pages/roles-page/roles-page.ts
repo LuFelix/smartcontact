@@ -8,6 +8,11 @@ import { RolesListViewComponent } from '../../components/roles-list-view/roles-l
 import { LayoutService } from '../../../../core/services/layout.service';
 import { finalize } from 'rxjs';
 
+// Shared UI Components
+import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
+import { SearchBarComponent } from '../../../shared/components/search-bar/search-bar.component';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+
 // Material
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -16,12 +21,16 @@ import { MatCardModule } from '@angular/material/card';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-roles-page',
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
@@ -29,8 +38,13 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
     MatTooltipModule,
     MatDialogModule,
     MatSnackBarModule,
+    MatFormFieldModule,
+    MatInputModule,
     RolesCardListComponent,
-    RolesListViewComponent
+    RolesListViewComponent,
+    PageHeaderComponent,
+    SearchBarComponent,
+    EmptyStateComponent
   ],
   templateUrl: './roles-page.html',
   styleUrl: './roles-page.scss'
@@ -42,10 +56,20 @@ export class RolesPageComponent implements OnInit {
   public layoutService = inject(LayoutService);
 
   roles: Role[] = [];
+  searchTerm: string = '';
   isLoading = true;
 
   ngOnInit(): void {
     this.loadRoles();
+  }
+
+  get filteredRoles(): Role[] {
+    if (!this.searchTerm) return this.roles;
+    const term = this.searchTerm.toLowerCase();
+    return this.roles.filter(r => 
+      r.name?.toLowerCase().includes(term) || 
+      r.description?.toLowerCase().includes(term)
+    );
   }
 
   loadRoles(): void {
