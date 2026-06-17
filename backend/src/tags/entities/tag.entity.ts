@@ -47,6 +47,10 @@ export class Tag {
   @Column({ type: 'varchar', nullable: true })
   uid!: string | null;
 
+  @Column({ type: 'varchar', unique: true, length: 120, nullable: true })
+  @Index({ unique: true })
+  handle!: string | null;
+
   @Column({ type: 'varchar', nullable: true })
   name!: string | null;
 

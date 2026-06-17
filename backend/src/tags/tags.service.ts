@@ -5,6 +5,8 @@ import { Tag, RedirectMode, TechnologyType, ApplicationType } from './entities/t
 import { UserTagAccess } from './entities/user-tag-access.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Profile } from 'src/profiles/entities/profile.entity';
+import { Tenant } from 'src/tenants/entities/tenant.entity';
+import { InteractionLogsService } from 'src/interaction-logs/interaction-logs.service';
 import { v4 as uuidv4 } from 'uuid';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
@@ -20,6 +22,9 @@ export class TagsService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Profile)
     private readonly profileRepository: Repository<Profile>,
+    @InjectRepository(Tenant)
+    private readonly tenantRepository: Repository<Tenant>,
+    private readonly interactionLogsService: InteractionLogsService,
   ) {}
 
   async create(createTagDto: CreateTagDto, currentUser: any, tenantId: string): Promise<Tag> {
@@ -43,10 +48,12 @@ export class TagsService {
           }
       }
 
+      const handle = await this.generateHandle(userId, tenantId);
       const tag = this.tagRepository.create({
           ...createTagDto,
           uid: sanitizedUid,
           uuid: uuidv4(),
+          handle,
           tenantId,
           ownerId: userId,
           userId,
@@ -59,8 +66,10 @@ export class TagsService {
 
   async createDefaultTag(userId: string, ownerId: string, tenantId: string): Promise<Tag> {
       const user = await this.userRepository.findOne({ where: { id: userId } });
+      const handle = await this.generateHandle(userId, tenantId);
       const tag = this.tagRepository.create({
           uuid: uuidv4(),
+          handle,
           userId,
           ownerId,
           tenantId,
@@ -212,19 +221,50 @@ export class TagsService {
       }));
   }
 
-  async resolveTag(identifier: string, source?: string) {
-    // 1. Tenta buscar primeiro por UUID (NFC)
+  private async generateHandle(userId: string, tenantId: string): Promise<string> {
+    const user = await this.userRepository.findOne({ where: { id: userId }, select: ['username', 'id'] });
+    const tenant = await this.tenantRepository.findOne({ where: { id: tenantId }, select: ['slug'] });
+
+    const username = user?.username || `user-${userId.slice(0, 6)}`;
+    const slug = tenant?.slug || `t-${tenantId.slice(0, 6)}`;
+    const baseHandle = `${username}-${slug}`.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+
+    let handle = baseHandle;
+    let counter = 2;
+    while (await this.tagRepository.findOne({ where: { handle }, select: ['id'] })) {
+      handle = `${baseHandle}-${counter}`;
+      counter++;
+    }
+
+    return handle;
+  }
+
+  async resolveTag(identifier: string, source?: string, metadata?: { ip: string; userAgent: string }) {
+    // 1. Tenta por HANDLE primeiro (identificador amigável por tenant)
     let tag = await this.tagRepository.createQueryBuilder('tag')
       .leftJoinAndSelect('tag.user', 'user')
       .leftJoinAndSelect('user.phones', 'phones')
       .leftJoinAndSelect('user.addresses', 'addresses')
       .leftJoinAndSelect('user.secondaryEmails', 'secondaryEmails')
       .leftJoinAndSelect('user.links', 'links')
-      .where('tag.uuid = :identifier', { identifier })
+      .where('tag.handle = :identifier', { identifier })
       .andWhere('tag.is_active = :isActive', { isActive: true })
       .getOne();
 
-    // 2. Se não achar por UUID, tenta por Username (URL Amigável) - Case Insensitive
+    // 2. Se não achar por HANDLE, tenta por UUID (NFC/RFID)
+    if (!tag) {
+        tag = await this.tagRepository.createQueryBuilder('tag')
+          .leftJoinAndSelect('tag.user', 'user')
+          .leftJoinAndSelect('user.phones', 'phones')
+          .leftJoinAndSelect('user.addresses', 'addresses')
+          .leftJoinAndSelect('user.secondaryEmails', 'secondaryEmails')
+          .leftJoinAndSelect('user.links', 'links')
+          .where('tag.uuid = :identifier', { identifier })
+          .andWhere('tag.is_active = :isActive', { isActive: true })
+          .getOne();
+    }
+
+    // 3. Se não achar por HANDLE nem UUID, tenta por Username (Legado - deprecado)
     if (!tag) {
         tag = await this.tagRepository.createQueryBuilder('tag')
           .leftJoinAndSelect('tag.user', 'user')
@@ -244,6 +284,20 @@ export class TagsService {
 
     console.log(`[TagsService] Resolved: ${identifier} | Found Tag ID: ${tag.id} | User: ${tag.user?.email} | Source: ${source}`);
     console.log(`[TagsService] Active Config - NFC: ${tag.nfcRedirectMode}, QR: ${tag.qrRedirectMode}`);
+
+    // LOG VISIT: Registra a visita para analytics
+    if (metadata) {
+        try {
+            await this.interactionLogsService.logVisit(tag.id, {
+                ip: metadata.ip,
+                userAgent: metadata.userAgent,
+                source: source || 'link',
+                tenantId: tag.tenantId
+            });
+        } catch (err) {
+            console.warn(`[TagsService] Falha ao registrar visita: ${err}`);
+        }
+    }
 
     // Filter sensitive data
     const { user } = tag;
@@ -267,6 +321,7 @@ export class TagsService {
 
     return {
       id: tag.id,
+      handle: tag.handle,
       redirectMode,
       customUrl,
       user: publicUser,
@@ -371,6 +426,18 @@ export class TagsService {
       if (updateData.nfcCustomUrl !== undefined) tag.nfcCustomUrl = updateData.nfcCustomUrl;
       if (updateData.qrRedirectMode) tag.qrRedirectMode = updateData.qrRedirectMode;
       if (updateData.qrCustomUrl !== undefined) tag.qrCustomUrl = updateData.qrCustomUrl;
+
+      // HANDLE: Permite admin customizar, com validação de unicidade
+      if (updateData.handle !== undefined) {
+          const sanitizedHandle = updateData.handle?.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-') || null;
+          if (sanitizedHandle && sanitizedHandle !== tag.handle) {
+              const existing = await this.tagRepository.findOne({ where: { handle: sanitizedHandle } });
+              if (existing) {
+                  throw new BadRequestException('Este handle já está em uso por outra tag.');
+              }
+              tag.handle = sanitizedHandle;
+          }
+      }
 
       return this.tagRepository.save(tag);
   }
