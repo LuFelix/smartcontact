@@ -8,7 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Tag, TechnologyType, ApplicationType } from '../../../shared/models/users.models';
+import { Tag, TechnologyType, ApplicationType, RedirectMode } from '../../../shared/models/users.models';
 import * as QRCode from 'qrcode';
 
 @Component({
@@ -109,27 +109,42 @@ export class QrFullscreenDialogComponent {
 
         <div class="qr-section" *ngIf="showQrPreview">
           <div class="qr-header">
-            <h3>QR Code do Recurso</h3>
-            <mat-icon color="primary">qr_code_2</mat-icon>
+            <h3>{{ isQrCodeType ? 'QR Code do Recurso' : 'Link da Etiqueta' }}</h3>
+            <mat-icon color="primary">{{ isQrCodeType ? 'qr_code_2' : 'contactless' }}</mat-icon>
           </div>
           
-          <div class="qr-canvas-container">
-            <canvas #qrcodeCanvas></canvas>
-          </div>
+          @if (isQrCodeType) {
+            <div class="qr-canvas-container">
+              <canvas #qrcodeCanvas></canvas>
+            </div>
+          } @else {
+            <div class="nfc-preview-container">
+              <mat-icon color="primary">contactless</mat-icon>
+              <span class="nfc-preview-label">Link gravado na etiqueta:</span>
+              <div class="url-value">{{ previewUrl }}</div>
+            </div>
+          }
 
           <div class="url-display">
-            <span class="url-label">Link de Destino:</span>
-            <div class="url-value">{{ previewUrl }}</div>
+            @if (isLinkType) {
+              <span class="url-label">Link de Destino:</span>
+              <div class="url-value">{{ previewUrl }}</div>
+            } @else {
+              <span class="url-label">Redirecionará para:</span>
+              <div class="url-value">{{ previewValue || '(perfil padrão)' }}</div>
+            }
           </div>
           
-          <div class="qr-actions">
-            <button mat-stroked-button color="primary" class="download-btn" (click)="downloadQR()" type="button">
-              <mat-icon>download</mat-icon> Baixar (PNG)
-            </button>
-            <button mat-icon-button color="primary" matTooltip="Ampliar QR Code" (click)="openLargeQR()" type="button">
-              <mat-icon>zoom_in</mat-icon>
-            </button>
-          </div>
+          @if (isQrCodeType) {
+            <div class="qr-actions">
+              <button mat-stroked-button color="primary" class="download-btn" (click)="downloadQR()" type="button">
+                <mat-icon>download</mat-icon> Baixar (PNG)
+              </button>
+              <button mat-icon-button color="primary" matTooltip="Ampliar QR Code" (click)="openLargeQR()" type="button">
+                <mat-icon>zoom_in</mat-icon>
+              </button>
+            </div>
+          }
         </div>
       </div>
     </mat-dialog-content>
@@ -213,6 +228,27 @@ export class QrFullscreenDialogComponent {
     .download-btn {
       flex: 1;
     }
+    .nfc-preview-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 24px 12px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: var(--mat-sys-level1);
+      width: 100%;
+    }
+    .nfc-preview-container mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+    }
+    .nfc-preview-label {
+      font-size: 11px;
+      color: var(--mat-sys-outline);
+      font-weight: 500;
+    }
     .tag-form {
       display: flex;
       flex-direction: column;
@@ -271,7 +307,23 @@ export class TagDialogComponent implements AfterViewInit {
   get showQrPreview(): boolean {
     if (!this.data.tag || !this.data.tag.uuid) return false;
     const type = this.tagForm.get('technologyType')?.value;
-    return type === TechnologyType.QR_CODE || type === TechnologyType.LINK || type === TechnologyType.TRILHA;
+    return type === TechnologyType.LINK || type === TechnologyType.TRILHA
+        || type === TechnologyType.QR_CODE || type === TechnologyType.NFC_HF
+        || type === TechnologyType.RFID_UHF;
+  }
+
+  get isQrCodeType(): boolean {
+    const type = this.tagForm.get('technologyType')?.value;
+    return type === TechnologyType.LINK || type === TechnologyType.TRILHA
+        || type === TechnologyType.QR_CODE;
+  }
+
+  get isLinkType(): boolean {
+    return this.tagForm.get('technologyType')?.value === TechnologyType.LINK;
+  }
+
+  get previewValue(): string | null {
+    return this.tagForm.get('value')?.value || null;
   }
 
   get previewUrl(): string {
@@ -280,21 +332,23 @@ export class TagDialogComponent implements AfterViewInit {
     const type = this.tagForm.get('technologyType')?.value;
     const value = this.tagForm.get('value')?.value;
 
-    if ((type === TechnologyType.LINK || type === TechnologyType.TRILHA) && value) {
+    // LINK: QR codifica URL direta (sem analytics)
+    if (type === TechnologyType.LINK && value) {
       return value.startsWith('http') ? value : 'https://' + value;
     }
 
+    // Demais tipos: passam pelo resolveTag (analytics)
     return window.location.origin + '/t/' + (this.data.tag.handle || this.data.tag.uuid);
   }
 
   ngAfterViewInit() {
-    if (this.showQrPreview) {
+    if (this.showQrPreview && this.isQrCodeType) {
       this.generateQRCode();
     }
   }
 
   onTechChange() {
-    if (this.showQrPreview) {
+    if (this.showQrPreview && this.isQrCodeType) {
       setTimeout(() => this.generateQRCode(), 100);
     }
   }
@@ -345,7 +399,23 @@ export class TagDialogComponent implements AfterViewInit {
 
   onSave(): void {
     if (this.tagForm.valid) {
-      this.dialogRef.close(this.tagForm.value);
+      const payload: any = { ...this.tagForm.value };
+      const type = payload.technologyType;
+      const value = payload.value;
+
+      if (value) {
+        if (type === TechnologyType.LINK) {
+          // LINK: QR direto, sem redirect mode
+        } else if (type === TechnologyType.TRILHA || type === TechnologyType.QR_CODE) {
+          payload.qrRedirectMode = RedirectMode.CUSTOM_URL;
+          payload.qrCustomUrl = value;
+        } else if (type === TechnologyType.NFC_HF || type === TechnologyType.RFID_UHF) {
+          payload.nfcRedirectMode = RedirectMode.CUSTOM_URL;
+          payload.nfcCustomUrl = value;
+        }
+      }
+
+      this.dialogRef.close(payload);
     }
   }
 }
