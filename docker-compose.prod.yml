@@ -4,7 +4,6 @@ services:
     container_name: smartcontact_db_prod
     restart: always
     environment:
-      # Usa as mesmas variáveis do seu .env para evitar confusão
       POSTGRES_USER: ${DB_USERNAME:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
       POSTGRES_DB: ${DB_DATABASE:-smartcontact}
@@ -40,6 +39,7 @@ services:
       PORT: 3000
     networks:
       - smartcontact-network
+      - webproxy # <-- API conectada ao Nginx
 
   web:
     build:
@@ -47,16 +47,18 @@ services:
       dockerfile: Dockerfile.prod
     container_name: smartcontact_web_prod
     restart: always
-    ports:
-      - "8081:80"
+    # REMOVIDO: ports: - "8081:80" (O Nginx assume isso agora)
     depends_on:
       - api
     networks:
       - smartcontact-network
+      - webproxy # <-- Frontend conectado ao Nginx
 
 networks:
   smartcontact-network:
     driver: bridge
+  webproxy: # <-- Declaração da rede do proxy
+    external: true
 
 volumes:
   smartcontact_prod_pgdata:
