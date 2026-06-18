@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { TechnologyType, ApplicationType } from '../entities/tag.entity';
+import { TechnologyType, ApplicationType, RedirectMode } from '../entities/tag.entity';
 
 export class CreateTagDto {
   @ApiPropertyOptional({ description: 'O ID físico gravado no hardware (UID NFC ou EPC RFID)' })
@@ -25,4 +25,24 @@ export class CreateTagDto {
   @IsOptional()
   @IsString()
   value?: string;
+
+  @ApiPropertyOptional({ enum: RedirectMode })
+  @IsOptional()
+  @IsEnum(RedirectMode)
+  nfcRedirectMode?: RedirectMode;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  nfcCustomUrl?: string;
+
+  @ApiPropertyOptional({ enum: RedirectMode })
+  @IsOptional()
+  @IsEnum(RedirectMode)
+  qrRedirectMode?: RedirectMode;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  qrCustomUrl?: string;
 }
