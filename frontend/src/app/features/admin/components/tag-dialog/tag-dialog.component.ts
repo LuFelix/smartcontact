@@ -190,7 +190,7 @@ export class QrFullscreenDialogComponent {
       font-weight: 500;
     }
     .qr-canvas-container {
-      background: white;
+      background: var(--mat-sys-surface);
       padding: 12px;
       border-radius: 8px;
       box-shadow: var(--mat-sys-level1);
@@ -234,7 +234,7 @@ export class QrFullscreenDialogComponent {
       align-items: center;
       gap: 8px;
       padding: 24px 12px;
-      background: white;
+      background: var(--mat-sys-surface);
       border-radius: 8px;
       box-shadow: var(--mat-sys-level1);
       width: 100%;
@@ -331,14 +331,25 @@ export class TagDialogComponent implements AfterViewInit {
     
     const type = this.tagForm.get('technologyType')?.value;
     const value = this.tagForm.get('value')?.value;
+    const ident = this.data.tag.handle || this.data.tag.uuid;
 
     // LINK: QR codifica URL direta (sem analytics)
     if (type === TechnologyType.LINK && value) {
       return value.startsWith('http') ? value : 'https://' + value;
     }
 
-    // Demais tipos: passam pelo resolveTag (analytics)
-    return window.location.origin + '/t/' + (this.data.tag.handle || this.data.tag.uuid);
+    // TRILHA/QR_CODE: QR codifica /t/{handle}?source=qr (analytics)
+    if (type === TechnologyType.TRILHA || type === TechnologyType.QR_CODE) {
+      return window.location.origin + '/t/' + ident + '?source=qr';
+    }
+
+    // NFC_HF: etiqueta grava /t/{handle}?source=nfc (analytics)
+    if (type === TechnologyType.NFC_HF) {
+      return window.location.origin + '/t/' + ident + '?source=nfc';
+    }
+
+    // RFID_UHF: etiqueta grava /t/{handle}?source=rfid (analytics)
+    return window.location.origin + '/t/' + ident + '?source=rfid';
   }
 
   ngAfterViewInit() {
