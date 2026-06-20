@@ -626,15 +626,19 @@ export class UsersService {
             await this.membershipsService.updateProfileId(user.id, newTenant.id, existingProfile.id);
         }
 
-        // OPTIMISTIC LOCK: Atualiza ownerId do usuário de forma atômica, apenas se ainda for null.
+        // OPTIMISTIC LOCK: Atualiza ownerId do usuário de forma atômica, apenas se ainda não for do próprio.
+        // ownerId = user.id pode vir de contact sync (usuário já é dono de si, mas sem workspace pessoal).
+        // Nesse caso, o lock é pulado — o slug determinístico ws-{userId} + UNIQUE constraint já previne duplicatas.
         // Se o affected for 0, significa que outra thread já venceu a corrida e definiu o ownerId.
-        const updateResult = await this.usersRepository.update({ id: user.id, ownerId: Not(user.id) }, { ownerId: user.id });
-        if (updateResult.affected === 0) {
-            this.logger.warn(`[Race Condition] Usuário ${user.email} já recebeu um ownerId em outra thread. Limpando recursos duplicados em memória.`);
-            await this.membershipsService.remove(user.id, newTenant.id);
-            await this.profilesService.removeByUserIdAndTenant(user.id, newTenant.id);
-            await this.tenantsRepository.delete(newTenant.id);
-            return this.findByEmail(user.email as string) as Promise<User>;
+        if (user.ownerId !== user.id) {
+            const updateResult = await this.usersRepository.update({ id: user.id, ownerId: Not(user.id) }, { ownerId: user.id });
+            if (updateResult.affected === 0) {
+                this.logger.warn(`[Race Condition] Usuário ${user.email} já recebeu um ownerId em outra thread. Limpando recursos duplicados em memória.`);
+                await this.membershipsService.remove(user.id, newTenant.id);
+                await this.profilesService.removeByUserIdAndTenant(user.id, newTenant.id);
+                await this.tenantsRepository.delete(newTenant.id);
+                return this.findByEmail(user.email as string) as Promise<User>;
+            }
         }
 
         return this.findByEmail(user.email as string) as Promise<User>;
