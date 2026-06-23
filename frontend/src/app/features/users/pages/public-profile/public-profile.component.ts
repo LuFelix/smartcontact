@@ -112,9 +112,25 @@ export class PublicProfileComponent implements OnInit {
       window.location.href = targetUrl;
       return true;
     } else if (data.redirectMode === RedirectMode.WHATSAPP) {
-      const mainPhone = data.user.phones?.find((p: any) => p.isWhatsapp) || data.user.phones?.[0];
+      // Lógica de prioridade de telefones:
+      // 1. WhatsApp e Principal (isWhatsapp && isMain)
+      // 2. Qualquer WhatsApp (isWhatsapp)
+      // 3. Qualquer Principal (isMain)
+      // 4. Primeiro da lista
+      const phones = data.user.phones || [];
+      const mainPhone = phones.find((p: any) => p.isWhatsapp && p.isMain) ||
+                        phones.find((p: any) => p.isWhatsapp) ||
+                        phones.find((p: any) => p.isMain) ||
+                        phones[0];
+
       if (mainPhone && mainPhone.number) {
-        const cleanNumber = mainPhone.number.replace(/\D/g, '');
+        let cleanNumber = mainPhone.number.replace(/\D/g, '');
+        
+        // Se for um número brasileiro (DDD + número) com 10 ou 11 dígitos, injeta o DDI 55 caso não comece com 55
+        if ((cleanNumber.length === 10 || cleanNumber.length === 11) && !cleanNumber.startsWith('55')) {
+          cleanNumber = '55' + cleanNumber;
+        }
+        
         window.location.href = `https://wa.me/${cleanNumber}`;
         return true;
       }
