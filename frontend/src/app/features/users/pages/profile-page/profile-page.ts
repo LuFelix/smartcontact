@@ -1,6 +1,6 @@
 // Caminho: src/app/features/users/pages/profile-page/profile-page.ts
 
-import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
@@ -62,6 +62,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private snackBar = inject(MatSnackBar);
   private router = inject(Router);
   private cepService = inject(CepService);
+  private cdr = inject(ChangeDetectorRef);
 
   @ViewChild('qrcodeCanvas') qrcodeCanvas!: ElementRef<HTMLCanvasElement>;
 
@@ -151,7 +152,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.profileSubscription?.unsubscribe();
-    this.cepSubscriptions.forEach(s => s.unsubscribe());
+    this.clearCepSubscriptions();
   }
 
   get phones(): FormArray {
@@ -257,23 +258,35 @@ export class ProfileComponent implements OnInit, OnDestroy {
         tap(() => {
             this.isFetchingCep[index] = true;
             addressGroup.patchValue({ street: '', neighborhood: '', city: '', state: '' }, { emitEvent: false });
+            this.cdr.detectChanges();
         }),
         switchMap(cep => this.cepService.fetchAddressFromCep(cep).pipe(
             catchError(() => of(null))
         )),
-        tap(() => this.isFetchingCep[index] = false)
+        tap(() => {
+            this.isFetchingCep[index] = false;
+            this.cdr.detectChanges();
+        })
     ).subscribe(data => {
-        if (data) {
+        if (data && !data.erro) {
             addressGroup.patchValue({
                 street: data.logradouro || '',
                 neighborhood: data.bairro || '',
                 city: data.localidade || '',
                 state: data.uf || ''
             });
+            this.cdr.detectChanges();
+        } else if (data && data.erro) {
+            this.snackBar.open('CEP não encontrado.', 'Fechar', { duration: 3000 });
         }
     });
 
     this.cepSubscriptions.push(sub);
+  }
+
+  private clearCepSubscriptions(): void {
+    this.cepSubscriptions.forEach(s => s.unsubscribe());
+    this.cepSubscriptions = [];
   }
 
   removeAddress(index: number): void {
@@ -286,7 +299,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.phones.controls.forEach((control, i) => {
         control.get('isMain')?.setValue(i === index);
     });
-    this.sortPhones();
+    this.cdr.detectChanges();
   }
 
   setMainEmail(index: number): void {
@@ -364,6 +377,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
             sortedPhones.forEach(p => this.addPhone(p));
         }
 
+        this.clearCepSubscriptions();
         this.addresses.clear();
         if (userProfile.addresses) userProfile.addresses.forEach(a => this.addAddress(a));
 
@@ -391,6 +405,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.secondaryEmails.controls.forEach(c => c.disable());
         this.links.controls.forEach(c => c.disable());
         this.profileForm.get('tagSettings')?.disable();
+        this.cdr.detectChanges();
       },
       error: () => {
         this.snackBar.open('Erro ao carregar seu perfil.', 'Fechar', { duration: 5000 });
@@ -408,6 +423,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       this.secondaryEmails.controls.forEach(c => c.enable());
       this.links.controls.forEach(c => c.enable());
       this.profileForm.get('tagSettings')?.enable();
+      this.cdr.detectChanges();
     } else {
       this.onCancel();
     }
