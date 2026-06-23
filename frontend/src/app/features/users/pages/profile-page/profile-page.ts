@@ -119,7 +119,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
   redirectModes = [
       { value: RedirectMode.PROFILE, label: 'Perfil Inteligente' },
       { value: RedirectMode.WHATSAPP, label: 'WhatsApp Direto' },
-      { value: RedirectMode.VCARD, label: 'Salvar Contato (vCard)' },
       { value: RedirectMode.CUSTOM_URL, label: 'Link Personalizado' }
   ];
 
