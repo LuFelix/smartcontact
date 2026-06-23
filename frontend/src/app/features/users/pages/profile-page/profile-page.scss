@@ -325,6 +325,10 @@
     background-color: var(--mat-sys-surface-container-highest);
     border-radius: 20px;
     height: 48px;
+    position: relative;
+    z-index: 1;
+    max-width: 120px;
+    box-sizing: border-box;
 }
 
 .icon-align-fix {
@@ -333,6 +337,8 @@
     justify-content: center !important;
     width: 40px !important;
     height: 40px !important;
+    position: relative;
+    z-index: 2;
     
     mat-icon { margin: 0 !important; }
 }
