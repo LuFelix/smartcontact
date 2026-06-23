@@ -27,7 +27,7 @@
         <!-- AÇÕES DE EDIÇÃO ABAIXO DA FOTO -->
         <div class="avatar-actions">
             @if (!isEditing) {
-              <button mat-flat-button color="primary" (click)="toggleEditMode()" class="avatar-action-btn">
+              <button type="button" mat-flat-button color="primary" (click)="toggleEditMode()" class="avatar-action-btn">
                 <mat-icon>edit</mat-icon> Editar Perfil
               </button>
             } @else {
@@ -216,7 +216,7 @@
             </div>
 
             <div formArrayName="phones" class="array-list">
-                @for (phone of phones.controls; track $index) {
+                @for (phone of phones.controls; track phone) {
                     <div [formGroupName]="$index" class="array-item-row">
                         <mat-form-field appearance="outline" class="flex-grow">
                             <mat-label>Telefone / Celular</mat-label>
@@ -304,7 +304,7 @@
             </div>
 
             <div formArrayName="addresses" class="array-list">
-                @for (address of addresses.controls; track $index) {
+                @for (address of addresses.controls; track address) {
                     <div [formGroupName]="$index" class="address-item-block">
                         <div class="address-item-header">
                             <mat-form-field appearance="outline" class="tag-select">
@@ -380,7 +380,7 @@
 
         <div class="profile-actions">
           @if (!isEditing) {
-            <button mat-flat-button color="primary" (click)="toggleEditMode()" class="action-btn">
+            <button type="button" mat-flat-button color="primary" (click)="toggleEditMode()" class="action-btn">
               <mat-icon>edit</mat-icon> Editar Perfil
             </button>
           }
