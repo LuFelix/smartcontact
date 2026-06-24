@@ -123,6 +123,27 @@
                     </div>
                 </div>
             </div>
+
+            <!-- EXIBIÇÃO DO LINK NFC -->
+            <div class="nfc-link-section">
+                <div class="nfc-display-card">
+                    <div class="nfc-info">
+                        <h4><mat-icon>contactless</mat-icon> Seu Link NFC</h4>
+                        <p>Use este link para gravar em chips NFC. O destino é configurado no painel acima.</p>
+                        <div class="nfc-url-display">
+                            <code>{{ nfcUrl }}</code>
+                        </div>
+                        <div class="nfc-actions-row">
+                            <button mat-flat-button color="primary" (click)="copyNfcLink()" class="nfc-action-btn">
+                                <mat-icon>content_copy</mat-icon> Copiar Link
+                            </button>
+                            <button mat-stroked-button color="accent" (click)="writeNfcChip()" class="nfc-action-btn">
+                                <mat-icon>nfc</mat-icon> Gravar Chip NFC
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <mat-divider *ngIf="activeTag"></mat-divider>

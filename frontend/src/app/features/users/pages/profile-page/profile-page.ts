@@ -83,6 +83,25 @@ export class ProfileComponent implements OnInit, OnDestroy {
   isFetchingCep: { [key: number]: boolean } = {};
   profilePicturePreview: string | ArrayBuffer | null = null;
 
+  get nfcUrl(): string {
+    if (!this.activeTag) return '';
+    return `${window.location.origin}/t/${this.activeTag.uuid}?source=nfc`;
+  }
+
+  copyNfcLink(): void {
+    const url = this.nfcUrl;
+    if (!url) return;
+    navigator.clipboard.writeText(url).then(() => {
+      this.snackBar.open('Link NFC copiado!', 'OK', { duration: 2000 });
+    }).catch(() => {
+      this.snackBar.open('Erro ao copiar link.', 'Fechar', { duration: 3000 });
+    });
+  }
+
+  writeNfcChip(): void {
+    this.snackBar.open('Gravação de chip NFC será implementada em breve.', 'OK', { duration: 3000 });
+  }
+
   getInitial(): string {
       const name = this.profileForm.get('firstName')?.value || '';
       return name ? name.trim().charAt(0).toUpperCase() : '?';
