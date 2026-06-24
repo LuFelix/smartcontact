@@ -571,4 +571,29 @@ export class ProfileComponent implements OnInit, OnDestroy {
     link.href = canvas.toDataURL('image/png');
     link.click();
   }
+
+  viewQrFullscreen(): void {
+    if (!this.activeTag) return;
+    const baseUrl = window.location.origin;
+    const url = `${baseUrl}/t/${this.activeTag.uuid}?source=qr`;
+    QRCode.toDataURL(url, {
+      width: 600,
+      margin: 2,
+      color: { dark: '#000000', light: '#ffffff' }
+    }, (err: Error | null | undefined, dataUrl: string) => {
+      if (err) { console.error(err); return; }
+      const win = window.open('', '_blank');
+      if (win) {
+        win.document.write(`
+          <html>
+            <head><title>QR Code - SmartContact</title></head>
+            <body style="display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:white;">
+              <img src="${dataUrl}" style="max-width:90vw;max-height:90vh;" />
+            </body>
+          </html>
+        `);
+        win.document.close();
+      }
+    });
+  }
 }
