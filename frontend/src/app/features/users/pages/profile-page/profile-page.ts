@@ -22,6 +22,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { NgxMaskDirective } from 'ngx-mask';
 
 // Models e Serviços
@@ -30,6 +31,7 @@ import { UserService } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { CepService } from '../../../../core/utils/cep.service';
 import { environment } from '../../../../environments/environment';
+import { NfcWriterDialogComponent, NfcWriterDialogData } from '../../components/nfc-writer-dialog/nfc-writer-dialog';
 
 @Component({
   selector: 'app-profile',
@@ -50,6 +52,7 @@ import { environment } from '../../../../environments/environment';
     MatTooltipModule,
     MatSelectModule,
     MatSlideToggleModule,
+    MatDialogModule,
     NgxMaskDirective
   ],
   templateUrl: './profile-page.html',
@@ -63,6 +66,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private cepService = inject(CepService);
   private cdr = inject(ChangeDetectorRef);
+  private dialog = inject(MatDialog);
 
   @ViewChild('qrcodeCanvas') qrcodeCanvas!: ElementRef<HTMLCanvasElement>;
 
@@ -99,7 +103,14 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   writeNfcChip(): void {
-    this.snackBar.open('Gravação de chip NFC será implementada em breve.', 'OK', { duration: 3000 });
+    const nfcUrl = this.nfcUrl;
+    if (!nfcUrl) return;
+    this.dialog.open(NfcWriterDialogComponent, {
+      data: { nfcUrl } as NfcWriterDialogData,
+      width: '520px',
+      maxWidth: '95vw',
+      autoFocus: false,
+    });
   }
 
   getInitial(): string {
