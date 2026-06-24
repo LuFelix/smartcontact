@@ -368,6 +368,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
                 qrRedirectMode: this.activeTag.qrRedirectMode,
                 qrCustomUrl: this.activeTag.qrCustomUrl
             });
+            this.cdr.detectChanges();
             this.generatePersonalQR();
         }
 
