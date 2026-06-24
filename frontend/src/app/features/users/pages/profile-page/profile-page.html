@@ -104,26 +104,6 @@
                 </div>
             </div>
 
-            <!-- EXIBIÇÃO DO QR CODE PESSOAL -->
-            <div class="personal-qr-section">
-                <div class="qr-display-card">
-                    <canvas #qrcodeCanvas></canvas>
-                    <div class="qr-info">
-                        <h4>Seu QR Code Pessoal</h4>
-                        <p>Aponte a câmera para testar o destino configurado acima.</p>
-                        <div class="qr-actions-row">
-                            <a mat-flat-button color="primary" [routerLink]="['/t', activeTag.uuid]" [queryParams]="{ source: 'qr' }" target="_blank" class="test-config-btn">
-                                <mat-icon>open_in_new</mat-icon> Testar Configuração
-                            </a>
-                            <button mat-flat-button color="accent" (click)="downloadPersonalQR()" class="download-qr-btn">
-                                <mat-icon>download</mat-icon> Baixar QR
-                            </button>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-
             <!-- EXIBIÇÃO DO LINK NFC -->
             <div class="nfc-link-section">
                 <div class="nfc-display-card">
@@ -141,6 +121,26 @@
                                 <mat-icon>nfc</mat-icon> Gravar Chip NFC
                             </button>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EXIBIÇÃO DO QR CODE PESSOAL -->
+            <div class="personal-qr-section">
+                <div class="qr-display-card">
+                    <canvas #qrcodeCanvas></canvas>
+                    <div class="qr-info">
+                        <h4>Seu QR Code Pessoal</h4>
+                        <p>Aponte a câmera para testar o destino configurado acima.</p>
+                        <div class="qr-actions-row">
+                            <a mat-flat-button color="primary" [routerLink]="['/t', activeTag.uuid]" [queryParams]="{ source: 'qr' }" target="_blank" class="test-config-btn">
+                                <mat-icon>open_in_new</mat-icon> Testar Configuração
+                            </a>
+                            <button mat-flat-button color="accent" (click)="downloadPersonalQR()" class="download-qr-btn">
+                                <mat-icon>download</mat-icon> Baixar QR
+                            </button>
+                        </div>
+
                     </div>
                 </div>
             </div>
