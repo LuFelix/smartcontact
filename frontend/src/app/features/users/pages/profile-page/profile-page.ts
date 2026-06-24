@@ -1,12 +1,12 @@
 // Caminho: src/app/features/users/pages/profile-page/profile-page.ts
 
-import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { Subscription, EMPTY, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap, tap, catchError, filter, finalize } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, tap, filter, finalize } from 'rxjs/operators';
 import * as QRCode from 'qrcode';
 
 // Imports do Angular Material
@@ -22,6 +22,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { NgxMaskDirective } from 'ngx-mask';
 
 // Models e Serviços
@@ -30,6 +31,7 @@ import { UserService } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { CepService } from '../../../../core/utils/cep.service';
 import { environment } from '../../../../environments/environment';
+import { NfcWriterDialogComponent, NfcWriterDialogData } from '../../components/nfc-writer-dialog/nfc-writer-dialog';
 
 @Component({
   selector: 'app-profile',
@@ -50,6 +52,7 @@ import { environment } from '../../../../environments/environment';
     MatTooltipModule,
     MatSelectModule,
     MatSlideToggleModule,
+    MatDialogModule,
     NgxMaskDirective
   ],
   templateUrl: './profile-page.html',
@@ -62,6 +65,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private snackBar = inject(MatSnackBar);
   private router = inject(Router);
   private cepService = inject(CepService);
+  private cdr = inject(ChangeDetectorRef);
+  private dialog = inject(MatDialog);
 
   @ViewChild('qrcodeCanvas') qrcodeCanvas!: ElementRef<HTMLCanvasElement>;
 
@@ -81,6 +86,32 @@ export class ProfileComponent implements OnInit, OnDestroy {
   isEditing = false;
   isFetchingCep: { [key: number]: boolean } = {};
   profilePicturePreview: string | ArrayBuffer | null = null;
+
+  get nfcUrl(): string {
+    if (!this.activeTag) return '';
+    return `${window.location.origin}/t/${this.activeTag.uuid}?source=nfc`;
+  }
+
+  copyNfcLink(): void {
+    const url = this.nfcUrl;
+    if (!url) return;
+    navigator.clipboard.writeText(url).then(() => {
+      this.snackBar.open('Link NFC copiado!', 'OK', { duration: 2000 });
+    }).catch(() => {
+      this.snackBar.open('Erro ao copiar link.', 'Fechar', { duration: 3000 });
+    });
+  }
+
+  writeNfcChip(): void {
+    const nfcUrl = this.nfcUrl;
+    if (!nfcUrl) return;
+    this.dialog.open(NfcWriterDialogComponent, {
+      data: { nfcUrl } as NfcWriterDialogData,
+      width: '520px',
+      maxWidth: '95vw',
+      autoFocus: false,
+    });
+  }
 
   getInitial(): string {
       const name = this.profileForm.get('firstName')?.value || '';
@@ -119,7 +150,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
   redirectModes = [
       { value: RedirectMode.PROFILE, label: 'Perfil Inteligente' },
       { value: RedirectMode.WHATSAPP, label: 'WhatsApp Direto' },
-      { value: RedirectMode.VCARD, label: 'Salvar Contato (vCard)' },
       { value: RedirectMode.CUSTOM_URL, label: 'Link Personalizado' }
   ];
 
@@ -152,7 +182,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.profileSubscription?.unsubscribe();
-    this.cepSubscriptions.forEach(s => s.unsubscribe());
+    this.clearCepSubscriptions();
   }
 
   get phones(): FormArray {
@@ -258,23 +288,35 @@ export class ProfileComponent implements OnInit, OnDestroy {
         tap(() => {
             this.isFetchingCep[index] = true;
             addressGroup.patchValue({ street: '', neighborhood: '', city: '', state: '' }, { emitEvent: false });
+            this.cdr.detectChanges();
         }),
-        switchMap(cep => this.cepService.fetchAddressFromCep(cep).pipe(
-            catchError(() => of(null))
-        )),
-        tap(() => this.isFetchingCep[index] = false)
+        switchMap(cep => this.cepService.fetchAddressFromCep(cep)),
+        tap(() => {
+            this.isFetchingCep[index] = false;
+            this.cdr.detectChanges();
+        })
     ).subscribe(data => {
-        if (data) {
+        if (data && !data.erro) {
             addressGroup.patchValue({
                 street: data.logradouro || '',
                 neighborhood: data.bairro || '',
                 city: data.localidade || '',
                 state: data.uf || ''
             });
+            this.cdr.detectChanges();
+        } else if (data && data.erro) {
+            this.snackBar.open('CEP não encontrado.', 'Fechar', { duration: 3000 });
+        } else {
+            this.snackBar.open('Erro ao consultar CEP. Verifique o número e tente novamente.', 'Fechar', { duration: 3000 });
         }
     });
 
     this.cepSubscriptions.push(sub);
+  }
+
+  private clearCepSubscriptions(): void {
+    this.cepSubscriptions.forEach(s => s.unsubscribe());
+    this.cepSubscriptions = [];
   }
 
   removeAddress(index: number): void {
@@ -287,7 +329,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.phones.controls.forEach((control, i) => {
         control.get('isMain')?.setValue(i === index);
     });
-    this.sortPhones();
+    this.cdr.detectChanges();
   }
 
   setMainEmail(index: number): void {
@@ -356,6 +398,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
                 qrRedirectMode: this.activeTag.qrRedirectMode,
                 qrCustomUrl: this.activeTag.qrCustomUrl
             });
+            this.cdr.detectChanges();
             this.generatePersonalQR();
         }
 
@@ -365,6 +408,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
             sortedPhones.forEach(p => this.addPhone(p));
         }
 
+        this.clearCepSubscriptions();
         this.addresses.clear();
         if (userProfile.addresses) userProfile.addresses.forEach(a => this.addAddress(a));
 
@@ -392,6 +436,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.secondaryEmails.controls.forEach(c => c.disable());
         this.links.controls.forEach(c => c.disable());
         this.profileForm.get('tagSettings')?.disable();
+        this.cdr.detectChanges();
       },
       error: () => {
         this.snackBar.open('Erro ao carregar seu perfil.', 'Fechar', { duration: 5000 });
@@ -409,6 +454,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       this.secondaryEmails.controls.forEach(c => c.enable());
       this.links.controls.forEach(c => c.enable());
       this.profileForm.get('tagSettings')?.enable();
+      this.cdr.detectChanges();
     } else {
       this.onCancel();
     }
@@ -510,13 +556,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
   generatePersonalQR(): void {
       if (!this.activeTag) return;
       const baseUrl = window.location.origin;
-      const identifier = this.activeTag?.handle || this.userUsername() || this.activeTag.uuid;
-      const url = `${baseUrl}/t/${identifier}?source=qr`;
+      const url = `${baseUrl}/t/${this.activeTag.uuid}?source=qr`;
       
       setTimeout(() => {
           if (this.qrcodeCanvas) {
               QRCode.toCanvas(this.qrcodeCanvas.nativeElement, url, {
-                  width: 250,
+                  width: 180,
                   margin: 1,
                   color: {
                       dark: '#000000',
@@ -530,11 +575,36 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   downloadPersonalQR(): void {
-    if (!this.qrcodeCanvas) return;
+    if (!this.qrcodeCanvas || !this.activeTag) return;
     const canvas = this.qrcodeCanvas.nativeElement;
     const link = document.createElement('a');
-    link.download = `smartcontact-qr-${this.activeTag?.handle || this.userUsername() || 'me'}.png`;
+    link.download = `smartcontact-qr-${this.activeTag.uuid}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
+  }
+
+  viewQrFullscreen(): void {
+    if (!this.activeTag) return;
+    const baseUrl = window.location.origin;
+    const url = `${baseUrl}/t/${this.activeTag.uuid}?source=qr`;
+    QRCode.toDataURL(url, {
+      width: 600,
+      margin: 2,
+      color: { dark: '#000000', light: '#ffffff' }
+    }, (err: Error | null | undefined, dataUrl: string) => {
+      if (err) { console.error(err); return; }
+      const win = window.open('', '_blank');
+      if (win) {
+        win.document.write(`
+          <html>
+            <head><title>QR Code - SmartContact</title></head>
+            <body style="display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:white;">
+              <img src="${dataUrl}" style="max-width:90vw;max-height:90vh;" />
+            </body>
+          </html>
+        `);
+        win.document.close();
+      }
+    });
   }
 }

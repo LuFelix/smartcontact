@@ -27,7 +27,7 @@
         <!-- AÇÕES DE EDIÇÃO ABAIXO DA FOTO -->
         <div class="avatar-actions">
             @if (!isEditing) {
-              <button mat-flat-button color="primary" (click)="toggleEditMode()" class="avatar-action-btn">
+              <button type="button" mat-flat-button color="primary" (click)="toggleEditMode()" class="avatar-action-btn">
                 <mat-icon>edit</mat-icon> Editar Perfil
               </button>
             } @else {
@@ -104,6 +104,27 @@
                 </div>
             </div>
 
+            <!-- EXIBIÇÃO DO LINK NFC -->
+            <div class="nfc-link-section">
+                <div class="nfc-display-card">
+                    <div class="nfc-info">
+                        <h4><mat-icon>contactless</mat-icon> Seu Link NFC</h4>
+                        <p>Use este link para gravar em chips NFC. O destino é configurado no painel acima.</p>
+                        <div class="nfc-url-display">
+                            <code>{{ nfcUrl }}</code>
+                        </div>
+                        <div class="nfc-actions-row">
+                            <button mat-flat-button color="primary" (click)="copyNfcLink()" class="nfc-action-btn">
+                                <mat-icon>content_copy</mat-icon> Copiar Link
+                            </button>
+                            <button mat-stroked-button color="accent" (click)="writeNfcChip()" class="nfc-action-btn">
+                                <mat-icon>nfc</mat-icon> Gravar Chip NFC
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- EXIBIÇÃO DO QR CODE PESSOAL -->
             <div class="personal-qr-section">
                 <div class="qr-display-card">
@@ -112,11 +133,14 @@
                         <h4>Seu QR Code Pessoal</h4>
                         <p>Aponte a câmera para testar o destino configurado acima.</p>
                         <div class="qr-actions-row">
-                            <a mat-flat-button color="primary" [routerLink]="['/t', activeTag.handle || userUsername() || activeTag.uuid]" [queryParams]="{ source: 'qr' }" target="_blank" class="test-config-btn">
+                            <a mat-flat-button color="primary" [routerLink]="['/t', activeTag.uuid]" [queryParams]="{ source: 'qr' }" target="_blank" class="test-config-btn">
                                 <mat-icon>open_in_new</mat-icon> Testar Configuração
                             </a>
                             <button mat-flat-button color="accent" (click)="downloadPersonalQR()" class="download-qr-btn">
                                 <mat-icon>download</mat-icon> Baixar QR
+                            </button>
+                            <button mat-flat-button color="primary" (click)="viewQrFullscreen()" class="view-qr-btn">
+                                <mat-icon>fullscreen</mat-icon> Expor QR
                             </button>
                         </div>
 
@@ -174,7 +198,7 @@
             </div>
 
             <div formArrayName="secondaryEmails" class="array-list">
-                @for (email of secondaryEmails.controls; track $index) {
+                @for (email of secondaryEmails.controls; track email) {
                     <div [formGroupName]="$index" class="array-item-row">
                         <mat-form-field appearance="outline" class="flex-grow">
                             <mat-label>E-mail Secundário</mat-label>
@@ -216,7 +240,7 @@
             </div>
 
             <div formArrayName="phones" class="array-list">
-                @for (phone of phones.controls; track $index) {
+                @for (phone of phones.controls; track phone) {
                     <div [formGroupName]="$index" class="array-item-row">
                         <mat-form-field appearance="outline" class="flex-grow">
                             <mat-label>Telefone / Celular</mat-label>
@@ -266,7 +290,7 @@
             </div>
 
             <div formArrayName="links" class="array-list">
-                @for (link of links.controls; track $index) {
+                @for (link of links.controls; track link) {
                     <div [formGroupName]="$index" class="array-item-row">
                         <mat-form-field appearance="outline" style="width: 150px;">
                             <mat-label>Título</mat-label>
@@ -304,7 +328,7 @@
             </div>
 
             <div formArrayName="addresses" class="array-list">
-                @for (address of addresses.controls; track $index) {
+                @for (address of addresses.controls; track address) {
                     <div [formGroupName]="$index" class="address-item-block">
                         <div class="address-item-header">
                             <mat-form-field appearance="outline" class="tag-select">
@@ -380,7 +404,7 @@
 
         <div class="profile-actions">
           @if (!isEditing) {
-            <button mat-flat-button color="primary" (click)="toggleEditMode()" class="action-btn">
+            <button type="button" mat-flat-button color="primary" (click)="toggleEditMode()" class="action-btn">
               <mat-icon>edit</mat-icon> Editar Perfil
             </button>
           }

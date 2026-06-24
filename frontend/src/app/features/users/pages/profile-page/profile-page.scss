@@ -214,6 +214,8 @@
     border-radius: 20px;
     box-shadow: var(--mat-sys-level2);
     border: 1px solid var(--mat-sys-outline-variant);
+    width: 100%;
+    max-width: 600px;
     
     canvas {
         background: white;
@@ -228,10 +230,11 @@
 
     .qr-actions-row {
         display: flex;
+        flex-wrap: wrap;
         gap: 12px;
         margin-top: 16px;
         
-        .test-config-btn, .download-qr-btn {
+        .test-config-btn, .download-qr-btn, .view-qr-btn {
             font-weight: 700;
             letter-spacing: 0.5px;
             padding: 0 24px;
@@ -256,7 +259,7 @@
         }
     }
 
-    @media (max-width: 600px) {
+    @media (max-width: 720px) {
         flex-direction: column;
         text-align: center;
         width: 100%;
@@ -267,6 +270,97 @@
     background: #f5f5f5; 
     .qr-info h4 { color: #000; }
     .qr-info p { color: #444; }
+}
+
+/* --- NFC LINK SECTION --- */
+.nfc-link-section {
+    margin-top: 32px;
+    display: flex;
+    justify-content: center;
+}
+
+.nfc-display-card {
+    display: flex;
+    align-items: center;
+    padding: 24px 32px;
+    background: var(--mat-sys-surface-container-low);
+    border-radius: 20px;
+    border: 1px dashed var(--mat-sys-primary);
+    box-shadow: var(--mat-sys-level1);
+    width: 100%;
+    max-width: 600px;
+
+    .nfc-info {
+        width: 100%;
+
+        h4 {
+            margin: 0 0 8px 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--mat-sys-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            mat-icon { font-size: 24px; width: 24px; height: 24px; }
+        }
+
+        p {
+            margin: 0 0 16px 0;
+            font-size: 0.9rem;
+            color: var(--mat-sys-on-surface-variant);
+            line-height: 1.4;
+        }
+    }
+
+    .nfc-url-display {
+        background: var(--mat-sys-surface-container-highest);
+        border-radius: 12px;
+        padding: 14px 18px;
+        margin-bottom: 16px;
+        overflow: hidden;
+
+        code {
+            font-size: 0.85rem;
+            word-break: break-all;
+            color: var(--mat-sys-on-surface);
+            display: block;
+            line-height: 1.5;
+        }
+    }
+
+    .nfc-actions-row {
+        display: flex;
+        gap: 12px;
+
+        .nfc-action-btn {
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            padding: 0 24px;
+            height: 48px;
+            border-radius: 32px !important;
+            box-shadow: var(--mat-sys-level1);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--mat-sys-level3);
+                filter: brightness(1.1);
+            }
+
+            &:active {
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 400px) {
+            flex-direction: column;
+        }
+    }
+
+    @media (max-width: 600px) {
+        padding: 20px;
+    }
 }
 
 .form-section {
@@ -325,6 +419,10 @@
     background-color: var(--mat-sys-surface-container-highest);
     border-radius: 20px;
     height: 48px;
+    position: relative;
+    z-index: 1;
+    max-width: 120px;
+    box-sizing: border-box;
 }
 
 .icon-align-fix {
@@ -333,6 +431,8 @@
     justify-content: center !important;
     width: 40px !important;
     height: 40px !important;
+    position: relative;
+    z-index: 2;
     
     mat-icon { margin: 0 !important; }
 }

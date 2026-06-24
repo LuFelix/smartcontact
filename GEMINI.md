@@ -22,7 +22,7 @@ O sistema opera em um paradigma Multi-Tenant N:N (estilo Google Drive).
 1. **Dono (Owner):** Criador do Workspace.
 2. **Equipe (Member):** Possui um `profile_id` vinculado na membership. Aparece na gestão de equipe.
 3. **Usuário Standard:** Possui membership no tenant mas `profile_id` é null. Acesso apenas ao painel básico.
-4. **Contato (Lead):** Role 'contato'. Sem senha. Capturado via perfil público.
+4. **Lead:** Role 'contato' (sem senha), capturado via perfil público e exibido no menu "Meus Leads". Torna-se **Contato** após a sincronização com o Google através do botão de envio presente em cada card.
 
 ---
 

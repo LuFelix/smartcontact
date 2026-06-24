@@ -1,0 +1,87 @@
+<h2 mat-dialog-title>
+  <mat-icon>nfc</mat-icon> Gravar Chip NFC
+</h2>
+
+<mat-dialog-content>
+  @if (!supportInfo.supported) {
+    <div class="browser-warning">
+      <mat-icon>warning_amber</mat-icon>
+      <div class="warning-text">
+        <strong>Funcionalidade não suportada neste navegador.</strong>
+        <p [innerHTML]="supportInfo.message"></p>
+      </div>
+    </div>
+  }
+
+  <div class="nfc-status-area">
+    @if (actionState === 'idle') {
+      <div class="status-icon idle-icon">
+        <mat-icon>contactless</mat-icon>
+      </div>
+      <p class="status-text">Escolha uma ação abaixo e aproxime o chip NFC do celular.</p>
+      <p class="status-url">
+        <strong>Link a ser gravado:</strong><br>
+        <code>{{ data.nfcUrl }}</code>
+      </p>
+    }
+
+    @if (actionState === 'waiting_tag') {
+      <div class="status-icon waiting-icon">
+        <mat-spinner [diameter]="48"></mat-spinner>
+      </div>
+      <p class="status-text">{{ actionLabel }}</p>
+    }
+
+    @if (actionState === 'success') {
+      <div class="status-icon success-icon">
+        <mat-icon>check_circle</mat-icon>
+      </div>
+      <p class="status-text success-text">{{ actionLabel }}</p>
+      @if (readResult) {
+        <div class="read-result">
+          <p><strong>Conteúdo lido:</strong></p>
+          <code>{{ readResult.url }}</code>
+          <p class="serial">Nº de série: {{ readResult.serialNumber }}</p>
+        </div>
+      }
+    }
+
+    @if (actionState === 'error') {
+      <div class="status-icon error-icon">
+        <mat-icon>error</mat-icon>
+      </div>
+      <p class="status-text error-text">{{ errorMessage }}</p>
+    }
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="center" class="nfc-actions">
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="read()"
+    [disabled]="!supportInfo.supported || actionState === 'waiting_tag'"
+  >
+    <mat-icon>visibility</mat-icon> Ler
+  </button>
+  <button
+    mat-flat-button
+    color="accent"
+    (click)="write()"
+    [disabled]="!supportInfo.supported || actionState === 'waiting_tag'"
+  >
+    <mat-icon>save</mat-icon> Gravar
+  </button>
+  <button
+    mat-stroked-button
+    color="warn"
+    (click)="erase()"
+    [disabled]="!supportInfo.supported || actionState === 'waiting_tag'"
+  >
+    <mat-icon>delete</mat-icon> Apagar
+  </button>
+</mat-dialog-actions>
+
+<div class="dialog-footer-actions" align="end">
+  <button mat-button mat-dialog-close>Fechar</button>
+</div>
