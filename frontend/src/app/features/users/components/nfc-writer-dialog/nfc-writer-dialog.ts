@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { NfcService, NfcReadResult } from '../../../../core/services/nfc.service';
+import { NfcService, NfcReadResult, NfcSupportInfo } from '../../../../core/services/nfc.service';
 
 export interface NfcWriterDialogData {
   nfcUrl: string;
@@ -31,7 +31,7 @@ export class NfcWriterDialogComponent {
   private nfcService = inject(NfcService);
   private snackBar = inject(MatSnackBar);
 
-  nfcSupported = this.nfcService.isSupported();
+  supportInfo: NfcSupportInfo = this.nfcService.getSupportInfo();
   actionState: NfcAction = 'idle';
   actionLabel = '';
   readResult: NfcReadResult | null = null;

@@ -3,12 +3,12 @@
 </h2>
 
 <mat-dialog-content>
-  @if (!nfcSupported) {
+  @if (!supportInfo.supported) {
     <div class="browser-warning">
       <mat-icon>warning_amber</mat-icon>
       <div class="warning-text">
         <strong>Funcionalidade não suportada neste navegador.</strong>
-        <p>Esta funcionalidade funciona apenas no <strong>Google Chrome para Android (versão 89+)</strong>.</p>
+        <p [innerHTML]="supportInfo.message"></p>
       </div>
     </div>
   }
@@ -60,7 +60,7 @@
     mat-flat-button
     color="primary"
     (click)="read()"
-    [disabled]="!nfcSupported || actionState === 'waiting_tag'"
+    [disabled]="!supportInfo.supported || actionState === 'waiting_tag'"
   >
     <mat-icon>visibility</mat-icon> Ler
   </button>
@@ -68,7 +68,7 @@
     mat-flat-button
     color="accent"
     (click)="write()"
-    [disabled]="!nfcSupported || actionState === 'waiting_tag'"
+    [disabled]="!supportInfo.supported || actionState === 'waiting_tag'"
   >
     <mat-icon>save</mat-icon> Gravar
   </button>
@@ -76,7 +76,7 @@
     mat-stroked-button
     color="warn"
     (click)="erase()"
-    [disabled]="!nfcSupported || actionState === 'waiting_tag'"
+    [disabled]="!supportInfo.supported || actionState === 'waiting_tag'"
   >
     <mat-icon>delete</mat-icon> Apagar
   </button>

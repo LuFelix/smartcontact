@@ -1,15 +1,57 @@
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 
 export interface NfcReadResult {
   url: string;
   serialNumber: string;
 }
 
+export interface NfcSupportInfo {
+  supported: boolean;
+  message: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class NfcService {
+  getSupportInfo(): NfcSupportInfo {
+    if ('NDEFReader' in window) {
+      return { supported: true, message: '' };
+    }
+
+    const ua = navigator.userAgent.toLowerCase();
+    const isChrome = ua.includes('chrome') || ua.includes('chromium');
+    const isAndroid = ua.includes('android');
+    const isDesktop = !(ua.includes('mobile') || ua.includes('tablet'));
+
+    if (isChrome && isDesktop && !isAndroid) {
+      return {
+        supported: false,
+        message:
+          'O Web NFC é suportado apenas no <strong>Google Chrome para Android</strong>. Você está usando o Chrome no Desktop, que não possui suporte a NFC.',
+      };
+    }
+
+    if (isChrome && isAndroid) {
+      const match = ua.match(/chrome\/(\d+)/);
+      const version = match ? parseInt(match[1], 10) : 0;
+      if (version < 89) {
+        return {
+          supported: false,
+          message:
+            'Sua versão do Chrome para Android é muito antiga. Atualize para a versão <strong>89 ou superior</strong> para usar NFC.',
+        };
+      }
+    }
+
+    return {
+      supported: false,
+      message:
+        'Seu navegador não suporta Web NFC. Utilize o <strong>Google Chrome para Android (versão 89+)</strong>.',
+    };
+  }
+
   isSupported(): boolean {
     return 'NDEFReader' in window;
   }
