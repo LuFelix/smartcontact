@@ -545,7 +545,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   downloadPersonalQR(): void {
-    if (!this.qrcodeCanvas) return;
+    if (!this.qrcodeCanvas || !this.activeTag) return;
     const canvas = this.qrcodeCanvas.nativeElement;
     const link = document.createElement('a');
     link.download = `smartcontact-qr-${this.activeTag.uuid}.png`;
