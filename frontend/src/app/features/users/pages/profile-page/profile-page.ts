@@ -5,8 +5,8 @@ import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { Subscription, EMPTY, of } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap, tap, catchError, filter, finalize } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, tap, filter, finalize } from 'rxjs/operators';
 import * as QRCode from 'qrcode';
 
 // Imports do Angular Material
@@ -260,9 +260,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
             addressGroup.patchValue({ street: '', neighborhood: '', city: '', state: '' }, { emitEvent: false });
             this.cdr.detectChanges();
         }),
-        switchMap(cep => this.cepService.fetchAddressFromCep(cep).pipe(
-            catchError(() => of(null))
-        )),
+        switchMap(cep => this.cepService.fetchAddressFromCep(cep)),
         tap(() => {
             this.isFetchingCep[index] = false;
             this.cdr.detectChanges();
@@ -278,6 +276,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
             this.cdr.detectChanges();
         } else if (data && data.erro) {
             this.snackBar.open('CEP não encontrado.', 'Fechar', { duration: 3000 });
+        } else {
+            this.snackBar.open('Erro ao consultar CEP. Verifique o número e tente novamente.', 'Fechar', { duration: 3000 });
         }
     });
 
