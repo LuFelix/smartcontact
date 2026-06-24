@@ -230,6 +230,7 @@
 
     .qr-actions-row {
         display: flex;
+        flex-wrap: wrap;
         gap: 12px;
         margin-top: 16px;
         
@@ -258,7 +259,7 @@
         }
     }
 
-    @media (max-width: 600px) {
+    @media (max-width: 720px) {
         flex-direction: column;
         text-align: center;
         width: 100%;

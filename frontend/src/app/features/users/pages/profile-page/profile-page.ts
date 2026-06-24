@@ -550,7 +550,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       setTimeout(() => {
           if (this.qrcodeCanvas) {
               QRCode.toCanvas(this.qrcodeCanvas.nativeElement, url, {
-                  width: 250,
+                  width: 180,
                   margin: 1,
                   color: {
                       dark: '#000000',
