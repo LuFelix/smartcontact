@@ -526,8 +526,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   generatePersonalQR(): void {
       if (!this.activeTag) return;
       const baseUrl = window.location.origin;
-      const identifier = this.activeTag?.handle || this.userUsername() || this.activeTag.uuid;
-      const url = `${baseUrl}/t/${identifier}?source=qr`;
+      const url = `${baseUrl}/t/${this.activeTag.uuid}?source=qr`;
       
       setTimeout(() => {
           if (this.qrcodeCanvas) {
@@ -549,7 +548,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     if (!this.qrcodeCanvas) return;
     const canvas = this.qrcodeCanvas.nativeElement;
     const link = document.createElement('a');
-    link.download = `smartcontact-qr-${this.activeTag?.handle || this.userUsername() || 'me'}.png`;
+    link.download = `smartcontact-qr-${this.activeTag.uuid}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
   }

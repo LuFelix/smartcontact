@@ -112,7 +112,7 @@
                         <h4>Seu QR Code Pessoal</h4>
                         <p>Aponte a câmera para testar o destino configurado acima.</p>
                         <div class="qr-actions-row">
-                            <a mat-flat-button color="primary" [routerLink]="['/t', activeTag.handle || userUsername() || activeTag.uuid]" [queryParams]="{ source: 'qr' }" target="_blank" class="test-config-btn">
+                            <a mat-flat-button color="primary" [routerLink]="['/t', activeTag.uuid]" [queryParams]="{ source: 'qr' }" target="_blank" class="test-config-btn">
                                 <mat-icon>open_in_new</mat-icon> Testar Configuração
                             </a>
                             <button mat-flat-button color="accent" (click)="downloadPersonalQR()" class="download-qr-btn">
