@@ -39,7 +39,15 @@ export class MainLayoutComponent implements OnInit {
       .pipe(map(result => result.matches))
       .subscribe(mobile => {
         this.isMobile.set(mobile);
-        if (mobile) this.isSidenavOpen = false;
+        this.isSidenavOpen = !mobile;
+      });
+
+    this.breakpointObserver.observe('(min-width: 1400px)')
+      .pipe(map(result => result.matches))
+      .subscribe(wide => {
+        if (!this.isMobile()) {
+          this.isCollapsed.set(!wide);
+        }
       });
 
     this.router.events.pipe(
@@ -52,12 +60,10 @@ export class MainLayoutComponent implements OnInit {
   }
 
   toggleSidenav() {
-    this.isSidenavOpen = !this.isSidenavOpen;
-  }
-
-  onSidenavHover(isEntered: boolean) {
-    if (!this.isMobile()) {
-      this.isCollapsed.set(!isEntered);
+    if (this.isMobile()) {
+      this.isSidenavOpen = !this.isSidenavOpen;
+    } else {
+      this.isCollapsed.update(v => !v);
     }
   }
 }

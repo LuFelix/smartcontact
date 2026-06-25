@@ -4,14 +4,12 @@
                [mode]="isMobile() ? 'over' : 'side'"
                [(opened)]="isSidenavOpen"
                class="sidenav"
-               [class.collapsed]="!isMobile() && isCollapsed()"
-               (mouseenter)="onSidenavHover(true)"
-               (mouseleave)="onSidenavHover(false)">
+               [class.collapsed]="!isMobile() && isCollapsed()">
     <app-side-nav [collapsed]="!isMobile() && isCollapsed()" />
   </mat-sidenav>
 
   <mat-sidenav-content class="main-content">
-    <app-header [sidenavOpen]="isSidenavOpen" [isMobile]="isMobile()" (toggleSidenav)="toggleSidenav()"></app-header>
+    <app-header [sidenavOpen]="!isCollapsed()" [isMobile]="isMobile()" (toggleSidenav)="toggleSidenav()"></app-header>
 
     <div class="page-content" [class.has-bottom-nav]="isMobile()">
       <router-outlet></router-outlet>

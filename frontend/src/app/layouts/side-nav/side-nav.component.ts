@@ -28,7 +28,10 @@ interface NavItem {
     MatTooltipModule
   ],
   templateUrl: './side-nav.component.html',
-  styleUrl: './side-nav.component.scss'
+  styleUrl: './side-nav.component.scss',
+  host: {
+    '[class.collapsed]': 'collapsed'
+  }
 })
 export class SideNavComponent {
   @Input() collapsed = false;

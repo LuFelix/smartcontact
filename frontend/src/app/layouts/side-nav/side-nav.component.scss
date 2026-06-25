@@ -10,7 +10,6 @@ a[mat-list-item] {
   border-radius: 12px;
   transition: all 0.2s ease;
   color: var(--mat-sys-on-surface-variant);
-  justify-content: center;
 
   &:hover {
     background-color: var(--mat-sys-surface-container-high);
@@ -29,7 +28,6 @@ a[mat-list-item] {
 
   mat-icon {
     color: var(--mat-sys-on-surface-variant);
-    margin-right: 0;
   }
 }
 
@@ -45,4 +43,14 @@ a[mat-list-item] {
 mat-divider {
     margin: 16px 8px;
     border-color: var(--mat-sys-outline-variant);
+}
+
+:host.collapsed {
+  a[mat-list-item] {
+    justify-content: center;
+
+    mat-icon {
+      margin-right: 0;
+    }
+  }
 }
