@@ -71,19 +71,27 @@
     }
 
     <!-- Menu do Usuário -->
-    <button [mat-button]="!isMobile" [mat-icon-button]="isMobile" [matMenuTriggerFor]="userMenu"
-            [class.user-menu-button]="!isMobile" [class.mobile-user-btn]="isMobile">
-      <div class="header-avatar" [style.background-color]="getAvatarColor()">
-        @if (profileImage; as avatarUrl) {
-            <img [src]="avatarUrl" (error)="handleImageError($event)" referrerpolicy="no-referrer">
-        }
-        <span class="letter-placeholder">{{ getInitial() }}</span>
-      </div>
-      @if (!isMobile) {
+    @if (isMobile) {
+      <button mat-icon-button [matMenuTriggerFor]="userMenu" class="mobile-user-btn">
+        <div class="header-avatar" [style.background-color]="getAvatarColor()">
+          @if (profileImage; as avatarUrl) {
+              <img [src]="avatarUrl" (error)="handleImageError($event)" referrerpolicy="no-referrer">
+          }
+          <span class="letter-placeholder">{{ getInitial() }}</span>
+        </div>
+      </button>
+    } @else {
+      <button mat-button [matMenuTriggerFor]="userMenu" class="user-menu-button">
+        <div class="header-avatar" [style.background-color]="getAvatarColor()">
+          @if (profileImage; as avatarUrl) {
+              <img [src]="avatarUrl" (error)="handleImageError($event)" referrerpolicy="no-referrer">
+          }
+          <span class="letter-placeholder">{{ getInitial() }}</span>
+        </div>
         <span class="user-name">{{ userName() || 'Usuário' }}</span>
         <mat-icon>arrow_drop_down</mat-icon>
-      }
-    </button>
+      </button>
+    }
     <mat-menu #userMenu="matMenu">
       <button mat-menu-item (click)="navigateToProfile()">
         <mat-icon>person</mat-icon>
