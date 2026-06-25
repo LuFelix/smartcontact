@@ -6,6 +6,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
+const NFC_TECH_TYPES = ['NFC_HF', 'RFID_UHF'];
+
 @Component({
   selector: 'app-my-tags-card-list',
   standalone: true,
@@ -23,22 +25,37 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
           <mat-card-title class="tag-title">{{ tag.name || 'Recurso sem nome' }}</mat-card-title>
           <mat-card-subtitle>{{ getTechLabel(tag.technologyType) }}</mat-card-subtitle>
         </mat-card-header>
-        
+
         <mat-card-content>
-          <div class="mini-qr-container" (click)="viewQr.emit(tag)">
-            <img *ngIf="tag.qrDataUrl" [src]="tag.qrDataUrl" alt="QR Code" class="mini-qr-img">
-            <mat-spinner *ngIf="!tag.qrDataUrl" diameter="40"></mat-spinner>
-            <div class="overlay-hint">
-              <mat-icon>zoom_in</mat-icon>
-              <span>Ampliar</span>
+          @if (isNfcTag(tag)) {
+            <div class="nfc-chip-container">
+              <div class="nfc-chip-icon">
+                <mat-icon>nfc</mat-icon>
+              </div>
+              <span class="nfc-chip-label">Etiqueta NFC</span>
             </div>
-          </div>
+          } @else {
+            <div class="mini-qr-container" (click)="viewQr.emit(tag)">
+              <img *ngIf="tag.qrDataUrl" [src]="tag.qrDataUrl" alt="QR Code" class="mini-qr-img">
+              <mat-spinner *ngIf="!tag.qrDataUrl" diameter="40"></mat-spinner>
+              <div class="overlay-hint">
+                <mat-icon>zoom_in</mat-icon>
+                <span>Ampliar</span>
+              </div>
+            </div>
+          }
         </mat-card-content>
 
         <mat-card-actions align="end">
-          <button mat-stroked-button color="primary" (click)="viewQr.emit(tag)" type="button" class="action-btn">
-            <mat-icon>visibility</mat-icon> Visualizar / Baixar
-          </button>
+          @if (isNfcTag(tag)) {
+            <button mat-stroked-button color="primary" (click)="writeNfc.emit(tag)" type="button" class="action-btn">
+              <mat-icon>nfc</mat-icon> Ler / Gravar NFC
+            </button>
+          } @else {
+            <button mat-stroked-button color="primary" (click)="viewQr.emit(tag)" type="button" class="action-btn">
+              <mat-icon>visibility</mat-icon> Visualizar / Baixar
+            </button>
+          }
         </mat-card-actions>
       </mat-card>
     </div>
@@ -60,6 +77,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
     .overlay-hint { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease; border-radius: 8px; }
     .mini-qr-container:hover .overlay-hint { opacity: 1; }
     .overlay-hint mat-icon { font-size: 32px; width: 32px; height: 32px; margin-bottom: 4px; }
+    .nfc-chip-container { margin: 16px auto; width: 140px; height: 140px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--mat-sys-surface-container-high); border-radius: 12px; border: 2px dashed var(--mat-sys-outline-variant); }
+    .nfc-chip-icon mat-icon { font-size: 48px; width: 48px; height: 48px; color: var(--mat-sys-primary); }
+    .nfc-chip-label { margin-top: 8px; font-size: 12px; color: var(--mat-sys-on-surface-variant); font-weight: 500; }
     mat-card-actions { margin-top: auto; padding: 12px 16px; border-top: 1px solid var(--mat-sys-outline-variant); background: var(--mat-sys-surface-container-lowest); }
     .action-btn { width: 100%; }
   `]
@@ -68,14 +88,19 @@ export class MyTagsCardListComponent {
   @Input() tags: any[] = [];
   @Input() isLoading = false;
   @Output() viewQr = new EventEmitter<any>();
+  @Output() writeNfc = new EventEmitter<any>();
+
+  isNfcTag(tag: any): boolean {
+    return NFC_TECH_TYPES.includes(tag.technologyType);
+  }
 
   getIcon(tech: string): string {
-    const icons: any = { 'NFC_HF': 'nfc', 'RFID_UHF': 'settings_input_antenna', 'QR_CODE': 'qr_code', 'LINK': 'link', 'TRILHA': 'auto_stories' };
+    const icons: Record<string, string> = { 'NFC_HF': 'nfc', 'RFID_UHF': 'settings_input_antenna', 'QR_CODE': 'qr_code', 'LINK': 'link', 'TRILHA': 'auto_stories' };
     return icons[tech] || 'tag';
   }
 
   getTechLabel(tech: string): string {
-    const labels: any = { 'NFC_HF': 'Tag NFC', 'RFID_UHF': 'RFID UHF', 'QR_CODE': 'QR Code', 'LINK': 'Link Seguro', 'TRILHA': 'Trilha de Conhecimento' };
+    const labels: Record<string, string> = { 'NFC_HF': 'Tag NFC', 'RFID_UHF': 'RFID UHF', 'QR_CODE': 'QR Code', 'LINK': 'Link Seguro', 'TRILHA': 'Trilha de Conhecimento' };
     return labels[tech] || tech;
   }
 }

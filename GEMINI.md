@@ -46,6 +46,9 @@ O sistema opera em um paradigma Multi-Tenant N:N (estilo Google Drive).
 - [x] **PASSO N (Issue #164):** Context Switcher e Arquitetura Multi-Tenant N:N (OK).
 - [x] **PASSO O (Issue #156):** Estabilização - Auto-verificação, Prompt Promoção, Visibilidade Básica (OK - no remoto).
 - [x] **PASSO P (Issue #173):** Fix Tags tab permanently disabled in User Modal (OK).
+- [x] **PASSO Q (Issue #216):** Self-ownership bypass for profile and tag editing in multitenant context — JwtStrategy, UsersService, TagsService + CPF empty string fix (OK).
+- [x] **PASSO R (Issue #224):** Reestruturar profile-page.html com layout de abas (tabs) — template adaptado da modal user-details (OK).
+- [x] **PASSO S (Issue #225):** Adaptar profile-page.ts — limpeza de imports não utilizados, zero mudanças funcionais (OK).
 - [ ] **PRÓXIMOS PASSOS (Backlog Prioritário - issues-todo.json):**
   - #169: Módulo de Gestão Administrativa de Tenants (Workspaces) - BE/FE
   - #97: Motor de Recompensa e Link de Indicação (Growth Loop) - BE/DB

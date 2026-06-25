@@ -2,7 +2,7 @@ import { Component, Inject, inject, OnInit, ViewChild, ElementRef, AfterViewInit
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatDialog, MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { TagService } from '../../../../core/services/tag.service';
@@ -18,11 +18,14 @@ import * as QRCode from 'qrcode';
 // Dumb Components
 import { MyTagsListViewComponent } from '../../components/my-tags-list-view/my-tags-list-view.component';
 import { MyTagsCardListComponent } from '../../components/my-tags-card-list/my-tags-card-list.component';
+import { NfcWriterDialogComponent, NfcWriterDialogData } from '../../../shared/components/nfc-writer-dialog/nfc-writer-dialog';
 
 export interface DisplayTag extends Tag {
   qrDataUrl?: string;
   resolvedUrl?: string;
 }
+
+const NFC_TECH_TYPES = ['NFC_HF', 'RFID_UHF'];
 
 // ============================================================================
 // MODAL DE VISUALIZAÇÃO AMPLIADA DO QR CODE
@@ -68,7 +71,7 @@ export interface DisplayTag extends Tag {
     mat-dialog-actions { display: flex; gap: 16px; padding: 0 16px; }
   `]
 })
-export class QrViewDialogComponent implements AfterViewInit {
+export class MyTagsQrViewDialogComponent implements AfterViewInit {
   private clipboard = inject(Clipboard);
   private snackBar = inject(MatSnackBar);
   
@@ -119,6 +122,7 @@ export class QrViewDialogComponent implements AfterViewInit {
     CommonModule,
     MatButtonModule,
     MatIconModule,
+    MatDialogModule,
     MatSnackBarModule,
     PageHeaderComponent,
     EmptyStateComponent,
@@ -174,7 +178,7 @@ export class MyTagsComponent implements OnInit {
 
   generateAllQrDataUrls() {
     this.displayTags.forEach(tag => {
-      if (tag.resolvedUrl) {
+      if (tag.resolvedUrl && !NFC_TECH_TYPES.includes(tag.technologyType)) {
         QRCode.toDataURL(tag.resolvedUrl, {
           width: 140,
           margin: 1,
@@ -189,7 +193,7 @@ export class MyTagsComponent implements OnInit {
   }
 
   openQrModal(tag: DisplayTag): void {
-    this.dialog.open(QrViewDialogComponent, {
+    this.dialog.open(MyTagsQrViewDialogComponent, {
       data: {
         name: tag.name || 'Recurso',
         url: tag.resolvedUrl
@@ -197,6 +201,16 @@ export class MyTagsComponent implements OnInit {
       width: '450px',
       maxWidth: '95vw',
       panelClass: 'large-abac-modal',
+      autoFocus: false
+    });
+  }
+
+  openNfcWriter(tag: DisplayTag): void {
+    const data: NfcWriterDialogData = { nfcUrl: tag.resolvedUrl || '' };
+    this.dialog.open(NfcWriterDialogComponent, {
+      data,
+      width: '450px',
+      maxWidth: '95vw',
       autoFocus: false
     });
   }

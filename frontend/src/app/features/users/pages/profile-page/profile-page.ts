@@ -2,7 +2,6 @@
 
 import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef, ChangeDetectorRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -18,16 +17,15 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSpinner } from '@angular/material/progress-spinner';
-import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTabsModule } from '@angular/material/tabs';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { NgxMaskDirective } from 'ngx-mask';
 
 // Models e Serviços
-import { UserData, FullUserResponse, Phone, Address, AddressTag, SecondaryEmail, UserLink, RedirectMode, Tag } from '../../../shared/models/users.models';
+import { FullUserResponse, Phone, Address, AddressTag, SecondaryEmail, UserLink, RedirectMode, Tag } from '../../../shared/models/users.models';
 import { UserService } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { CepService } from '../../../../core/utils/cep.service';
@@ -39,7 +37,6 @@ import { NfcWriterDialogComponent, NfcWriterDialogData } from '../../../shared/c
   standalone: true,
   imports: [
     CommonModule,
-    HttpClientModule,
     ReactiveFormsModule,
     RouterModule,
     MatCardModule,
@@ -48,11 +45,10 @@ import { NfcWriterDialogComponent, NfcWriterDialogData } from '../../../shared/c
     MatButtonModule,
     MatProgressSpinnerModule,
     MatIconModule,
-    MatSpinner,
-    MatDividerModule,
     MatTooltipModule,
     MatSelectModule,
     MatSlideToggleModule,
+    MatTabsModule,
     MatDialogModule,
     NgxMaskDirective
   ],
