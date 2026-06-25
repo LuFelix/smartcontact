@@ -1,9 +1,10 @@
 // Caminho: src/app/layouts/side-nav/side-nav.component.ts
 
-import { Component, inject } from '@angular/core';
+import { Component, inject, Input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../core/services/auth.service';
 import { LayoutService } from '../../core/services/layout.service';
@@ -23,12 +24,15 @@ interface NavItem {
     RouterLink,
     RouterLinkActive,
     MatListModule,
-    MatIconModule
+    MatIconModule,
+    MatTooltipModule
   ],
   templateUrl: './side-nav.component.html',
   styleUrl: './side-nav.component.scss'
 })
 export class SideNavComponent {
+  @Input() collapsed = false;
+
   public authService = inject(AuthService);
   public layoutService = inject(LayoutService);
 

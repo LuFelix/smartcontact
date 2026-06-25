@@ -32,6 +32,7 @@ export class MainLayoutComponent implements OnInit {
 
   isMobile = signal(false);
   isSidenavOpen = true;
+  isCollapsed = signal(true);
 
   ngOnInit() {
     this.breakpointObserver.observe('(max-width: 959.98px)')
@@ -52,5 +53,11 @@ export class MainLayoutComponent implements OnInit {
 
   toggleSidenav() {
     this.isSidenavOpen = !this.isSidenavOpen;
+  }
+
+  onSidenavHover(isEntered: boolean) {
+    if (!this.isMobile()) {
+      this.isCollapsed.set(!isEntered);
+    }
   }
 }

@@ -6,7 +6,9 @@
          routerLinkActive="active-link"
          [routerLinkActiveOptions]="{exact: item.link === '/app/dashboard'}">
         <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-        <span matListItemTitle>{{ item.label }}</span>
+        @if (!collapsed) {
+          <span matListItemTitle>{{ item.label }}</span>
+        }
       </a>
     }
   }
@@ -18,9 +20,11 @@
         <mat-icon matListItemIcon>
           {{ layoutService.layout() === 'moderno' ? 'view_list' : 'grid_view' }}
         </mat-icon>
-        <span matListItemTitle>
-          {{ layoutService.layout() === 'moderno' ? 'Layout Clássico' : 'Layout Moderno' }}
-        </span>
+        @if (!collapsed) {
+          <span matListItemTitle>
+            {{ layoutService.layout() === 'moderno' ? 'Layout Clássico' : 'Layout Moderno' }}
+          </span>
+        }
     </a>
   }
 </mat-nav-list>

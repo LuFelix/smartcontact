@@ -11,6 +11,12 @@
   background-color: var(--mat-sys-surface-container-low);
   border-right: 1px solid var(--mat-sys-outline-variant);
   height: 100%;
+  transition: width 0.2s ease;
+  overflow: hidden;
+
+  &.collapsed {
+    width: 64px;
+  }
 }
 
 .main-content {

@@ -2,13 +2,15 @@ mat-nav-list {
   padding: 16px 0;
   background-color: var(--mat-sys-surface-container-low);
   height: 100%;
+  overflow-x: hidden;
 }
 
 a[mat-list-item] {
-  margin: 4px 12px;
+  margin: 4px 8px;
   border-radius: 12px;
   transition: all 0.2s ease;
   color: var(--mat-sys-on-surface-variant);
+  justify-content: center;
 
   &:hover {
     background-color: var(--mat-sys-surface-container-high);
@@ -27,6 +29,7 @@ a[mat-list-item] {
 
   mat-icon {
     color: var(--mat-sys-on-surface-variant);
+    margin-right: 0;
   }
 }
 
@@ -40,6 +43,6 @@ a[mat-list-item] {
 }
 
 mat-divider {
-    margin: 16px 12px;
+    margin: 16px 8px;
     border-color: var(--mat-sys-outline-variant);
 }

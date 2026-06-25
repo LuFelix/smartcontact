@@ -3,8 +3,11 @@
   <mat-sidenav #sidenav
                [mode]="isMobile() ? 'over' : 'side'"
                [(opened)]="isSidenavOpen"
-               class="sidenav">
-    <app-side-nav></app-side-nav>
+               class="sidenav"
+               [class.collapsed]="!isMobile() && isCollapsed()"
+               (mouseenter)="onSidenavHover(true)"
+               (mouseleave)="onSidenavHover(false)">
+    <app-side-nav [collapsed]="!isMobile() && isCollapsed()" />
   </mat-sidenav>
 
   <mat-sidenav-content class="main-content">
