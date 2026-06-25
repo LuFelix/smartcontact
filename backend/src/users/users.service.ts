@@ -333,6 +333,7 @@ export class UsersService {
         } else {
             queryBuilder.leftJoinAndSelect('user.tags', 'tag');
         }
+        queryBuilder.addOrderBy('tag.createdAt', 'DESC');
 
         if (showContacts) {
             queryBuilder
