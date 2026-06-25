@@ -99,28 +99,10 @@ export class TagManagerComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        if (tag) {
-          this.updateTag(tag.id, result);
-        } else {
-          this.createTag(result, createdTag => this.openTagDialog(createdTag));
-        }
+      if (tag && result) {
+        this.updateTag(tag.id, result);
       }
-    });
-  }
-
-  createTag(data: Partial<Tag>, onSuccess?: (tag: Tag) => void): void {
-    this.tagService.create(data).subscribe({
-      next: (createdTag) => {
-        this.snackBar.open('Tag cadastrada com sucesso!', 'OK', { duration: 3000 });
-        this.loadTags();
-        if (onSuccess) onSuccess(createdTag);
-      },
-      error: (err) => {
-        console.error(err);
-        const msg = err.error?.message || 'Erro ao cadastrar tag.';
-        this.snackBar.open(msg, 'Fechar');
-      }
+      this.loadTags();
     });
   }
 

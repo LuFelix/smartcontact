@@ -8,7 +8,9 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Tag, TechnologyType, ApplicationType, RedirectMode } from '../../../shared/models/users.models';
+import { TagService } from '../../../../core/services/tag.service';
 import { NfcWriterDialogComponent, NfcWriterDialogData } from '../../../shared/components/nfc-writer-dialog/nfc-writer-dialog';
 import * as QRCode from 'qrcode';
 
@@ -52,7 +54,8 @@ export class QrFullscreenDialogComponent {
     MatSelectModule,
     MatButtonModule,
     MatIconModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatSnackBarModule
   ],
   template: `
     <h2 mat-dialog-title>{{ data.tag ? 'Editar Recurso' : 'Cadastrar Novo Recurso' }}</h2>
@@ -169,7 +172,7 @@ export class QrFullscreenDialogComponent {
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button (click)="onCancel()" type="button">Cancelar</button>
-      <button mat-flat-button color="primary" [disabled]="tagForm.invalid" (click)="onSave()" type="button">
+      <button mat-flat-button color="primary" [disabled]="tagForm.invalid || isSaving" (click)="onSave()" type="button">
         {{ data.tag ? 'Atualizar Recurso' : 'Salvar Recurso' }}
       </button>
     </mat-dialog-actions>
@@ -334,12 +337,15 @@ export class TagDialogComponent implements AfterViewInit {
   private fb = inject(FormBuilder);
   private dialogRef = inject(MatDialogRef<TagDialogComponent>);
   private dialog = inject(MatDialog);
-  
+  private tagService = inject(TagService);
+  private snackBar = inject(MatSnackBar);
+
   @ViewChild('qrcodeCanvas') qrcodeCanvas!: ElementRef<HTMLCanvasElement>;
 
   tagForm: FormGroup;
   techTypes = TechnologyType;
   appTypes = ApplicationType;
+  isSaving = false;
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: { tag?: Tag }) {
     this.tagForm = this.fb.group({
@@ -479,24 +485,45 @@ export class TagDialogComponent implements AfterViewInit {
   }
 
   onSave(): void {
-    if (this.tagForm.valid) {
-      const payload: any = { ...this.tagForm.value };
-      const type = payload.technologyType;
-      const value = payload.value;
+    if (!this.tagForm.valid) return;
 
-      if (value) {
-        if (type === TechnologyType.LINK) {
-          // LINK: QR direto, sem redirect mode
-        } else if (type === TechnologyType.TRILHA || type === TechnologyType.QR_CODE) {
-          payload.qrRedirectMode = RedirectMode.CUSTOM_URL;
-          payload.qrCustomUrl = value;
-        } else if (type === TechnologyType.NFC_HF || type === TechnologyType.RFID_UHF) {
-          payload.nfcRedirectMode = RedirectMode.CUSTOM_URL;
-          payload.nfcCustomUrl = value;
-        }
+    const payload: any = { ...this.tagForm.value };
+    const type = payload.technologyType;
+    const value = payload.value;
+
+    if (value) {
+      if (type === TechnologyType.LINK) {
+        // LINK: QR direto, sem redirect mode
+      } else if (type === TechnologyType.TRILHA || type === TechnologyType.QR_CODE) {
+        payload.qrRedirectMode = RedirectMode.CUSTOM_URL;
+        payload.qrCustomUrl = value;
+      } else if (type === TechnologyType.NFC_HF || type === TechnologyType.RFID_UHF) {
+        payload.nfcRedirectMode = RedirectMode.CUSTOM_URL;
+        payload.nfcCustomUrl = value;
       }
+    }
 
+    if (this.data.tag) {
       this.dialogRef.close(payload);
+    } else {
+      this.isSaving = true;
+      this.tagService.create(payload).subscribe({
+        next: (createdTag) => {
+          this.isSaving = false;
+          this.data = { tag: createdTag };
+          this.tagForm.patchValue({ uid: createdTag.uid || '' });
+          this.snackBar.open('Tag cadastrada com sucesso!', 'OK', { duration: 3000 });
+          if (this.isQrCodeType) {
+            setTimeout(() => this.generateQRCode(), 100);
+          }
+        },
+        error: (err) => {
+          this.isSaving = false;
+          console.error(err);
+          const msg = err.error?.message || 'Erro ao cadastrar tag.';
+          this.snackBar.open(msg, 'Fechar');
+        }
+      });
     }
   }
 }
