@@ -1,12 +1,13 @@
 // Caminho: src/app/features/users/pages/profile-page/profile-page.ts
 
-import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef, ChangeDetectorRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormArray } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap, tap, filter, finalize } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, switchMap, tap, filter, finalize, map } from 'rxjs/operators';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import * as QRCode from 'qrcode';
 
 // Imports do Angular Material
@@ -67,8 +68,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private cepService = inject(CepService);
   private cdr = inject(ChangeDetectorRef);
   private dialog = inject(MatDialog);
+  private breakpointObserver = inject(BreakpointObserver);
 
   @ViewChild('qrcodeCanvas') qrcodeCanvas!: ElementRef<HTMLCanvasElement>;
+
+  isMobile = signal(false);
 
   // Signals
   userUsername = this.authService.userUsername;
@@ -178,6 +182,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadInitialProfile();
+    this.breakpointObserver.observe(Breakpoints.Handset)
+      .pipe(map(result => result.matches))
+      .subscribe(mobile => this.isMobile.set(mobile));
   }
 
   ngOnDestroy(): void {

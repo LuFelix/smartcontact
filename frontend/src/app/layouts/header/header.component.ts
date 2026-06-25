@@ -56,6 +56,7 @@ export class HeaderComponent implements OnInit {
   });
 
   @Input() sidenavOpen: boolean = true;
+  @Input() isMobile: boolean = false;
   @Output() toggleSidenav = new EventEmitter<void>();
 
   notificationCount = 5;

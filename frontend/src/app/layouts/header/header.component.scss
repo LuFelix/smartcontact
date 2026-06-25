@@ -56,6 +56,16 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+
+        &.icon-only {
+            .workspace-name,
+            mat-icon:last-child {
+                display: none;
+            }
+            padding: 0 8px;
+            min-width: 40px;
+            justify-content: center;
+        }
     }
 }
 
@@ -215,12 +225,12 @@
     color: var(--mat-sys-on-surface-variant);
 }
 
-@media (max-width: 768px) {
-  .brand-name {
-    display: none;
+@media (max-width: 959.98px) {
+  .main-header {
+    height: 56px;
   }
-  
+
   .header-content {
-      padding: 0 4px;
+    padding: 0 4px;
   }
 }
