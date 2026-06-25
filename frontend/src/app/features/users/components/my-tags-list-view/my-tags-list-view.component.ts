@@ -6,6 +6,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
+const NFC_TECH_TYPES = ['NFC_HF', 'RFID_UHF'];
+
 @Component({
   selector: 'app-my-tags-list-view',
   standalone: true,
@@ -39,9 +41,15 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef> Ações </th>
           <td mat-cell *matCellDef="let tag">
-            <button mat-stroked-button color="primary" (click)="viewQr.emit(tag)" type="button">
-              <mat-icon>visibility</mat-icon> Visualizar / Baixar
-            </button>
+            @if (isNfcTag(tag)) {
+              <button mat-stroked-button color="primary" (click)="writeNfc.emit(tag)" type="button">
+                <mat-icon>nfc</mat-icon> Ler / Gravar NFC
+              </button>
+            } @else {
+              <button mat-stroked-button color="primary" (click)="viewQr.emit(tag)" type="button">
+                <mat-icon>visibility</mat-icon> Visualizar / Baixar
+              </button>
+            }
           </td>
         </ng-container>
 
@@ -70,16 +78,21 @@ export class MyTagsListViewComponent {
   @Input() tags: any[] = [];
   @Input() isLoading = false;
   @Output() viewQr = new EventEmitter<any>();
+  @Output() writeNfc = new EventEmitter<any>();
 
   displayedColumns: string[] = ['name', 'technology', 'actions'];
 
+  isNfcTag(tag: any): boolean {
+    return NFC_TECH_TYPES.includes(tag.technologyType);
+  }
+
   getIcon(tech: string): string {
-    const icons: any = { 'NFC_HF': 'nfc', 'RFID_UHF': 'settings_input_antenna', 'QR_CODE': 'qr_code', 'LINK': 'link', 'TRILHA': 'auto_stories' };
+    const icons: Record<string, string> = { 'NFC_HF': 'nfc', 'RFID_UHF': 'settings_input_antenna', 'QR_CODE': 'qr_code', 'LINK': 'link', 'TRILHA': 'auto_stories' };
     return icons[tech] || 'tag';
   }
 
   getTechLabel(tech: string): string {
-    const labels: any = { 'NFC_HF': 'Tag NFC', 'RFID_UHF': 'RFID UHF', 'QR_CODE': 'QR Code', 'LINK': 'Link Seguro', 'TRILHA': 'Trilha de Conhecimento' };
+    const labels: Record<string, string> = { 'NFC_HF': 'Tag NFC', 'RFID_UHF': 'RFID UHF', 'QR_CODE': 'QR Code', 'LINK': 'Link Seguro', 'TRILHA': 'Trilha de Conhecimento' };
     return labels[tech] || tech;
   }
 }

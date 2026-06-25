@@ -47,6 +47,22 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             const membership = await this.membershipsService.findByUserAndTenant(payload.sub, tenantId);
             
             if (!membership) {
+                // Self-ownership bypass: usuário sempre pode acessar o próprio perfil
+                // mesmo sem vínculo com o tenant ativo (ex: foi removido de uma organização)
+                const isOwnProfile = req.url?.includes(`/users/${payload.sub}`);
+                if (isOwnProfile) {
+                    console.log(`[JwtStrategy] Auto-acesso ao próprio perfil: ${payload.sub}. Usando tenant do payload.`);
+                    return {
+                        sub: payload.sub,
+                        name: payload.name,
+                        username: payload.username,
+                        role: payload.role,
+                        tenantId: payload.tenantId,
+                        ownerId: payload.ownerId,
+                        isSuperAdmin: false,
+                        picture: payload.picture
+                    };
+                }
                 console.warn(`[JwtStrategy] Acesso negado: Usuário ${payload.sub} sem vínculo com tenant ${tenantId}`);
                 throw new UnauthorizedException('Você não tem acesso a este Workspace.');
             }
