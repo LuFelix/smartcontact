@@ -326,8 +326,13 @@ export class UsersService {
         const queryBuilder = this.usersRepository.createQueryBuilder('user')
             .leftJoinAndSelect('user.memberships', 'membership')
             .leftJoinAndSelect('membership.role', 'role')
-            .leftJoinAndSelect('user.tags', 'tag', 'tag.tenantId = :tenantId', { tenantId: currentUser?.tenantId || '' })
             .where('user.id = :userId', { userId });
+
+        if (currentUser?.tenantId) {
+            queryBuilder.leftJoinAndSelect('user.tags', 'tag', 'tag.tenantId = :tenantId', { tenantId: currentUser.tenantId });
+        } else {
+            queryBuilder.leftJoinAndSelect('user.tags', 'tag');
+        }
 
         if (showContacts) {
             queryBuilder
