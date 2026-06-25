@@ -56,19 +56,17 @@
         </div>
       }
 
-      @if (bySourcePreview().length > 0) {
-        <div class="breakdown-card">
-          <div class="breakdown-header">Origens (NFC/QR)</div>
-          <div class="breakdown-list">
-            @for (item of bySourcePreview(); track item.name) {
-              <div class="breakdown-row">
-                <span class="breakdown-label">{{ item.name }}</span>
-                <span class="breakdown-value">{{ item.count }}</span>
-              </div>
-            }
-          </div>
+      <div class="breakdown-card">
+        <div class="breakdown-header">Origens (NFC/QR)</div>
+        <div class="breakdown-list">
+          @for (item of bySourcePreview(); track item.name) {
+            <div class="breakdown-row">
+              <span class="breakdown-label">{{ item.name }}</span>
+              <span class="breakdown-value">{{ item.count }}</span>
+            </div>
+          }
         </div>
-      }
+      </div>
     </div>
 
     <mat-tab-group>

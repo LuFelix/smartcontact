@@ -41,7 +41,13 @@ export class DashboardContainerComponent implements OnInit {
 
   readonly bySourcePreview = computed(() => {
     const s = this.summary();
-    return s?.bySource ?? [];
+    const api = s?.bySource ?? [];
+    const known = new Map(api.map(i => [i.name.toLowerCase(), i]));
+    const defaults = ['nfc', 'qr', 'rfid', 'link', 'desconhecido'];
+    return defaults.map(name => ({
+      name,
+      count: known.get(name)?.count ?? 0,
+    }));
   });
 
   ngOnInit(): void {
