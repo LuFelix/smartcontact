@@ -24,6 +24,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 // Dialog
 import { TagDialogComponent } from '../../components/tag-dialog/tag-dialog.component';
+import { NfcWriterDialogComponent, NfcWriterDialogData } from '../../../shared/components/nfc-writer-dialog/nfc-writer-dialog';
 
 @Component({
   selector: 'app-tag-manager',
@@ -102,23 +103,34 @@ export class TagManagerComponent implements OnInit {
         if (tag) {
           this.updateTag(tag.id, result);
         } else {
-          this.createTag(result);
+          this.createTag(result, createdTag => this.openTagDialog(createdTag));
         }
       }
     });
   }
 
-  createTag(data: Partial<Tag>): void {
+  createTag(data: Partial<Tag>, onSuccess?: (tag: Tag) => void): void {
     this.tagService.create(data).subscribe({
-      next: () => {
+      next: (createdTag) => {
         this.snackBar.open('Tag cadastrada com sucesso!', 'OK', { duration: 3000 });
         this.loadTags();
+        if (onSuccess) onSuccess(createdTag);
       },
       error: (err) => {
         console.error(err);
         const msg = err.error?.message || 'Erro ao cadastrar tag.';
         this.snackBar.open(msg, 'Fechar');
       }
+    });
+  }
+
+  openNfcWriter(tag: Tag): void {
+    const nfcUrl = `${window.location.origin}/t/${tag.uuid}?source=nfc`;
+    this.dialog.open(NfcWriterDialogComponent, {
+      data: { nfcUrl } as NfcWriterDialogData,
+      width: '520px',
+      maxWidth: '95vw',
+      autoFocus: false,
     });
   }
 

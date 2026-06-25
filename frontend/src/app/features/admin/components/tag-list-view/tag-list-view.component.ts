@@ -75,11 +75,15 @@ import { Tag } from '../../../shared/models/users.models';
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef> Ações </th>
           <td mat-cell *matCellDef="let tag">
-            <div class="actions-buttons" *ngIf="isAdmin">
-              <button mat-icon-button color="primary" matTooltip="Editar" (click)="editTag.emit(tag)">
+            <div class="actions-buttons">
+              <button mat-icon-button color="accent" matTooltip="Gravar NFC" (click)="writeNfc.emit(tag)"
+                *ngIf="tag.technologyType === 'NFC_HF' || tag.technologyType === 'RFID_UHF'">
+                <mat-icon>near_me</mat-icon>
+              </button>
+              <button mat-icon-button color="primary" matTooltip="Editar" (click)="editTag.emit(tag)" *ngIf="isAdmin">
                 <mat-icon>edit</mat-icon>
               </button>
-              <button mat-icon-button color="warn" matTooltip="Excluir" (click)="deleteTag.emit(tag)">
+              <button mat-icon-button color="warn" matTooltip="Excluir" (click)="deleteTag.emit(tag)" *ngIf="isAdmin">
                 <mat-icon>delete</mat-icon>
               </button>
             </div>
@@ -181,6 +185,7 @@ export class TagListViewComponent {
   @Input() isAdmin = false;
   @Output() editTag = new EventEmitter<Tag>();
   @Output() deleteTag = new EventEmitter<Tag>();
+  @Output() writeNfc = new EventEmitter<Tag>();
 
   displayedColumns: string[] = ['uid', 'name', 'technology', 'application', 'actions'];
 

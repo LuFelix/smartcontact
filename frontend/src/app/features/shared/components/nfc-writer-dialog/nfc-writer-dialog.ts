@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { NfcService, NfcReadResult, NfcSupportInfo } from '../../../../core/services/nfc.service';
+import { NfcService, NfcReadResult, NfcSupportInfo } from '../../../core/services/nfc.service';
 
 export interface NfcWriterDialogData {
   nfcUrl: string;

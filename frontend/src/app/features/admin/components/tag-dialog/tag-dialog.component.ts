@@ -9,6 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Tag, TechnologyType, ApplicationType, RedirectMode } from '../../../shared/models/users.models';
+import { NfcWriterDialogComponent, NfcWriterDialogData } from '../../../shared/components/nfc-writer-dialog/nfc-writer-dialog';
 import * as QRCode from 'qrcode';
 
 @Component({
@@ -145,6 +146,24 @@ export class QrFullscreenDialogComponent {
               </button>
             </div>
           }
+
+          @if (showNfcActions) {
+            <div class="nfc-actions-divider"></div>
+            <div class="nfc-actions">
+              <span class="nfc-actions-label">Gravação NFC</span>
+              <div class="nfc-btn-row">
+                <button mat-stroked-button color="accent" (click)="openNfcWriter('write')" type="button">
+                  <mat-icon>near_me</mat-icon> Gravar
+                </button>
+                <button mat-stroked-button (click)="openNfcWriter('read')" type="button">
+                  <mat-icon>contactless</mat-icon> Ler
+                </button>
+                <button mat-stroked-button color="warn" (click)="openNfcWriter('erase')" type="button">
+                  <mat-icon>delete_forever</mat-icon> Apagar
+                </button>
+              </div>
+            </div>
+          }
         </div>
       </div>
     </mat-dialog-content>
@@ -249,6 +268,39 @@ export class QrFullscreenDialogComponent {
       color: var(--mat-sys-outline);
       font-weight: 500;
     }
+    .nfc-actions-divider {
+      width: 100%;
+      height: 1px;
+      background: var(--mat-sys-outline-variant);
+    }
+    .nfc-actions {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .nfc-actions-label {
+      font-size: 11px;
+      color: var(--mat-sys-outline);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .nfc-btn-row {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .nfc-btn-row button {
+      flex: 1;
+      min-width: 0;
+      font-size: 11px;
+    }
+    .nfc-btn-row button mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
     .tag-form {
       display: flex;
       flex-direction: column;
@@ -324,6 +376,12 @@ export class TagDialogComponent implements AfterViewInit {
 
   get previewValue(): string | null {
     return this.tagForm.get('value')?.value || null;
+  }
+
+  get showNfcActions(): boolean {
+    if (!this.data.tag) return false;
+    const type = this.tagForm.get('technologyType')?.value;
+    return type === TechnologyType.NFC_HF || type === TechnologyType.RFID_UHF;
   }
 
   get previewUrl(): string {
@@ -402,6 +460,18 @@ export class TagDialogComponent implements AfterViewInit {
     link.download = 'qr-' + resourceName + '.png';
     link.href = url;
     link.click();
+  }
+
+  openNfcWriter(action: 'write' | 'read' | 'erase'): void {
+    if (!this.data.tag?.uuid) return;
+    const isNfc = this.tagForm.get('technologyType')?.value === TechnologyType.NFC_HF;
+    const nfcUrl = `${window.location.origin}/t/${this.data.tag.uuid}?source=${isNfc ? 'nfc' : 'rfid'}`;
+    this.dialog.open(NfcWriterDialogComponent, {
+      data: { nfcUrl } as NfcWriterDialogData,
+      width: '520px',
+      maxWidth: '95vw',
+      autoFocus: false,
+    });
   }
 
   onCancel(): void {
