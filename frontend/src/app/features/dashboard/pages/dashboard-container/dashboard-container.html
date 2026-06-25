@@ -1,0 +1,87 @@
+<div class="dashboard-page">
+  @if (isLoading() && !summary()) {
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Carregando métricas...</p>
+    </div>
+  } @else if (error()) {
+    <app-empty-state
+      icon="error_outline"
+      [title]="'Erro ao carregar'"
+      [message]="error()!"
+    />
+  } @else if (summary(); as s) {
+    <div class="kpi-grid">
+      <app-kpi-card
+        label="Total de Leituras"
+        [value]="s.totalReads"
+        icon="visibility"
+        color="#2196F3"
+      />
+      <app-kpi-card
+        label="Leituras Hoje"
+        [value]="s.readsToday"
+        icon="today"
+        color="#4CAF50"
+      />
+      <app-kpi-card
+        label="Leituras (7d)"
+        [value]="s.readsThisWeek"
+        icon="date_range"
+        color="#FF9800"
+      />
+      <app-kpi-card
+        label="Total de Leads"
+        [value]="s.totalLeads"
+        icon="person_add"
+        color="#9C27B0"
+      />
+    </div>
+
+    <div class="details-grid">
+      <app-interaction-list [items]="s.trend" />
+
+      @if (byDevicePreview().length > 0) {
+        <mat-card class="breakdown-card">
+          <mat-card-header>
+            <mat-card-title>Dispositivos</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="breakdown-list">
+              @for (item of byDevicePreview(); track item.name) {
+                <div class="breakdown-row">
+                  <span class="breakdown-label">{{ item.name }}</span>
+                  <span class="breakdown-value">{{ item.count }}</span>
+                </div>
+              }
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+
+      @if (byBrowserPreview().length > 0) {
+        <mat-card class="breakdown-card">
+          <mat-card-header>
+            <mat-card-title>Navegadores</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="breakdown-list">
+              @for (item of byBrowserPreview(); track item.name) {
+                <div class="breakdown-row">
+                  <span class="breakdown-label">{{ item.name }}</span>
+                  <span class="breakdown-value">{{ item.count }}</span>
+                </div>
+              }
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+  } @else {
+    <app-empty-state
+      icon="analytics"
+      title="Nenhuma métrica disponível"
+      message="As interações com suas tags aparecerão aqui."
+    />
+  }
+</div>
