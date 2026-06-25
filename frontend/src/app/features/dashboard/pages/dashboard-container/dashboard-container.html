@@ -1,22 +1,5 @@
 <div class="dashboard-page">
-  @if (isLoading() && !summary()) {
-    <div class="loading-container">
-      <mat-spinner diameter="40"></mat-spinner>
-      <p>Carregando métricas...</p>
-    </div>
-  } @else if (error()) {
-    <app-empty-state
-      icon="error_outline"
-      [title]="'Erro ao carregar'"
-      [message]="error()!"
-    />
-  } @else if (error()) {
-    <app-empty-state
-      icon="error_outline"
-      [title]="'Erro ao carregar'"
-      [message]="error()!"
-    />
-  } @else if (summary(); as s) {
+  @if (summary(); as s) {
     <div class="kpi-grid">
       <app-kpi-card
         label="Total de Leituras"
@@ -76,10 +59,23 @@
       }
     </div>
   } @else {
-    <app-empty-state
-      icon="analytics"
-      title="Nenhuma métrica disponível"
-      message="As interações com suas tags aparecerão aqui."
-    />
+    @if (isLoading()) {
+      <div class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Carregando métricas...</p>
+      </div>
+    } @else if (error()) {
+      <app-empty-state
+        icon="error_outline"
+        [title]="'Erro ao carregar'"
+        [message]="error()!"
+      />
+    } @else {
+      <app-empty-state
+        icon="analytics"
+        title="Nenhuma métrica disponível"
+        message="As interações com suas tags aparecerão aqui."
+      />
+    }
   }
 </div>
