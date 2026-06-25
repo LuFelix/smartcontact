@@ -337,7 +337,7 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
                         qrRedirectMode: activeTag.qrRedirectMode,
                         qrCustomUrl: activeTag.qrCustomUrl
                     });
-                    this.generatePersonalQR(activeTag.uuid || activeTag.handle);
+                    this.generatePersonalQR(activeTag.uuid ?? activeTag.handle ?? '');
                 }
 
                 this.phones.clear();
