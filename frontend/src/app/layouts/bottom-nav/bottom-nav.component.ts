@@ -1,4 +1,4 @@
-import { Component, inject, Input } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -67,7 +67,7 @@ export class BottomSheetOptionsComponent {
     MatBottomSheetModule
   ],
   template: `
-    <nav class="bottom-nav" [class.hidden]="!isMobile">
+    <nav class="bottom-nav">
       <a mat-button class="nav-item"
          routerLink="/app/profile"
          routerLinkActive="active"
@@ -111,10 +111,6 @@ export class BottomSheetOptionsComponent {
       box-sizing: border-box;
     }
 
-    .hidden {
-      display: none;
-    }
-
     .nav-item {
       display: flex;
       flex-direction: column;
@@ -154,7 +150,6 @@ export class BottomSheetOptionsComponent {
   `]
 })
 export class BottomNavComponent {
-  @Input() isMobile: boolean = false;
   private bottomSheet = inject(MatBottomSheet);
 
   openOptionsSheet(): void {

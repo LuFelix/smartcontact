@@ -215,27 +215,7 @@
     color: var(--mat-sys-on-surface-variant);
 }
 
-.mobile-user-btn {
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 40px !important;
-  height: 40px !important;
-  margin: 0 4px;
-  border-radius: 50%;
-
-  .header-avatar {
-    width: 28px;
-    height: 28px;
-    font-size: 0.85rem;
-  }
-}
-
 @media (max-width: 959.98px) {
-  .brand-name {
-    display: none;
-  }
-
   .main-header {
     height: 56px;
   }

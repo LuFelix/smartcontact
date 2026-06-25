@@ -14,7 +14,9 @@
       <router-outlet></router-outlet>
     </div>
 
-    <app-bottom-nav [isMobile]="isMobile()" />
+    @if (isMobile()) {
+      <app-bottom-nav />
+    }
   </mat-sidenav-content>
 
 </mat-sidenav-container>

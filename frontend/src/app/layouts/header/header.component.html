@@ -1,19 +1,24 @@
 <mat-toolbar class="main-header">
   <div class="header-content">
-    <!-- Botão Hamburger para alternar Sidenav -->
-    <button mat-icon-button (click)="emitToggleSidenav()" aria-label="Toggle sidenav" class="hamburger-btn">
-      <mat-icon>{{ sidenavOpen ? 'menu_open' : 'menu' }}</mat-icon>
-    </button>
+    <!-- Botão Hamburger para alternar Sidenav — oculto em mobile (bottom nav substitui) -->
+    @if (!isMobile) {
+      <button mat-icon-button (click)="emitToggleSidenav()" aria-label="Toggle sidenav" class="hamburger-btn">
+        <mat-icon>{{ sidenavOpen ? 'menu_open' : 'menu' }}</mat-icon>
+      </button>
+    }
 
-    <div class="brand-container" (click)="navigateToProfile()">
-      <img src="/mas-logo.svg" alt="SmartContact Logo" class="logo">
-      <span class="brand-name">
-        <span class="smart">Smart</span><span class="contact">Contact</span>
-      </span>
-    </div>
+    <!-- Logo + Brand — oculto em mobile para dar espaço ao workspace switcher -->
+    @if (!isMobile) {
+      <div class="brand-container" (click)="navigateToProfile()">
+        <img src="/mas-logo.svg" alt="SmartContact Logo" class="logo">
+        <span class="brand-name">
+          <span class="smart">Smart</span><span class="contact">Contact</span>
+        </span>
+      </div>
+    }
 
-    <!-- Context Switcher (Workspaces) — oculto em mobile -->
-    @if (!isMobile && workspaces().length > 0) {
+    <!-- Context Switcher (Workspaces) — sempre visível para o usuário saber em qual conta está -->
+    @if (workspaces().length > 0) {
         <div class="workspace-switcher-container">
             <button mat-button [matMenuTriggerFor]="workspaceMenu" class="workspace-btn">
                 <mat-icon>business</mat-icon>
@@ -57,41 +62,28 @@
     <!-- Espaçador para empurrar itens para a direita -->
     <span class="spacer"></span>
 
-    <!-- Botão de Notificações (Exemplo) — oculto em mobile -->
-    @if (!isMobile) {
-      <button mat-icon-button (click)="toggleDarkMode()" aria-label="Alternar modo escuro" class="theme-toggle-button">
-        <mat-icon>{{ darkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
-      </button>
+    <!-- Botão de Notificações (Exemplo) -->
+    <button mat-icon-button (click)="toggleDarkMode()" aria-label="Alternar modo escuro" class="theme-toggle-button">
+      <mat-icon>{{ darkMode() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
 
-      <button mat-icon-button aria-label="Notificações" class="notification-button">
-        <mat-icon matBadge="{{ notificationCount > 0 ? notificationCount : '' }}"
-                  matBadgeColor="warn"
-                  [matBadgeHidden]="notificationCount === 0">notifications</mat-icon>
-      </button>
-    }
+    <button mat-icon-button aria-label="Notificações" class="notification-button">
+      <mat-icon matBadge="{{ notificationCount > 0 ? notificationCount : '' }}"
+                matBadgeColor="warn"
+                [matBadgeHidden]="notificationCount === 0">notifications</mat-icon>
+    </button>
 
     <!-- Menu do Usuário -->
-    @if (isMobile) {
-      <button mat-icon-button [matMenuTriggerFor]="userMenu" class="mobile-user-btn">
-        <div class="header-avatar" [style.background-color]="getAvatarColor()">
-          @if (profileImage; as avatarUrl) {
-              <img [src]="avatarUrl" (error)="handleImageError($event)" referrerpolicy="no-referrer">
-          }
-          <span class="letter-placeholder">{{ getInitial() }}</span>
-        </div>
-      </button>
-    } @else {
-      <button mat-button [matMenuTriggerFor]="userMenu" class="user-menu-button">
-        <div class="header-avatar" [style.background-color]="getAvatarColor()">
-          @if (profileImage; as avatarUrl) {
-              <img [src]="avatarUrl" (error)="handleImageError($event)" referrerpolicy="no-referrer">
-          }
-          <span class="letter-placeholder">{{ getInitial() }}</span>
-        </div>
-        <span class="user-name">{{ userName() || 'Usuário' }}</span>
-        <mat-icon>arrow_drop_down</mat-icon>
-      </button>
-    }
+    <button mat-button [matMenuTriggerFor]="userMenu" class="user-menu-button">
+      <div class="header-avatar" [style.background-color]="getAvatarColor()">
+        @if (profileImage; as avatarUrl) {
+            <img [src]="avatarUrl" (error)="handleImageError($event)" referrerpolicy="no-referrer">
+        }
+        <span class="letter-placeholder">{{ getInitial() }}</span>
+      </div>
+      <span class="user-name">{{ userName() || 'Usuário' }}</span>
+      <mat-icon>arrow_drop_down</mat-icon>
+    </button>
     <mat-menu #userMenu="matMenu">
       <button mat-menu-item (click)="navigateToProfile()">
         <mat-icon>person</mat-icon>
