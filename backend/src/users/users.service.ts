@@ -481,6 +481,7 @@ export class UsersService {
         }
 
         const { roleId, phones, addresses, secondaryEmails, links, tags, ...userUpdateData } = updateUserDto;
+        if ((userUpdateData as any).cpf === '') (userUpdateData as any).cpf = null;
         this.usersRepository.merge(user!, userUpdateData);
 
         const cleanItems = (items: any[]) => items.map(item => {
