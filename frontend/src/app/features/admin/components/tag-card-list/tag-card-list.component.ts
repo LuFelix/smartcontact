@@ -68,15 +68,15 @@ import { Tag } from '../../../shared/models/users.models';
         <mat-divider></mat-divider>
 
         <mat-card-actions align="end">
-          <button mat-icon-button color="accent" matTooltip="Gravar NFC" (click)="writeNfc.emit(tag)"
+          <button mat-icon-button color="accent" class="icon-align-fix" matTooltip="Gravar NFC" (click)="writeNfc.emit(tag)"
             *ngIf="tag.technologyType === 'NFC_HF' || tag.technologyType === 'RFID_UHF'">
-            <span><mat-icon>near_me</mat-icon></span>
+            <mat-icon>near_me</mat-icon>
           </button>
-          <button mat-icon-button color="primary" matTooltip="Editar" (click)="editTag.emit(tag)" *ngIf="isAdmin">
-            <span><mat-icon>edit</mat-icon></span>
+          <button mat-icon-button color="primary" class="icon-align-fix" matTooltip="Editar" (click)="editTag.emit(tag)" *ngIf="isAdmin">
+            <mat-icon>edit</mat-icon>
           </button>
-          <button mat-icon-button color="warn" matTooltip="Excluir" (click)="deleteTag.emit(tag)" *ngIf="isAdmin">
-            <span><mat-icon>delete</mat-icon></span>
+          <button mat-icon-button color="warn" class="icon-align-fix" matTooltip="Excluir" (click)="deleteTag.emit(tag)" *ngIf="isAdmin">
+            <mat-icon>delete</mat-icon>
           </button>
         </mat-card-actions>
       </mat-card>
@@ -175,6 +175,15 @@ import { Tag } from '../../../shared/models/users.models';
     .redirect { background: var(--mat-sys-primary-container); color: var(--mat-sys-on-primary-container); }
     .asset_counting { background: var(--mat-sys-tertiary-container); color: var(--mat-sys-on-tertiary-container); }
     .access_control { background: var(--mat-sys-error-container); color: var(--mat-sys-on-error-container); }
+
+    .icon-align-fix {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 40px !important;
+      height: 40px !important;
+      padding: 0 !important;
+    }
   `]
 })
 export class TagCardListComponent {
