@@ -23,6 +23,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTabsModule } from '@angular/material/tabs';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { NgxMaskDirective } from 'ngx-mask';
 
@@ -53,6 +54,7 @@ import { NfcWriterDialogComponent, NfcWriterDialogData } from '../../../shared/c
     MatTooltipModule,
     MatSelectModule,
     MatSlideToggleModule,
+    MatTabsModule,
     MatDialogModule,
     NgxMaskDirective
   ],

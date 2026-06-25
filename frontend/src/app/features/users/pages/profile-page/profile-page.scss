@@ -142,6 +142,119 @@
   mat-form-field { width: 100%; }
 }
 
+.config-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.tab-padding {
+  padding: 20px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 400px;
+  max-height: 65vh;
+  overflow-y: auto;
+}
+
+.section-card {
+  border-radius: 16px;
+  background-color: var(--mat-sys-surface-container-low);
+  border: 1px solid var(--mat-sys-outline-variant);
+
+  &.no-shadow {
+    box-shadow: none !important;
+  }
+
+  mat-card-header {
+    padding: 16px 20px 8px;
+    mat-card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--mat-sys-primary);
+    }
+  }
+}
+
+.config-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 8px 20px 20px;
+}
+
+.header-with-action {
+  .header-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+}
+
+.array-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 20px 20px;
+}
+
+.no-tag-msg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px;
+  color: var(--mat-sys-on-surface-variant);
+
+  mat-icon { font-size: 48px; width: 48px; height: 48px; opacity: 0.5; }
+  p { margin: 0; font-style: italic; }
+}
+
+.personal-qr-preview-container {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 20px;
+
+  .qr-preview-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--mat-sys-outline-variant);
+
+    canvas {
+      background: white;
+      padding: 4px;
+      border-radius: 4px;
+    }
+
+    .qr-preview-info {
+      p { margin: 0; line-height: 1.2; color: #333; }
+      .text-xs { color: #666; }
+      .download-qr-btn {
+        font-weight: 700;
+        margin-top: 8px;
+        transition: transform 0.2s ease;
+        &:hover { transform: scale(1.02); }
+      }
+    }
+  }
+}
+
+.md\:col-span-2 {
+  grid-column: span 2;
+}
+
+.add-btn {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  &:hover { transform: translateY(-1px); box-shadow: var(--mat-sys-level1); }
+}
+
 .tag-management-section {
     background-color: var(--mat-sys-surface-container-low);
     border-radius: 24px;
