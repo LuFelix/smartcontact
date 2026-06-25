@@ -24,7 +24,7 @@ export class AnalyticsService {
       baseQuery.andWhere('(tag.ownerId = :userId OR tag.userId = :userId)', { userId });
     }
 
-    const [totalReads, totalLeads, readsToday, readsThisWeek, leadsThisWeek, trend, byDevice, byBrowser] =
+    const [totalReads, totalLeads, readsToday, readsThisWeek, leadsThisWeek, trend, byDevice, byBrowser, bySource] =
       await Promise.all([
         this.countByType(baseQuery, InteractionType.VISIT),
         this.countByType(baseQuery, InteractionType.LEAD),
@@ -34,9 +34,10 @@ export class AnalyticsService {
         this.trend(baseQuery, 7),
         this.breakdown(baseQuery, 'deviceType'),
         this.breakdown(baseQuery, 'browser'),
+        this.bySource(baseQuery),
       ]);
 
-    return { totalReads, totalLeads, readsToday, readsThisWeek, leadsThisWeek, trend, byDevice, byBrowser };
+    return { totalReads, totalLeads, readsToday, readsThisWeek, leadsThisWeek, trend, byDevice, byBrowser, bySource };
   }
 
   private async countByType(qb: ReturnType<typeof this.logRepository.createQueryBuilder>, type: InteractionType): Promise<number> {
@@ -71,6 +72,17 @@ export class AnalyticsService {
     return rows.map(r => ({ date: r.date, reads: Number(r.reads), leads: Number(r.leads) }));
   }
 
+  private async bySource(qb: ReturnType<typeof this.logRepository.createQueryBuilder>) {
+    const rows = await qb.clone()
+      .select('COALESCE(log.source, \'desconhecido\')', 'name')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('log.source')
+      .orderBy('count', 'DESC')
+      .getRawMany();
+
+    return rows.map(r => ({ name: r.name, count: Number(r.count) }));
+  }
+
   private async breakdown(qb: ReturnType<typeof this.logRepository.createQueryBuilder>, column: 'deviceType' | 'browser') {
     const colName = column === 'deviceType' ? 'device_type' : 'browser';
 
@@ -95,6 +107,7 @@ export class AnalyticsService {
       trend: [],
       byDevice: [],
       byBrowser: [],
+      bySource: [],
     };
   }
 }
