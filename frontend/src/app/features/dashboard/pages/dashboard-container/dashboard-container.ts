@@ -2,6 +2,7 @@ import { Component, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatIconModule } from '@angular/material/icon';
 import { DashboardService } from '../../services/dashboard.service';
 import { KpiCardComponent } from '../../components/kpi-card/kpi-card';
 import { InteractionListComponent } from '../../components/interaction-list/interaction-list';
@@ -14,6 +15,7 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
     CommonModule,
     MatProgressSpinnerModule,
     MatTabsModule,
+    MatIconModule,
     KpiCardComponent,
     InteractionListComponent,
     EmptyStateComponent,
@@ -49,6 +51,17 @@ export class DashboardContainerComponent implements OnInit {
       count: known.get(name)?.count ?? 0,
     }));
   });
+
+  sourceIcon(name: string): string {
+    const map: Record<string, string> = {
+      nfc: 'near_me',
+      qr: 'qr_code_scanner',
+      rfid: 'radio_button_checked',
+      link: 'link',
+      desconhecido: 'help_outline',
+    };
+    return map[name.toLowerCase()] || 'help_outline';
+  }
 
   ngOnInit(): void {
     this.dashboardService.loadSummary();

@@ -57,11 +57,17 @@
       }
 
       <div class="breakdown-card">
-        <div class="breakdown-header">Origens (NFC/QR)</div>
+        <div class="breakdown-header">
+          <mat-icon class="header-icon">settings_input_antenna</mat-icon>
+          Origens
+        </div>
         <div class="breakdown-list">
           @for (item of bySourcePreview(); track item.name) {
             <div class="breakdown-row">
-              <span class="breakdown-label">{{ item.name }}</span>
+              <span class="breakdown-label">
+                <mat-icon class="source-icon">{{ sourceIcon(item.name) }}</mat-icon>
+                {{ item.name }}
+              </span>
               <span class="breakdown-value">{{ item.count }}</span>
             </div>
           }
