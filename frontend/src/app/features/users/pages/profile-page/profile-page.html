@@ -113,7 +113,7 @@
                         <div class="nfc-url-display">
                             <code>{{ nfcUrl }}</code>
                         </div>
-                        <div class="nfc-actions-row">
+                        <div class="nfc-actions-row" [class.desktop-only]="isMobile()">
                             <button mat-flat-button color="primary" (click)="copyNfcLink()" class="nfc-action-btn">
                                 <mat-icon>content_copy</mat-icon> Copiar Link
                             </button>
@@ -124,6 +124,11 @@
                     </div>
                 </div>
             </div>
+
+            <!-- FAB para mobile: Gravar Chip NFC -->
+            <button *ngIf="isMobile() && activeTag" mat-fab color="accent" class="nfc-fab" (click)="writeNfcChip()" matTooltip="Gravar Chip NFC">
+                <mat-icon>nfc</mat-icon>
+            </button>
 
             <!-- EXIBIÇÃO DO QR CODE PESSOAL -->
             <div class="personal-qr-section">

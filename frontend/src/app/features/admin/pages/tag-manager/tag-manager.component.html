@@ -33,7 +33,8 @@
           [isLoading]="isLoading"
           [isAdmin]="isAdmin"
           (editTag)="openTagDialog($event)"
-          (deleteTag)="deleteTag($event)">
+          (deleteTag)="deleteTag($event)"
+          (writeNfc)="openNfcWriter($event)">
         </app-tag-card-list>
       } @else {
         <app-tag-list-view
@@ -41,7 +42,8 @@
           [isLoading]="isLoading"
           [isAdmin]="isAdmin"
           (editTag)="openTagDialog($event)"
-          (deleteTag)="deleteTag($event)">
+          (deleteTag)="deleteTag($event)"
+          (writeNfc)="openNfcWriter($event)">
         </app-tag-list-view>
       }
     }

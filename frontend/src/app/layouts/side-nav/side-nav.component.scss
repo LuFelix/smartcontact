@@ -1,11 +1,11 @@
 mat-nav-list {
-  padding: 16px 0;
+  padding: 4px 0 16px;
   background-color: var(--mat-sys-surface-container-low);
-  height: 100%;
+  overflow-x: hidden;
 }
 
 a[mat-list-item] {
-  margin: 4px 12px;
+  margin: 4px 8px;
   border-radius: 12px;
   transition: all 0.2s ease;
   color: var(--mat-sys-on-surface-variant);
@@ -40,6 +40,16 @@ a[mat-list-item] {
 }
 
 mat-divider {
-    margin: 16px 12px;
+    margin: 16px 8px;
     border-color: var(--mat-sys-outline-variant);
+}
+
+:host.collapsed {
+  a[mat-list-item] {
+    justify-content: center;
+
+    mat-icon {
+      margin-right: 0;
+    }
+  }
 }

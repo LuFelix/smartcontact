@@ -15,6 +15,7 @@ import { TenantsModule } from './tenants/tenants.module';
 import { TeamModule } from './team/team.module';
 import { TagsModule } from './tags/tags.module';
 import { InteractionLogsModule } from './interaction-logs/interaction-logs.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 import { MembershipsModule } from './memberships/memberships.module';
 
 @Module({
@@ -61,6 +62,7 @@ import { MembershipsModule } from './memberships/memberships.module';
     TeamModule,
     TagsModule,
     InteractionLogsModule,
+    AnalyticsModule,
     GlobalJwtModule,
     SeedModule,
   ],

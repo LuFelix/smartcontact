@@ -1,21 +1,26 @@
 <mat-toolbar class="main-header">
   <div class="header-content">
-    <!-- Botão Hamburger para alternar Sidenav -->
-    <button mat-icon-button (click)="emitToggleSidenav()" aria-label="Toggle sidenav" class="hamburger-btn">
-      <mat-icon>{{ sidenavOpen ? 'menu_open' : 'menu' }}</mat-icon>
-    </button>
+    <!-- Botão Hamburger para alternar Sidenav — oculto em mobile (bottom nav substitui) -->
+    @if (!isMobile) {
+      <button mat-icon-button (click)="emitToggleSidenav()" aria-label="Toggle sidenav" class="hamburger-btn">
+        <mat-icon>{{ sidenavOpen ? 'menu_open' : 'menu' }}</mat-icon>
+      </button>
+    }
 
-    <div class="brand-container" (click)="navigateToProfile()">
-      <img src="/mas-logo.svg" alt="SmartContact Logo" class="logo">
-      <span class="brand-name">
-        <span class="smart">Smart</span><span class="contact">Contact</span>
-      </span>
-    </div>
+    <!-- Logo + Brand — oculto em mobile para dar espaço ao workspace switcher -->
+    @if (!isMobile) {
+      <div class="brand-container" (click)="navigateToProfile()">
+        <img src="/mas-logo.svg" alt="SmartContact Logo" class="logo">
+        <span class="brand-name">
+          <span class="smart">Smart</span><span class="contact">Contact</span>
+        </span>
+      </div>
+    }
 
-    <!-- Context Switcher (Workspaces) -->
+    <!-- Context Switcher (Workspaces) — sempre visível para o usuário saber em qual conta está -->
     @if (workspaces().length > 0) {
         <div class="workspace-switcher-container">
-            <button mat-button [matMenuTriggerFor]="workspaceMenu" class="workspace-btn">
+            <button mat-button [matMenuTriggerFor]="workspaceMenu" class="workspace-btn" [class.icon-only]="isMobile">
                 <mat-icon>business</mat-icon>
                 <span class="workspace-name">{{ currentWorkspace()?.name || 'Selecionar Workspace' }}</span>
                 <mat-icon>expand_more</mat-icon>
@@ -63,14 +68,13 @@
     </button>
 
     <button mat-icon-button aria-label="Notificações" class="notification-button">
-       <mat-icon matBadge="{{ notificationCount > 0 ? notificationCount : '' }}"
-                 matBadgeColor="warn"
-                 [matBadgeHidden]="notificationCount === 0">notifications</mat-icon>
+      <mat-icon matBadge="{{ notificationCount > 0 ? notificationCount : '' }}"
+                matBadgeColor="warn"
+                [matBadgeHidden]="notificationCount === 0">notifications</mat-icon>
     </button>
 
     <!-- Menu do Usuário -->
     <button mat-button [matMenuTriggerFor]="userMenu" class="user-menu-button">
-      <!-- Foto/Ícone do Usuário -->
       <div class="header-avatar" [style.background-color]="getAvatarColor()">
         @if (profileImage; as avatarUrl) {
             <img [src]="avatarUrl" (error)="handleImageError($event)" referrerpolicy="no-referrer">

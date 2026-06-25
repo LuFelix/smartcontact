@@ -5,8 +5,13 @@
          [routerLink]="item.link"
          routerLinkActive="active-link"
          [routerLinkActiveOptions]="{exact: item.link === '/app/dashboard'}">
-        <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-        <span matListItemTitle>{{ item.label }}</span>
+        <mat-icon matListItemIcon
+                  [matTooltip]="collapsed ? item.label : ''"
+                  matTooltipPosition="right"
+                  matTooltipShowDelay="300">{{ item.icon }}</mat-icon>
+        @if (!collapsed) {
+          <span matListItemTitle>{{ item.label }}</span>
+        }
       </a>
     }
   }
@@ -15,12 +20,17 @@
   
   @if (authService.hasPermission('READ_USERS')) {
     <a mat-list-item (click)="layoutService.toggleLayout()" class="layout-toggle-button">
-        <mat-icon matListItemIcon>
+        <mat-icon matListItemIcon
+                  [matTooltip]="collapsed ? (layoutService.layout() === 'moderno' ? 'Layout Clássico' : 'Layout Moderno') : ''"
+                  matTooltipPosition="right"
+                  matTooltipShowDelay="300">
           {{ layoutService.layout() === 'moderno' ? 'view_list' : 'grid_view' }}
         </mat-icon>
-        <span matListItemTitle>
-          {{ layoutService.layout() === 'moderno' ? 'Layout Clássico' : 'Layout Moderno' }}
-        </span>
+        @if (!collapsed) {
+          <span matListItemTitle>
+            {{ layoutService.layout() === 'moderno' ? 'Layout Clássico' : 'Layout Moderno' }}
+          </span>
+        }
     </a>
   }
 </mat-nav-list>

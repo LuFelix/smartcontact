@@ -24,6 +24,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 // Dialog
 import { TagDialogComponent } from '../../components/tag-dialog/tag-dialog.component';
+import { NfcWriterDialogComponent, NfcWriterDialogData } from '../../../shared/components/nfc-writer-dialog/nfc-writer-dialog';
 
 @Component({
   selector: 'app-tag-manager',
@@ -97,42 +98,18 @@ export class TagManagerComponent implements OnInit {
       data: { tag }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        if (tag) {
-          this.updateTag(tag.id, result);
-        } else {
-          this.createTag(result);
-        }
-      }
+    dialogRef.afterClosed().subscribe(() => {
+      this.loadTags();
     });
   }
 
-  createTag(data: Partial<Tag>): void {
-    this.tagService.create(data).subscribe({
-      next: () => {
-        this.snackBar.open('Tag cadastrada com sucesso!', 'OK', { duration: 3000 });
-        this.loadTags();
-      },
-      error: (err) => {
-        console.error(err);
-        const msg = err.error?.message || 'Erro ao cadastrar tag.';
-        this.snackBar.open(msg, 'Fechar');
-      }
-    });
-  }
-
-  updateTag(id: string, data: Partial<Tag>): void {
-    this.tagService.update(id, data).subscribe({
-      next: () => {
-        this.snackBar.open('Tag atualizada com sucesso!', 'OK', { duration: 3000 });
-        this.loadTags();
-      },
-      error: (err) => {
-        console.error(err);
-        const msg = err.error?.message || 'Erro ao atualizar tag.';
-        this.snackBar.open(msg, 'Fechar');
-      }
+  openNfcWriter(tag: Tag): void {
+    const nfcUrl = `${window.location.origin}/t/${tag.uuid}?source=nfc`;
+    this.dialog.open(NfcWriterDialogComponent, {
+      data: { nfcUrl } as NfcWriterDialogData,
+      width: '520px',
+      maxWidth: '95vw',
+      autoFocus: false,
     });
   }
 

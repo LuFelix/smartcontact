@@ -1,0 +1,11 @@
+<mat-card class="kpi-card" [style.--kpi-color]="color">
+  <mat-card-content>
+    <div class="kpi-content">
+      <mat-icon class="kpi-icon" [style.color]="color">{{ icon }}</mat-icon>
+      <div class="kpi-info">
+        <span class="kpi-value">{{ prefix }}{{ value }}</span>
+        <span class="kpi-label">{{ label }}</span>
+      </div>
+    </div>
+  </mat-card-content>
+</mat-card>

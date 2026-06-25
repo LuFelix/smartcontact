@@ -8,7 +8,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Tag, TechnologyType, ApplicationType, RedirectMode } from '../../../shared/models/users.models';
+import { TagService } from '../../../../core/services/tag.service';
+import { NfcWriterDialogComponent, NfcWriterDialogData } from '../../../shared/components/nfc-writer-dialog/nfc-writer-dialog';
 import * as QRCode from 'qrcode';
 
 @Component({
@@ -51,7 +54,8 @@ export class QrFullscreenDialogComponent {
     MatSelectModule,
     MatButtonModule,
     MatIconModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatSnackBarModule
   ],
   template: `
     <h2 mat-dialog-title>{{ data.tag ? 'Editar Recurso' : 'Cadastrar Novo Recurso' }}</h2>
@@ -145,12 +149,30 @@ export class QrFullscreenDialogComponent {
               </button>
             </div>
           }
+
+          @if (showNfcActions) {
+            <div class="nfc-actions-divider"></div>
+            <div class="nfc-actions">
+              <span class="nfc-actions-label">Gravação NFC</span>
+              <div class="nfc-btn-row">
+                <button mat-stroked-button color="accent" (click)="openNfcWriter('write')" type="button">
+                  <mat-icon>near_me</mat-icon> Gravar
+                </button>
+                <button mat-stroked-button (click)="openNfcWriter('read')" type="button">
+                  <mat-icon>contactless</mat-icon> Ler
+                </button>
+                <button mat-stroked-button color="warn" (click)="openNfcWriter('erase')" type="button">
+                  <mat-icon>delete_forever</mat-icon> Apagar
+                </button>
+              </div>
+            </div>
+          }
         </div>
       </div>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button (click)="onCancel()" type="button">Cancelar</button>
-      <button mat-flat-button color="primary" [disabled]="tagForm.invalid" (click)="onSave()" type="button">
+      <button mat-button (click)="onCancel()" type="button">Fechar</button>
+      <button mat-flat-button color="primary" [disabled]="tagForm.invalid || isSaving" (click)="onSave()" type="button">
         {{ data.tag ? 'Atualizar Recurso' : 'Salvar Recurso' }}
       </button>
     </mat-dialog-actions>
@@ -249,6 +271,39 @@ export class QrFullscreenDialogComponent {
       color: var(--mat-sys-outline);
       font-weight: 500;
     }
+    .nfc-actions-divider {
+      width: 100%;
+      height: 1px;
+      background: var(--mat-sys-outline-variant);
+    }
+    .nfc-actions {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .nfc-actions-label {
+      font-size: 11px;
+      color: var(--mat-sys-outline);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .nfc-btn-row {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .nfc-btn-row button {
+      flex: 1;
+      min-width: 0;
+      font-size: 11px;
+    }
+    .nfc-btn-row button mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
     .tag-form {
       display: flex;
       flex-direction: column;
@@ -282,12 +337,15 @@ export class TagDialogComponent implements AfterViewInit {
   private fb = inject(FormBuilder);
   private dialogRef = inject(MatDialogRef<TagDialogComponent>);
   private dialog = inject(MatDialog);
-  
+  private tagService = inject(TagService);
+  private snackBar = inject(MatSnackBar);
+
   @ViewChild('qrcodeCanvas') qrcodeCanvas!: ElementRef<HTMLCanvasElement>;
 
   tagForm: FormGroup;
   techTypes = TechnologyType;
   appTypes = ApplicationType;
+  isSaving = false;
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: { tag?: Tag }) {
     this.tagForm = this.fb.group({
@@ -324,6 +382,12 @@ export class TagDialogComponent implements AfterViewInit {
 
   get previewValue(): string | null {
     return this.tagForm.get('value')?.value || null;
+  }
+
+  get showNfcActions(): boolean {
+    if (!this.data.tag) return false;
+    const type = this.tagForm.get('technologyType')?.value;
+    return type === TechnologyType.NFC_HF || type === TechnologyType.RFID_UHF;
   }
 
   get previewUrl(): string {
@@ -404,29 +468,74 @@ export class TagDialogComponent implements AfterViewInit {
     link.click();
   }
 
+  openNfcWriter(action: 'write' | 'read' | 'erase'): void {
+    if (!this.data.tag?.uuid) return;
+    const isNfc = this.tagForm.get('technologyType')?.value === TechnologyType.NFC_HF;
+    const nfcUrl = `${window.location.origin}/t/${this.data.tag.uuid}?source=${isNfc ? 'nfc' : 'rfid'}`;
+    this.dialog.open(NfcWriterDialogComponent, {
+      data: { nfcUrl } as NfcWriterDialogData,
+      width: '520px',
+      maxWidth: '95vw',
+      autoFocus: false,
+    });
+  }
+
   onCancel(): void {
     this.dialogRef.close();
   }
 
   onSave(): void {
-    if (this.tagForm.valid) {
-      const payload: any = { ...this.tagForm.value };
-      const type = payload.technologyType;
-      const value = payload.value;
+    if (!this.tagForm.valid) return;
 
-      if (value) {
-        if (type === TechnologyType.LINK) {
-          // LINK: QR direto, sem redirect mode
-        } else if (type === TechnologyType.TRILHA || type === TechnologyType.QR_CODE) {
-          payload.qrRedirectMode = RedirectMode.CUSTOM_URL;
-          payload.qrCustomUrl = value;
-        } else if (type === TechnologyType.NFC_HF || type === TechnologyType.RFID_UHF) {
-          payload.nfcRedirectMode = RedirectMode.CUSTOM_URL;
-          payload.nfcCustomUrl = value;
-        }
+    const payload: any = { ...this.tagForm.value };
+    const type = payload.technologyType;
+    const value = payload.value;
+
+    if (value) {
+      if (type === TechnologyType.LINK) {
+        // LINK: QR direto, sem redirect mode
+      } else if (type === TechnologyType.TRILHA || type === TechnologyType.QR_CODE) {
+        payload.qrRedirectMode = RedirectMode.CUSTOM_URL;
+        payload.qrCustomUrl = value;
+      } else if (type === TechnologyType.NFC_HF || type === TechnologyType.RFID_UHF) {
+        payload.nfcRedirectMode = RedirectMode.CUSTOM_URL;
+        payload.nfcCustomUrl = value;
       }
+    }
 
-      this.dialogRef.close(payload);
+    if (this.data.tag) {
+      this.isSaving = true;
+      this.tagService.update(this.data.tag.id, payload).subscribe({
+        next: () => {
+          this.isSaving = false;
+          this.snackBar.open('Tag atualizada com sucesso!', 'OK', { duration: 3000 });
+        },
+        error: (err) => {
+          this.isSaving = false;
+          console.error(err);
+          const msg = err.error?.message || 'Erro ao atualizar tag.';
+          this.snackBar.open(msg, 'Fechar');
+        }
+      });
+    } else {
+      this.isSaving = true;
+      this.tagService.create(payload).subscribe({
+        next: (createdTag) => {
+          this.isSaving = false;
+          this.data = { tag: createdTag };
+          this.tagForm.patchValue({ uid: createdTag.uid || '' });
+          this.snackBar.open('Tag cadastrada com sucesso!', 'OK', { duration: 3000 });
+          if (this.isQrCodeType) {
+            setTimeout(() => this.generateQRCode(), 100);
+          }
+        },
+        error: (err) => {
+          this.isSaving = false;
+          console.error(err);
+          const msg = err.error?.message || 'Erro ao cadastrar tag.';
+          this.snackBar.open(msg, 'Fechar');
+        }
+      });
     }
   }
 }
