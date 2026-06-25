@@ -23,6 +23,7 @@ export interface DashboardSummary {
   trend: DashboardTrendItem[];
   byDevice: DashboardBreakdownItem[];
   byBrowser: DashboardBreakdownItem[];
+  bySource: DashboardBreakdownItem[];
 }
 
 export interface DashboardState {
