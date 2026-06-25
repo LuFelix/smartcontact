@@ -504,7 +504,19 @@ export class TagDialogComponent implements AfterViewInit {
     }
 
     if (this.data.tag) {
-      this.dialogRef.close(payload);
+      this.isSaving = true;
+      this.tagService.update(this.data.tag.id, payload).subscribe({
+        next: () => {
+          this.isSaving = false;
+          this.snackBar.open('Tag atualizada com sucesso!', 'OK', { duration: 3000 });
+        },
+        error: (err) => {
+          this.isSaving = false;
+          console.error(err);
+          const msg = err.error?.message || 'Erro ao atualizar tag.';
+          this.snackBar.open(msg, 'Fechar');
+        }
+      });
     } else {
       this.isSaving = true;
       this.tagService.create(payload).subscribe({

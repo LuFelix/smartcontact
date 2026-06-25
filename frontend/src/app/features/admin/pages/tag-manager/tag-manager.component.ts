@@ -98,10 +98,7 @@ export class TagManagerComponent implements OnInit {
       data: { tag }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (tag && result) {
-        this.updateTag(tag.id, result);
-      }
+    dialogRef.afterClosed().subscribe(() => {
       this.loadTags();
     });
   }
@@ -113,20 +110,6 @@ export class TagManagerComponent implements OnInit {
       width: '520px',
       maxWidth: '95vw',
       autoFocus: false,
-    });
-  }
-
-  updateTag(id: string, data: Partial<Tag>): void {
-    this.tagService.update(id, data).subscribe({
-      next: () => {
-        this.snackBar.open('Tag atualizada com sucesso!', 'OK', { duration: 3000 });
-        this.loadTags();
-      },
-      error: (err) => {
-        console.error(err);
-        const msg = err.error?.message || 'Erro ao atualizar tag.';
-        this.snackBar.open(msg, 'Fechar');
-      }
     });
   }
 
