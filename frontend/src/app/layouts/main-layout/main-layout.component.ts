@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ViewChild, signal } from '@angular/core';
+import { Component, inject, OnInit, ViewChild, signal, computed } from '@angular/core';
 import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { MatSidenavModule, MatSidenav } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
@@ -33,6 +33,7 @@ export class MainLayoutComponent implements OnInit {
   isMobile = signal(false);
   isSidenavOpen = true;
   isCollapsed = signal(true);
+  sidenavWidth = computed(() => this.isCollapsed() ? 64 : 280);
 
   ngOnInit() {
     this.breakpointObserver.observe('(max-width: 959.98px)')

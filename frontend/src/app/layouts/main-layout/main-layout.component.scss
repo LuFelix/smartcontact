@@ -11,12 +11,8 @@
   background-color: var(--mat-sys-surface-container-low);
   border-right: 1px solid var(--mat-sys-outline-variant);
   height: 100%;
-  transition: width 0.2s ease;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
-
-  &.collapsed {
-    width: 64px;
-  }
 }
 
 .main-content {
@@ -27,6 +23,11 @@
   min-width: 0; // Crucial for flexbox children to not overflow
   overflow: hidden;
   background-color: var(--mat-sys-surface);
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+mat-sidenav-content.main-content {
+  overflow: hidden;
 }
 
 .page-content {
@@ -40,10 +41,6 @@
 }
 
 @media (max-width: 959px) {
-    .sidenav {
-        width: 240px;
-    }
-    
     .page-content {
         padding: 16px;
     }
