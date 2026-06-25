@@ -121,7 +121,7 @@ export class NfcService {
 
       try {
         const writer = new (window as any).NDEFReader();
-        writer.write({ records: [] })
+        writer.write({ records: [{ recordType: 'text', data: '' }] })
           .then(() => {
             observer.next();
             observer.complete();
