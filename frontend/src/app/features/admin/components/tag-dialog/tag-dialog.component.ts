@@ -171,7 +171,7 @@ export class QrFullscreenDialogComponent {
       </div>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button (click)="onCancel()" type="button">Cancelar</button>
+      <button mat-button (click)="onCancel()" type="button">Fechar</button>
       <button mat-flat-button color="primary" [disabled]="tagForm.invalid || isSaving" (click)="onSave()" type="button">
         {{ data.tag ? 'Atualizar Recurso' : 'Salvar Recurso' }}
       </button>

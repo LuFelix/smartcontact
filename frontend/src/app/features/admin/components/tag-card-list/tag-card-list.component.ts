@@ -70,13 +70,13 @@ import { Tag } from '../../../shared/models/users.models';
         <mat-card-actions align="end">
           <button mat-icon-button color="accent" matTooltip="Gravar NFC" (click)="writeNfc.emit(tag)"
             *ngIf="tag.technologyType === 'NFC_HF' || tag.technologyType === 'RFID_UHF'">
-            <mat-icon>near_me</mat-icon>
+            <span><mat-icon>near_me</mat-icon></span>
           </button>
           <button mat-icon-button color="primary" matTooltip="Editar" (click)="editTag.emit(tag)" *ngIf="isAdmin">
-            <mat-icon>edit</mat-icon>
+            <span><mat-icon>edit</mat-icon></span>
           </button>
           <button mat-icon-button color="warn" matTooltip="Excluir" (click)="deleteTag.emit(tag)" *ngIf="isAdmin">
-            <mat-icon>delete</mat-icon>
+            <span><mat-icon>delete</mat-icon></span>
           </button>
         </mat-card-actions>
       </mat-card>
