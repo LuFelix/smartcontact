@@ -20,13 +20,15 @@
         <app-my-tags-card-list
           [tags]="displayTags"
           [isLoading]="isLoading"
-          (viewQr)="openQrModal($event)">
+          (viewQr)="openQrModal($event)"
+          (writeNfc)="openNfcWriter($event)">
         </app-my-tags-card-list>
       } @else {
         <app-my-tags-list-view
           [tags]="displayTags"
           [isLoading]="isLoading"
-          (viewQr)="openQrModal($event)">
+          (viewQr)="openQrModal($event)"
+          (writeNfc)="openNfcWriter($event)">
         </app-my-tags-list-view>
       }
     }

@@ -344,6 +344,9 @@ export class TagsService {
       const tag = await this.tagRepository.findOne({ where: { id: tagId } });
       if (!tag) throw new NotFoundException('Recurso não encontrado.');
 
+      // Self-ownership bypass: dono sempre pode acessar o próprio recurso
+      if (tag.ownerId === userId) return;
+
       // Bloqueio Multi-Tenant usando o header explícito
       if (tag.tenantId !== tenantId) {
           throw new ForbiddenException('Acesso negado: Este recurso pertence a outra organização.');

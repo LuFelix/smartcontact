@@ -307,17 +307,19 @@ export class UsersService {
         });
         if (!baseUser) return null;
 
-        // Regra Multi-Tenant: Checa se o usuário logado e o alvo compartilham o mesmo tenant
-        const sharedTenant = currentUser?.tenantId && baseUser.memberships?.some(m => m.tenantId === currentUser?.tenantId);
-        
-        if (currentUser?.tenantId && !sharedTenant && !currentUser?.isSuperAdmin) {
-             throw new BadRequestException('Acesso negado: Este usuário não pertence à sua organização.');
-        }
-
+        const isSystemAdmin = currentUser?.isSuperAdmin;
         const isOwner = baseUser.ownerId === currentUser?.sub;
         const isOwnProfile = baseUser.id === currentUser?.sub;
-        const isTenantAdmin = currentUser?.role === 'administrador' && sharedTenant;
-        const isSystemAdmin = currentUser?.isSuperAdmin;
+
+        // Self-ownership bypass: usuário sempre pode ver o próprio perfil
+        if (!isOwnProfile && !isOwner) {
+            const sharedTenant = currentUser?.tenantId && baseUser.memberships?.some(m => m.tenantId === currentUser?.tenantId);
+            if (currentUser?.tenantId && !sharedTenant && !isSystemAdmin) {
+                throw new BadRequestException('Acesso negado: Este usuário não pertence à sua organização.');
+            }
+        }
+
+        const isTenantAdmin = currentUser?.role === 'administrador' && baseUser.memberships?.some(m => m.tenantId === currentUser?.tenantId);
 
         const showContacts = isSystemAdmin || isOwnProfile || isOwner || isTenantAdmin;
 
@@ -450,15 +452,16 @@ export class UsersService {
         const isTenantAdmin = currentUser?.role === 'administrador';
         const targetTenantId = currentUser?.tenantId || this.TIWEB_ID;
 
-        // Validação de Tenant
-        const sharedTenant = currentUser?.tenantId && user.memberships?.some(m => m.tenantId === currentUser?.tenantId);
-        
-        if (!isSystemAdmin && currentUser?.tenantId && !sharedTenant) {
-             throw new BadRequestException('Acesso negado: Este usuário não pertence à sua organização.');
-        }
-
         const isOwner = user.ownerId === currentUser?.sub;
         const isOwnProfile = user.id === currentUser?.sub;
+
+        // Self-ownership bypass: usuário sempre pode editar o próprio perfil
+        if (!isOwnProfile && !isOwner) {
+            const sharedTenant = currentUser?.tenantId && user.memberships?.some(m => m.tenantId === currentUser?.tenantId);
+            if (!isSystemAdmin && currentUser?.tenantId && !sharedTenant) {
+                throw new BadRequestException('Acesso negado: Este usuário não pertence à sua organização.');
+            }
+        }
 
         if (!isSystemAdmin && !isOwner && !isOwnProfile && !isTenantAdmin) {
              throw new BadRequestException('Você não tem permissão para editar este usuário.');
