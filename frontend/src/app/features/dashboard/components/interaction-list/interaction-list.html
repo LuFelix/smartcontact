@@ -1,0 +1,36 @@
+<mat-card class="interaction-card">
+  <mat-card-header>
+    <mat-card-title>Últimos 7 Dias</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @if (items.length > 0) {
+      <table mat-table [dataSource]="items" class="interaction-table">
+        <ng-container matColumnDef="date">
+          <th mat-header-cell *matHeaderCellDef>Data</th>
+          <td mat-cell *matCellDef="let item">{{ item.date }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="reads">
+          <th mat-header-cell *matHeaderCellDef>Leituras</th>
+          <td mat-cell *matCellDef="let item">{{ item.reads }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="leads">
+          <th mat-header-cell *matHeaderCellDef>Leads</th>
+          <td mat-cell *matCellDef="let item">{{ item.leads }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+
+      <div class="interaction-totals">
+        <span><strong>Total:</strong> {{ totalReads }} leituras, {{ totalLeads }} leads</span>
+      </div>
+    } @else {
+      <div class="empty-message">
+        <p>Nenhuma interação registrada nos últimos 7 dias.</p>
+      </div>
+    }
+  </mat-card-content>
+</mat-card>

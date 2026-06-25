@@ -1,0 +1,162 @@
+<div class="dashboard-page">
+  @if (summary(); as s) {
+    <div class="kpi-grid">
+      <app-kpi-card
+        label="Total de Leituras"
+        [value]="s.totalReads"
+        icon="visibility"
+        color="#2196F3"
+      />
+      <app-kpi-card
+        label="Leituras Hoje"
+        [value]="s.readsToday"
+        icon="today"
+        color="#4CAF50"
+      />
+      <app-kpi-card
+        label="Leituras (7d)"
+        [value]="s.readsThisWeek"
+        icon="date_range"
+        color="#FF9800"
+      />
+      <app-kpi-card
+        label="Total de Leads"
+        [value]="s.totalLeads"
+        icon="person_add"
+        color="#9C27B0"
+      />
+    </div>
+
+    <div class="breakdown-grid">
+      @if (byDevicePreview().length > 0) {
+        <div class="breakdown-card">
+          <div class="breakdown-header">Dispositivos</div>
+          <div class="breakdown-list">
+            @for (item of byDevicePreview(); track item.name) {
+              <div class="breakdown-row">
+                <span class="breakdown-label">{{ item.name }}</span>
+                <span class="breakdown-value">{{ item.count }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @if (byBrowserPreview().length > 0) {
+        <div class="breakdown-card">
+          <div class="breakdown-header">Navegadores</div>
+          <div class="breakdown-list">
+            @for (item of byBrowserPreview(); track item.name) {
+              <div class="breakdown-row">
+                <span class="breakdown-label">{{ item.name }}</span>
+                <span class="breakdown-value">{{ item.count }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="breakdown-card">
+        <div class="breakdown-header">
+          <mat-icon class="header-icon">settings_input_antenna</mat-icon>
+          Origens
+        </div>
+        <div class="breakdown-list">
+          @for (item of bySourcePreview(); track item.name) {
+            <div class="breakdown-row">
+              <span class="breakdown-label">
+                <mat-icon class="source-icon">{{ sourceIcon(item.name) }}</mat-icon>
+                {{ item.name }}
+              </span>
+              <span class="breakdown-value">{{ item.count }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <mat-tab-group>
+      <mat-tab label="Resumo">
+        <div class="tab-content">
+          <app-interaction-list [items]="s.trend" />
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Dispositivos">
+        <div class="tab-content">
+          @if (byDevicePreview().length > 0) {
+            <div class="full-list">
+              @for (item of byDevicePreview(); track item.name) {
+                <div class="breakdown-card">
+                  <div class="breakdown-row">
+                    <span class="breakdown-label">{{ item.name }}</span>
+                    <span class="breakdown-value">{{ item.count }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="empty-tab">Nenhum dado de dispositivo disponível.</p>
+          }
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Navegadores">
+        <div class="tab-content">
+          @if (byBrowserPreview().length > 0) {
+            <div class="full-list">
+              @for (item of byBrowserPreview(); track item.name) {
+                <div class="breakdown-card">
+                  <div class="breakdown-row">
+                    <span class="breakdown-label">{{ item.name }}</span>
+                    <span class="breakdown-value">{{ item.count }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="empty-tab">Nenhum dado de navegador disponível.</p>
+          }
+        </div>
+      </mat-tab>
+
+      <mat-tab label="Origens">
+        <div class="tab-content">
+          @if (bySourcePreview().length > 0) {
+            <div class="full-list">
+              @for (item of bySourcePreview(); track item.name) {
+                <div class="breakdown-card">
+                  <div class="breakdown-row">
+                    <span class="breakdown-label">{{ item.name }}</span>
+                    <span class="breakdown-value">{{ item.count }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="empty-tab">Nenhum dado de origem disponível.</p>
+          }
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  } @else {
+    @if (isLoading()) {
+      <div class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Carregando métricas...</p>
+      </div>
+    } @else if (error()) {
+      <app-empty-state
+        icon="error_outline"
+        [title]="'Erro ao carregar'"
+        [message]="error()!"
+      />
+    } @else {
+      <app-empty-state
+        icon="analytics"
+        title="Nenhuma métrica disponível"
+        message="As interações com suas tags aparecerão aqui."
+      />
+    }
+  }
+</div>

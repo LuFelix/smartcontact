@@ -1,0 +1,22 @@
+.interaction-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.interaction-table {
+  width: 100%;
+}
+
+.interaction-totals {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+  font-size: 14px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.empty-message {
+  text-align: center;
+  padding: 24px;
+  color: var(--mat-sys-on-surface-variant);
+}

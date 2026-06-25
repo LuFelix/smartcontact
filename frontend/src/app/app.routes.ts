@@ -7,7 +7,6 @@ import { PermissionGuard } from './core/guards/permission.guard'; // Importe o g
 
 // Importa o novo Layout e a página de Métricas
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
-import { DashboardMetricsComponent } from './features/users/pages/dashboard-metrics/dashboard-metrics.component';
 import { UnauthorizedComponent } from './core/pages/unauthorized-page/unauthorized.component'; // Importa a nova página
 //import { Welcome } from './pages/welcome/welcome'; // Assumindo que exista
 
@@ -55,7 +54,7 @@ export const routes: Routes = [
             // Rota REAL do Dashboard (com métricas)
             {
                 path: 'dashboard',
-                component: DashboardMetricsComponent,
+                loadComponent: () => import('./features/dashboard/pages/dashboard-container/dashboard-container').then(m => m.DashboardContainerComponent),
                 canActivate: [PermissionGuard], // Proteger com permissão VIEW_DASHBOARD
                 data: { permissions: ['VIEW_DASHBOARD'] }
             },
