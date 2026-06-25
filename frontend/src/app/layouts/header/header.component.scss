@@ -56,6 +56,16 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+
+        &.icon-only {
+            .workspace-name,
+            mat-icon:last-child {
+                display: none;
+            }
+            padding: 0 8px;
+            min-width: 40px;
+            justify-content: center;
+        }
     }
 }
 

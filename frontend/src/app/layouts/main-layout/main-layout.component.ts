@@ -5,8 +5,8 @@ import { MatListModule } from '@angular/material/list';
 import { HeaderComponent } from '../header/header.component';
 import { SideNavComponent } from '../side-nav/side-nav.component';
 import { BottomNavComponent } from '../bottom-nav/bottom-nav.component';
-import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { map, shareReplay, filter } from 'rxjs/operators';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { map, filter } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -34,7 +34,7 @@ export class MainLayoutComponent implements OnInit {
   isSidenavOpen = true;
 
   ngOnInit() {
-    this.breakpointObserver.observe(Breakpoints.Handset)
+    this.breakpointObserver.observe('(max-width: 959.98px)')
       .pipe(map(result => result.matches))
       .subscribe(mobile => {
         this.isMobile.set(mobile);
