@@ -1,18 +1,20 @@
 <mat-sidenav-container class="main-container">
 
   <mat-sidenav #sidenav
-               [mode]="isMobile ? 'over' : 'side'" 
-               [(opened)]="isSidenavOpen" 
+               [mode]="isMobile() ? 'over' : 'side'"
+               [(opened)]="isSidenavOpen"
                class="sidenav">
     <app-side-nav></app-side-nav>
   </mat-sidenav>
 
   <mat-sidenav-content class="main-content">
-    <app-header [sidenavOpen]="isSidenavOpen" (toggleSidenav)="toggleSidenav()"></app-header>
+    <app-header [sidenavOpen]="isSidenavOpen" [isMobile]="isMobile()" (toggleSidenav)="toggleSidenav()"></app-header>
 
-    <div class="page-content">
+    <div class="page-content" [class.has-bottom-nav]="isMobile()">
       <router-outlet></router-outlet>
     </div>
+
+    <app-bottom-nav [isMobile]="isMobile()" />
   </mat-sidenav-content>
 
 </mat-sidenav-container>
