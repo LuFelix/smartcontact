@@ -75,11 +75,15 @@ import { Tag } from '../../../shared/models/users.models';
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef> Ações </th>
           <td mat-cell *matCellDef="let tag">
-            <div class="actions-buttons" *ngIf="isAdmin">
-              <button mat-icon-button color="primary" matTooltip="Editar" (click)="editTag.emit(tag)">
+            <div class="actions-buttons">
+              <button mat-icon-button color="accent" class="icon-align-fix" matTooltip="Gravar NFC" (click)="writeNfc.emit(tag)"
+                *ngIf="tag.technologyType === 'NFC_HF' || tag.technologyType === 'RFID_UHF'">
+                <mat-icon>near_me</mat-icon>
+              </button>
+              <button mat-icon-button color="primary" class="icon-align-fix" matTooltip="Editar" (click)="editTag.emit(tag)" *ngIf="isAdmin">
                 <mat-icon>edit</mat-icon>
               </button>
-              <button mat-icon-button color="warn" matTooltip="Excluir" (click)="deleteTag.emit(tag)">
+              <button mat-icon-button color="warn" class="icon-align-fix" matTooltip="Excluir" (click)="deleteTag.emit(tag)" *ngIf="isAdmin">
                 <mat-icon>delete</mat-icon>
               </button>
             </div>
@@ -168,8 +172,17 @@ import { Tag } from '../../../shared/models/users.models';
     .asset_counting { background: var(--mat-sys-tertiary-container); color: var(--mat-sys-on-tertiary-container); }
     .access_control { background: var(--mat-sys-error-container); color: var(--mat-sys-on-error-container); }
 
-    .actions-buttons { display: flex; gap: 4px; }
+    .actions-buttons { display: flex; gap: 4px; align-items: center; }
     .text-muted { color: var(--mat-sys-outline); font-size: 12px; font-style: italic; }
+
+    .icon-align-fix {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 40px !important;
+      height: 40px !important;
+      padding: 0 !important;
+    }
     
     th.mat-header-cell { color: var(--mat-sys-on-surface-variant); font-weight: 700; }
     td.mat-cell { color: var(--mat-sys-on-surface); }
@@ -181,6 +194,7 @@ export class TagListViewComponent {
   @Input() isAdmin = false;
   @Output() editTag = new EventEmitter<Tag>();
   @Output() deleteTag = new EventEmitter<Tag>();
+  @Output() writeNfc = new EventEmitter<Tag>();
 
   displayedColumns: string[] = ['uid', 'name', 'technology', 'application', 'actions'];
 

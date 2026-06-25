@@ -31,7 +31,7 @@ import { UserService } from '../../services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { CepService } from '../../../../core/utils/cep.service';
 import { environment } from '../../../../environments/environment';
-import { NfcWriterDialogComponent, NfcWriterDialogData } from '../../components/nfc-writer-dialog/nfc-writer-dialog';
+import { NfcWriterDialogComponent, NfcWriterDialogData } from '../../../shared/components/nfc-writer-dialog/nfc-writer-dialog';
 
 @Component({
   selector: 'app-profile',
