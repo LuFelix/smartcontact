@@ -1,11 +1,7 @@
 import { Component, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatCardModule } from '@angular/material/card';
-import {
-  DashboardService,
-  DashboardSummary,
-} from '../../services/dashboard.service';
+import { DashboardService } from '../../services/dashboard.service';
 import { KpiCardComponent } from '../../components/kpi-card/kpi-card';
 import { InteractionListComponent } from '../../components/interaction-list/interaction-list';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -16,7 +12,6 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
   imports: [
     CommonModule,
     MatProgressSpinnerModule,
-    MatCardModule,
     KpiCardComponent,
     InteractionListComponent,
     EmptyStateComponent,

@@ -10,6 +10,12 @@
       [title]="'Erro ao carregar'"
       [message]="error()!"
     />
+  } @else if (error()) {
+    <app-empty-state
+      icon="error_outline"
+      [title]="'Erro ao carregar'"
+      [message]="error()!"
+    />
   } @else if (summary(); as s) {
     <div class="kpi-grid">
       <app-kpi-card
@@ -42,39 +48,31 @@
       <app-interaction-list [items]="s.trend" />
 
       @if (byDevicePreview().length > 0) {
-        <mat-card class="breakdown-card">
-          <mat-card-header>
-            <mat-card-title>Dispositivos</mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="breakdown-list">
-              @for (item of byDevicePreview(); track item.name) {
-                <div class="breakdown-row">
-                  <span class="breakdown-label">{{ item.name }}</span>
-                  <span class="breakdown-value">{{ item.count }}</span>
-                </div>
-              }
-            </div>
-          </mat-card-content>
-        </mat-card>
+        <div class="breakdown-card">
+          <div class="breakdown-header">Dispositivos</div>
+          <div class="breakdown-list">
+            @for (item of byDevicePreview(); track item.name) {
+              <div class="breakdown-row">
+                <span class="breakdown-label">{{ item.name }}</span>
+                <span class="breakdown-value">{{ item.count }}</span>
+              </div>
+            }
+          </div>
+        </div>
       }
 
       @if (byBrowserPreview().length > 0) {
-        <mat-card class="breakdown-card">
-          <mat-card-header>
-            <mat-card-title>Navegadores</mat-card-title>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="breakdown-list">
-              @for (item of byBrowserPreview(); track item.name) {
-                <div class="breakdown-row">
-                  <span class="breakdown-label">{{ item.name }}</span>
-                  <span class="breakdown-value">{{ item.count }}</span>
-                </div>
-              }
-            </div>
-          </mat-card-content>
-        </mat-card>
+        <div class="breakdown-card">
+          <div class="breakdown-header">Navegadores</div>
+          <div class="breakdown-list">
+            @for (item of byBrowserPreview(); track item.name) {
+              <div class="breakdown-row">
+                <span class="breakdown-label">{{ item.name }}</span>
+                <span class="breakdown-value">{{ item.count }}</span>
+              </div>
+            }
+          </div>
+        </div>
       }
     </div>
   } @else {
