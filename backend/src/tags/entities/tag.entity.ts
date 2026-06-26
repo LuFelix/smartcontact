@@ -11,6 +11,7 @@ import {
   OneToMany,
   JoinColumn,
   Index,
+  Unique,
 } from 'typeorm';
 
 export enum RedirectMode {
@@ -36,6 +37,7 @@ export enum ApplicationType {
 
 @Entity('tags')
 @Index(['uid', 'tenantId'], { unique: true })
+@Unique(['userId', 'tenantId'])
 export class Tag {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

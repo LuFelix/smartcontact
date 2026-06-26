@@ -338,7 +338,7 @@
                   <mat-card-header class="header-with-action">
                     <div class="header-inner">
                       <mat-card-title>Controle de Redirecionamento (NFC vs QR)</mat-card-title>
-                      <a mat-flat-button color="primary" [routerLink]="['/t', activeTag.uuid]" [queryParams]="{ source: 'qr' }" target="_blank">
+                       <a mat-flat-button color="primary" [routerLink]="['/t', activeTag.handle || activeTag.uuid]" [queryParams]="{ source: 'qr' }" target="_blank">
                         <mat-icon>open_in_new</mat-icon> Testar Configuração
                       </a>
                     </div>
