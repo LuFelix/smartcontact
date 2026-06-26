@@ -350,7 +350,7 @@
                                 <mat-card-header class="header-with-action">
                                     <div class="header-inner">
                                         <mat-card-title>Controle de Redirecionamento (NFC vs QR)</mat-card-title>
-                                        <a mat-flat-button color="primary" [routerLink]="['/t', getPublicLinkIdentifier()]" [queryParams]="{ source: 'link' }" target="_blank" (click)="$event.stopPropagation()">
+                                        <a mat-flat-button color="primary" [routerLink]="['/t', getPublicLinkIdentifier()]" [queryParams]="{ source: 'qr' }" target="_blank" (click)="$event.stopPropagation()">
                                             <mat-icon>open_in_new</mat-icon> Testar Configuração
                                         </a>
                                     </div>
