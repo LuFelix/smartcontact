@@ -65,6 +65,11 @@ export class TagsService {
   }
 
   async createDefaultTag(userId: string, ownerId: string, tenantId: string): Promise<Tag> {
+      const existingTag = await this.tagRepository.findOne({ where: { userId, tenantId } });
+      if (existingTag) {
+          return existingTag;
+      }
+
       const user = await this.userRepository.findOne({ where: { id: userId } });
       const handle = await this.generateHandle(userId, tenantId);
       const tag = this.tagRepository.create({
@@ -79,7 +84,7 @@ export class TagsService {
           technologyType: TechnologyType.QR_CODE,
           applicationType: ApplicationType.REDIRECT,
           name: `Cartão: ${user?.name || 'Novo Membro'}`,
-          isResource: false // Tags pessoais NÃO são recursos genéricos
+          isResource: false
       });
       return this.tagRepository.save(tag);
   }

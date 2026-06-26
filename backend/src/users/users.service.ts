@@ -323,14 +323,29 @@ export class UsersService {
 
         const showContacts = isSystemAdmin || isOwnProfile || isOwner || isTenantAdmin;
 
-        const relations = showContacts
-            ? ['memberships', 'memberships.role', 'memberships.tenant', 'memberships.profile', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags']
-            : ['memberships', 'memberships.role', 'tags']; 
+        const queryBuilder = this.usersRepository.createQueryBuilder('user')
+            .leftJoinAndSelect('user.memberships', 'membership')
+            .leftJoinAndSelect('membership.role', 'role')
+            .where('user.id = :userId', { userId });
 
-        const user = await this.usersRepository.findOne({ 
-            where: { id: userId }, 
-            relations 
-        });
+        if (currentUser?.tenantId) {
+            queryBuilder.leftJoinAndSelect('user.tags', 'tag', 'tag.tenantId = :tenantId', { tenantId: currentUser.tenantId });
+        } else {
+            queryBuilder.leftJoinAndSelect('user.tags', 'tag');
+        }
+        queryBuilder.addOrderBy('tag.createdAt', 'DESC');
+
+        if (showContacts) {
+            queryBuilder
+                .leftJoinAndSelect('membership.tenant', 'tenant')
+                .leftJoinAndSelect('membership.profile', 'membershipProfile')
+                .leftJoinAndSelect('user.phones', 'phone')
+                .leftJoinAndSelect('user.addresses', 'address')
+                .leftJoinAndSelect('user.secondaryEmails', 'secondaryEmail')
+                .leftJoinAndSelect('user.links', 'link');
+        }
+
+        const user = await queryBuilder.getOne();
 
         if (user) {
             const activeMembership = user.memberships?.find(m => m.tenantId === currentUser?.tenantId) || user.memberships?.[0];
@@ -497,7 +512,7 @@ export class UsersService {
 
         // --- Lógica de Persistência de TAG Refatorada ---
         if (user!.tags && user!.tags.length > 0) {
-            const activeTag = user!.tags[0];
+            const activeTag = user!.tags.find((t: any) => t.tenantId === currentUser?.tenantId) || user!.tags[0];
             
             if ((updateUserDto as any).nfcRedirectMode) activeTag.nfcRedirectMode = (updateUserDto as any).nfcRedirectMode;
             if ((updateUserDto as any).nfcCustomUrl !== undefined) activeTag.nfcCustomUrl = (updateUserDto as any).nfcCustomUrl;
