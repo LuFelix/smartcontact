@@ -2,7 +2,7 @@
 
 import { Component, Inject, OnInit, inject, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormControl, FormArray} from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { RouterModule, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
@@ -29,6 +29,7 @@ import { NgxMaskDirective } from 'ngx-mask';
 import * as QRCode from 'qrcode';
 
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { NfcWriterDialogComponent, NfcWriterDialogData } from '../../../shared/components/nfc-writer-dialog/nfc-writer-dialog';
 
 // Interface para os dados recebidos
 export interface UserModalData {
@@ -71,6 +72,7 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
     private cepService = inject(CepService);
     private snackBar = inject(MatSnackBar);
     public dialogRef = inject(MatDialogRef<UserDetailsModalComponent>);
+    private dialog = inject(MatDialog);
 
     @ViewChild('qrcodeCanvas') qrcodeCanvas!: ElementRef<HTMLCanvasElement>;
     @ViewChild('qrSelect') qrSelect!: MatSelect;
@@ -585,5 +587,17 @@ export class UserDetailsModalComponent implements OnInit, OnDestroy, AfterViewIn
         link.download = `smartcontact-qr-${this.user.name.replace(/\s+/g, '-').toLowerCase()}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
+    }
+
+    writeNfcChip(): void {
+        const tag = this.user?.tags?.find(t => t.isActive) || this.user?.tags?.[0];
+        if (!tag) return;
+        const nfcUrl = `${window.location.origin}/t/${tag.uuid}?source=nfc`;
+        this.dialog.open(NfcWriterDialogComponent, {
+            data: { nfcUrl } as NfcWriterDialogData,
+            width: '520px',
+            maxWidth: '95vw',
+            autoFocus: false,
+        });
     }
 }
