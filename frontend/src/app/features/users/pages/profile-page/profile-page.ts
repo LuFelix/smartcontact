@@ -393,7 +393,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
         });
 
         if (userProfile.tags && userProfile.tags.length > 0) {
-            this.activeTag = userProfile.tags.find((t: Tag) => t.isActive) || userProfile.tags[0];
+            this.activeTag = userProfile.tags.find((t: Tag) => !t.isResource && t.isActive)
+                || userProfile.tags.find((t: Tag) => !t.isResource)
+                || userProfile.tags.find((t: Tag) => t.isActive)
+                || userProfile.tags[0];
             this.profileForm.get('tagSettings')?.patchValue({
                 id: this.activeTag.id,
                 nfcRedirectMode: this.activeTag.nfcRedirectMode,
