@@ -50,6 +50,7 @@ O sistema opera em um paradigma Multi-Tenant N:N (estilo Google Drive).
 - [x] **PASSO R (Issue #224):** Reestruturar profile-page.html com layout de abas (tabs) — template adaptado da modal user-details (OK).
 - [x] **PASSO S (Issue #225):** Adaptar profile-page.ts — limpeza de imports não utilizados, zero mudanças funcionais (OK).
 - [x] **PASSO T (Issue #231):** Per-tenant tag filtering — findById() com QueryBuilder, update() busca tag por tenant, upsert em createDefaultTag(), @Unique(['userId', 'tenantId']). QR/NFC URLs unificadas (UUID para QR/NFC, handle para source=link). Botão Gravar Chip NFC na modal de contatos. Fix: botão "Testar Configuração" agora usa source=qr para respeitar o dropdown de QR redirect (PR #233) (OK).
+- [x] **PASSO U (Issue #237):** Correção de colisão e persistência de configurações de tags NFC/QR no perfil — atualização de tags por ID no backend e filtro de tag pessoal (!isResource) no frontend (PR #240) (OK).
 - [ ] **PRÓXIMOS PASSOS (Backlog Prioritário - issues-todo.json):**
   - #169: Módulo de Gestão Administrativa de Tenants (Workspaces) - BE/FE
   - #97: Motor de Recompensa e Link de Indicação (Growth Loop) - BE/DB
