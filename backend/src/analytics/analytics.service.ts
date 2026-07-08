@@ -55,7 +55,7 @@ export class AnalyticsService {
       baseQuery.andWhere('(tag.ownerId = :userId OR tag.userId = :userId)', { userId });
     }
 
-    baseQuery.orderBy('log.accessed_at', 'DESC')
+    baseQuery.orderBy('log.accessedAt', 'DESC')
       .take(50);
 
     const logs = await baseQuery.getMany();
