@@ -20,3 +20,15 @@
   padding: 24px;
   color: var(--mat-sys-on-surface-variant);
 }
+
+.source-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}

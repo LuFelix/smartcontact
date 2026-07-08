@@ -20,4 +20,14 @@ export class AnalyticsController {
     const { sub: userId, role, isSuperAdmin } = currentUser;
     return this.analyticsService.getSummary(tenantId || null, userId, role, isSuperAdmin);
   }
+
+  @Get('recent-reads')
+  @ApiOperation({ summary: 'Retorna as leituras recentes de tags do tenant' })
+  async getRecentReads(
+    @GetUser() currentUser: any,
+    @Headers('x-tenant-id') tenantId: string,
+  ) {
+    const { sub: userId, role, isSuperAdmin } = currentUser;
+    return this.analyticsService.getRecentReads(tenantId || null, userId, role, isSuperAdmin);
+  }
 }

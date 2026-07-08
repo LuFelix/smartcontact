@@ -40,6 +40,36 @@ export class AnalyticsService {
     return { totalReads, totalLeads, readsToday, readsThisWeek, leadsThisWeek, trend, byDevice, byBrowser, bySource };
   }
 
+  async getRecentReads(tenantId: string | null, userId: string, role: string, isSuperAdmin: boolean) {
+    const baseQuery = this.logRepository.createQueryBuilder('log')
+      .leftJoinAndSelect('log.tag', 'tag')
+      .andWhere('log.interaction_type = :type', { type: InteractionType.VISIT });
+
+    if (tenantId) {
+      baseQuery.andWhere('tag.tenantId = :tenantId', { tenantId });
+    } else if (!isSuperAdmin) {
+      return [];
+    }
+
+    if (!isSuperAdmin && role !== 'administrador') {
+      baseQuery.andWhere('(tag.ownerId = :userId OR tag.userId = :userId)', { userId });
+    }
+
+    baseQuery.orderBy('log.accessedAt', 'DESC')
+      .take(50);
+
+    const logs = await baseQuery.getMany();
+
+    return logs.map(log => ({
+      accessedAt: log.accessedAt,
+      source: log.source,
+      tag: {
+        name: log.tag?.name || null,
+        uuid: log.tag?.uuid || null,
+      },
+    }));
+  }
+
   private async countByType(qb: ReturnType<typeof this.logRepository.createQueryBuilder>, type: InteractionType): Promise<number> {
     return qb.clone()
       .andWhere('log.interaction_type = :type', { type })
