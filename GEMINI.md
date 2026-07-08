@@ -54,6 +54,7 @@ O sistema opera em um paradigma Multi-Tenant N:N (estilo Google Drive).
 - [x] **PASSO V (Issue #239):** Estruturação e Padronização da Documentação Técnica (FE/BE) — consolidação de sumários modulares das features e guias de especificações detalhadas de apoio (PR #241) (OK).
 - [x] **PASSO W (Issue #238):** Upgrade do Dashboard - Histórico Detalhado de Leituras de Tags (OK).
 - [x] **PASSO X (Issue #243):** Setup do ApexCharts e Série Temporal com Filtro de Período (OK).
+- [x] **PASSO Y (Issue #244):** Painel de Gráficos - Evolução Temporal e Rosca de Origens (OK).
 - [ ] **PRÓXIMOS PASSOS (Backlog Prioritário - issues-todo.json):**
   - #169: Módulo de Gestão Administrativa de Tenants (Workspaces) - BE/FE
   - #97: Motor de Recompensa e Link de Indicação (Growth Loop) - BE/DB
