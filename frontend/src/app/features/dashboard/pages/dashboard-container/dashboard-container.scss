@@ -116,13 +116,9 @@
 
 .details-grid-row-2 {
   display: grid;
-  grid-template-columns: 1.5fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 24px;
   margin-bottom: 24px;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-  }
 }
 
 .breakdown-tabs-card {
