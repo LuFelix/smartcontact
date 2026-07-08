@@ -40,7 +40,13 @@ export class DashboardContainerComponent implements OnInit {
   readonly isLoading = computed(() => this.state().isLoading);
   readonly error = computed(() => this.state().error);
   readonly recentReads = this.dashboardService.recentReads;
+  readonly teamRanking = this.dashboardService.teamRanking;
   readonly activePeriod = signal<number>(7);
+
+  readonly isAdmin = computed(() => {
+    const role = this.authService.userRole();
+    return role?.toLowerCase() === 'administrador';
+  });
 
   constructor() {
     toObservable(this.authService.activeTenantId).subscribe(() => {
@@ -52,12 +58,84 @@ export class DashboardContainerComponent implements OnInit {
     const period = this.activePeriod();
     this.dashboardService.loadSummary(period);
     this.dashboardService.loadRecentReads();
+    if (this.isAdmin()) {
+      this.dashboardService.loadTeamRanking();
+    }
   }
 
   setPeriod(days: number): void {
     this.activePeriod.set(days);
     this.dashboardService.loadSummary(days);
   }
+
+  readonly teamRankingChartOptions = computed(() => {
+    const data = this.teamRanking();
+    if (!data || data.length === 0) return null;
+
+    const names = data.map(item => item.name);
+    const reads = data.map(item => item.reads);
+    const leads = data.map(item => item.leads);
+
+    return {
+      series: [
+        {
+          name: 'Leituras',
+          data: reads
+        },
+        {
+          name: 'Leads',
+          data: leads
+        }
+      ],
+      chart: {
+        type: 'bar',
+        height: 350,
+        stacked: true,
+        toolbar: {
+          show: false
+        },
+        background: 'transparent'
+      },
+      colors: ['var(--mat-sys-primary, #2196F3)', 'var(--mat-sys-tertiary, #9C27B0)'],
+      plotOptions: {
+        bar: {
+          horizontal: true,
+          borderRadius: 4
+        }
+      },
+      xaxis: {
+        categories: names,
+        labels: {
+          style: {
+            colors: 'var(--mat-sys-on-surface-variant)'
+          }
+        }
+      },
+      yaxis: {
+        labels: {
+          style: {
+            colors: 'var(--mat-sys-on-surface-variant)'
+          }
+        }
+      },
+      grid: {
+        borderColor: 'var(--mat-sys-outline-variant, #E0E0E0)'
+      },
+      dataLabels: {
+        enabled: false
+      },
+      legend: {
+        position: 'top',
+        horizontalAlign: 'right',
+        labels: {
+          colors: 'var(--mat-sys-on-surface)'
+        }
+      },
+      tooltip: {
+        theme: 'dark'
+      }
+    };
+  });
 
   readonly byDevicePreview = computed(() => {
     const s = this.summary();

@@ -20,13 +20,22 @@ export class InteractionLogsService {
    * Registra uma visita simples a uma tag
    */
   async logVisit(tagId: string, metadata: { ip: string; userAgent: string; source?: string; tenantId?: string; device?: string; browser?: string }) {
+    let parsedDevice = metadata.device;
+    let parsedBrowser = metadata.browser;
+
+    if (!parsedDevice || !parsedBrowser) {
+      const parsed = this.parseUA(metadata.userAgent);
+      parsedDevice = parsedDevice || parsed.device;
+      parsedBrowser = parsedBrowser || parsed.browser;
+    }
+
     const log = this.interactionLogRepository.create({
       tagId,
       interactionType: InteractionType.VISIT,
       ipAddress: metadata.ip,
       userAgent: metadata.userAgent,
-      deviceType: metadata.device,
-      browser: metadata.browser,
+      deviceType: parsedDevice,
+      browser: parsedBrowser,
       source: metadata.source || null,
       tenantId: metadata.tenantId || null,
     });
@@ -43,6 +52,8 @@ export class InteractionLogsService {
           select: ['userId'] 
       });
 
+      const parsed = this.parseUA(metadata.userAgent);
+
       const log = this.interactionLogRepository.create({
           tagId,
           interactionType: InteractionType.LEAD,
@@ -52,9 +63,40 @@ export class InteractionLogsService {
           leadNote: leadData.note,
           ipAddress: metadata.ip,
           userAgent: metadata.userAgent,
+          deviceType: parsed.device,
+          browser: parsed.browser,
           capturedByUserId: tag?.userId || null
       });
       return this.interactionLogRepository.save(log);
+  }
+
+  private parseUA(ua: string): { device: string; browser: string } {
+    if (!ua || ua === 'unknown') {
+      return { device: 'Desktop', browser: 'Outros' };
+    }
+    const uaLower = ua.toLowerCase();
+    
+    // Device detection
+    let device = 'Desktop';
+    if (uaLower.includes('mobi') || uaLower.includes('android') || uaLower.includes('iphone') || uaLower.includes('ipad')) {
+      device = 'Mobile';
+    }
+
+    // Browser detection
+    let browser = 'Chrome';
+    if (uaLower.includes('edg/')) {
+      browser = 'Edge';
+    } else if (uaLower.includes('firefox') || uaLower.includes('fxios')) {
+      browser = 'Firefox';
+    } else if (uaLower.includes('chrome') || uaLower.includes('crios')) {
+      browser = 'Chrome';
+    } else if (uaLower.includes('safari') && !uaLower.includes('android')) {
+      browser = 'Safari';
+    } else {
+      browser = 'Outros';
+    }
+
+    return { device, browser };
   }
 
   /**

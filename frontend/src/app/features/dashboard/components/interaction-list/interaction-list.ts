@@ -3,12 +3,21 @@ import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { RecentRead } from '../../services/dashboard.service';
 
 @Component({
   selector: 'app-interaction-list',
   standalone: true,
-  imports: [CommonModule, MatTableModule, MatCardModule, MatIconModule],
+  imports: [
+    CommonModule,
+    MatTableModule,
+    MatCardModule,
+    MatIconModule,
+    MatButtonModule,
+    MatTooltipModule,
+  ],
   templateUrl: './interaction-list.html',
   styleUrl: './interaction-list.scss',
 })

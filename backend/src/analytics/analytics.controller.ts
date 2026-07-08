@@ -32,4 +32,14 @@ export class AnalyticsController {
     const { sub: userId, role, isSuperAdmin } = currentUser;
     return this.analyticsService.getRecentReads(tenantId || null, userId, role, isSuperAdmin);
   }
+
+  @Get('team-ranking')
+  @ApiOperation({ summary: 'Retorna o ranking de engajamento dos membros da equipe' })
+  async getTeamRanking(
+    @GetUser() currentUser: any,
+    @Headers('x-tenant-id') tenantId: string,
+  ) {
+    const { sub: userId, role, isSuperAdmin } = currentUser;
+    return this.analyticsService.getTeamRanking(tenantId || null, userId, role, isSuperAdmin);
+  }
 }

@@ -63,6 +63,17 @@
 
     <!-- Details Grid Row 2 -->
     <div class="details-grid-row-2">
+      @if (isAdmin()) {
+        <div class="team-ranking-container">
+          <app-analytics-chart-card
+            title="Desempenho da Equipe"
+            [isLoading]="isLoading()"
+            [error]="error()"
+            [chartOptions]="teamRankingChartOptions()"
+          ></app-analytics-chart-card>
+        </div>
+      }
+
       <div class="recent-reads-container">
         <app-interaction-list [items]="recentReads()" />
       </div>

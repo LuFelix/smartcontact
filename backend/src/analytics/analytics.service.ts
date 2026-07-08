@@ -70,6 +70,36 @@ export class AnalyticsService {
     }));
   }
 
+  async getTeamRanking(tenantId: string | null, userId: string, role: string, isSuperAdmin: boolean) {
+    if (!tenantId) {
+      return [];
+    }
+
+    if (!isSuperAdmin && role !== 'administrador') {
+      return [];
+    }
+
+    const rows = await this.logRepository.createQueryBuilder('log')
+      .innerJoin('log.tag', 'tag')
+      .innerJoin('tag.user', 'user')
+      .select('user.name', 'name')
+      .addSelect(`COUNT(*) FILTER (WHERE log.interaction_type = '${InteractionType.VISIT}')`, 'reads')
+      .addSelect(`COUNT(*) FILTER (WHERE log.interaction_type = '${InteractionType.LEAD}')`, 'leads')
+      .addSelect('COUNT(*)', 'total')
+      .where('tag.tenantId = :tenantId', { tenantId })
+      .groupBy('user.id')
+      .addGroupBy('user.name')
+      .orderBy('total', 'DESC')
+      .getRawMany();
+
+    return rows.map(r => ({
+      name: r.name,
+      reads: Number(r.reads),
+      leads: Number(r.leads),
+      total: Number(r.total),
+    }));
+  }
+
   private async countByType(qb: ReturnType<typeof this.logRepository.createQueryBuilder>, type: InteractionType): Promise<number> {
     return qb.clone()
       .andWhere('log.interaction_type = :type', { type })
