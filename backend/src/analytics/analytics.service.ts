@@ -10,7 +10,7 @@ export class AnalyticsService {
     private readonly logRepository: Repository<InteractionLog>,
   ) {}
 
-  async getSummary(tenantId: string | null, userId: string, role: string, isSuperAdmin: boolean) {
+  async getSummary(tenantId: string | null, userId: string, role: string, isSuperAdmin: boolean, days: number = 7) {
     const baseQuery = this.logRepository.createQueryBuilder('log')
       .leftJoin('log.tag', 'tag');
 
@@ -31,7 +31,7 @@ export class AnalyticsService {
         this.countByTypeSince(baseQuery, InteractionType.VISIT, 'today'),
         this.countByTypeSince(baseQuery, InteractionType.VISIT, 'week'),
         this.countByTypeSince(baseQuery, InteractionType.LEAD, 'week'),
-        this.trend(baseQuery, 7),
+        this.trend(baseQuery, days),
         this.breakdown(baseQuery, 'deviceType'),
         this.breakdown(baseQuery, 'browser'),
         this.bySource(baseQuery),

@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Headers } from '@nestjs/common';
+import { Controller, Get, UseGuards, Headers, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { AnalyticsService } from './analytics.service';
@@ -16,9 +16,11 @@ export class AnalyticsController {
   async getSummary(
     @GetUser() currentUser: any,
     @Headers('x-tenant-id') tenantId: string,
+    @Query('period') period?: string,
   ) {
     const { sub: userId, role, isSuperAdmin } = currentUser;
-    return this.analyticsService.getSummary(tenantId || null, userId, role, isSuperAdmin);
+    const days = period && ['7', '15', '30'].includes(period) ? parseInt(period, 10) : 7;
+    return this.analyticsService.getSummary(tenantId || null, userId, role, isSuperAdmin, days);
   }
 
   @Get('recent-reads')
