@@ -1,0 +1,42 @@
+<mat-card class="chart-card">
+  <mat-card-header>
+    <mat-card-title>{{ title }}</mat-card-title>
+    <!-- Content projection slot for filters/actions in the top right -->
+    <ng-content select="[card-header-actions]"></ng-content>
+  </mat-card-header>
+
+  <mat-card-content class="chart-content">
+    @if (isLoading) {
+      <div class="loading-overlay">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Carregando dados...</p>
+      </div>
+    } @else if (error) {
+      <div class="error-state">
+        <p class="error-text">{{ error }}</p>
+      </div>
+    } @else if (chartOptions) {
+      <div class="chart-wrapper">
+        <apx-chart
+          [series]="chartOptions.series"
+          [chart]="chartOptions.chart"
+          [xaxis]="chartOptions.xaxis"
+          [yaxis]="chartOptions.yaxis"
+          [labels]="chartOptions.labels"
+          [stroke]="chartOptions.stroke"
+          [title]="chartOptions.title"
+          [grid]="chartOptions.grid"
+          [dataLabels]="chartOptions.dataLabels"
+          [colors]="chartOptions.colors"
+          [legend]="chartOptions.legend"
+          [tooltip]="chartOptions.tooltip"
+          [plotOptions]="chartOptions.plotOptions"
+        ></apx-chart>
+      </div>
+    } @else {
+      <div class="empty-state">
+        <p>Nenhum dado disponível.</p>
+      </div>
+    }
+  </mat-card-content>
+</mat-card>
