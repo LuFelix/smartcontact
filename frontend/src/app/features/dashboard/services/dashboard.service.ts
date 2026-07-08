@@ -26,6 +26,15 @@ export interface DashboardSummary {
   bySource: DashboardBreakdownItem[];
 }
 
+export interface RecentRead {
+  accessedAt: string;
+  source: string;
+  tag: {
+    name: string | null;
+    uuid: string | null;
+  };
+}
+
 export interface DashboardState {
   summary: DashboardSummary | null;
   isLoading: boolean;
@@ -47,6 +56,27 @@ export class DashboardService {
   });
 
   readonly state = this.#state.asReadonly();
+
+  readonly #recentReads = signal<RecentRead[]>([]);
+  readonly recentReads = this.#recentReads.asReadonly();
+
+  loadRecentReads(): void {
+    const headers: Record<string, string> = {};
+    const tenantId = this.authService.activeTenantId();
+    if (tenantId) {
+      headers['x-tenant-id'] = tenantId;
+    }
+
+    this.http.get<RecentRead[]>(`${this.API_URL}/recent-reads`, { headers }).subscribe({
+      next: (reads) => {
+        this.#recentReads.set(reads);
+      },
+      error: (err) => {
+        console.error('Erro ao carregar leituras recentes:', err);
+        this.#recentReads.set([]);
+      },
+    });
+  }
 
   loadSummary(): void {
     this.#state.update(s => ({ ...s, isLoading: true, error: null }));
