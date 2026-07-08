@@ -510,24 +510,44 @@ export class UsersService {
         if (secondaryEmails) user!.secondaryEmails = cleanItems(secondaryEmails) as any;
         if (links) user!.links = cleanItems(links) as any;
 
-        // --- Lógica de Persistência de TAG Refatorada ---
+        // --- Lógica de Persistência de TAG Refatorada e Corrigida ---
         if (user!.tags && user!.tags.length > 0) {
-            const activeTag = user!.tags.find((t: any) => t.tenantId === currentUser?.tenantId) || user!.tags[0];
-            
-            if ((updateUserDto as any).nfcRedirectMode) activeTag.nfcRedirectMode = (updateUserDto as any).nfcRedirectMode;
-            if ((updateUserDto as any).nfcCustomUrl !== undefined) activeTag.nfcCustomUrl = (updateUserDto as any).nfcCustomUrl;
-            if ((updateUserDto as any).qrRedirectMode) activeTag.qrRedirectMode = (updateUserDto as any).qrRedirectMode;
-            if ((updateUserDto as any).qrCustomUrl !== undefined) activeTag.qrCustomUrl = (updateUserDto as any).qrCustomUrl;
-
+            // 1. Se vierem tags no array 'tags' (que contêm ID), atualiza apenas as correspondentes
             if (tags && tags.length > 0) {
-                const tagData = tags[0];
-                if (tagData.nfcRedirectMode) activeTag.nfcRedirectMode = tagData.nfcRedirectMode;
-                if (tagData.nfcCustomUrl !== undefined) activeTag.nfcCustomUrl = tagData.nfcCustomUrl;
-                if (tagData.qrRedirectMode) activeTag.qrRedirectMode = tagData.qrRedirectMode;
-                if (tagData.qrCustomUrl !== undefined) activeTag.qrCustomUrl = tagData.qrCustomUrl;
+                for (const tagData of tags) {
+                    if (tagData.id) {
+                        const tagToUpdate = user!.tags.find((t: any) => t.id === tagData.id);
+                        if (tagToUpdate) {
+                            if (tagData.nfcRedirectMode) tagToUpdate.nfcRedirectMode = tagData.nfcRedirectMode;
+                            if (tagData.nfcCustomUrl !== undefined) tagToUpdate.nfcCustomUrl = tagData.nfcCustomUrl;
+                            if (tagData.qrRedirectMode) tagToUpdate.qrRedirectMode = tagData.qrRedirectMode;
+                            if (tagData.qrCustomUrl !== undefined) tagToUpdate.qrCustomUrl = tagData.qrCustomUrl;
+                            await this.tagRepository.save(tagToUpdate);
+                        }
+                    }
+                }
             }
 
-            await this.tagRepository.save(activeTag);
+            // 2. Se vierem dados na raiz do DTO, atualiza apenas a tag pessoal (isResource === false) no tenant ativo
+            const hasRootRedirectSettings = 
+                updateUserDto.nfcRedirectMode || 
+                updateUserDto.nfcCustomUrl !== undefined || 
+                updateUserDto.qrRedirectMode || 
+                updateUserDto.qrCustomUrl !== undefined;
+
+            if (hasRootRedirectSettings) {
+                const defaultTag = user!.tags.find((t: any) => t.tenantId === targetTenantId && !t.isResource)
+                    || user!.tags.find((t: any) => t.tenantId === targetTenantId)
+                    || user!.tags[0];
+
+                if (defaultTag) {
+                    if (updateUserDto.nfcRedirectMode) defaultTag.nfcRedirectMode = updateUserDto.nfcRedirectMode;
+                    if (updateUserDto.nfcCustomUrl !== undefined) defaultTag.nfcCustomUrl = updateUserDto.nfcCustomUrl;
+                    if (updateUserDto.qrRedirectMode) defaultTag.qrRedirectMode = updateUserDto.qrRedirectMode;
+                    if (updateUserDto.qrCustomUrl !== undefined) defaultTag.qrCustomUrl = updateUserDto.qrCustomUrl;
+                    await this.tagRepository.save(defaultTag);
+                }
+            }
         }
 
         await this.usersRepository.save(user!);

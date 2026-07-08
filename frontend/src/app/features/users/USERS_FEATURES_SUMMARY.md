@@ -2,6 +2,12 @@
 
 Este arquivo serve como documentação de referência para desenvolvedores e agentes de IA compreenderem o design, funcionamento, arquitetura e fluxos de dados da feature **Users** no frontend do **SmartContact**.
 
+> [!NOTE]
+> Para detalhes técnicos adicionais sobre contratos de dados, chamadas de rede e segurança, consulte os documentos dependentes:
+> * 🗃️ **[Modelos de Dados e Interfaces (TypeScript)](file:///home/jaspion/projetos/smartcontact/frontend/src/app/features/users/docs/DATA_MODELS.md)**
+> * 🔌 **[Endpoints e Integração de APIs](file:///home/jaspion/projetos/smartcontact/frontend/src/app/features/users/docs/API_ENDPOINTS.md)**
+> * 🔐 **[Regras de Permissão e Políticas ABAC](file:///home/jaspion/projetos/smartcontact/frontend/src/app/features/users/docs/ABAC_POLICIES.md)**
+
 ---
 
 ## 🏗️ 1. Arquitetura e Estrutura de Pastas
@@ -18,6 +24,8 @@ A feature está localizada em `/frontend/src/app/features/users/` e segue uma ar
 ---
 
 ## ⚙️ 2. Serviços da Feature (`/services`)
+
+*(Mapeamento completo das chamadas de rede e payloads detalhado em: [Endpoints e Integração de APIs](file:///home/jaspion/projetos/smartcontact/frontend/src/app/features/users/docs/API_ENDPOINTS.md))*
 
 ### 🔹 [user.service.ts](file:///home/jaspion/projetos/smartcontact/frontend/src/app/features/users/services/user.service.ts)
 Gerencia o ciclo de vida dos usuários e ações administrativas de membros no inquilino (Tenant):
@@ -98,3 +106,12 @@ As visualizações das listagens em **Leads** e **My Tags** são separadas em co
 * **My Tags:**
   * `MyTagsCardListComponent`: Renderiza os recursos delegados em formato de cartões visuais com QR Codes em miniatura.
   * `MyTagsListViewComponent`: Renderiza os recursos em uma tabela tabular clássica.
+
+---
+
+## 📖 5. Documentos Complementares de Contexto
+
+Para evitar que este arquivo se torne excessivamente extenso, as especificações técnicas aprofundadas foram modularizadas nos seguintes guias:
+* 🗃️ **[Modelos de Dados e Interfaces (TypeScript)](file:///home/jaspion/projetos/smartcontact/frontend/src/app/features/users/docs/DATA_MODELS.md)**: Detalha as tipagens do TypeScript e payloads usados no fluxo de usuários, tags, contatos e leads.
+* 🔌 **[Endpoints e Integração de APIs](file:///home/jaspion/projetos/smartcontact/frontend/src/app/features/users/docs/API_ENDPOINTS.md)**: Lista o mapeamento de requisições HTTP entre os serviços do frontend Angular e os controllers do backend NestJS.
+* 🔐 **[Regras de Permissão e Políticas ABAC](file:///home/jaspion/projetos/smartcontact/frontend/src/app/features/users/docs/ABAC_POLICIES.md)**: Explica o isolamento multi-tenant N:N, regras de autopropriedade (Self-ownership bypass) e controle de permissões.

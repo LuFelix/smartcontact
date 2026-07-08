@@ -26,6 +26,22 @@ export interface DashboardSummary {
   bySource: DashboardBreakdownItem[];
 }
 
+export interface RecentRead {
+  accessedAt: string;
+  source: string;
+  tag: {
+    name: string | null;
+    uuid: string | null;
+  };
+}
+
+export interface TeamRankingItem {
+  name: string;
+  reads: number;
+  leads: number;
+  total: number;
+}
+
 export interface DashboardState {
   summary: DashboardSummary | null;
   isLoading: boolean;
@@ -48,7 +64,49 @@ export class DashboardService {
 
   readonly state = this.#state.asReadonly();
 
-  loadSummary(): void {
+  readonly #recentReads = signal<RecentRead[]>([]);
+  readonly recentReads = this.#recentReads.asReadonly();
+
+  readonly #teamRanking = signal<TeamRankingItem[]>([]);
+  readonly teamRanking = this.#teamRanking.asReadonly();
+
+  loadTeamRanking(): void {
+    const headers: Record<string, string> = {};
+    const tenantId = this.authService.activeTenantId();
+    if (tenantId) {
+      headers['x-tenant-id'] = tenantId;
+    }
+
+    this.http.get<TeamRankingItem[]>(`${this.API_URL}/team-ranking`, { headers }).subscribe({
+      next: (ranking) => {
+        this.#teamRanking.set(ranking);
+      },
+      error: (err) => {
+        console.error('Erro ao carregar ranking da equipe:', err);
+        this.#teamRanking.set([]);
+      },
+    });
+  }
+
+  loadRecentReads(): void {
+    const headers: Record<string, string> = {};
+    const tenantId = this.authService.activeTenantId();
+    if (tenantId) {
+      headers['x-tenant-id'] = tenantId;
+    }
+
+    this.http.get<RecentRead[]>(`${this.API_URL}/recent-reads`, { headers }).subscribe({
+      next: (reads) => {
+        this.#recentReads.set(reads);
+      },
+      error: (err) => {
+        console.error('Erro ao carregar leituras recentes:', err);
+        this.#recentReads.set([]);
+      },
+    });
+  }
+
+  loadSummary(period: number = 7): void {
     this.#state.update(s => ({ ...s, isLoading: true, error: null }));
 
     const headers: Record<string, string> = {};
@@ -57,7 +115,7 @@ export class DashboardService {
       headers['x-tenant-id'] = tenantId;
     }
 
-    this.http.get<DashboardSummary>(`${this.API_URL}/summary`, { headers }).subscribe({
+    this.http.get<DashboardSummary>(`${this.API_URL}/summary?period=${period}`, { headers }).subscribe({
       next: (summary) => {
         this.#state.set({ summary, isLoading: false, error: null });
       },

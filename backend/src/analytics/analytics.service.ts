@@ -10,7 +10,7 @@ export class AnalyticsService {
     private readonly logRepository: Repository<InteractionLog>,
   ) {}
 
-  async getSummary(tenantId: string | null, userId: string, role: string, isSuperAdmin: boolean) {
+  async getSummary(tenantId: string | null, userId: string, role: string, isSuperAdmin: boolean, days: number = 7) {
     const baseQuery = this.logRepository.createQueryBuilder('log')
       .leftJoin('log.tag', 'tag');
 
@@ -31,13 +31,73 @@ export class AnalyticsService {
         this.countByTypeSince(baseQuery, InteractionType.VISIT, 'today'),
         this.countByTypeSince(baseQuery, InteractionType.VISIT, 'week'),
         this.countByTypeSince(baseQuery, InteractionType.LEAD, 'week'),
-        this.trend(baseQuery, 7),
+        this.trend(baseQuery, days),
         this.breakdown(baseQuery, 'deviceType'),
         this.breakdown(baseQuery, 'browser'),
         this.bySource(baseQuery),
       ]);
 
     return { totalReads, totalLeads, readsToday, readsThisWeek, leadsThisWeek, trend, byDevice, byBrowser, bySource };
+  }
+
+  async getRecentReads(tenantId: string | null, userId: string, role: string, isSuperAdmin: boolean) {
+    const baseQuery = this.logRepository.createQueryBuilder('log')
+      .leftJoinAndSelect('log.tag', 'tag')
+      .andWhere('log.interaction_type = :type', { type: InteractionType.VISIT });
+
+    if (tenantId) {
+      baseQuery.andWhere('tag.tenantId = :tenantId', { tenantId });
+    } else if (!isSuperAdmin) {
+      return [];
+    }
+
+    if (!isSuperAdmin && role !== 'administrador') {
+      baseQuery.andWhere('(tag.ownerId = :userId OR tag.userId = :userId)', { userId });
+    }
+
+    baseQuery.orderBy('log.accessedAt', 'DESC')
+      .take(50);
+
+    const logs = await baseQuery.getMany();
+
+    return logs.map(log => ({
+      accessedAt: log.accessedAt,
+      source: log.source,
+      tag: {
+        name: log.tag?.name || null,
+        uuid: log.tag?.uuid || null,
+      },
+    }));
+  }
+
+  async getTeamRanking(tenantId: string | null, userId: string, role: string, isSuperAdmin: boolean) {
+    if (!tenantId) {
+      return [];
+    }
+
+    if (!isSuperAdmin && role !== 'administrador') {
+      return [];
+    }
+
+    const rows = await this.logRepository.createQueryBuilder('log')
+      .innerJoin('log.tag', 'tag')
+      .innerJoin('tag.user', 'user')
+      .select('user.name', 'name')
+      .addSelect(`COUNT(*) FILTER (WHERE log.interaction_type = '${InteractionType.VISIT}')`, 'reads')
+      .addSelect(`COUNT(*) FILTER (WHERE log.interaction_type = '${InteractionType.LEAD}')`, 'leads')
+      .addSelect('COUNT(*)', 'total')
+      .where('tag.tenantId = :tenantId', { tenantId })
+      .groupBy('user.id')
+      .addGroupBy('user.name')
+      .orderBy('total', 'DESC')
+      .getRawMany();
+
+    return rows.map(r => ({
+      name: r.name,
+      reads: Number(r.reads),
+      leads: Number(r.leads),
+      total: Number(r.total),
+    }));
   }
 
   private async countByType(qb: ReturnType<typeof this.logRepository.createQueryBuilder>, type: InteractionType): Promise<number> {

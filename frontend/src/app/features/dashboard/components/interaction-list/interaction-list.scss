@@ -1,6 +1,36 @@
 .interaction-card {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.card-header-with-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 16px 8px 16px;
+  
+  mat-card-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 500;
+  }
+}
+
+.card-content-scrollable {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px 16px 16px;
+}
+
+.table-scroll-container {
+  max-height: 260px;
+  overflow-y: auto;
+  flex-grow: 1;
 }
 
 .interaction-table {
@@ -19,4 +49,16 @@
   text-align: center;
   padding: 24px;
   color: var(--mat-sys-on-surface-variant);
+}
+
+.source-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
 }

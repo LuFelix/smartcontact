@@ -1,6 +1,6 @@
 .dashboard-page {
   padding: 24px;
-  max-width: 960px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -102,3 +102,40 @@
   padding: 32px;
   color: var(--mat-sys-on-surface-variant);
 }
+
+.charts-grid-row-1 {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.details-grid-row-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.breakdown-tabs-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  height: 100%;
+  padding: 16px;
+  background-color: var(--mat-sys-surface);
+}
+
+.period-toggle {
+  height: 32px;
+  align-self: center;
+
+  ::v-deep .mat-button-toggle-label-content {
+    line-height: 32px;
+    padding: 0 12px;
+  }
+}
+
