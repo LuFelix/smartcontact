@@ -14,7 +14,7 @@
         color="#4CAF50"
       />
       <app-kpi-card
-        label="Leituras (7d)"
+        label="Leituras (Período)"
         [value]="s.readsThisWeek"
         icon="date_range"
         color="#FF9800"
@@ -27,118 +27,86 @@
       />
     </div>
 
-    <div class="breakdown-grid">
-      @if (byDevicePreview().length > 0) {
-        <div class="breakdown-card">
-          <div class="breakdown-header">Dispositivos</div>
-          <div class="breakdown-list">
-            @for (item of byDevicePreview(); track item.name) {
-              <div class="breakdown-row">
-                <span class="breakdown-label">{{ item.name }}</span>
-                <span class="breakdown-value">{{ item.count }}</span>
-              </div>
-            }
+    <!-- Charts Grid Row 1 -->
+    <div class="charts-grid-row-1">
+      <div class="evolution-chart-container">
+        <app-analytics-chart-card
+          title="Evolução Temporal"
+          [isLoading]="isLoading()"
+          [error]="error()"
+          [chartOptions]="evolutionChartOptions()"
+        >
+          <!-- Selector for period inside actions slot -->
+          <div card-header-actions>
+            <mat-button-toggle-group
+              [value]="activePeriod()"
+              (change)="setPeriod($event.value)"
+              class="period-toggle"
+            >
+              <mat-button-toggle [value]="7">7d</mat-button-toggle>
+              <mat-button-toggle [value]="15">15d</mat-button-toggle>
+              <mat-button-toggle [value]="30">30d</mat-button-toggle>
+            </mat-button-toggle-group>
           </div>
-        </div>
-      }
+        </app-analytics-chart-card>
+      </div>
 
-      @if (byBrowserPreview().length > 0) {
-        <div class="breakdown-card">
-          <div class="breakdown-header">Navegadores</div>
-          <div class="breakdown-list">
-            @for (item of byBrowserPreview(); track item.name) {
-              <div class="breakdown-row">
-                <span class="breakdown-label">{{ item.name }}</span>
-                <span class="breakdown-value">{{ item.count }}</span>
-              </div>
-            }
-          </div>
-        </div>
-      }
-
-      <div class="breakdown-card">
-        <div class="breakdown-header">
-          <mat-icon class="header-icon">settings_input_antenna</mat-icon>
-          Origens
-        </div>
-        <div class="breakdown-list">
-          @for (item of bySourcePreview(); track item.name) {
-            <div class="breakdown-row">
-              <span class="breakdown-label">
-                <mat-icon class="source-icon">{{ sourceIcon(item.name) }}</mat-icon>
-                {{ item.name }}
-              </span>
-              <span class="breakdown-value">{{ item.count }}</span>
-            </div>
-          }
-        </div>
+      <div class="origins-chart-container">
+        <app-analytics-chart-card
+          title="Origens das Aproximações"
+          [isLoading]="isLoading()"
+          [error]="error()"
+          [chartOptions]="originsChartOptions()"
+        ></app-analytics-chart-card>
       </div>
     </div>
 
-    <mat-tab-group>
-      <mat-tab label="Resumo">
-        <div class="tab-content">
-          <app-interaction-list [items]="recentReads()" />
-        </div>
-      </mat-tab>
+    <!-- Details Grid Row 2 -->
+    <div class="details-grid-row-2">
+      <div class="recent-reads-container">
+        <app-interaction-list [items]="recentReads()" />
+      </div>
 
-      <mat-tab label="Dispositivos">
-        <div class="tab-content">
-          @if (byDevicePreview().length > 0) {
-            <div class="full-list">
-              @for (item of byDevicePreview(); track item.name) {
-                <div class="breakdown-card">
-                  <div class="breakdown-row">
-                    <span class="breakdown-label">{{ item.name }}</span>
-                    <span class="breakdown-value">{{ item.count }}</span>
+      <div class="breakdown-tabs-container">
+        <mat-card class="breakdown-tabs-card">
+          <mat-tab-group>
+            <mat-tab label="Dispositivos">
+              <div class="tab-content">
+                @if (byDevicePreview().length > 0) {
+                  <div class="breakdown-list">
+                    @for (item of byDevicePreview(); track item.name) {
+                      <div class="breakdown-row">
+                        <span class="breakdown-label">{{ item.name }}</span>
+                        <span class="breakdown-value">{{ item.count }}</span>
+                      </div>
+                    }
                   </div>
-                </div>
-              }
-            </div>
-          } @else {
-            <p class="empty-tab">Nenhum dado de dispositivo disponível.</p>
-          }
-        </div>
-      </mat-tab>
+                } @else {
+                  <p class="empty-tab">Nenhum dado de dispositivo disponível.</p>
+                }
+              </div>
+            </mat-tab>
 
-      <mat-tab label="Navegadores">
-        <div class="tab-content">
-          @if (byBrowserPreview().length > 0) {
-            <div class="full-list">
-              @for (item of byBrowserPreview(); track item.name) {
-                <div class="breakdown-card">
-                  <div class="breakdown-row">
-                    <span class="breakdown-label">{{ item.name }}</span>
-                    <span class="breakdown-value">{{ item.count }}</span>
+            <mat-tab label="Navegadores">
+              <div class="tab-content">
+                @if (byBrowserPreview().length > 0) {
+                  <div class="breakdown-list">
+                    @for (item of byBrowserPreview(); track item.name) {
+                      <div class="breakdown-row">
+                        <span class="breakdown-label">{{ item.name }}</span>
+                        <span class="breakdown-value">{{ item.count }}</span>
+                      </div>
+                    }
                   </div>
-                </div>
-              }
-            </div>
-          } @else {
-            <p class="empty-tab">Nenhum dado de navegador disponível.</p>
-          }
-        </div>
-      </mat-tab>
-
-      <mat-tab label="Origens">
-        <div class="tab-content">
-          @if (bySourcePreview().length > 0) {
-            <div class="full-list">
-              @for (item of bySourcePreview(); track item.name) {
-                <div class="breakdown-card">
-                  <div class="breakdown-row">
-                    <span class="breakdown-label">{{ item.name }}</span>
-                    <span class="breakdown-value">{{ item.count }}</span>
-                  </div>
-                </div>
-              }
-            </div>
-          } @else {
-            <p class="empty-tab">Nenhum dado de origem disponível.</p>
-          }
-        </div>
-      </mat-tab>
-    </mat-tab-group>
+                } @else {
+                  <p class="empty-tab">Nenhum dado de navegador disponível.</p>
+                }
+              </div>
+            </mat-tab>
+          </mat-tab-group>
+        </mat-card>
+      </div>
+    </div>
   } @else {
     @if (isLoading()) {
       <div class="loading-container">

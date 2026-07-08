@@ -78,7 +78,7 @@ export class DashboardService {
     });
   }
 
-  loadSummary(): void {
+  loadSummary(period: number = 7): void {
     this.#state.update(s => ({ ...s, isLoading: true, error: null }));
 
     const headers: Record<string, string> = {};
@@ -87,7 +87,7 @@ export class DashboardService {
       headers['x-tenant-id'] = tenantId;
     }
 
-    this.http.get<DashboardSummary>(`${this.API_URL}/summary`, { headers }).subscribe({
+    this.http.get<DashboardSummary>(`${this.API_URL}/summary?period=${period}`, { headers }).subscribe({
       next: (summary) => {
         this.#state.set({ summary, isLoading: false, error: null });
       },
