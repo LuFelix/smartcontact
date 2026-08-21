@@ -12,7 +12,7 @@ import { TagsService } from 'src/tags/tags.service';
 import { MembershipsService } from '../memberships/memberships.service';
 import { TenantsService } from '../tenants/tenants.service';
 import { Repository } from 'typeorm';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 
 vi.mock('bcrypt', () => ({
   hash: vi.fn().mockResolvedValue('hashed_password'),
@@ -23,13 +23,19 @@ describe('UsersService', () => {
   let usersRepository: Repository<User>;
   let tagRepository: Repository<Tag>;
   let rolesRepository: Repository<Role>;
+  let membershipsService: MembershipsService;
 
   const mockQueryBuilder = {
     leftJoinAndSelect: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
     andWhere: vi.fn().mockReturnThis(),
     addOrderBy: vi.fn().mockReturnThis(),
+    orderBy: vi.fn().mockReturnThis(),
+    setParameter: vi.fn().mockReturnThis(),
+    skip: vi.fn().mockReturnThis(),
+    take: vi.fn().mockReturnThis(),
     getOne: vi.fn(),
+    getManyAndCount: vi.fn().mockResolvedValue([[], 0]),
   };
 
   const mockUserRepo = {
@@ -47,15 +53,20 @@ describe('UsersService', () => {
   const mockTagRepo = {
     findOne: vi.fn(),
     save: vi.fn(),
+    delete: vi.fn().mockResolvedValue(undefined),
   };
 
   const mockGenericRepo = {
     findOne: vi.fn(),
+    find: vi.fn(),
     save: vi.fn(),
+    create: vi.fn().mockImplementation(dto => dto),
+    delete: vi.fn().mockResolvedValue(undefined),
   };
 
   const mockRolesServ = {
-    findByName: vi.fn(),
+    findOne: vi.fn(),
+    findOneByName: vi.fn(),
   };
 
   const mockProfilesServ = {
@@ -70,6 +81,10 @@ describe('UsersService', () => {
   const mockMembershipsServ = {
     create: vi.fn(),
     remove: vi.fn().mockResolvedValue(undefined),
+    findByUserAndTenant: vi.fn(),
+    updateRoleAndProfile: vi.fn().mockResolvedValue(undefined),
+    updateRole: vi.fn().mockResolvedValue(undefined),
+    updateProfileId: vi.fn().mockResolvedValue(undefined),
   };
 
   const mockTenantsServ = {
@@ -129,6 +144,7 @@ describe('UsersService', () => {
     usersRepository = module.get<Repository<User>>(getRepositoryToken(User));
     tagRepository = module.get<Repository<Tag>>(getRepositoryToken(Tag));
     rolesRepository = module.get<Repository<Role>>(getRepositoryToken(Role));
+    membershipsService = module.get<MembershipsService>(MembershipsService);
   });
 
   afterEach(() => {
@@ -250,6 +266,25 @@ describe('UsersService', () => {
     });
   });
 
+  describe('findAll', () => {
+    it('should throw ForbiddenException if user has no membership in tenant', async () => {
+      mockMembershipsServ.findByUserAndTenant.mockResolvedValueOnce(null);
+      await expect(
+        service.findAll(1, 10, '', '', '', { sub: 'user-1', tenantId: 'tenant-active' })
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should return paginated list of users', async () => {
+      mockMembershipsServ.findByUserAndTenant.mockResolvedValueOnce({ id: 'membership-1' });
+      const mockUsers = [{ id: 'user-1', name: 'John Doe', memberships: [{ tenantId: 'tenant-active' }] }];
+      mockQueryBuilder.getManyAndCount.mockResolvedValueOnce([mockUsers, 1]);
+
+      const result = await service.findAll(1, 10, 'John', '', '', { sub: 'user-1', tenantId: 'tenant-active', role: 'administrador' });
+      expect(result.total).toBe(1);
+      expect(result.data).toHaveLength(1);
+    });
+  });
+
   describe('update', () => {
     it('should throw NotFoundException if user is not found', async () => {
       mockUserRepo.findOne.mockResolvedValueOnce(null);
@@ -317,6 +352,80 @@ describe('UsersService', () => {
           nfcCustomUrl: 'https://personalurl.com',
         })
       );
+    });
+  });
+
+  describe('promoteToTeam / demoteFromTeam', () => {
+    it('should throw NotFoundException if user to promote does not exist', async () => {
+      mockUserRepo.findOne.mockResolvedValueOnce(null);
+      await expect(
+        service.promoteToTeam('invalid', 'role-1', { role: 'administrador' })
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw BadRequestException if non-admin tries to promote', async () => {
+      mockUserRepo.findOne.mockResolvedValueOnce({ id: 'user-1' });
+      await expect(
+        service.promoteToTeam('user-1', 'role-1', { role: 'usuario' })
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should promote user successfully if requested by admin', async () => {
+      const mockUser = { id: 'user-1', email: 'john@email.com', memberships: [] };
+      mockUserRepo.findOne.mockResolvedValueOnce(mockUser);
+      mockRolesServ.findOne.mockResolvedValueOnce({ id: 'role-colaborador', name: 'colaborador' });
+      mockProfilesServ.findByUserIdAndTenant.mockResolvedValueOnce(null); // profile free
+      mockTagRepo.findOne.mockResolvedValueOnce(null); // tag check free
+      
+      // findByEmail mock at the end
+      mockUserRepo.findOne.mockResolvedValueOnce(mockUser);
+
+      const result = await service.promoteToTeam('user-1', 'role-colaborador', { role: 'administrador', tenantId: 'tenant-1' });
+      expect(result).toBeDefined();
+      expect(mockProfilesServ.create).toHaveBeenCalled();
+      expect(mockTagsServ.createDefaultTag).toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException if non-admin tries to demote', async () => {
+      mockUserRepo.findOne.mockResolvedValueOnce({ id: 'user-1' });
+      await expect(
+        service.demoteFromTeam('user-1', { role: 'usuario' })
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should demote user successfully if requested by admin', async () => {
+      const mockUser = { id: 'user-1', memberships: [{ tenantId: 'tenant-1' }] };
+      mockUserRepo.findOne.mockResolvedValueOnce(mockUser);
+      mockRolesServ.findOneByName.mockResolvedValueOnce({ id: 'role-contato', name: 'contato' });
+
+      await service.demoteFromTeam('user-1', { role: 'administrador', tenantId: 'tenant-1' });
+      expect(mockMembershipsServ.updateRole).toHaveBeenCalled();
+      expect(mockMembershipsServ.updateProfileId).toHaveBeenCalledWith('user-1', 'tenant-1', null);
+      expect(mockTagRepo.delete).toHaveBeenCalled();
+    });
+  });
+
+  describe('getUserTags / updateUserTags', () => {
+    it('should get user tags', async () => {
+      mockGenericRepo.find.mockResolvedValueOnce([
+        { tagId: 'tag-1' },
+        { tagId: 'tag-2' },
+      ]);
+
+      const result = await service.getUserTags('user-1', { tenantId: 'tenant-1' });
+      expect(result).toEqual(['tag-1', 'tag-2']);
+    });
+
+    it('should throw ForbiddenException if non-admin tries to update user tags', async () => {
+      await expect(
+        service.updateUserTags('user-1', ['tag-1'], { role: 'usuario' })
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should update user tags successfully if requested by admin', async () => {
+      await service.updateUserTags('user-1', ['tag-1', 'tag-2'], { role: 'administrador', tenantId: 'tenant-1' });
+      expect(mockGenericRepo.delete).toHaveBeenCalledWith({ userId: 'user-1', tenantId: 'tenant-1' });
+      expect(mockGenericRepo.save).toHaveBeenCalled();
     });
   });
 
