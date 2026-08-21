@@ -13,17 +13,23 @@ import { BadRequestException, ForbiddenException, NotFoundException } from '@nes
 describe('TagsService', () => {
   let service: TagsService;
   let tagRepository: Repository<Tag>;
+  let accessRepository: Repository<UserTagAccess>;
+  let userRepository: Repository<User>;
+  let tenantRepository: Repository<Tenant>;
   let interactionLogsService: InteractionLogsService;
 
   const mockQueryBuilder = {
     leftJoinAndSelect: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
     andWhere: vi.fn().mockReturnThis(),
+    innerJoin: vi.fn().mockReturnThis(),
     getOne: vi.fn(),
+    getMany: vi.fn(),
   };
 
   const mockTagRepo = {
     findOne: vi.fn(),
+    find: vi.fn(),
     create: vi.fn().mockImplementation(dto => dto),
     save: vi.fn().mockImplementation(tag => Promise.resolve({ id: 'tag-123', ...tag })),
     createQueryBuilder: vi.fn().mockReturnValue(mockQueryBuilder),
@@ -31,8 +37,10 @@ describe('TagsService', () => {
 
   const mockGenericRepo = {
     findOne: vi.fn(),
+    find: vi.fn(),
     create: vi.fn().mockImplementation(dto => dto),
-    save: vi.fn(),
+    save: vi.fn().mockImplementation(entity => Promise.resolve({ id: 'access-123', ...entity })),
+    remove: vi.fn().mockResolvedValue(undefined),
   };
 
   const mockInteractionLogsServ = {
@@ -72,6 +80,9 @@ describe('TagsService', () => {
 
     service = module.get<TagsService>(TagsService);
     tagRepository = module.get<Repository<Tag>>(getRepositoryToken(Tag));
+    accessRepository = module.get<Repository<UserTagAccess>>(getRepositoryToken(UserTagAccess));
+    userRepository = module.get<Repository<User>>(getRepositoryToken(User));
+    tenantRepository = module.get<Repository<Tenant>>(getRepositoryToken(Tenant));
     interactionLogsService = module.get<InteractionLogsService>(InteractionLogsService);
   });
 
@@ -99,7 +110,7 @@ describe('TagsService', () => {
 
     it('should create and save a new tag of type resource', async () => {
       mockTagRepo.findOne.mockResolvedValueOnce(null); // UID free
-      mockTagRepo.findOne.mockResolvedValueOnce(null); // handle unique check (generateHandle)
+      mockTagRepo.findOne.mockResolvedValueOnce(null); // handle unique check
       
       const tagDto = { name: 'Tag Teste', uid: '12345' } as any;
       const result = await service.create(tagDto, { sub: 'user-123' }, 'tenant-1');
@@ -107,6 +118,61 @@ describe('TagsService', () => {
       expect(result).toBeDefined();
       expect(result.isResource).toBe(true);
       expect(mockTagRepo.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('createDefaultTag', () => {
+    it('should return existing tag if already exists for user and tenant', async () => {
+      const existing = { id: 'tag-existing', isResource: false };
+      mockTagRepo.findOne.mockResolvedValueOnce(existing);
+
+      const result = await service.createDefaultTag('user-123', 'owner-123', 'tenant-1');
+      expect(result).toEqual(existing);
+      expect(mockTagRepo.save).not.toHaveBeenCalled();
+    });
+
+    it('should generate unique handle and create default tag if not exists', async () => {
+      mockTagRepo.findOne.mockResolvedValueOnce(null); // not found default tag
+      mockGenericRepo.findOne.mockResolvedValueOnce({ id: 'user-123', name: 'John Doe', username: 'johndoe' }); // user repository find
+      mockGenericRepo.findOne.mockResolvedValueOnce({ id: 'tenant-1', slug: 'ws-john' }); // tenant repository find
+      mockTagRepo.findOne.mockResolvedValueOnce(null); // unique handle check succeeds
+
+      const result = await service.createDefaultTag('user-123', 'owner-123', 'tenant-1');
+      expect(result).toBeDefined();
+      expect(result.isResource).toBe(false);
+      expect(mockTagRepo.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('findAll', () => {
+    it('should throw BadRequestException if tenantId is not provided', async () => {
+      await expect(
+        service.findAll({ isSuperAdmin: false }, '')
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should return tags for the tenant', async () => {
+      mockTagRepo.find.mockResolvedValueOnce([{ id: 'tag-1', isResource: true }]);
+      const result = await service.findAll({ isSuperAdmin: false }, 'tenant-1');
+      expect(result).toHaveLength(1);
+      expect(mockTagRepo.find).toHaveBeenCalled();
+    });
+  });
+
+  describe('findMyDelegated', () => {
+    it('should throw BadRequestException if tenantId is missing', async () => {
+      await expect(
+        service.findMyDelegated({ sub: 'user-1' }, '')
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should return delegated tags using query builder', async () => {
+      const mockTags = [{ id: 'tag-1', isResource: true }];
+      mockQueryBuilder.getMany.mockResolvedValueOnce(mockTags);
+
+      const result = await service.findMyDelegated({ sub: 'user-1' }, 'tenant-1');
+      expect(result).toEqual(mockTags);
+      expect(mockQueryBuilder.getMany).toHaveBeenCalled();
     });
   });
 
@@ -159,6 +225,56 @@ describe('TagsService', () => {
       await expect(
         service.validateAccess('tag-123', { sub: 'user-123' }, 'tenant-B')
       ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  describe('grantAccess / revokeAccess / getDelegations', () => {
+    it('should throw ForbiddenException if non-admin tries to grant access', async () => {
+      await expect(
+        service.grantAccess('tag-1', 'user-2', { sub: 'user-1', role: 'usuario' }, 'tenant-1')
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should grant access to tag successfully if user is admin', async () => {
+      mockTagRepo.findOne.mockResolvedValueOnce({ id: 'tag-1', tenantId: 'tenant-1' });
+      mockGenericRepo.findOne.mockResolvedValueOnce(null); // no existing access
+
+      const result = await service.grantAccess('tag-1', 'user-2', { sub: 'user-admin', role: 'administrador' }, 'tenant-1');
+      expect(result).toBeDefined();
+      expect(mockGenericRepo.save).toHaveBeenCalled();
+    });
+
+    it('should throw ForbiddenException if non-admin tries to revoke access', async () => {
+      await expect(
+        service.revokeAccess('tag-1', 'user-2', { sub: 'user-1', role: 'usuario' }, 'tenant-1')
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should revoke access successfully if user is admin', async () => {
+      const mockAccess = { id: 'access-1' };
+      mockGenericRepo.findOne.mockResolvedValueOnce(mockAccess);
+
+      await service.revokeAccess('tag-1', 'user-2', { sub: 'user-admin', role: 'administrador' }, 'tenant-1');
+      expect(mockGenericRepo.remove).toHaveBeenCalledWith(mockAccess);
+    });
+
+    it('should throw ForbiddenException if non-admin tries to get delegations', async () => {
+      await expect(
+        service.getDelegations('tag-1', { sub: 'user-1', role: 'usuario' }, 'tenant-1')
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should return delegations list if user is admin', async () => {
+      mockGenericRepo.find.mockResolvedValueOnce([
+        {
+          createdAt: new Date(),
+          user: { id: 'user-2', name: 'Pedro', email: 'pedro@email.com' }
+        }
+      ]);
+
+      const result = await service.getDelegations('tag-1', { sub: 'user-admin', role: 'administrador' }, 'tenant-1');
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('Pedro');
     });
   });
 });
