@@ -59,8 +59,8 @@ O sistema opera em um paradigma Multi-Tenant N:N (estilo Google Drive).
 - [x] **PASSO AA (Issue #255):** Configuração da Infraestrutura de Testes com Vitest no Backend (OK).
 - [x] **PASSO AB (Issue #256):** Migração e Setup da Suite de Testes do Frontend para Vitest (OK).
 - [x] **PASSO AC (Issue #257):** Implementação de Testes Unitários e Integração no Backend com 95% de Cobertura (OK).
+- [x] **PASSO AD (Issue #258):** Implementação de Testes Unitários no Frontend - Vitest setup estabilizado (pool forks), 17 arquivos e 44 specs verdes (100% de sucesso), e cobertura fina de core services e smart components (OK).
 - [ ] **PRÓXIMOS PASSOS (Backlog Prioritário - issues-todo.json):**
-  - #258: Implementação de Testes Unitários no Frontend com 95% de Cobertura - FE/QA
   - #259: Pipeline de CI/CD com Barreira de Cobertura Mínima de 95% - CI/QA
   - #169: Módulo de Gestão Administrativa de Tenants (Workspaces) - BE/FE
   - #97: Motor de Recompensa e Link de Indicação (Growth Loop) - BE/DB
