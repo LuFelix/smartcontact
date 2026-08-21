@@ -57,8 +57,8 @@ O sistema opera em um paradigma Multi-Tenant N:N (estilo Google Drive).
 - [x] **PASSO Y (Issue #244):** Painel de Gráficos - Evolução Temporal e Rosca de Origens (OK).
 - [x] **PASSO Z (Issue #245):** Dashboard B2B - Ranking de Engajamento de Membros da Equipe (OK).
 - [x] **PASSO AA (Issue #255):** Configuração da Infraestrutura de Testes com Vitest no Backend (OK).
+- [x] **PASSO AB (Issue #256):** Migração e Setup da Suite de Testes do Frontend para Vitest (OK).
 - [ ] **PRÓXIMOS PASSOS (Backlog Prioritário - issues-todo.json):**
-  - #256: Migração e Setup da Suite de Testes do Frontend para Vitest - FE/QA
   - #257: Implementação de Testes Unitários e Integração no Backend com 95% de Cobertura - BE/QA
   - #258: Implementação de Testes Unitários no Frontend com 95% de Cobertura - FE/QA
   - #259: Pipeline de CI/CD com Barreira de Cobertura Mínima de 95% - CI/QA
