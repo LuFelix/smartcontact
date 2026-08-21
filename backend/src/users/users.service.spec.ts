@@ -43,6 +43,18 @@ describe('UsersService', () => {
 
   const mockUserRepo = {
     findOne: vi.fn().mockImplementation((options) => {
+      if (options?.where?.id === 'invalid') {
+        return Promise.resolve(null);
+      }
+      if (options?.where?.id === 'user-1') {
+        return Promise.resolve({
+          id: 'user-1',
+          email: 'john@email.com',
+          name: 'John Doe',
+          ownerId: 'user-admin',
+          memberships: [{ tenantId: 'tenant-1' }]
+        });
+      }
       if (options?.where?.email) {
         return Promise.resolve({ 
           id: 'user-123', 
@@ -500,9 +512,6 @@ describe('UsersService', () => {
 
   describe('verification and helpers', () => {
     it('should save verification data', async () => {
-      const user = { id: 'user-1' };
-      mockUserRepo.findOne.mockResolvedValueOnce(user);
-
       const expires = new Date();
       await service.setVerificationData('user-1', '123456', expires);
 
@@ -513,9 +522,6 @@ describe('UsersService', () => {
     });
 
     it('should mark email as verified', async () => {
-      const user = { id: 'user-1', isVerified: false };
-      mockUserRepo.findOne.mockResolvedValueOnce(user);
-
       await service.markEmailAsVerified('user-1');
 
       expect(mockUserRepo.update).toHaveBeenCalledWith('user-1', {
@@ -526,12 +532,25 @@ describe('UsersService', () => {
     });
 
     it('should remove user successfully', async () => {
-      const user = { id: 'user-1' };
-      mockUserRepo.findOne.mockResolvedValueOnce(user);
-
       const result = await service.remove('user-1', { isSuperAdmin: true });
       expect(result).toEqual({ message: 'Usuário com ID user-1 foi removido com sucesso.' });
       expect(mockUserRepo.delete).toHaveBeenCalledWith('user-1');
+    });
+
+    it('should throw NotFoundException if user to remove does not exist', async () => {
+      await expect(service.remove('invalid', { isSuperAdmin: true })).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw BadRequestException if user to remove belongs to another tenant', async () => {
+      await expect(
+        service.remove('user-1', { isSuperAdmin: false, tenantId: 'tenant-active' })
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException if requester has no permission to remove user', async () => {
+      await expect(
+        service.remove('user-1', { isSuperAdmin: false, sub: 'not-owner', tenantId: 'tenant-1' })
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });
