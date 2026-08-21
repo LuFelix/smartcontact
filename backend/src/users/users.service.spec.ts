@@ -22,10 +22,12 @@ describe('UsersService', () => {
   let service: UsersService;
   let usersRepository: Repository<User>;
   let tagRepository: Repository<Tag>;
+  let rolesRepository: Repository<Role>;
 
   const mockQueryBuilder = {
     leftJoinAndSelect: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
+    andWhere: vi.fn().mockReturnThis(),
     addOrderBy: vi.fn().mockReturnThis(),
     getOne: vi.fn(),
   };
@@ -33,9 +35,12 @@ describe('UsersService', () => {
   const mockUserRepo = {
     findOne: vi.fn(),
     find: vi.fn(),
-    create: vi.fn(),
-    save: vi.fn(),
+    create: vi.fn().mockImplementation(dto => dto),
+    save: vi.fn().mockImplementation(user => Promise.resolve({ id: 'user-123', ...user })),
     merge: vi.fn(),
+    update: vi.fn().mockResolvedValue(undefined),
+    delete: vi.fn().mockResolvedValue(undefined),
+    remove: vi.fn().mockResolvedValue(undefined),
     createQueryBuilder: vi.fn().mockReturnValue(mockQueryBuilder),
   };
 
@@ -54,7 +59,8 @@ describe('UsersService', () => {
   };
 
   const mockProfilesServ = {
-    create: vi.fn(),
+    create: vi.fn().mockResolvedValue({ id: 'profile-new' }),
+    findByUserIdAndTenant: vi.fn().mockResolvedValue(null),
   };
 
   const mockTagsServ = {
@@ -63,10 +69,13 @@ describe('UsersService', () => {
 
   const mockMembershipsServ = {
     create: vi.fn(),
+    remove: vi.fn().mockResolvedValue(undefined),
   };
 
   const mockTenantsServ = {
+    create: vi.fn().mockResolvedValue({ id: 'tenant-new', name: 'New Tenant' }),
     findOne: vi.fn(),
+    update: vi.fn().mockResolvedValue(undefined),
   };
 
   beforeEach(async () => {
@@ -119,6 +128,7 @@ describe('UsersService', () => {
     service = module.get<UsersService>(UsersService);
     usersRepository = module.get<Repository<User>>(getRepositoryToken(User));
     tagRepository = module.get<Repository<Tag>>(getRepositoryToken(Tag));
+    rolesRepository = module.get<Repository<Role>>(getRepositoryToken(Role));
   });
 
   afterEach(() => {
@@ -144,6 +154,75 @@ describe('UsersService', () => {
       const username = await service.generateUniqueUsername('teste');
       expect(username).toBe('teste1');
       expect(mockUserRepo.findOne).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('create', () => {
+    it('should throw BadRequestException if email already exists', async () => {
+      mockUserRepo.findOne.mockResolvedValueOnce({ id: '1', email: 'existing@email.com' });
+      await expect(
+        service.create({ email: 'existing@email.com', name: 'John' } as any)
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException if password is sent but email is missing', async () => {
+      mockUserRepo.findOne.mockResolvedValueOnce(null); // email not exists
+      await expect(
+        service.create({ password: '123', name: 'John' } as any)
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException if CPF already exists', async () => {
+      mockUserRepo.findOne.mockResolvedValueOnce(null); // email free
+      mockUserRepo.findOne.mockResolvedValueOnce({ id: '1', cpf: '12345678901' }); // cpf exists
+      await expect(
+        service.create({ email: 'john@email.com', cpf: '12345678901', name: 'John' } as any)
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should register successfully and provision a new tenant on auto-registration', async () => {
+      mockUserRepo.findOne
+        .mockResolvedValueOnce(null) // email free
+        .mockResolvedValueOnce(null) // cpf free
+        .mockResolvedValueOnce(null) // unique username check free
+        .mockResolvedValueOnce({ id: 'user-123', email: 'john@email.com' }); // findByEmail check
+      mockGenericRepo.findOne.mockResolvedValueOnce({ id: 'role-1', name: 'usuario' }); // default role
+
+      const result = await service.create({
+        email: 'john@email.com',
+        name: 'John',
+        password: 'Password@123',
+      } as any);
+
+      expect(result).toBeDefined();
+      expect(mockTenantsServ.create).toHaveBeenCalled();
+      expect(usersRepository.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('findByCpf / findByEmail / findByUsername', () => {
+    it('should find user by email', async () => {
+      const mockUser = { id: 'user-1', email: 'john@email.com' };
+      mockUserRepo.findOne.mockResolvedValueOnce(mockUser);
+
+      const result = await service.findByEmail('john@email.com');
+      expect(result).toEqual(mockUser);
+    });
+
+    it('should find user by cpf', async () => {
+      const mockUser = { id: 'user-1', cpf: '12345678901' };
+      mockUserRepo.findOne.mockResolvedValueOnce(mockUser);
+
+      const result = await service.findByCpf('123.456.789-01');
+      expect(result).toEqual(mockUser);
+    });
+
+    it('should find user by username', async () => {
+      const mockUser = { id: 'user-1', username: 'john' };
+      mockUserRepo.findOne.mockResolvedValueOnce(mockUser);
+
+      const result = await service.findByUsername('john');
+      expect(result).toEqual(mockUser);
     });
   });
 
@@ -238,6 +317,43 @@ describe('UsersService', () => {
           nfcCustomUrl: 'https://personalurl.com',
         })
       );
+    });
+  });
+
+  describe('verification and helpers', () => {
+    it('should save verification data', async () => {
+      const user = { id: 'user-1' };
+      mockUserRepo.findOne.mockResolvedValueOnce(user);
+
+      const expires = new Date();
+      await service.setVerificationData('user-1', '123456', expires);
+
+      expect(mockUserRepo.update).toHaveBeenCalledWith('user-1', {
+        verificationCode: '123456',
+        verificationExpires: expires,
+      });
+    });
+
+    it('should mark email as verified', async () => {
+      const user = { id: 'user-1', isVerified: false };
+      mockUserRepo.findOne.mockResolvedValueOnce(user);
+
+      await service.markEmailAsVerified('user-1');
+
+      expect(mockUserRepo.update).toHaveBeenCalledWith('user-1', {
+        isVerified: true,
+        verificationCode: null,
+        verificationExpires: null,
+      });
+    });
+
+    it('should remove user successfully', async () => {
+      const user = { id: 'user-1' };
+      mockUserRepo.findOne.mockResolvedValueOnce(user);
+
+      const result = await service.remove('user-1', { isSuperAdmin: true });
+      expect(result).toEqual({ message: 'Usuário com ID user-1 foi removido com sucesso.' });
+      expect(mockUserRepo.delete).toHaveBeenCalledWith('user-1');
     });
   });
 });
