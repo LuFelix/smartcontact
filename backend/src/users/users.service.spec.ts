@@ -24,6 +24,9 @@ describe('UsersService', () => {
   let tagRepository: Repository<Tag>;
   let rolesRepository: Repository<Role>;
   let membershipsService: MembershipsService;
+  let tenantsService: TenantsService;
+  let profilesService: ProfilesService;
+  let tagsService: TagsService;
 
   const mockQueryBuilder = {
     leftJoinAndSelect: vi.fn().mockReturnThis(),
@@ -39,12 +42,26 @@ describe('UsersService', () => {
   };
 
   const mockUserRepo = {
-    findOne: vi.fn(),
+    findOne: vi.fn().mockImplementation((options) => {
+      if (options?.where?.email) {
+        return Promise.resolve({ 
+          id: 'user-123', 
+          email: options.where.email, 
+          name: 'John Doe', 
+          ownerId: 'user-123', 
+          memberships: [{ tenantId: 'tenant-1', role: { name: 'administrador' } }] 
+        });
+      }
+      if (options?.where?.username) {
+        return Promise.resolve(null);
+      }
+      return Promise.resolve(null);
+    }),
     find: vi.fn(),
     create: vi.fn().mockImplementation(dto => dto),
     save: vi.fn().mockImplementation(user => Promise.resolve({ id: 'user-123', ...user })),
     merge: vi.fn(),
-    update: vi.fn().mockResolvedValue(undefined),
+    update: vi.fn().mockResolvedValue({ affected: 1 }),
     delete: vi.fn().mockResolvedValue(undefined),
     remove: vi.fn().mockResolvedValue(undefined),
     createQueryBuilder: vi.fn().mockReturnValue(mockQueryBuilder),
@@ -72,6 +89,7 @@ describe('UsersService', () => {
   const mockProfilesServ = {
     create: vi.fn().mockResolvedValue({ id: 'profile-new' }),
     findByUserIdAndTenant: vi.fn().mockResolvedValue(null),
+    removeByUserIdAndTenant: vi.fn().mockResolvedValue(undefined),
   };
 
   const mockTagsServ = {
@@ -145,6 +163,9 @@ describe('UsersService', () => {
     tagRepository = module.get<Repository<Tag>>(getRepositoryToken(Tag));
     rolesRepository = module.get<Repository<Role>>(getRepositoryToken(Role));
     membershipsService = module.get<MembershipsService>(MembershipsService);
+    tenantsService = module.get<TenantsService>(TenantsService);
+    profilesService = module.get<ProfilesService>(ProfilesService);
+    tagsService = module.get<TagsService>(TagsService);
   });
 
   afterEach(() => {
@@ -377,7 +398,6 @@ describe('UsersService', () => {
       mockProfilesServ.findByUserIdAndTenant.mockResolvedValueOnce(null); // profile free
       mockTagRepo.findOne.mockResolvedValueOnce(null); // tag check free
       
-      // findByEmail mock at the end
       mockUserRepo.findOne.mockResolvedValueOnce(mockUser);
 
       const result = await service.promoteToTeam('user-1', 'role-colaborador', { role: 'administrador', tenantId: 'tenant-1' });
@@ -426,6 +446,55 @@ describe('UsersService', () => {
       await service.updateUserTags('user-1', ['tag-1', 'tag-2'], { role: 'administrador', tenantId: 'tenant-1' });
       expect(mockGenericRepo.delete).toHaveBeenCalledWith({ userId: 'user-1', tenantId: 'tenant-1' });
       expect(mockGenericRepo.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('provisioning & picture helpers', () => {
+    it('should update profile picture successfully', async () => {
+      await service.updateProfilePicture('user-1', 'new_pic.png');
+      expect(mockUserRepo.update).toHaveBeenCalledWith('user-1', { profilePictureUrl: 'new_pic.png' });
+    });
+
+    it('should ensure user has default tag', async () => {
+      const mockUser = { id: 'user-1', ownerId: 'user-1', memberships: [{ tenantId: 'tenant-1' }] } as any;
+      mockTagRepo.findOne.mockResolvedValueOnce(null); // tag not exists
+
+      await service.ensureHasDefaultTag(mockUser);
+      expect(mockTagsServ.createDefaultTag).toHaveBeenCalledWith('user-1', 'user-1', 'tenant-1');
+    });
+
+    it('should migrate usernames for users without one', async () => {
+      mockUserRepo.find.mockResolvedValueOnce([
+        { id: 'user-1', name: 'John Doe', username: null },
+      ]);
+      mockUserRepo.findOne.mockResolvedValueOnce(null); // username check free
+
+      await service.migrateUsernames();
+      expect(mockUserRepo.update).toHaveBeenCalledWith('user-1', { username: 'johndoe' });
+    });
+
+    it('should handle unique constraint conflict on workspace provisioning by retrying find', async () => {
+      const mockUser = { id: 'user-1', email: 'john@email.com', ownerId: 'user-1' } as any;
+      mockTenantsServ.create.mockRejectedValueOnce({ code: '23505', message: 'unique constraint error' });
+
+      const result = await service.provisionPersonalWorkspace(mockUser);
+      expect(result).toBeDefined();
+      expect(mockUserRepo.findOne).toHaveBeenCalled();
+    });
+
+    it('should rollback personal workspace creation if optimistic lock fails', async () => {
+      const mockUser = { id: 'user-1', email: 'john@email.com', ownerId: 'other-id' } as any;
+      mockTenantsServ.create.mockResolvedValueOnce({ id: 'tenant-new', name: 'New Tenant' });
+      mockRolesServ.findOneByName.mockResolvedValueOnce({ id: 'role-admin' });
+      mockProfilesServ.findByUserIdAndTenant.mockResolvedValueOnce({ id: 'profile-1' });
+      
+      // mock the update resulting in 0 affected rows (optimistic lock failure)
+      mockUserRepo.update.mockResolvedValueOnce({ affected: 0 });
+
+      const result = await service.provisionPersonalWorkspace(mockUser);
+      expect(result).toBeDefined();
+      expect(mockMembershipsServ.remove).toHaveBeenCalled();
+      expect(mockProfilesServ.removeByUserIdAndTenant).toHaveBeenCalled();
     });
   });
 
