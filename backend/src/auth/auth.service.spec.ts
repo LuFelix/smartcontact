@@ -35,6 +35,7 @@ describe('AuthService', () => {
   let usersService: UsersService;
   let jwtService: JwtService;
   let teamService: TeamService;
+  let membershipsService: MembershipsService;
 
   const mockUsersServ = {
     findByEmail: vi.fn(),
@@ -44,6 +45,7 @@ describe('AuthService', () => {
     updateProfilePicture: vi.fn(),
     setVerificationData: vi.fn().mockResolvedValue(undefined),
     provisionPersonalWorkspace: vi.fn().mockImplementation(user => Promise.resolve(user)),
+    createMembershipForUser: vi.fn().mockResolvedValue(undefined),
   };
 
   const mockProfilesServ = {
@@ -96,6 +98,7 @@ describe('AuthService', () => {
     usersService = module.get<UsersService>(UsersService);
     jwtService = module.get<JwtService>(JwtService);
     teamService = module.get<TeamService>(TeamService);
+    membershipsService = module.get<MembershipsService>(MembershipsService);
   });
 
   afterEach(() => {
@@ -176,6 +179,57 @@ describe('AuthService', () => {
     });
   });
 
+  describe('verifyEmailCode', () => {
+    it('should throw UnauthorizedException if user not found', async () => {
+      mockUsersServ.findByEmail.mockResolvedValueOnce(null);
+      await expect(service.verifyEmailCode('notfound@email.com', '123456')).rejects.toThrow(
+        UnauthorizedException
+      );
+    });
+
+    it('should return message if email is already verified', async () => {
+      mockUsersServ.findByEmail.mockResolvedValueOnce({ id: 'user-1', isVerified: true });
+      const result = await service.verifyEmailCode('verified@email.com', '123456');
+      expect(result).toEqual({ message: 'E-mail já está verificado' });
+    });
+
+    it('should throw UnauthorizedException if code does not match', async () => {
+      mockUsersServ.findByEmail.mockResolvedValueOnce({ id: 'user-1', isVerified: false, verificationCode: '111111' });
+      await expect(service.verifyEmailCode('user@email.com', '222222')).rejects.toThrow(
+        UnauthorizedException
+      );
+    });
+
+    it('should throw UnauthorizedException if code is expired', async () => {
+      const expiredDate = new Date();
+      expiredDate.setMinutes(expiredDate.getMinutes() - 10);
+      mockUsersServ.findByEmail.mockResolvedValueOnce({ 
+        id: 'user-1', 
+        isVerified: false, 
+        verificationCode: '123456',
+        verificationExpires: expiredDate
+      });
+      await expect(service.verifyEmailCode('user@email.com', '123456')).rejects.toThrow(
+        UnauthorizedException
+      );
+    });
+
+    it('should verify email and return success message on valid code', async () => {
+      const validDate = new Date();
+      validDate.setMinutes(validDate.getMinutes() + 10);
+      mockUsersServ.findByEmail.mockResolvedValueOnce({ 
+        id: 'user-1', 
+        isVerified: false, 
+        verificationCode: '123456',
+        verificationExpires: validDate
+      });
+
+      const result = await service.verifyEmailCode('user@email.com', '123456');
+      expect(result).toEqual({ message: 'E-mail verificado com sucesso. Você já pode fazer login.' });
+      expect(mockUsersServ.markEmailAsVerified).toHaveBeenCalledWith('user-1');
+    });
+  });
+
   describe('loginWithGoogle', () => {
     it('should login and return jwt for existing google user', async () => {
       const mockUser = {
@@ -206,6 +260,84 @@ describe('AuthService', () => {
       const result = await service.loginWithGoogle({ token: 'google_token' });
       expect(result).toEqual({ access_token: 'jwt_token_123' });
       expect(mockUsersServ.findByEmail).toHaveBeenCalledWith('user@google.com');
+    });
+
+    it('should provision personal workspace and login new user if google user does not exist', async () => {
+      mockUsersServ.findByEmail.mockResolvedValueOnce(null);
+      mockUsersServ.create.mockResolvedValueOnce({ id: 'new-google-user', email: 'user@google.com' });
+      mockUsersServ.findByEmail.mockResolvedValue({
+        id: 'new-google-user',
+        email: 'user@google.com',
+        username: 'usergoogle',
+        ownerId: 'new-google-user',
+        isVerified: true,
+        memberships: [],
+      });
+      mockMembershipsServ.findTeamWorkspacesByUser.mockResolvedValueOnce([
+        {
+          tenantId: 'tenant-new',
+          role: { name: 'administrador' },
+          tenant: { slug: 'ws-new-google-user', ownerId: 'new-google-user' }
+        }
+      ]);
+
+      const result = await service.loginWithGoogle({ token: 'google_token' });
+      expect(result).toEqual({ access_token: 'jwt_token_123' });
+      expect(mockUsersServ.create).toHaveBeenCalled();
+    });
+
+    it('should update profile picture if different from google picture', async () => {
+      const mockUser = {
+        id: 'google-user-123',
+        name: 'Google User',
+        email: 'user@google.com',
+        profilePictureUrl: 'old_pic.png',
+        ownerId: 'google-user-123',
+        isVerified: true,
+        memberships: [
+          {
+            tenantId: 'tenant-personal',
+            role: { name: 'administrador' },
+            tenant: { ownerId: 'google-user-123' },
+          },
+        ],
+      };
+      mockUsersServ.findByEmail.mockResolvedValue(mockUser);
+      mockMembershipsServ.findTeamWorkspacesByUser.mockResolvedValueOnce([
+        {
+          tenantId: 'tenant-personal',
+          role: { name: 'administrador' },
+          tenant: { slug: 'ws-google-user-123', ownerId: 'google-user-123' }
+        }
+      ]);
+
+      await service.loginWithGoogle({ token: 'google_token' });
+      expect(mockUsersServ.updateProfilePicture).toHaveBeenCalledWith('google-user-123', 'https://google.com/pic.png');
+    });
+
+    it('should assign user to membership if user has a pending invitation and is existing', async () => {
+      const mockUser = {
+        id: 'google-user-123',
+        name: 'Google User',
+        email: 'user@google.com',
+        profilePictureUrl: 'https://google.com/pic.png',
+        ownerId: 'google-user-123',
+        isVerified: true,
+        memberships: [],
+      };
+      mockUsersServ.findByEmail.mockResolvedValue(mockUser);
+      mockTeamServ.resolveInvitation.mockResolvedValueOnce({ tenantId: 'tenant-invited', roleId: 'role-invited' });
+      mockMembershipsServ.findTeamWorkspacesByUser.mockResolvedValueOnce([
+        {
+          tenantId: 'tenant-invited',
+          role: { name: 'colaborador' },
+          tenant: { slug: 'tenant-invited', ownerId: 'admin-owner' }
+        }
+      ]);
+
+      await service.loginWithGoogle({ token: 'google_token', invitationToken: 'invite-123' });
+      expect(teamService.resolveInvitation).toHaveBeenCalledWith('invite-123');
+      expect(usersService.createMembershipForUser).toHaveBeenCalledWith('google-user-123', 'tenant-invited', 'role-invited');
     });
   });
 });
