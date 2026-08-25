@@ -306,6 +306,17 @@ export class UsersService {
             relations: ['memberships']
         });
         if (!baseUser) return null;
+ 
+        // Garante que o usuário possua uma tag pessoal ativa para o tenant de contexto atual
+        if (currentUser?.tenantId) {
+            const hasTag = await this.tagRepository.findOne({ 
+                where: { userId: baseUser.id, tenantId: currentUser.tenantId, isResource: false } 
+            });
+            if (!hasTag) {
+                console.log(`[UsersService.findById] Lazy creating personal default tag for user ${baseUser.id} in tenant ${currentUser.tenantId}`);
+                await this.tagsService.createDefaultTag(baseUser.id, baseUser.id, currentUser.tenantId);
+            }
+        }
 
         const isSystemAdmin = currentUser?.isSuperAdmin;
         const isOwner = baseUser.ownerId === currentUser?.sub;
