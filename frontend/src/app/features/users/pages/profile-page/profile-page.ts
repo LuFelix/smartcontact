@@ -393,7 +393,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
         });
 
         if (userProfile.tags && userProfile.tags.length > 0) {
-            this.activeTag = userProfile.tags.find((t: Tag) => !t.isResource && t.isActive)
+            const activeTenantId = this.authService.activeTenantId();
+            this.activeTag = userProfile.tags.find((t: Tag) => !t.isResource && t.tenantId === activeTenantId && t.isActive)
+                || userProfile.tags.find((t: Tag) => !t.isResource && t.tenantId === activeTenantId)
+                || userProfile.tags.find((t: Tag) => !t.isResource && t.isActive)
                 || userProfile.tags.find((t: Tag) => !t.isResource)
                 || userProfile.tags.find((t: Tag) => t.isActive)
                 || userProfile.tags[0];
