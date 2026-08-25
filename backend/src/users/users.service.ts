@@ -343,8 +343,8 @@ export class UsersService {
             queryBuilder.leftJoinAndSelect(
                 'user.tags', 
                 'tag', 
-                '(tag.tenantId = :tenantId OR tag.isResource = :isResourceFalse)', 
-                { tenantId: currentUser.tenantId, isResourceFalse: false }
+                'tag.tenantId = :tenantId', 
+                { tenantId: currentUser.tenantId }
             );
         } else {
             queryBuilder.leftJoinAndSelect('user.tags', 'tag');
