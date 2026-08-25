@@ -277,4 +277,29 @@ describe('TagsService', () => {
       expect(result[0].name).toBe('Pedro');
     });
   });
+
+  describe('Issue #267 - Filtro de isResource no resolvedor por username', () => {
+    it('should query tags with isResource = false when resolving by username', async () => {
+      mockQueryBuilder.andWhere.mockClear();
+      mockQueryBuilder.getOne
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          id: 'tag-personal',
+          uuid: 'tag-personal-uuid',
+          isResource: false,
+          qrRedirectMode: 'PROFILE',
+          nfcRedirectMode: 'PROFILE',
+          user: { id: 'user-1', email: 'john@email.com' }
+        });
+
+      const result = await service.resolveTag('john-doe', 'qr');
+
+      expect(result).toBeDefined();
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'tag.isResource = :isResource',
+        { isResource: false }
+      );
+    });
+  });
 });
