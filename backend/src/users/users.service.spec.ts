@@ -606,4 +606,45 @@ describe('UsersService', () => {
       );
     });
   });
+
+  describe('Issue #270 - Lazy-Create Personal Tag in findById', () => {
+    it('should lazy create personal default tag if user has no personal tag in the current active tenant', async () => {
+      const mockUser = {
+        id: 'user-1',
+        email: 'john@email.com',
+        memberships: [{ tenantId: 'tenant-b2b', role: { name: 'administrador' } }]
+      } as any;
+
+      mockUserRepo.findOne.mockResolvedValueOnce(mockUser);
+      mockTagRepo.findOne.mockResolvedValueOnce(null);
+      vi.spyOn(mockTagsServ, 'createDefaultTag').mockResolvedValueOnce({} as any);
+
+      await service.findById('user-1', { tenantId: 'tenant-b2b', sub: 'user-1' });
+
+      expect(mockTagRepo.findOne).toHaveBeenCalledWith({
+        where: { userId: 'user-1', tenantId: 'tenant-b2b', isResource: false }
+      });
+      expect(mockTagsServ.createDefaultTag).toHaveBeenCalledWith('user-1', 'user-1', 'tenant-b2b');
+    });
+
+    it('should NOT create personal default tag if user already has a personal tag in the current active tenant', async () => {
+      const mockUser = {
+        id: 'user-1',
+        email: 'john@email.com',
+        memberships: [{ tenantId: 'tenant-b2b', role: { name: 'administrador' } }]
+      } as any;
+
+      mockUserRepo.findOne.mockResolvedValueOnce(mockUser);
+      mockTagRepo.findOne.mockResolvedValueOnce({ id: 'tag-1' } as any);
+      vi.spyOn(mockTagsServ, 'createDefaultTag');
+
+      await service.findById('user-1', { tenantId: 'tenant-b2b', sub: 'user-1' });
+
+      expect(mockTagRepo.findOne).toHaveBeenCalledWith({
+        where: { userId: 'user-1', tenantId: 'tenant-b2b', isResource: false }
+      });
+      expect(mockTagsServ.createDefaultTag).not.toHaveBeenCalled();
+    });
+  });
 });
+
