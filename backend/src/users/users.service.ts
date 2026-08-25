@@ -329,7 +329,12 @@ export class UsersService {
             .where('user.id = :userId', { userId });
 
         if (currentUser?.tenantId) {
-            queryBuilder.leftJoinAndSelect('user.tags', 'tag', 'tag.tenantId = :tenantId', { tenantId: currentUser.tenantId });
+            queryBuilder.leftJoinAndSelect(
+                'user.tags', 
+                'tag', 
+                '(tag.tenantId = :tenantId OR tag.isResource = :isResourceFalse)', 
+                { tenantId: currentUser.tenantId, isResourceFalse: false }
+            );
         } else {
             queryBuilder.leftJoinAndSelect('user.tags', 'tag');
         }
@@ -536,8 +541,7 @@ export class UsersService {
                 updateUserDto.qrCustomUrl !== undefined;
 
             if (hasRootRedirectSettings) {
-                const defaultTag = user!.tags.find((t: any) => t.tenantId === targetTenantId && !t.isResource)
-                    || user!.tags.find((t: any) => t.tenantId === targetTenantId)
+                const defaultTag = user!.tags.find((t: any) => !t.isResource)
                     || user!.tags[0];
 
                 if (defaultTag) {

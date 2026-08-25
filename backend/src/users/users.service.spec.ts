@@ -553,4 +553,57 @@ describe('UsersService', () => {
       ).rejects.toThrow(BadRequestException);
     });
   });
+
+  describe('Issue #267 - Colisão de Tags no Perfil', () => {
+    it('should query user tags including personal tag of another tenant in findById', async () => {
+      const mockUser = {
+        id: 'user-1',
+        memberships: [{ tenantId: 'tenant-b2b', role: { name: 'administrador' } }],
+        tags: [
+          { id: 'tag-1', isResource: false, tenantId: 'tenant-solo' },
+          { id: 'tag-2', isResource: true, tenantId: 'tenant-b2b' }
+        ]
+      } as any;
+
+      mockQueryBuilder.getOne.mockResolvedValueOnce(mockUser);
+
+      const result = await service.findById('user-1', { tenantId: 'tenant-b2b', role: 'administrador', sub: 'user-1' });
+      expect(result).toBeDefined();
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'user.tags',
+        'tag',
+        '(tag.tenantId = :tenantId OR tag.isResource = :isResourceFalse)',
+        expect.any(Object)
+      );
+    });
+
+    it('should prioritize personal tag of any tenant when updating redirect settings via root DTO', async () => {
+      const existingUser = {
+        id: 'user-1',
+        email: 'john@email.com',
+        memberships: [{ tenantId: 'tenant-b2b' }],
+        tags: [
+          { id: 'tag-resource', isResource: true, tenantId: 'tenant-b2b', qrRedirectMode: 'PROFILE' },
+          { id: 'tag-personal', isResource: false, tenantId: 'tenant-solo', qrRedirectMode: 'PROFILE' }
+        ]
+      } as any;
+
+      mockUserRepo.findOne.mockResolvedValueOnce(existingUser);
+
+      const updateDto = {
+        qrRedirectMode: 'CUSTOM_URL' as any,
+        qrCustomUrl: 'https://redirect-me.com'
+      };
+
+      await service.update('user-1', updateDto, { sub: 'user-1', tenantId: 'tenant-b2b' });
+
+      expect(mockTagRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'tag-personal',
+          qrRedirectMode: 'CUSTOM_URL',
+          qrCustomUrl: 'https://redirect-me.com'
+        })
+      );
+    });
+  });
 });
