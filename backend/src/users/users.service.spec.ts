@@ -572,7 +572,7 @@ describe('UsersService', () => {
       expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
         'user.tags',
         'tag',
-        '(tag.tenantId = :tenantId OR tag.isResource = :isResourceFalse)',
+        'tag.tenantId = :tenantId',
         expect.any(Object)
       );
     });
