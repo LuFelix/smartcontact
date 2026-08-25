@@ -78,6 +78,8 @@ pids/
 *.pid.lock
 # Cache do NestJS e builds
 **/backend/dist/
+**/backend/dist-test/
+**/backend/tsconfig.build.tsbuildinfo
 **/backend/node_modules/
 node_modules/
 

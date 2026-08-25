@@ -279,6 +279,7 @@ export class TagsService {
           .leftJoinAndSelect('user.links', 'links')
           .where('LOWER(user.username) = LOWER(:identifier)', { identifier })
           .andWhere('tag.is_active = :isActive', { isActive: true })
+          .andWhere('tag.isResource = :isResource', { isResource: false })
           .getOne();
     }
 
