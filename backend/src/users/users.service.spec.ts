@@ -676,5 +676,66 @@ describe('UsersService', () => {
       expect((result as any).profile).toEqual({ id: 'profile-solo', bio: 'Solo Profile Bio' });
     });
   });
+
+  describe('Issue #270 - Refinamento Dono vs Membros', () => {
+    it('should NOT lazy create personal tag and query the Solo Tenant tag if the user is the owner of the Workspace context in findById', async () => {
+      const mockUser = {
+        id: 'user-1',
+        email: 'john@email.com',
+        memberships: [{ tenantId: 'tenant-b2b', role: { name: 'administrador' } }]
+      } as any;
+
+      mockUserRepo.findOne.mockResolvedValueOnce(mockUser);
+      mockQueryBuilder.getOne.mockResolvedValueOnce(mockUser);
+      vi.spyOn(mockTagsServ, 'createDefaultTag');
+
+      mockGenericRepo.findOne
+        .mockResolvedValueOnce({ id: 'tenant-b2b', ownerId: 'user-1' })
+        .mockResolvedValueOnce({ id: 'tenant-solo', ownerId: 'user-1' });
+
+      await service.findById('user-1', { tenantId: 'tenant-b2b', sub: 'user-1' });
+
+      expect(mockTagsServ.createDefaultTag).not.toHaveBeenCalled();
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'user.tags',
+        'tag',
+        'tag.tenantId = :tenantId',
+        expect.objectContaining({ tenantId: 'tenant-solo' })
+      );
+    });
+
+    it('should update the Solo Tenant tag redirect settings if the user is the owner of the Workspace context in update', async () => {
+      const existingUser = {
+        id: 'user-1',
+        email: 'john@email.com',
+        memberships: [{ tenantId: 'tenant-b2b' }],
+        tags: [
+          { id: 'tag-solo', isResource: false, tenantId: 'tenant-solo', qrRedirectMode: 'PROFILE' },
+          { id: 'tag-b2b', isResource: false, tenantId: 'tenant-b2b', qrRedirectMode: 'PROFILE' }
+        ]
+      } as any;
+
+      mockUserRepo.findOne.mockResolvedValueOnce(existingUser);
+
+      mockGenericRepo.findOne
+        .mockResolvedValueOnce({ id: 'tenant-b2b', ownerId: 'user-1' })
+        .mockResolvedValueOnce({ id: 'tenant-solo', ownerId: 'user-1' });
+
+      const updateDto = {
+        qrRedirectMode: 'CUSTOM_URL' as any,
+        qrCustomUrl: 'https://dono-redirect.com'
+      };
+
+      await service.update('user-1', updateDto, { sub: 'user-1', tenantId: 'tenant-b2b' });
+
+      expect(mockTagRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'tag-solo',
+          qrRedirectMode: 'CUSTOM_URL',
+          qrCustomUrl: 'https://dono-redirect.com'
+        })
+      );
+    });
+  });
 });
 
