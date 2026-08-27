@@ -308,13 +308,32 @@ export class UsersService {
         if (!baseUser) return null;
  
         // Garante que o usuário possua uma tag pessoal ativa para o tenant de contexto atual
+        let isContextOwner = false;
+        let personalTenantId = currentUser?.tenantId;
+
         if (currentUser?.tenantId) {
-            const hasTag = await this.tagRepository.findOne({ 
-                where: { userId: baseUser.id, tenantId: currentUser.tenantId, isResource: false } 
+            const tenantContext = await this.tenantsRepository.findOne({ 
+                where: { id: currentUser.tenantId } 
             });
-            if (!hasTag) {
-                console.log(`[UsersService.findById] Lazy creating personal default tag for user ${baseUser.id} in tenant ${currentUser.tenantId}`);
-                await this.tagsService.createDefaultTag(baseUser.id, baseUser.id, currentUser.tenantId);
+            isContextOwner = tenantContext?.ownerId === baseUser.id;
+
+            // Se for o dono do Workspace, localiza seu Solo Tenant para usar a tag Solo principal
+            if (isContextOwner) {
+                const personalTenant = await this.tenantsRepository.findOne({
+                    where: { ownerId: baseUser.id }
+                });
+                if (personalTenant) {
+                    personalTenantId = personalTenant.id;
+                }
+            } else {
+                // Se for colaborador/membro, garante a existência da tag corporativa local
+                const hasTag = await this.tagRepository.findOne({ 
+                    where: { userId: baseUser.id, tenantId: currentUser.tenantId, isResource: false } 
+                });
+                if (!hasTag) {
+                    console.log(`[UsersService.findById] Lazy creating personal default tag for user ${baseUser.id} in tenant ${currentUser.tenantId}`);
+                    await this.tagsService.createDefaultTag(baseUser.id, baseUser.id, currentUser.tenantId);
+                }
             }
         }
 
@@ -344,7 +363,7 @@ export class UsersService {
                 'user.tags', 
                 'tag', 
                 'tag.tenantId = :tenantId', 
-                { tenantId: currentUser.tenantId }
+                { tenantId: personalTenantId }
             );
         } else {
             queryBuilder.leftJoinAndSelect('user.tags', 'tag');
@@ -555,8 +574,25 @@ export class UsersService {
                 updateUserDto.qrCustomUrl !== undefined;
 
             if (hasRootRedirectSettings) {
-                const defaultTag = user!.tags.find((t: any) => !t.isResource)
-                    || user!.tags[0];
+                const tenantContext = await this.tenantsRepository.findOne({ 
+                    where: { id: targetTenantId } 
+                });
+                const isContextOwner = tenantContext?.ownerId === user.id;
+
+                let defaultTag;
+                if (isContextOwner) {
+                    const personalTenant = await this.tenantsRepository.findOne({
+                        where: { ownerId: user.id }
+                    });
+                    const personalTenantId = personalTenant?.id || targetTenantId;
+                    defaultTag = user!.tags.find((t: any) => !t.isResource && t.tenantId === personalTenantId)
+                        || user!.tags.find((t: any) => !t.isResource)
+                        || user!.tags[0];
+                } else {
+                    defaultTag = user!.tags.find((t: any) => !t.isResource && t.tenantId === targetTenantId)
+                        || user!.tags.find((t: any) => !t.isResource)
+                        || user!.tags[0];
+                }
 
                 if (defaultTag) {
                     if (updateUserDto.nfcRedirectMode) defaultTag.nfcRedirectMode = updateUserDto.nfcRedirectMode;
