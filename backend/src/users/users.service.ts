@@ -324,6 +324,15 @@ export class UsersService {
                 });
                 if (personalTenant) {
                     personalTenantId = personalTenant.id;
+                    
+                    // FIX: Garantir que o dono tenha uma tag pessoal (isResource=false) no seu Solo Tenant
+                    const hasSoloTag = await this.tagRepository.findOne({ 
+                        where: { userId: baseUser.id, tenantId: personalTenantId, isResource: false } 
+                    });
+                    if (!hasSoloTag) {
+                        console.log(`[UsersService.findById] Lazy creating personal default tag for owner ${baseUser.id} in solo tenant ${personalTenantId}`);
+                        await this.tagsService.createDefaultTag(baseUser.id, baseUser.id, personalTenantId);
+                    }
                 }
             } else {
                 // Se for colaborador/membro, garante a existência da tag corporativa local
@@ -362,11 +371,11 @@ export class UsersService {
             queryBuilder.leftJoinAndSelect(
                 'user.tags', 
                 'tag', 
-                'tag.tenantId = :tenantId', 
-                { tenantId: personalTenantId }
+                'tag.tenantId = :tenantId AND tag.is_resource = :isResource', 
+                { tenantId: personalTenantId, isResource: false }
             );
         } else {
-            queryBuilder.leftJoinAndSelect('user.tags', 'tag');
+            queryBuilder.leftJoinAndSelect('user.tags', 'tag', 'tag.is_resource = :isResource', { isResource: false });
         }
         queryBuilder.addOrderBy('tag.createdAt', 'DESC');
 

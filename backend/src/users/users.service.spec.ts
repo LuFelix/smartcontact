@@ -549,7 +549,7 @@ describe('UsersService', () => {
   });
 
   describe('Issue #267 - Colisão de Tags no Perfil', () => {
-    it('should query user tags including personal tag of another tenant in findById', async () => {
+    it('should query user tags including personal tag of another tenant in findById with isResource=false filter', async () => {
       const mockUser = {
         id: 'user-1',
         memberships: [{ tenantId: 'tenant-b2b', role: { name: 'administrador' } }],
@@ -566,7 +566,7 @@ describe('UsersService', () => {
       expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
         'user.tags',
         'tag',
-        'tag.tenantId = :tenantId',
+        'tag.tenantId = :tenantId AND tag.is_resource = :isResource',
         expect.any(Object)
       );
     });
@@ -676,7 +676,7 @@ describe('UsersService', () => {
   });
 
   describe('Issue #270 - Refinamento Dono vs Membros', () => {
-    it('should NOT lazy create personal tag and query the Solo Tenant tag if the user is the owner of the Workspace context in findById', async () => {
+    it('should lazy create personal tag for Solo Tenant if the user is the owner of the Workspace context in findById', async () => {
       const mockUser = {
         id: 'user-1',
         email: 'john@email.com',
@@ -685,20 +685,25 @@ describe('UsersService', () => {
 
       mockUserRepo.findOne.mockResolvedValueOnce(mockUser);
       mockQueryBuilder.getOne.mockResolvedValueOnce(mockUser);
-      vi.spyOn(mockTagsServ, 'createDefaultTag');
+      vi.spyOn(mockTagsServ, 'createDefaultTag').mockResolvedValueOnce({} as any);
 
       mockGenericRepo.findOne
         .mockResolvedValueOnce({ id: 'tenant-b2b', ownerId: 'user-1' })
         .mockResolvedValueOnce({ id: 'tenant-solo', ownerId: 'user-1' });
 
+      // O repositório de tag não encontra a tag no solo tenant, disparando lazy create
+      mockTagRepo.findOne.mockResolvedValueOnce(null);
+
       await service.findById('user-1', { tenantId: 'tenant-b2b', sub: 'user-1' });
 
-      expect(mockTagsServ.createDefaultTag).not.toHaveBeenCalled();
+      // Confirma que agora a lazy creation é disparada também para o Solo Tenant do Dono
+      expect(mockTagsServ.createDefaultTag).toHaveBeenCalledWith('user-1', 'user-1', 'tenant-solo');
+      
       expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
         'user.tags',
         'tag',
-        'tag.tenantId = :tenantId',
-        expect.objectContaining({ tenantId: 'tenant-solo' })
+        'tag.tenantId = :tenantId AND tag.is_resource = :isResource',
+        expect.objectContaining({ tenantId: 'tenant-solo', isResource: false })
       );
     });
 
