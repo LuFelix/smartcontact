@@ -519,10 +519,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
             qrRedirectMode: tagSettings.qrRedirectMode,
             qrCustomUrl: tagSettings.qrCustomUrl
         }] : [],
-        nfcRedirectMode: tagSettings.nfcRedirectMode,
-        nfcCustomUrl: tagSettings.nfcCustomUrl,
-        qrRedirectMode: tagSettings.qrRedirectMode,
-        qrCustomUrl: tagSettings.qrCustomUrl
     };
 
     // Remover IDs nulos para evitar erro de validação UUID no backend

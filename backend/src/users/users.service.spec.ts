@@ -320,7 +320,7 @@ describe('UsersService', () => {
 
   describe('update', () => {
     it('should throw NotFoundException if user is not found', async () => {
-      mockUserRepo.findOne.mockResolvedValueOnce(null);
+      mockQueryBuilder.getOne.mockResolvedValueOnce(null);
       await expect(service.update('invalid', {})).rejects.toThrow(NotFoundException);
     });
 
@@ -329,50 +329,19 @@ describe('UsersService', () => {
         id: 'user-123',
         ownerId: 'user-123',
         tags: [
-          { id: 'tag-personal', isResource: false, tenantId: 'tenant-1' },
-          { id: 'tag-resource', isResource: true, tenantId: 'tenant-1' },
+          { id: 'tag-personal', isResource: false, tenantId: 'tenant-1', nfcRedirectMode: 'PROFILE' },
         ],
       } as any;
 
-      mockUserRepo.findOne.mockResolvedValueOnce(existingUser);
-      mockUserRepo.findOne.mockResolvedValueOnce(existingUser);
+      // update() now uses createQueryBuilder → getOne
+      mockQueryBuilder.getOne.mockResolvedValueOnce(existingUser);
+      mockUserRepo.findOne.mockResolvedValueOnce(existingUser); // findByEmail at the end
       mockUserRepo.merge.mockImplementation((dest, src) => Object.assign(dest, src));
 
       const payload = {
         tags: [
-          { id: 'tag-resource', nfcRedirectMode: 'custom', nfcCustomUrl: 'https://newurl.com' },
+          { id: 'tag-personal', nfcRedirectMode: 'custom', nfcCustomUrl: 'https://newurl.com' },
         ],
-      };
-
-      await service.update('user-123', payload, { sub: 'user-123', tenantId: 'tenant-1' });
-
-      expect(tagRepository.save).toHaveBeenCalledTimes(1);
-      expect(tagRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          id: 'tag-resource',
-          nfcRedirectMode: 'custom',
-          nfcCustomUrl: 'https://newurl.com',
-        })
-      );
-    });
-
-    it('should update personal tag when properties are sent in the root DTO', async () => {
-      const existingUser = {
-        id: 'user-123',
-        ownerId: 'user-123',
-        tags: [
-          { id: 'tag-personal', isResource: false, tenantId: 'tenant-1' },
-          { id: 'tag-resource', isResource: true, tenantId: 'tenant-1' },
-        ],
-      } as any;
-
-      mockUserRepo.findOne.mockResolvedValueOnce(existingUser);
-      mockUserRepo.findOne.mockResolvedValueOnce(existingUser);
-      mockUserRepo.merge.mockImplementation((dest, src) => Object.assign(dest, src));
-
-      const payload = {
-        nfcRedirectMode: 'custom',
-        nfcCustomUrl: 'https://personalurl.com',
       };
 
       await service.update('user-123', payload, { sub: 'user-123', tenantId: 'tenant-1' });
@@ -382,9 +351,33 @@ describe('UsersService', () => {
         expect.objectContaining({
           id: 'tag-personal',
           nfcRedirectMode: 'custom',
-          nfcCustomUrl: 'https://personalurl.com',
+          nfcCustomUrl: 'https://newurl.com',
         })
       );
+    });
+
+    it('should NOT update any tag when redirect properties are only in root DTO (block removed)', async () => {
+      const existingUser = {
+        id: 'user-123',
+        ownerId: 'user-123',
+        tags: [
+          { id: 'tag-personal', isResource: false, tenantId: 'tenant-1' },
+        ],
+      } as any;
+
+      mockQueryBuilder.getOne.mockResolvedValueOnce(existingUser);
+      mockUserRepo.findOne.mockResolvedValueOnce(existingUser); // findByEmail at the end
+      mockUserRepo.merge.mockImplementation((dest, src) => Object.assign(dest, src));
+
+      const payload = {
+        nfcRedirectMode: 'custom',
+        nfcCustomUrl: 'https://personalurl.com',
+      };
+
+      await service.update('user-123', payload, { sub: 'user-123', tenantId: 'tenant-1' });
+
+      // The root-level redirect block was removed — tagRepository.save should NOT be called
+      expect(tagRepository.save).not.toHaveBeenCalled();
     });
   });
 
@@ -405,11 +398,12 @@ describe('UsersService', () => {
 
     it('should promote user successfully if requested by admin', async () => {
       const mockUser = { id: 'user-1', email: 'john@email.com', memberships: [] };
-      mockUserRepo.findOne.mockResolvedValueOnce(mockUser);
+      mockUserRepo.findOne.mockResolvedValueOnce(mockUser); // findOne for user lookup
       mockRolesServ.findOne.mockResolvedValueOnce({ id: 'role-colaborador', name: 'colaborador' });
       mockProfilesServ.findByUserIdAndTenant.mockResolvedValueOnce(null); // profile free
       mockTagRepo.findOne.mockResolvedValueOnce(null); // tag check free
       
+      // findByEmail at the end returns user with email
       mockUserRepo.findOne.mockResolvedValueOnce(mockUser);
 
       const result = await service.promoteToTeam('user-1', 'role-colaborador', { role: 'administrador', tenantId: 'tenant-1' });
@@ -577,25 +571,29 @@ describe('UsersService', () => {
       );
     });
 
-    it('should prioritize personal tag of any tenant when updating redirect settings via root DTO', async () => {
+    it('should exclude resource tags from user.tags in update() preventing collision with resource tags', async () => {
+      // This test validates the core fix: update() now uses QueryBuilder with
+      // isResource = false filter, so resource tags like "FORM Livro dos Espíritos"
+      // never appear in user.tags and can never be accidentally overwritten.
       const existingUser = {
         id: 'user-1',
         email: 'john@email.com',
         memberships: [{ tenantId: 'tenant-b2b' }],
         tags: [
-          { id: 'tag-resource', isResource: true, tenantId: 'tenant-b2b', qrRedirectMode: 'PROFILE' },
+          // Only personal tags appear — resource tags are filtered out by QueryBuilder
           { id: 'tag-personal', isResource: false, tenantId: 'tenant-solo', qrRedirectMode: 'PROFILE' }
         ]
       } as any;
 
-      mockUserRepo.findOne.mockResolvedValueOnce(existingUser);
+      mockQueryBuilder.getOne.mockResolvedValueOnce(existingUser);
+      mockUserRepo.findOne.mockResolvedValueOnce(existingUser); // findByEmail at the end
+      mockUserRepo.merge.mockImplementation((dest, src) => Object.assign(dest, src));
 
-      const updateDto = {
-        qrRedirectMode: 'CUSTOM_URL' as any,
-        qrCustomUrl: 'https://redirect-me.com'
+      const payload = {
+        tags: [{ id: 'tag-personal', qrRedirectMode: 'CUSTOM_URL', qrCustomUrl: 'https://redirect-me.com' }]
       };
 
-      await service.update('user-1', updateDto, { sub: 'user-1', tenantId: 'tenant-b2b' });
+      await service.update('user-1', payload, { sub: 'user-1', tenantId: 'tenant-b2b' });
 
       expect(mockTagRepo.save).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -704,7 +702,7 @@ describe('UsersService', () => {
       );
     });
 
-    it('should update the Solo Tenant tag redirect settings if the user is the owner of the Workspace context in update', async () => {
+    it('should update the Solo Tenant tag via tags array if the user is the owner of the Workspace context in update', async () => {
       const existingUser = {
         id: 'user-1',
         email: 'john@email.com',
@@ -715,15 +713,12 @@ describe('UsersService', () => {
         ]
       } as any;
 
-      mockUserRepo.findOne.mockResolvedValueOnce(existingUser);
-
-      mockGenericRepo.findOne
-        .mockResolvedValueOnce({ id: 'tenant-b2b', ownerId: 'user-1' })
-        .mockResolvedValueOnce({ id: 'tenant-solo', ownerId: 'user-1' });
+      mockQueryBuilder.getOne.mockResolvedValueOnce(existingUser);
+      mockUserRepo.findOne.mockResolvedValueOnce(existingUser); // findByEmail at the end
+      mockUserRepo.merge.mockImplementation((dest, src) => Object.assign(dest, src));
 
       const updateDto = {
-        qrRedirectMode: 'CUSTOM_URL' as any,
-        qrCustomUrl: 'https://dono-redirect.com'
+        tags: [{ id: 'tag-solo', qrRedirectMode: 'CUSTOM_URL' as any, qrCustomUrl: 'https://dono-redirect.com' }]
       };
 
       await service.update('user-1', updateDto, { sub: 'user-1', tenantId: 'tenant-b2b' });
