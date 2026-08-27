@@ -71,6 +71,7 @@ describe('ProfileComponent', () => {
     mockAuthService = {
       userId: vi.fn().mockReturnValue('user-123'),
       userUsername: vi.fn().mockReturnValue('johndoe'),
+      activeTenantId: vi.fn().mockReturnValue('tenant-1'),
     };
 
     mockCepService = {
