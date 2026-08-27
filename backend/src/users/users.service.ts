@@ -492,10 +492,19 @@ export class UsersService {
     }
 
    async update(id: string, updateUserDto: UpdateUserDto, currentUser?: any): Promise<User> { 
-        let user = await this.usersRepository.findOne({
-            where: { id },
-            relations: ['memberships', 'phones', 'addresses', 'secondaryEmails', 'links', 'tags', 'profiles'],
-        });
+        // CORREÇÃO #270-V4: Carrega tags filtrando isResource = false para impedir
+        // que tags de recurso (ex: "FORM Livro dos Espíritos") entrem no array user.tags
+        // e sejam acidentalmente sobrescritas pelos fallbacks de redirecionamento.
+        let user = await this.usersRepository.createQueryBuilder('user')
+            .leftJoinAndSelect('user.memberships', 'membership')
+            .leftJoinAndSelect('user.phones', 'phone')
+            .leftJoinAndSelect('user.addresses', 'address')
+            .leftJoinAndSelect('user.secondaryEmails', 'secondaryEmail')
+            .leftJoinAndSelect('user.links', 'link')
+            .leftJoinAndSelect('user.tags', 'tag', 'tag.is_resource = :isResource', { isResource: false })
+            .leftJoinAndSelect('user.profiles', 'profile')
+            .where('user.id = :id', { id })
+            .getOne();
 
         if (!user) {
             throw new NotFoundException(`Usuário com ID ${id} não encontrado`);
@@ -563,43 +572,6 @@ export class UsersService {
                             await this.tagRepository.save(tagToUpdate);
                         }
                     }
-                }
-            }
-
-            // 2. Se vierem dados na raiz do DTO, atualiza apenas a tag pessoal (isResource === false) no tenant ativo
-            const hasRootRedirectSettings = 
-                updateUserDto.nfcRedirectMode || 
-                updateUserDto.nfcCustomUrl !== undefined || 
-                updateUserDto.qrRedirectMode || 
-                updateUserDto.qrCustomUrl !== undefined;
-
-            if (hasRootRedirectSettings) {
-                const tenantContext = await this.tenantsRepository.findOne({ 
-                    where: { id: targetTenantId } 
-                });
-                const isContextOwner = tenantContext?.ownerId === user.id;
-
-                let defaultTag;
-                if (isContextOwner) {
-                    const personalTenant = await this.tenantsRepository.findOne({
-                        where: { ownerId: user.id }
-                    });
-                    const personalTenantId = personalTenant?.id || targetTenantId;
-                    defaultTag = user!.tags.find((t: any) => !t.isResource && t.tenantId === personalTenantId)
-                        || user!.tags.find((t: any) => !t.isResource)
-                        || user!.tags[0];
-                } else {
-                    defaultTag = user!.tags.find((t: any) => !t.isResource && t.tenantId === targetTenantId)
-                        || user!.tags.find((t: any) => !t.isResource)
-                        || user!.tags[0];
-                }
-
-                if (defaultTag) {
-                    if (updateUserDto.nfcRedirectMode) defaultTag.nfcRedirectMode = updateUserDto.nfcRedirectMode;
-                    if (updateUserDto.nfcCustomUrl !== undefined) defaultTag.nfcCustomUrl = updateUserDto.nfcCustomUrl;
-                    if (updateUserDto.qrRedirectMode) defaultTag.qrRedirectMode = updateUserDto.qrRedirectMode;
-                    if (updateUserDto.qrCustomUrl !== undefined) defaultTag.qrCustomUrl = updateUserDto.qrCustomUrl;
-                    await this.tagRepository.save(defaultTag);
                 }
             }
         }
