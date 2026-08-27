@@ -302,4 +302,27 @@ describe('TagsService', () => {
       );
     });
   });
+
+  describe('Issue #270 - Fallback de Perfil de Dono no resolveTag', () => {
+    it('should fallback to personal profile (Solo Tenant) if workspace profile is missing', async () => {
+      mockQueryBuilder.getOne.mockResolvedValueOnce({
+        id: 'tag-1',
+        uuid: 'tag-1-uuid',
+        tenantId: 'tenant-b2b',
+        qrRedirectMode: 'PROFILE',
+        nfcRedirectMode: 'PROFILE',
+        user: { id: 'user-1', name: 'John Doe', email: 'john@email.com' }
+      });
+
+      mockGenericRepo.findOne
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ id: 'tenant-solo' })
+        .mockResolvedValueOnce({ id: 'profile-solo', bio: 'Bio do Dono' });
+
+      const result = await service.resolveTag('tag-1-uuid', 'qr');
+
+      expect(result).toBeDefined();
+      expect(result?.user?.profile).toEqual({ id: 'profile-solo', bio: 'Bio do Dono' });
+    });
+  });
 });

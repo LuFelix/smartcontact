@@ -645,6 +645,36 @@ describe('UsersService', () => {
       });
       expect(mockTagsServ.createDefaultTag).not.toHaveBeenCalled();
     });
+
+    it('should fallback to personal profile (dono) if the active membership profile is missing in findById', async () => {
+      const mockUser = {
+        id: 'user-1',
+        email: 'john@email.com',
+        memberships: [
+          { 
+            tenantId: 'tenant-b2b', 
+            role: { name: 'usuario' },
+            profile: null,
+            tenant: { ownerId: 'user-admin' }
+          },
+          { 
+            tenantId: 'tenant-solo', 
+            role: { name: 'administrador' },
+            profile: { id: 'profile-solo', bio: 'Solo Profile Bio' },
+            tenant: { ownerId: 'user-1' } // Solo Tenant! (ownerId === user.id)
+          }
+        ]
+      } as any;
+
+      mockUserRepo.findOne.mockResolvedValueOnce(mockUser);
+      mockTagRepo.findOne.mockResolvedValueOnce({ id: 'tag-1' } as any);
+      mockQueryBuilder.getOne.mockResolvedValueOnce(mockUser);
+
+      const result = await service.findById('user-1', { tenantId: 'tenant-b2b', sub: 'user-1' });
+
+      expect(result).toBeDefined();
+      expect((result as any).profile).toEqual({ id: 'profile-solo', bio: 'Solo Profile Bio' });
+    });
   });
 });
 

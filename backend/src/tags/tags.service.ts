@@ -308,9 +308,23 @@ export class TagsService {
     // Filter sensitive data
     const { user } = tag;
     // Carrega o profile específico deste Tenant (cada tag pertence a um tenant)
-    const profile = await this.profileRepository.findOne({ 
+    let profile = await this.profileRepository.findOne({ 
         where: { userId: user.id, tenantId: tag.tenantId } 
     });
+
+    // FALLBACK: Se o perfil do Workspace estiver em branco/nulo, carrega o perfil pessoal (Solo Tenant) do proprietário da tag
+    if (!profile) {
+        // Encontra o Solo Tenant pertencente ao usuário
+        const personalTenant = await this.tenantRepository.findOne({
+            where: { ownerId: user.id }
+        });
+        if (personalTenant) {
+            profile = await this.profileRepository.findOne({
+                where: { userId: user.id, tenantId: personalTenant.id }
+            });
+        }
+    }
+
     const publicUser = {
       name: user.name,
       email: user.email,

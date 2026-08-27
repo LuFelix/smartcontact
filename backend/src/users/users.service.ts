@@ -367,9 +367,12 @@ export class UsersService {
             const activeMembership = user.memberships?.find(m => m.tenantId === currentUser?.tenantId) || user.memberships?.[0];
             (user as any).role = activeMembership?.role;
             (user as any).tenantId = activeMembership?.tenantId;
+            // Busca a membership pessoal no Solo Tenant (onde o tenant.ownerId === user.id)
+            const personalMembership = user.memberships?.find(m => m.tenant?.ownerId === user.id);
+
             // O profile contextual é o da membership ativa neste tenant
-            // FALLBACK: profile da membership ou undefined
-            (user as any).profile = activeMembership?.profile || undefined;
+            // FALLBACK: se o profile ativo for nulo/incompleto, faz fallback para o profile pessoal principal (de dono)
+            (user as any).profile = activeMembership?.profile || personalMembership?.profile || undefined;
 
             const isTenantOwner = activeMembership 
                 && activeMembership.role?.name === 'administrador' 
