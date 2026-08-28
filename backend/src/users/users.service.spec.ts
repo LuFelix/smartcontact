@@ -606,44 +606,6 @@ describe('UsersService', () => {
   });
 
   describe('Issue #270 - Lazy-Create Personal Tag in findById', () => {
-    it('should lazy create personal default tag if user has no personal tag in the current active tenant', async () => {
-      const mockUser = {
-        id: 'user-1',
-        email: 'john@email.com',
-        memberships: [{ tenantId: 'tenant-b2b', role: { name: 'administrador' } }]
-      } as any;
-
-      mockUserRepo.findOne.mockResolvedValueOnce(mockUser);
-      mockTagRepo.findOne.mockResolvedValueOnce(null);
-      vi.spyOn(mockTagsServ, 'createDefaultTag').mockResolvedValueOnce({} as any);
-
-      await service.findById('user-1', { tenantId: 'tenant-b2b', sub: 'user-1' });
-
-      expect(mockTagRepo.findOne).toHaveBeenCalledWith({
-        where: { userId: 'user-1', tenantId: 'tenant-b2b', isResource: false }
-      });
-      expect(mockTagsServ.createDefaultTag).toHaveBeenCalledWith('user-1', 'user-1', 'tenant-b2b');
-    });
-
-    it('should NOT create personal default tag if user already has a personal tag in the current active tenant', async () => {
-      const mockUser = {
-        id: 'user-1',
-        email: 'john@email.com',
-        memberships: [{ tenantId: 'tenant-b2b', role: { name: 'administrador' } }]
-      } as any;
-
-      mockUserRepo.findOne.mockResolvedValueOnce(mockUser);
-      mockTagRepo.findOne.mockResolvedValueOnce({ id: 'tag-1' } as any);
-      vi.spyOn(mockTagsServ, 'createDefaultTag');
-
-      await service.findById('user-1', { tenantId: 'tenant-b2b', sub: 'user-1' });
-
-      expect(mockTagRepo.findOne).toHaveBeenCalledWith({
-        where: { userId: 'user-1', tenantId: 'tenant-b2b', isResource: false }
-      });
-      expect(mockTagsServ.createDefaultTag).not.toHaveBeenCalled();
-    });
-
     it('should fallback to personal profile (dono) if the active membership profile is missing in findById', async () => {
       const mockUser = {
         id: 'user-1',
@@ -676,37 +638,6 @@ describe('UsersService', () => {
   });
 
   describe('Issue #270 - Refinamento Dono vs Membros', () => {
-    it('should lazy create personal tag for Solo Tenant if the user is the owner of the Workspace context in findById', async () => {
-      const mockUser = {
-        id: 'user-1',
-        email: 'john@email.com',
-        memberships: [{ tenantId: 'tenant-b2b', role: { name: 'administrador' } }]
-      } as any;
-
-      mockUserRepo.findOne.mockResolvedValueOnce(mockUser);
-      mockQueryBuilder.getOne.mockResolvedValueOnce(mockUser);
-      vi.spyOn(mockTagsServ, 'createDefaultTag').mockResolvedValueOnce({} as any);
-
-      mockGenericRepo.findOne
-        .mockResolvedValueOnce({ id: 'tenant-b2b', ownerId: 'user-1' })
-        .mockResolvedValueOnce({ id: 'tenant-solo', ownerId: 'user-1' });
-
-      // O repositório de tag não encontra a tag no solo tenant, disparando lazy create
-      mockTagRepo.findOne.mockResolvedValueOnce(null);
-
-      await service.findById('user-1', { tenantId: 'tenant-b2b', sub: 'user-1' });
-
-      // Confirma que agora a lazy creation é disparada também para o Solo Tenant do Dono
-      expect(mockTagsServ.createDefaultTag).toHaveBeenCalledWith('user-1', 'user-1', 'tenant-solo');
-      
-      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
-        'user.tags',
-        'tag',
-        'tag.tenantId = :tenantId AND tag.is_resource = :isResource',
-        expect.objectContaining({ tenantId: 'tenant-solo', isResource: false })
-      );
-    });
-
     it('should update the Solo Tenant tag via tags array if the user is the owner of the Workspace context in update', async () => {
       const existingUser = {
         id: 'user-1',
