@@ -34,6 +34,7 @@ export class AuthService {
   readonly #decodedToken: WritableSignal<JwtPayload | null> = signal(null);
   readonly #userPermissions: WritableSignal<Set<string>> = signal(new Set());
   readonly #activeTenantId: WritableSignal<string | null> = signal(null);
+  readonly workspaces: WritableSignal<any[]> = signal([]);
 
   constructor() {
     console.log("[AuthService Constructor] Iniciando...");
@@ -56,6 +57,14 @@ export class AuthService {
   readonly userUsername = computed(() => this.#decodedToken()?.username);
   readonly userPicture = computed(() => this.#decodedToken()?.picture);
   readonly activeTenantId = computed(() => this.#activeTenantId());
+
+  readonly activeRole = computed(() => {
+    const activeId = this.#activeTenantId();
+    const wss = this.workspaces();
+    if (!activeId || wss.length === 0) return this.userRole();
+    const current = wss.find(w => w.tenantId === activeId);
+    return current?.role?.name || this.userRole();
+  });
 
   // --- Métodos de Autenticação ---
 
@@ -152,7 +161,9 @@ export class AuthService {
   // --- Métodos de Workspace (Multi-Tenant) ---
 
   getMyWorkspaces(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.BASE_PATH}/my-workspaces`);
+    return this.http.get<any[]>(`${this.BASE_PATH}/my-workspaces`).pipe(
+      tap(data => this.workspaces.set(data))
+    );
   }
 
   switchTenant(tenantId: string): void {
@@ -175,8 +186,8 @@ export class AuthService {
   // --- Métodos de Permissão e Role ---
 
   hasRole(role: string): boolean {
-    const userRole = this.userRole();
-    return userRole?.toLowerCase() === role.toLowerCase();
+    const roleName = this.activeRole();
+    return roleName?.toLowerCase() === role.toLowerCase();
   }
 
   hasPermission(permission: string): boolean {
