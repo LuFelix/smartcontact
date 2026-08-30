@@ -25,6 +25,7 @@ import { environment } from '../../../../environments/environment';
 export class MembersCardListComponent {
   @Input() members: FullUserResponse[] = [];
   @Input() isLoading = false;
+  @Input() isAdmin = false;
   @Output() delegateResources = new EventEmitter<FullUserResponse>();
   @Output() removeMember = new EventEmitter<FullUserResponse>();
 

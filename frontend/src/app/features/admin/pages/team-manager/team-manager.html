@@ -26,9 +26,12 @@
                             (search)="searchTerm = $event">
                         </app-search-bar>
 
-                        <button mat-flat-button color="primary" (click)="openInvitationDialog()">
-                            <mat-icon>person_add</mat-icon> Adicionar Membro
-                        </button>
+                        @if (isAdmin()) {
+                            <button mat-flat-button color="primary" (click)="openInvitationDialog()">
+                                <mat-icon>person_add</mat-icon> Adicionar Membro
+                            </button>
+                        }
+                            
                     </div>
 
                     @if (!isLoadingMembers && filteredMembers.length === 0) {
@@ -43,6 +46,7 @@
                         @if (layoutService.layout() === 'moderno') {
                             <app-members-card-list
                                 [members]="filteredMembers"
+                                [isAdmin]="isAdmin()"
                                 [isLoading]="isLoadingMembers"
                                 (delegateResources)="openDelegationDialog($event)"
                                 (removeMember)="removeMember($event)">
@@ -50,6 +54,7 @@
                         } @else {
                             <app-members-list-view
                                 [members]="filteredMembers"
+                                [isAdmin]="isAdmin()"
                                 [isLoading]="isLoadingMembers"
                                 (delegateResources)="openDelegationDialog($event)"
                                 (removeMember)="removeMember($event)">
