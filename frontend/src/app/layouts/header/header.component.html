@@ -44,7 +44,8 @@
 
                 @if (sharedWorkspaces().length > 0) {
                     
-                    <div class="menu-section-header" [class.with-divider]="myWorkspaces().length > 0">
+                    @if (myWorkspaces().length > 0) { <mat-divider></mat-divider> }
+                    <div class="menu-section-header">
                         <mat-icon class="section-icon" color="accent">group</mat-icon>
                         <span>Compartilhados Comigo</span>
                     </div>
@@ -60,6 +61,7 @@
                 }
 
                 
+                <mat-divider></mat-divider>
                 <button mat-menu-item disabled class="add-workspace-btn">
                     <mat-icon>add_circle_outline</mat-icon>
                     <span>Criar Novo Workspace (Premium)</span>
