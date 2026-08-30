@@ -108,9 +108,17 @@ export class TagsService {
           });
       }
 
-      // 2. Admin do Tenant vê apenas os recursos do seu workspace
+      // 2. Restrição ABAC: Membros comuns vêem apenas as tags delegadas a eles. Admin/Owner vê tudo.
+      const isAdminOrOwner = currentUser.role === 'administrador' || currentUser.role === 'owner';
+      
+      const whereCondition: any = { tenantId, isResource: true };
+      
+      if (!isAdminOrOwner) {
+          whereCondition.userId = currentUser.sub;
+      }
+
       return this.tagRepository.find({ 
-          where: { tenantId, isResource: true },
+          where: whereCondition,
           relations: ['user']
       });
   }
