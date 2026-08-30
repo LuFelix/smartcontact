@@ -339,5 +339,34 @@ describe('AuthService', () => {
       expect(teamService.resolveInvitation).toHaveBeenCalledWith('invite-123');
       expect(usersService.createMembershipForUser).toHaveBeenCalledWith('google-user-123', 'tenant-invited', 'role-invited');
     });
+
+  describe('getWorkspaces', () => {
+    it('should map isOwner correctly based on tenant ownerId', async () => {
+      const mockUser = { id: 'user-123', name: 'John Doe' };
+      mockUsersServ.findByEmail.mockResolvedValueOnce(mockUser);
+      
+      const mockWorkspaces = [
+        {
+          tenantId: 'tenant-1',
+          role: { name: 'administrador' },
+          tenant: { name: 'My Workspace', ownerId: 'user-123' },
+          profile: { ownerId: 'user-123' }
+        },
+        {
+          tenantId: 'tenant-2',
+          role: { name: 'membro' },
+          tenant: { name: 'Shared Workspace', ownerId: 'other-user' },
+          profile: { ownerId: 'user-123' } // Profile belongs to user, but tenant does not
+        }
+      ];
+      mockMembershipsServ.findTeamWorkspacesByUser.mockResolvedValueOnce(mockWorkspaces);
+
+      const result = await service.getWorkspaces('user-123', 'user@example.com');
+      
+      expect(result).toHaveLength(2);
+      expect(result[0].isOwner).toBe(true);
+      expect(result[1].isOwner).toBe(false);
+    });
+  });
   });
 });
