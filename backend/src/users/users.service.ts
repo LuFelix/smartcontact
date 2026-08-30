@@ -560,6 +560,7 @@ export class UsersService {
                             if (tagData.nfcCustomUrl !== undefined) tagToUpdate.nfcCustomUrl = tagData.nfcCustomUrl;
                             if (tagData.qrRedirectMode) tagToUpdate.qrRedirectMode = tagData.qrRedirectMode;
                             if (tagData.qrCustomUrl !== undefined) tagToUpdate.qrCustomUrl = tagData.qrCustomUrl;
+                            tagToUpdate.user = { id: user!.id } as any;
                             await this.tagRepository.save(tagToUpdate);
                         }
                     }
@@ -567,6 +568,7 @@ export class UsersService {
             }
         }
 
+        delete (user! as any).tags;
         await this.usersRepository.save(user!);
 
         // --- ATUALIZAÇÃO DE ROLE (Via Membership) ---
@@ -584,8 +586,8 @@ export class UsersService {
             }
         }
 
-        // FORÇA O RECARREGAMENTO TOTAL DO BANCO para garantir que as novas memberships/roles sejam lidas
-        const updatedUser = await this.findByEmail(user!.email as string, currentUser); 
+        // FORÇA O RECARREGAMENTO TOTAL DO BANCO para garantir que as novas memberships/roles e tags sejam lidas no contexto correto
+        const updatedUser = await this.findById(user!.id, currentUser); 
         return updatedUser as User;
     }
 

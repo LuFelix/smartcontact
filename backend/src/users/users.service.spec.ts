@@ -352,6 +352,14 @@ describe('UsersService', () => {
           id: 'tag-personal',
           nfcRedirectMode: 'custom',
           nfcCustomUrl: 'https://newurl.com',
+          user: { id: 'user-123' } // GARANTE QUE A TAG NÃO FICA ÓRFÃ
+        })
+      );
+      
+      // GARANTE QUE AS TAGS FORAM DELETADAS DO OBJETO USUÁRIO ANTES DO SAVE (PREVINE BUG DE RELAÇÃO DO TYPEORM)
+      expect(mockUserRepo.save).toHaveBeenCalledWith(
+        expect.not.objectContaining({
+          tags: expect.anything()
         })
       );
     });
