@@ -334,7 +334,7 @@ export class AuthService {
     // Fallback: Verifica se o nome do tenant foi gerado automaticamente com o nome do usuário (Workspace Pessoal)
     return workspaces.map(ws => ({
         ...ws,
-        isOwner: ws.profile?.ownerId === userId || (user && ws.tenant.name.startsWith(user.name))
+        isOwner: ws.profile?.ownerId === userId || (user && user.name && user.name.trim().length > 0 && ws.tenant.name.startsWith(user.name))
     }));
   }
 
