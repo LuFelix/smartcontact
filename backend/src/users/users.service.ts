@@ -560,6 +560,7 @@ export class UsersService {
                             if (tagData.nfcCustomUrl !== undefined) tagToUpdate.nfcCustomUrl = tagData.nfcCustomUrl;
                             if (tagData.qrRedirectMode) tagToUpdate.qrRedirectMode = tagData.qrRedirectMode;
                             if (tagData.qrCustomUrl !== undefined) tagToUpdate.qrCustomUrl = tagData.qrCustomUrl;
+                            tagToUpdate.user = { id: user!.id } as any;
                             await this.tagRepository.save(tagToUpdate);
                         }
                     }
