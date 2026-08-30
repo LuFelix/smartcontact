@@ -151,11 +151,22 @@ describe('TagsService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('should return tags for the tenant', async () => {
+    it('should return all tags for the tenant if user is administrador', async () => {
       mockTagRepo.find.mockResolvedValueOnce([{ id: 'tag-1', isResource: true }]);
-      const result = await service.findAll({ isSuperAdmin: false }, 'tenant-1');
+      const result = await service.findAll({ sub: 'admin-1', role: 'administrador', isSuperAdmin: false }, 'tenant-1');
       expect(result).toHaveLength(1);
-      expect(mockTagRepo.find).toHaveBeenCalled();
+      expect(mockTagRepo.find).toHaveBeenCalledWith(expect.objectContaining({
+         where: { tenantId: 'tenant-1', isResource: true }
+      }));
+    });
+
+    it('should return ONLY tags linked to the user if user is a common membro', async () => {
+      mockTagRepo.find.mockResolvedValueOnce([{ id: 'tag-2', isResource: true, userId: 'membro-1' }]);
+      const result = await service.findAll({ sub: 'membro-1', role: 'membro', isSuperAdmin: false }, 'tenant-1');
+      expect(result).toHaveLength(1);
+      expect(mockTagRepo.find).toHaveBeenCalledWith(expect.objectContaining({
+         where: { tenantId: 'tenant-1', isResource: true, userId: 'membro-1' }
+      }));
     });
   });
 
