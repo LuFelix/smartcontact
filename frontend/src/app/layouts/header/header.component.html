@@ -36,7 +36,7 @@
                             <mat-icon [class.invisible-icon]="ws.tenantId !== activeTenantId()" color="primary">check</mat-icon>
                             <div class="ws-item-content">
                                 <span class="ws-name">{{ ws.tenant?.name }}</span>
-                                <span class="ws-badge badge-owner">Dono</span>
+                                <span class="ws-badge badge-owner">{{ ws.role?.name | uppercase }}</span>
                             </div>
                         </button>
                     }
