@@ -14,7 +14,7 @@ describe('TeamManagerComponent', () => {
 
   beforeEach(() => {
     mockAuthService = {
-      activeRole: signal('usuario')
+      userRole: signal('usuario')
     };
 
     TestBed.configureTestingModule({
@@ -32,18 +32,18 @@ describe('TeamManagerComponent', () => {
   });
 
   it('should evaluate isAdmin as false for common users/members', () => {
-    mockAuthService.activeRole.set('usuario');
+    mockAuthService.userRole.set('usuario');
     expect(component.isAdmin()).toBe(false);
 
-    mockAuthService.activeRole.set('membro');
+    mockAuthService.userRole.set('membro');
     expect(component.isAdmin()).toBe(false);
   });
 
   it('should evaluate isAdmin as true for administrators or owners', () => {
-    mockAuthService.activeRole.set('administrador');
+    mockAuthService.userRole.set('administrador');
     expect(component.isAdmin()).toBe(true);
 
-    mockAuthService.activeRole.set('owner');
+    mockAuthService.userRole.set('owner');
     expect(component.isAdmin()).toBe(true);
   });
 });

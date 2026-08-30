@@ -58,7 +58,7 @@ import { FormsModule } from '@angular/forms';
 export class TeamManagerComponent implements OnInit {
   private authService = inject(AuthService);
   public isAdmin = computed(() => {
-    const role = this.authService.activeRole();
+    const role = this.authService.userRole();
     return role === 'administrador' || role === 'owner';
   });
 
