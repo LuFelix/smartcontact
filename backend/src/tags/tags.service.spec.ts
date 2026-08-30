@@ -160,13 +160,12 @@ describe('TagsService', () => {
       }));
     });
 
-    it('should return ONLY tags linked to the user if user is a common membro', async () => {
-      mockTagRepo.find.mockResolvedValueOnce([{ id: 'tag-2', isResource: true, userId: 'membro-1' }]);
+    it('should return ONLY delegated tags if user is a common membro', async () => {
+      const mockTags = [{ id: 'tag-2', isResource: true }];
+      mockQueryBuilder.getMany.mockResolvedValueOnce(mockTags);
       const result = await service.findAll({ sub: 'membro-1', role: 'membro', isSuperAdmin: false }, 'tenant-1');
-      expect(result).toHaveLength(1);
-      expect(mockTagRepo.find).toHaveBeenCalledWith(expect.objectContaining({
-         where: { tenantId: 'tenant-1', isResource: true, userId: 'membro-1' }
-      }));
+      expect(result).toEqual(mockTags);
+      expect(mockQueryBuilder.innerJoin).toHaveBeenCalledWith('user_resources_permissions', 'urp', 'tag.id = urp.tag_id');
     });
   });
 
