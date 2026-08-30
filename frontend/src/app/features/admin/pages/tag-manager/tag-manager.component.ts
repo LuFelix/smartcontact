@@ -56,7 +56,7 @@ export class TagManagerComponent implements OnInit {
   searchTerm = '';
 
   get isAdmin(): boolean {
-    return this.authService.hasRole('administrador');
+    return this.authService.hasRole('administrador') || this.authService.hasRole('owner');
   }
 
   constructor() {
