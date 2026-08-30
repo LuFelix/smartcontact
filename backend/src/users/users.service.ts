@@ -584,8 +584,8 @@ export class UsersService {
             }
         }
 
-        // FORÇA O RECARREGAMENTO TOTAL DO BANCO para garantir que as novas memberships/roles sejam lidas
-        const updatedUser = await this.findByEmail(user!.email as string, currentUser); 
+        // FORÇA O RECARREGAMENTO TOTAL DO BANCO para garantir que as novas memberships/roles e tags sejam lidas no contexto correto
+        const updatedUser = await this.findById(user!.id, currentUser); 
         return updatedUser as User;
     }
 
