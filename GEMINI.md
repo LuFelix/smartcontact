@@ -60,6 +60,9 @@ O sistema opera em um paradigma Multi-Tenant N:N (estilo Google Drive).
 - [x] **PASSO AB (Issue #256):** Migração e Setup da Suite de Testes do Frontend para Vitest (OK).
 - [x] **PASSO AC (Issue #257):** Implementação de Testes Unitários e Integração no Backend com 95% de Cobertura (OK).
 - [x] **PASSO AD (Issue #258):** Implementação de Testes Unitários no Frontend - Vitest setup estabilizado (pool forks), 17 arquivos e 44 specs verdes (100% de sucesso), e cobertura fina de core services e smart components (OK).
+- [x] **PASSO AE (Issue #267):** Correção de Colisão e Fallback de Tags do Perfil — QueryBuilder com OR no findById, defaultTag global no UsersService e restrição isResource no resolveTag (OK).
+- [x] **PASSO AF (Issue #270):** Lazy-Create & Fallback de Perfil de Dono — Garantia de tag pessoal ativa no Workspace de contexto B2B e fallback de perfil para manter consistência visual (OK).
+- [x] **PASSO AG (Issue #286):** Fix do Erro 500 no Salvamento de Perfil (Falso Negativo) — Isolamento correto do ownerId no interceptor/jwt strategy. (OK).
 - [ ] **PRÓXIMOS PASSOS (Backlog Prioritário - issues-todo.json):**
   - #259: Pipeline de CI/CD com Barreira de Cobertura Mínima de 95% - CI/QA
   - #169: Módulo de Gestão Administrativa de Tenants (Workspaces) - BE/FE
