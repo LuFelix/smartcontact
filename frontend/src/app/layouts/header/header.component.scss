@@ -81,6 +81,10 @@
         text-transform: uppercase;
         color: var(--mat-sys-on-surface-variant);
         letter-spacing: 0.5px;
+        &.with-divider {
+            border-top: 1px solid var(--mat-sys-outline-variant);
+            margin-top: 8px;
+        }
         gap: 8px;
 
         .section-icon {
@@ -119,6 +123,10 @@
             display: inline-block;
             width: fit-content;
             letter-spacing: 0.5px;
+        &.with-divider {
+            border-top: 1px solid var(--mat-sys-outline-variant);
+            margin-top: 8px;
+        }
         }
 
         .badge-owner {
