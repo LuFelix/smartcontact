@@ -568,6 +568,7 @@ export class UsersService {
             }
         }
 
+        delete (user! as any).tags;
         await this.usersRepository.save(user!);
 
         // --- ATUALIZAÇÃO DE ROLE (Via Membership) ---
