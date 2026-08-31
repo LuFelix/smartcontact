@@ -95,7 +95,7 @@ export class TagManagerComponent implements OnInit {
       maxWidth: '95vw',
       panelClass: 'large-abac-modal',
       autoFocus: false,
-      data: { tag }
+      data: { tag, isAdmin: this.isAdmin }
     });
 
     dialogRef.afterClosed().subscribe(() => {
