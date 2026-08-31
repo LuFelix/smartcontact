@@ -1,4 +1,5 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, computed } from '@angular/core';
+import { AuthService } from '../../../../core/services/auth.service';
 import { CommonModule } from '@angular/common';
 import { TeamService } from '../../../../core/services/team.service';
 import { LayoutService } from '../../../../core/services/layout.service';
@@ -55,6 +56,12 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './team-manager.scss'
 })
 export class TeamManagerComponent implements OnInit {
+  private authService = inject(AuthService);
+  public isAdmin = computed(() => {
+    const role = this.authService.userRole();
+    return role === 'administrador' || role === 'owner';
+  });
+
   private teamService = inject(TeamService);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);

@@ -80,14 +80,14 @@ import { Tag } from '../../../shared/models/users.models';
                 *ngIf="tag.technologyType === 'NFC_HF' || tag.technologyType === 'RFID_UHF'">
                 <mat-icon>near_me</mat-icon>
               </button>
-              <button mat-icon-button color="primary" class="icon-align-fix" matTooltip="Editar" (click)="editTag.emit(tag)" *ngIf="isAdmin">
-                <mat-icon>edit</mat-icon>
+              <button mat-icon-button color="primary" class="icon-align-fix" [matTooltip]="isAdmin ? 'Editar' : 'Ver Detalhes'" (click)="editTag.emit(tag)">
+                <mat-icon>{{ isAdmin ? 'edit' : 'visibility' }}</mat-icon>
               </button>
               <button mat-icon-button color="warn" class="icon-align-fix" matTooltip="Excluir" (click)="deleteTag.emit(tag)" *ngIf="isAdmin">
                 <mat-icon>delete</mat-icon>
               </button>
             </div>
-            <span *ngIf="!isAdmin" class="text-muted">Somente Leitura</span>
+            
           </td>
         </ng-container>
 

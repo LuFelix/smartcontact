@@ -206,6 +206,26 @@ describe('AuthService', () => {
       expect(res).toEqual(workspaces);
     });
 
+    
+    it('should compute activeRole dynamically based on active tenant and loaded workspaces', async () => {
+      localStorage.setItem('auth_token', 'token');
+      const service = TestBed.inject(AuthService);
+      
+      // By default, it falls back to token role
+      expect(service.activeRole()).toBe('administrador');
+
+      // Set workspaces where the user is 'membro' in 'tenant-new'
+      service.workspaces.set([
+         { tenantId: 'tenant-new', role: { name: 'membro' } }
+      ]);
+      
+      service.switchTenant('tenant-new');
+
+      expect(service.activeRole()).toBe('membro');
+      expect(service.hasRole('membro')).toBe(true);
+      expect(service.hasRole('administrador')).toBe(false);
+    });
+
     it('should switch tenant', () => {
       const service = TestBed.inject(AuthService);
       service.switchTenant('tenant-new');

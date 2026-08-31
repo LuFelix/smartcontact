@@ -4,6 +4,7 @@ import { TagsService } from './tags.service';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Roles } from 'src/auth/decorators/roles.decorator';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
@@ -36,7 +37,8 @@ export class TagsController {
   }
 
   @ApiBearerAuth()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('administrador', 'owner')
   @Post()
   @ApiOperation({ summary: 'Cadastra uma nova tag no estoque do Workspace (Apenas Admin)' })
   @ApiBody({ type: CreateTagDto })

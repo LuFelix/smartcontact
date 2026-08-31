@@ -1,4 +1,4 @@
-import { Component, Inject, inject, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, Inject, inject, AfterViewInit, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule, MatDialog } from '@angular/material/dialog';
@@ -58,7 +58,7 @@ export class QrFullscreenDialogComponent {
     MatSnackBarModule
   ],
   template: `
-    <h2 mat-dialog-title>{{ data.tag ? 'Editar Recurso' : 'Cadastrar Novo Recurso' }}</h2>
+    <h2 mat-dialog-title>{{ data.tag ? (data.isAdmin !== false ? 'Editar Recurso' : 'Detalhes do Recurso') : 'Cadastrar Novo Recurso' }}</h2>
     <mat-dialog-content>
       <div class="dialog-layout">
         <div class="form-section">
@@ -172,7 +172,7 @@ export class QrFullscreenDialogComponent {
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button (click)="onCancel()" type="button">Fechar</button>
-      <button mat-flat-button color="primary" [disabled]="tagForm.invalid || isSaving" (click)="onSave()" type="button">
+      <button *ngIf="data.isAdmin !== false" mat-flat-button color="primary" [disabled]="tagForm.invalid || isSaving" (click)="onSave()" type="button">
         {{ data.tag ? 'Atualizar Recurso' : 'Salvar Recurso' }}
       </button>
     </mat-dialog-actions>
@@ -333,7 +333,7 @@ export class QrFullscreenDialogComponent {
     }
   `]
 })
-export class TagDialogComponent implements AfterViewInit {
+export class TagDialogComponent implements AfterViewInit, OnInit {
   private fb = inject(FormBuilder);
   private dialogRef = inject(MatDialogRef<TagDialogComponent>);
   private dialog = inject(MatDialog);
@@ -347,7 +347,7 @@ export class TagDialogComponent implements AfterViewInit {
   appTypes = ApplicationType;
   isSaving = false;
 
-  constructor(@Inject(MAT_DIALOG_DATA) public data: { tag?: Tag }) {
+  constructor(@Inject(MAT_DIALOG_DATA) public data: { tag?: Tag, isAdmin?: boolean }) {
     this.tagForm = this.fb.group({
       uid: [data.tag?.uid || ''],
       name: [data.tag?.name || '', [Validators.required]],
@@ -414,6 +414,13 @@ export class TagDialogComponent implements AfterViewInit {
 
     // RFID_UHF: etiqueta grava /t/{handle}?source=rfid (analytics)
     return window.location.origin + '/t/' + ident + '?source=rfid';
+  }
+
+  
+  ngOnInit() {
+    if (this.data.isAdmin === false) {
+      this.tagForm.disable();
+    }
   }
 
   ngAfterViewInit() {

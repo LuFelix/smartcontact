@@ -39,6 +39,7 @@ describe('AuthService', () => {
 
   const mockUsersServ = {
     findByEmail: vi.fn(),
+    findById: vi.fn(),
     findByCpf: vi.fn(),
     create: vi.fn(),
     markEmailAsVerified: vi.fn(),
@@ -361,7 +362,7 @@ describe('AuthService', () => {
       ];
       mockMembershipsServ.findTeamWorkspacesByUser.mockResolvedValueOnce(mockWorkspaces);
 
-      const result = await service.getWorkspaces('user-123', 'user@example.com');
+      const result = await service.getMyWorkspaces('user-123');
       
       expect(result).toHaveLength(2);
       expect(result[0].isOwner).toBe(true);
