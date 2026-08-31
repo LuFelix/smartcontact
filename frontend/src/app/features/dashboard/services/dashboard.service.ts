@@ -24,6 +24,9 @@ export interface DashboardSummary {
   byDevice: DashboardBreakdownItem[];
   byBrowser: DashboardBreakdownItem[];
   bySource: DashboardBreakdownItem[];
+  byCity: DashboardBreakdownItem[];
+  byRegion: DashboardBreakdownItem[];
+  byCountry: DashboardBreakdownItem[];
 }
 
 export interface RecentRead {

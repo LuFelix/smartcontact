@@ -1,33 +1,41 @@
-# Plano TDD - Backend Captura GeoIP e Analytics Persistente na TagReadLog (Issue #302)
+# Plano TDD - Frontend Dashboard Analytics (Geo & Devices) - Issue #303
 
-## 1. Pacotes a Instalar
-- `geoip-lite` e `ua-parser-js` (e seus `@types`).
+## 1. Objetivo Visual e Funcional
+- Exibir aos usuários corporativos e premium (B2B) informações riquíssimas e visuais de **Onde** e **Como** as tags estão sendo lidas.
+- Impressionar visualmente: Gráficos de fácil leitura, interativos (ApexCharts) e bonitos com base nos tokens do Angular Material 3.
 
-## 2. Modificações na Entidade (`interaction-log.entity.ts`)
-- Adicionar colunas `country`, `region`, `city` (tipo `varchar`, `nullable: true`).
+## 2. Modificações na Tipagem (Modelos)
+- Arquivo alvo: `frontend/src/app/core/models/analytics.model.ts`
+- Adicionar interfaces para o retorno geográfico e de devices:
+  ```typescript
+  export interface AnalyticsMetric { name: string; count: number; }
+  export interface AnalyticsSummary {
+    ...
+    byDevice: AnalyticsMetric[];
+    byBrowser: AnalyticsMetric[];
+    byCity: AnalyticsMetric[];
+    byRegion: AnalyticsMetric[];
+    byCountry: AnalyticsMetric[];
+  }
+  ```
 
-## 3. Modificações no Serviço (`interaction-logs.service.ts`)
-- Alterar o `logVisit` e `captureLead` para usar `geoip.lookup(metadata.ip)`.
-- Alterar a extração de User-Agent para utilizar o `UAParser` (da biblioteca `ua-parser-js`), preenchendo corretamente `deviceType` e `browser`, além de associar os dados geográficos `country`, `region`, `city` no momento de salvar.
+## 3. Modificações no Componente Smart (Dashboard)
+- Arquivos alvo: `dashboard.component.ts` e `dashboard.component.html` (e/ou criar um componente "Dumb" de GeoAnalytics).
+- Processar os novos dados da API (`summary()`) para o formato lido pelo `ApexCharts`.
 
-## 4. Modificações em Analytics (`analytics.service.ts`)
-- No método `getSummary()`, adicionar novas métricas usando a função interna `breakdown`:
-  - `byCity`: agregação de `log.city`
-  - `byRegion`: agregação de `log.region`
-  - `byCountry`: agregação de `log.country`
+## 4. Estruturação dos Gráficos (Apresentação - Impressionante)
+Vamos criar 3 novos painéis na interface:
+1. **Gráfico de Dispositivos (Rosca/Donut):** Mostrando a divisão entre Mobile, Tablet e Desktop.
+2. **Gráfico de Navegadores (Rosca/Donut ou Barras Horizontais):** Firefox, Chrome, Safari, etc.
+3. **Top Cidades/Regiões (Barra Horizontal Ranking):** Uma tabela estilizada ou gráfico de barras horizontais rankeando as Top 5 Cidades e Países com maior engajamento.
 
-## 5. Testes Unitários (TDD)
-- Criar o arquivo `interaction-logs.service.spec.ts` que validará a lógica principal:
-  - Mock de `geoip-lite` retornando um lookup fake (ex: BR, SP, São Paulo).
-  - Mock de `ua-parser-js` retornando device e browser.
-  - Teste 1: `should extract and save geo and user-agent data correctly in logVisit`.
-  - Teste 2: `should handle missing or unresolvable IPs gracefully (saving nulls for geo)`.
-- Criar o arquivo `analytics.service.spec.ts` para validar se as agregações geográficas foram incluídas no retorno final.
+## 5. Testes Unitários (Vitest - Phase RED)
+- Testar a injeção do modelo atualizado.
+- Atualizar os mocks do serviço `AnalyticsService` para devolverem dados de `byCity`, `byRegion` e `byDevice`.
+- O teste do `dashboard.component.spec.ts` precisará validar a montagem da _Series_ do ApexChart para esses novos dados sem quebrar.
 
-## 6. Fluxo de Execução
-1. Instalar as libs.
-2. Criar e rodar testes para `InteractionLogsService` -> Falhar (RED).
-3. Implementar entidade e lógica de serviço -> Passar (GREEN).
-4. Criar e rodar testes para `AnalyticsService` -> Falhar (RED).
-5. Implementar agregação geográfica -> Passar (GREEN).
-6. Commit e PR!
+## 6. Fluxo de Trabalho
+1. Aprovação do plano pelo usuário.
+2. **Commit Atômico** isolado do arquivo `plano.md`.
+3. Início da fase TDD (RED -> GREEN) nas tipagens e componente.
+4. Refinamento visual da tela (garantindo que fique com alto impacto B2B).
