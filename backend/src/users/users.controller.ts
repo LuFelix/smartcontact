@@ -73,7 +73,17 @@ export class UsersController {
         return user;
     }
 
-    @Patch(':id')
+    
+  @Post(':id/initialize-profile')
+  @ApiOperation({ summary: 'Inicializa a Tag de Perfil do usuário para o Tenant atual (Contingência)' })
+  async initializeProfile(@Param('id', ParseUUIDPipe) id: string, @GetUser() currentUser: any, @Headers('x-tenant-id') tenantId: string) {
+      if (id !== currentUser?.sub && !currentUser?.isSuperAdmin) {
+          throw new ForbiddenException('Apenas o próprio usuário pode inicializar seu perfil.');
+      }
+      return this.usersService.ensureUserHasDefaultTagForTenant(id, tenantId);
+  }
+
+  @Patch(':id')
     @ApiOperation({ summary: 'Atualiza parcialmente um usuário' })
     @ApiParam({ name: 'id', type: String })
     @ApiBody({ type: UpdateUserDto })
