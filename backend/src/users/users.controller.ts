@@ -1,4 +1,4 @@
-import { Body, Controller, Get, NotFoundException, Param, Patch, UseGuards, Delete, Query, ParseUUIDPipe, Post, Req, Put } from '@nestjs/common';
+import { Body, Controller, Get, NotFoundException, Param, Patch, UseGuards, Delete, Query, ParseUUIDPipe, Post, Req, Put, Headers, ForbiddenException } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -73,7 +73,17 @@ export class UsersController {
         return user;
     }
 
-    @Patch(':id')
+    
+  @Post(':id/initialize-profile')
+  @ApiOperation({ summary: 'Inicializa a Tag de Perfil do usuário para o Tenant atual (Contingência)' })
+  async initializeProfile(@Param('id', ParseUUIDPipe) id: string, @GetUser() currentUser: any, @Headers('x-tenant-id') tenantId: string) {
+      if (id !== currentUser?.sub && !currentUser?.isSuperAdmin) {
+          throw new ForbiddenException('Apenas o próprio usuário pode inicializar seu perfil.');
+      }
+      return this.usersService.ensureUserHasDefaultTagForTenant(id, tenantId);
+  }
+
+  @Patch(':id')
     @ApiOperation({ summary: 'Atualiza parcialmente um usuário' })
     @ApiParam({ name: 'id', type: String })
     @ApiBody({ type: UpdateUserDto })

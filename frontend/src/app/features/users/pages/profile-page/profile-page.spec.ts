@@ -57,7 +57,8 @@ describe('ProfileComponent', () => {
         nfcRedirectMode: RedirectMode.PROFILE,
         nfcCustomUrl: '',
         qrRedirectMode: RedirectMode.PROFILE,
-        qrCustomUrl: ''
+        qrCustomUrl: '',
+        tenantId: 'tenant-1'
       } as Tag
     ]
   } as FullUserResponse;
@@ -142,6 +143,54 @@ describe('ProfileComponent', () => {
       newFixture.detectChanges();
 
       expect(mockSnackBar.open).toHaveBeenCalledWith('Erro ao carregar seu perfil.', 'Fechar', { duration: 5000 });
+    });
+
+    it('should set needsInitialization to true when user has no tags', () => {
+      const userWithoutTags = { ...mockUser, tags: [] };
+      mockUserService.findById.mockReturnValueOnce(of(userWithoutTags));
+      const newFixture = TestBed.createComponent(ProfileComponent);
+      newFixture.detectChanges();
+      
+      expect(newFixture.componentInstance.needsInitialization).toBe(true);
+    });
+
+    it('should set needsInitialization to true when user has tags but none for active tenant', () => {
+      const userWithWrongTenantTag = { ...mockUser, tags: [{ ...mockUser.tags[0], tenantId: 'wrong-tenant' }] };
+      mockUserService.findById.mockReturnValueOnce(of(userWithWrongTenantTag));
+      const newFixture = TestBed.createComponent(ProfileComponent);
+      newFixture.detectChanges();
+      
+      expect(newFixture.componentInstance.needsInitialization).toBe(true);
+    });
+  });
+
+  describe('initializeProfile', () => {
+    it('should call initialize profile endpoint and reload data on success', () => {
+      const mockHttp = {
+        post: vi.fn().mockReturnValue(of({ message: 'Success' }))
+      };
+      (component as any).http = mockHttp;
+      const loadInitialProfileSpy = vi.spyOn(component as any, 'loadInitialProfile').mockImplementation(() => {});
+
+      component.initializeProfile();
+
+      expect(component.isLoading).toBe(true);
+      expect(mockHttp.post).toHaveBeenCalledWith('/api/users/user-123/initialize-profile', {});
+      expect(mockSnackBar.open).toHaveBeenCalledWith('Perfil inicializado com sucesso!', 'Fechar', { duration: 3000 });
+      expect(loadInitialProfileSpy).toHaveBeenCalled();
+    });
+
+    it('should handle initialization error', () => {
+      const mockHttp = {
+        post: vi.fn().mockReturnValue(throwError(() => new Error('Error')))
+      };
+      (component as any).http = mockHttp;
+
+      component.initializeProfile();
+
+      expect(mockHttp.post).toHaveBeenCalledWith('/api/users/user-123/initialize-profile', {});
+      expect(mockSnackBar.open).toHaveBeenCalledWith('Erro ao inicializar perfil.', 'Fechar', { duration: 5000 });
+      expect(component.isLoading).toBe(false);
     });
   });
 
