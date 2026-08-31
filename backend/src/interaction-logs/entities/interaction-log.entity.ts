@@ -67,6 +67,15 @@ export class InteractionLog {
   @Column({ type: 'varchar', name: 'browser', nullable: true })
   browser!: string | null;
 
+  @Column({ type: 'varchar', name: 'country', nullable: true })
+  country!: string | null;
+
+  @Column({ type: 'varchar', name: 'region', nullable: true })
+  region!: string | null;
+
+  @Column({ type: 'varchar', name: 'city', nullable: true })
+  city!: string | null;
+
   @Column({ type: 'varchar', nullable: true })
   source!: string | null;
 
