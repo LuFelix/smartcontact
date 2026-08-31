@@ -4,6 +4,8 @@ import { Repository, In } from 'typeorm';
 import { InteractionLog, InteractionType } from './entities/interaction-log.entity';
 import { UserTagAccess } from 'src/tags/entities/user-tag-access.entity';
 import { Tag } from 'src/tags/entities/tag.entity';
+import geoip from 'geoip-lite';
+import { UAParser } from 'ua-parser-js';
 
 @Injectable()
 export class InteractionLogsService {
@@ -24,10 +26,12 @@ export class InteractionLogsService {
     let parsedBrowser = metadata.browser;
 
     if (!parsedDevice || !parsedBrowser) {
-      const parsed = this.parseUA(metadata.userAgent);
+      const parsed = this.parseMetadata(metadata.ip, metadata.userAgent);
       parsedDevice = parsedDevice || parsed.device;
       parsedBrowser = parsedBrowser || parsed.browser;
     }
+
+    const geo = this.getGeoData(metadata.ip);
 
     const log = this.interactionLogRepository.create({
       tagId,
@@ -36,6 +40,9 @@ export class InteractionLogsService {
       userAgent: metadata.userAgent,
       deviceType: parsedDevice,
       browser: parsedBrowser,
+      country: geo.country,
+      region: geo.region,
+      city: geo.city,
       source: metadata.source || null,
       tenantId: metadata.tenantId || null,
     });
@@ -52,7 +59,8 @@ export class InteractionLogsService {
           select: ['userId'] 
       });
 
-      const parsed = this.parseUA(metadata.userAgent);
+      const parsed = this.parseMetadata(metadata.ip, metadata.userAgent);
+      const geo = this.getGeoData(metadata.ip);
 
       const log = this.interactionLogRepository.create({
           tagId,
@@ -65,38 +73,46 @@ export class InteractionLogsService {
           userAgent: metadata.userAgent,
           deviceType: parsed.device,
           browser: parsed.browser,
+          country: geo.country,
+          region: geo.region,
+          city: geo.city,
           capturedByUserId: tag?.userId || null
       });
       return this.interactionLogRepository.save(log);
   }
 
-  private parseUA(ua: string): { device: string; browser: string } {
-    if (!ua || ua === 'unknown') {
+  private parseMetadata(ip: string, uaString: string): { device: string; browser: string } {
+    if (!uaString || uaString === 'unknown') {
       return { device: 'Desktop', browser: 'Outros' };
     }
-    const uaLower = ua.toLowerCase();
     
-    // Device detection
-    let device = 'Desktop';
-    if (uaLower.includes('mobi') || uaLower.includes('android') || uaLower.includes('iphone') || uaLower.includes('ipad')) {
-      device = 'Mobile';
-    }
-
-    // Browser detection
-    let browser = 'Chrome';
-    if (uaLower.includes('edg/')) {
-      browser = 'Edge';
-    } else if (uaLower.includes('firefox') || uaLower.includes('fxios')) {
-      browser = 'Firefox';
-    } else if (uaLower.includes('chrome') || uaLower.includes('crios')) {
-      browser = 'Chrome';
-    } else if (uaLower.includes('safari') && !uaLower.includes('android')) {
-      browser = 'Safari';
+    const parser = new UAParser(uaString);
+    const browserName = parser.getBrowser().name || 'Outros';
+    
+    let deviceType = parser.getDevice().type;
+    // ua-parser-js returns undefined for desktop usually, or 'mobile', 'tablet'
+    if (!deviceType) {
+      deviceType = 'Desktop';
     } else {
-      browser = 'Outros';
+      deviceType = deviceType.charAt(0).toUpperCase() + deviceType.slice(1); // Mobile, Tablet
     }
 
-    return { device, browser };
+    return { device: deviceType, browser: browserName };
+  }
+
+  private getGeoData(ip: string): { country: string | null; region: string | null; city: string | null } {
+    if (!ip || ip === '127.0.0.1' || ip === '::1') {
+      return { country: null, region: null, city: null };
+    }
+    const geo = geoip.lookup(ip);
+    if (geo) {
+      return {
+        country: geo.country || null,
+        region: geo.region || null,
+        city: geo.city || null,
+      };
+    }
+    return { country: null, region: null, city: null };
   }
 
   /**

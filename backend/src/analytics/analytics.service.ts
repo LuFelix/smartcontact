@@ -24,7 +24,7 @@ export class AnalyticsService {
       baseQuery.andWhere('(tag.ownerId = :userId OR tag.userId = :userId)', { userId });
     }
 
-    const [totalReads, totalLeads, readsToday, readsThisWeek, leadsThisWeek, trend, byDevice, byBrowser, bySource] =
+    const [totalReads, totalLeads, readsToday, readsThisWeek, leadsThisWeek, trend, byDevice, byBrowser, bySource, byCity, byRegion, byCountry] =
       await Promise.all([
         this.countByType(baseQuery, InteractionType.VISIT),
         this.countByType(baseQuery, InteractionType.LEAD),
@@ -35,9 +35,12 @@ export class AnalyticsService {
         this.breakdown(baseQuery, 'deviceType'),
         this.breakdown(baseQuery, 'browser'),
         this.bySource(baseQuery),
+        this.breakdown(baseQuery, 'city'),
+        this.breakdown(baseQuery, 'region'),
+        this.breakdown(baseQuery, 'country'),
       ]);
 
-    return { totalReads, totalLeads, readsToday, readsThisWeek, leadsThisWeek, trend, byDevice, byBrowser, bySource };
+    return { totalReads, totalLeads, readsToday, readsThisWeek, leadsThisWeek, trend, byDevice, byBrowser, bySource, byCity, byRegion, byCountry };
   }
 
   async getRecentReads(tenantId: string | null, userId: string, role: string, isSuperAdmin: boolean) {
@@ -143,8 +146,15 @@ export class AnalyticsService {
     return rows.map(r => ({ name: r.name, count: Number(r.count) }));
   }
 
-  private async breakdown(qb: ReturnType<typeof this.logRepository.createQueryBuilder>, column: 'deviceType' | 'browser') {
-    const colName = column === 'deviceType' ? 'device_type' : 'browser';
+  private async breakdown(qb: ReturnType<typeof this.logRepository.createQueryBuilder>, column: 'deviceType' | 'browser' | 'city' | 'region' | 'country') {
+    const colNameMap: Record<string, string> = {
+      deviceType: 'device_type',
+      browser: 'browser',
+      city: 'city',
+      region: 'region',
+      country: 'country'
+    };
+    const colName = colNameMap[column];
 
     const rows = await qb.clone()
       .select(`log.${column}`, 'name')

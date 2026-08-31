@@ -61,8 +61,29 @@
       </div>
     </div>
 
-    <!-- Details Grid Row 2 -->
-    <div class="details-grid-row-2">
+    <!-- Charts Grid Row 2 -->
+    <div class="charts-grid-row-2">
+      <div class="geo-chart-container">
+        <app-analytics-chart-card
+          title="Top Regiões (Geolocalização)"
+          [isLoading]="isLoading()"
+          [error]="error()"
+          [chartOptions]="geoChartOptions()"
+        ></app-analytics-chart-card>
+      </div>
+
+      <div class="devices-chart-container">
+        <app-analytics-chart-card
+          title="Sistemas e Dispositivos"
+          [isLoading]="isLoading()"
+          [error]="error()"
+          [chartOptions]="devicesChartOptions()"
+        ></app-analytics-chart-card>
+      </div>
+    </div>
+
+    <!-- Details Grid Row 3 -->
+    <div class="details-grid-row-3">
       @if (isAdmin()) {
         <div class="team-ranking-container">
           <app-analytics-chart-card
@@ -78,44 +99,13 @@
         <app-interaction-list [items]="recentReads()" />
       </div>
 
-      <div class="breakdown-tabs-container">
-        <mat-card class="breakdown-tabs-card">
-          <mat-tab-group>
-            <mat-tab label="Dispositivos">
-              <div class="tab-content">
-                @if (byDevicePreview().length > 0) {
-                  <div class="breakdown-list">
-                    @for (item of byDevicePreview(); track item.name) {
-                      <div class="breakdown-row">
-                        <span class="breakdown-label">{{ item.name }}</span>
-                        <span class="breakdown-value">{{ item.count }}</span>
-                      </div>
-                    }
-                  </div>
-                } @else {
-                  <p class="empty-tab">Nenhum dado de dispositivo disponível.</p>
-                }
-              </div>
-            </mat-tab>
-
-            <mat-tab label="Navegadores">
-              <div class="tab-content">
-                @if (byBrowserPreview().length > 0) {
-                  <div class="breakdown-list">
-                    @for (item of byBrowserPreview(); track item.name) {
-                      <div class="breakdown-row">
-                        <span class="breakdown-label">{{ item.name }}</span>
-                        <span class="breakdown-value">{{ item.count }}</span>
-                      </div>
-                    }
-                  </div>
-                } @else {
-                  <p class="empty-tab">Nenhum dado de navegador disponível.</p>
-                }
-              </div>
-            </mat-tab>
-          </mat-tab-group>
-        </mat-card>
+      <div class="browsers-chart-container">
+        <app-analytics-chart-card
+          title="Navegadores"
+          [isLoading]="isLoading()"
+          [error]="error()"
+          [chartOptions]="browsersChartOptions()"
+        ></app-analytics-chart-card>
       </div>
     </div>
   } @else {

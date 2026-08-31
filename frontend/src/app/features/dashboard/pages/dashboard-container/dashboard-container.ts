@@ -305,6 +305,68 @@ export class DashboardContainerComponent implements OnInit {
     };
   });
 
+  readonly devicesChartOptions = computed(() => {
+    const s = this.summary();
+    if (!s || !s.byDevice || s.byDevice.length === 0) return null;
+
+    const labels = s.byDevice.map(item => this.capitalize(item.name));
+    const counts = s.byDevice.map(item => item.count);
+
+    return {
+      series: counts,
+      chart: { type: 'donut', height: 300, background: 'transparent' },
+      labels: labels,
+      colors: ['var(--mat-sys-primary)', 'var(--mat-sys-secondary)', 'var(--mat-sys-tertiary)'],
+      legend: { position: 'bottom', labels: { colors: 'var(--mat-sys-on-surface)' } },
+      tooltip: { theme: 'dark' },
+      plotOptions: { pie: { donut: { size: '70%', labels: { show: true, total: { show: true, label: 'Dispositivos', color: 'var(--mat-sys-on-surface)' } } } } }
+    };
+  });
+
+  readonly browsersChartOptions = computed(() => {
+    const s = this.summary();
+    if (!s || !s.byBrowser || s.byBrowser.length === 0) return null;
+
+    const labels = s.byBrowser.map(item => this.capitalize(item.name));
+    const counts = s.byBrowser.map(item => item.count);
+
+    return {
+      series: [{ name: 'Leituras', data: counts }],
+      chart: { type: 'bar', height: 300, background: 'transparent', toolbar: { show: false } },
+      colors: ['var(--mat-sys-tertiary)'],
+      plotOptions: { bar: { horizontal: true, borderRadius: 4, distributed: true } },
+      xaxis: { categories: labels, labels: { style: { colors: 'var(--mat-sys-on-surface-variant)' } } },
+      yaxis: { labels: { style: { colors: 'var(--mat-sys-on-surface-variant)' } } },
+      grid: { borderColor: 'var(--mat-sys-outline-variant)' },
+      dataLabels: { enabled: false },
+      legend: { show: false },
+      tooltip: { theme: 'dark' }
+    };
+  });
+
+  readonly geoChartOptions = computed(() => {
+    const s = this.summary();
+    if (!s || !s.byCity || s.byCity.length === 0) return null;
+
+    // Show top 5 cities
+    const topCities = s.byCity.slice(0, 5);
+    const labels = topCities.map(item => this.capitalize(item.name));
+    const counts = topCities.map(item => item.count);
+
+    return {
+      series: [{ name: 'Leituras', data: counts }],
+      chart: { type: 'bar', height: 300, background: 'transparent', toolbar: { show: false } },
+      colors: ['var(--mat-sys-secondary)'],
+      plotOptions: { bar: { horizontal: true, borderRadius: 4, distributed: true } },
+      xaxis: { categories: labels, labels: { style: { colors: 'var(--mat-sys-on-surface-variant)' } } },
+      yaxis: { labels: { style: { colors: 'var(--mat-sys-on-surface-variant)' } } },
+      grid: { borderColor: 'var(--mat-sys-outline-variant)' },
+      dataLabels: { enabled: false },
+      legend: { show: false },
+      tooltip: { theme: 'dark' }
+    };
+  });
+
   private capitalize(str: string): string {
     if (!str) return '';
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();

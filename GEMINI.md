@@ -63,22 +63,16 @@ O sistema opera em um paradigma Multi-Tenant N:N (estilo Google Drive).
 - [x] **PASSO AE (Issue #267):** Correção de Colisão e Fallback de Tags do Perfil — QueryBuilder com OR no findById, defaultTag global no UsersService e restrição isResource no resolveTag (OK).
 - [x] **PASSO AF (Issue #270):** Lazy-Create & Fallback de Perfil de Dono — Garantia de tag pessoal ativa no Workspace de contexto B2B e fallback de perfil para manter consistência visual (OK).
 - [x] **PASSO AG (Issue #286):** Fix do Erro 500 no Salvamento de Perfil (Falso Negativo) — Isolamento correto do ownerId no interceptor/jwt strategy. (OK).
-- [ ] **PRÓXIMOS PASSOS (Backlog Prioritário - issues-todo.json):**
-  - #259: Pipeline de CI/CD com Barreira de Cobertura Mínima de 95% - CI/QA
-  - #169: Módulo de Gestão Administrativa de Tenants (Workspaces) - BE/FE
-  - #97: Motor de Recompensa e Link de Indicação (Growth Loop) - BE/DB
-  - #24: QA Homologação Performance (< 500ms) - QA/Release
-  - #23: QA Teste Físico End-to-End - QA/E2E
-  - #22: Hardware Gravação NFC Tags - Testing/Hardware
-  - #21: Infra Túnel Ngrok/Cloudflare - Infra/Testing
-  - #20: FE Modo Evento com Firebase Cloud Messaging - FE/PWA
-  - #19: FE Dashboard Analytics - FE/Dashboard
-  - #18: BE Gravação Assíncrona InteractionLog - BE/Async
-  - #17: FE Tela Gestão Tags e Redirecionamento - FE/UI-UX
-  - #11: Core Push Notifications Firebase - BE/Async
-  - #10: BE Endpoint vCard Dinâmico - BE/API
-  - #9: BE Lógica Roteamento Dinâmico Tag - BE/API
-  - #8: BE Endpoint Resolução Tag com Rate Limiting - BE/API/Security
+- [x] **PASSO AH (Issue #297):** Hotfix de Build e Strict Dependencies (TypeORM) — Migração do backend para SWC Compiler resolvendo crash silencioso no boot do Node 20+ (OK).
+- [x] **PASSO AI (Issue #299):** Arquitetura de Identidade Multi-Tenant — Sincronização contínua do nome global (User) via Google Auth isolada do apelido contextual de terceiros (Membership.alias) (OK).
+- [x] **PASSO AJ (Issue #302):** Backend Analytics — Captura de GeoIP persistida na TagReadLog via `geoip-lite` e extração robusta de User-Agent via `ua-parser-js`, com agregações por cidade, estado e país (OK).
+- [x] **PASSO AK (Issue #303):** Frontend Dashboard Analytics — Interface B2B de alto impacto com novos painéis gráficos de Dispositivos (Mobile/Desktop), Navegadores e Ranking de Regiões utilizando ApexCharts integrado (OK).
+- [ ] **PRÓXIMOS PASSOS (Backlog Estratégico - Go-to-Market):**
+  - #259: [CI/QA] Pipeline de CI/CD com Barreira de Cobertura Mínima de 95%
+  - #169: [BE/FE] Módulo de Gestão Administrativa de Tenants (Workspaces)
+  - #220-223: [BE/FE] Motor Dinâmico de Permissões e Roles Customizadas
+  - #97: [Growth] Motor de Recompensa e Link de Indicação (Acquisition Loop)
+  - #11, #20: [Engajamento] Push Notifications Firebase e Modo Evento
 
 ---
 
