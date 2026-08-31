@@ -1,3 +1,5 @@
+import { HttpClient } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 // Caminho: src/app/features/users/pages/profile-page/profile-page.ts
 
 import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef, ChangeDetectorRef, signal } from '@angular/core';
@@ -394,24 +396,27 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
         if (userProfile.tags && userProfile.tags.length > 0) {
             const activeTenantId = this.authService.activeTenantId();
-            this.activeTag = userProfile.tags.find((t: Tag) => !t.isResource && t.tenantId === activeTenantId && t.isActive)
-                || userProfile.tags.find((t: Tag) => !t.isResource && t.tenantId === activeTenantId)
-                || userProfile.tags.find((t: Tag) => !t.isResource && t.isActive)
-                || userProfile.tags.find((t: Tag) => !t.isResource)
-                || userProfile.tags.find((t: Tag) => t.isActive)
-                || userProfile.tags[0];
-            this.profileForm.get('tagSettings')?.patchValue({
-                id: this.activeTag.id,
-                nfcRedirectMode: this.activeTag.nfcRedirectMode,
-                nfcCustomUrl: this.activeTag.nfcCustomUrl,
-                qrRedirectMode: this.activeTag.qrRedirectMode,
-                qrCustomUrl: this.activeTag.qrCustomUrl
-            });
+            this.activeTag = userProfile.tags.find((t: Tag) => !t.isResource && t.tenantId === activeTenantId);
+            
+            if (this.activeTag) {
+                this.needsInitialization = false;
+                this.profileForm.get('tagSettings')?.patchValue({
+                    id: this.activeTag.id,
+                    nfcRedirectMode: this.activeTag.nfcRedirectMode,
+                    nfcCustomUrl: this.activeTag.nfcCustomUrl,
+                    qrRedirectMode: this.activeTag.qrRedirectMode,
+                    qrCustomUrl: this.activeTag.qrCustomUrl
+                });
+                this.cdr.detectChanges();
+                this.generatePersonalQR();
+            } else {
+                this.needsInitialization = true;
+                this.cdr.detectChanges();
+            }
+        } else {
+            this.needsInitialization = true;
             this.cdr.detectChanges();
-            this.generatePersonalQR();
-        }
-
-        this.phones.clear();
+        }    this.phones.clear();
         if (userProfile.phones) {
             const sortedPhones = [...userProfile.phones].sort((a, b) => (b.isMain ? 1 : 0) - (a.isMain ? 1 : 0));
             sortedPhones.forEach(p => this.addPhone(p));
@@ -449,6 +454,21 @@ export class ProfileComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.snackBar.open('Erro ao carregar seu perfil.', 'Fechar', { duration: 5000 });
+      }
+    });
+  }
+
+  
+  initializeProfile(): void {
+    this.isLoading = true;
+    this.http.post(`/api/users/${this.currentUserData!.id}/initialize-profile`, {}).subscribe({
+      next: () => {
+        this.snackBar.open('Perfil inicializado com sucesso!', 'Fechar', { duration: 3000 });
+        this.loadInitialProfile();
+      },
+      error: () => {
+        this.snackBar.open('Erro ao inicializar perfil.', 'Fechar', { duration: 5000 });
+        this.isLoading = false;
       }
     });
   }
