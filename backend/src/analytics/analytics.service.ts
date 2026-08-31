@@ -159,8 +159,8 @@ export class AnalyticsService {
     const rows = await qb.clone()
       .select(`log.${column}`, 'name')
       .addSelect('COUNT(*)', 'count')
-      .andWhere(`log.${column} IS NOT NULL`)
-      .groupBy(`log.${column}`)
+      .andWhere(`log.${colName} IS NOT NULL`)
+      .groupBy(`log.${colName}`)
       .orderBy('count', 'DESC')
       .getRawMany();
 
