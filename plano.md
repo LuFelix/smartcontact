@@ -21,3 +21,8 @@ Usuários legados (ou afetados por falhas de rede) ficam sem uma "Tag Pessoal" n
 2. Commit atômico isolado deste plano.
 3. Implementação e testes (RED/GREEN) do Botão de Contingência (Frontend).
 4. Implementação e testes (RED/GREEN) do Auto-Provisionamento via Membership (Backend).
+
+- [x] **PASSO AL (Issue #309):** Hotfix - Correção do GeoIP (Proxy Reverso)
+  - Identificação de que o NestJS estava armazenando o IP interno do Docker (\`172.18.0.x\`) devido à ausência de \`trust proxy\`.
+  - Habilitação do \`trust proxy\` no \`main.ts\` (AppModule).
+  - Sanitização e extração do primeiro IP público via \`X-Forwarded-For\` nos controllers de Logs e Tags.

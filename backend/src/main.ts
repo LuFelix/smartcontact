@@ -7,6 +7,13 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Habilita 'trust proxy' para capturar o IP real do cliente atrás do Nginx/Traefik
+  const httpAdapter = app.getHttpAdapter();
+  if (httpAdapter && httpAdapter.getInstance) {
+    const instance = httpAdapter.getInstance();
+    instance.set('trust proxy', 1);
+  }
+
   // Set global prefix so all routes start with /api
   app.setGlobalPrefix('api');
 
