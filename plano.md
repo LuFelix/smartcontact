@@ -1,23 +1,23 @@
-# Plano de Correção (Hotfix) - Sync de Banco de Dados e Dashboard Vazio
+# Plano de Ação - Auto-Provisionamento e Contingência de Perfil (Multi-Tenant)
 
-## 1. Etapa 1: Script de Backup Remoto e Restauração Local (Sincronização)
-- **Objetivo:** Resolver as divergências de tags locais legadas (Problema do *correiodolulu*) e garantir uma rotina de backup segura e automatizada, tornando o ambiente local um espelho exato da produção.
+## 1. O Problema
+Usuários legados (ou afetados por falhas de rede) ficam sem uma "Tag Pessoal" no Tenant atual, causando o erro "Nenhuma tag ativa encontrada" na tela de Perfil. 
+
+## 2. Solução 1: Contingência no Frontend (Botão Inicializar)
+- **Onde:** `profile-page.html` e `profile-page.ts`
 - **Ação:** 
-  1. Utilizar a pasta já existente `bkp-postgres/` (já mapeada no `.gitignore`).
-  2. Criar um script bash (`bkp-postgres/sync-db.sh`) que:
-     - Conecta via SSH na VPS de produção.
-     - Executa o `pg_dump` no container do PostgreSQL remoto.
-     - Faz o download seguro salvando em `bkp-postgres/dump_YYYYMMDD_HHMMSS.sql`.
-     - Executa a limpeza (`drop schema`/`create schema` ou `clean`) e faz o *restore* desses dados diretamente no container local `smartcontact_postgres_db_dev`.
-- **Resultado:** Ambientes sincronizados e backup do dia garantido na máquina local.
+  1. Detectar quando o backend retorna que o usuário não possui tag válida para o Tenant atual.
+  2. Substituir o aviso de erro seco por um estado vazio (Empty State) amigável com um botão **"Inicializar Perfil Profissional"**.
+  3. Ao clicar, o frontend fará um disparo (POST) limpo para gerar a tag sob demanda e recarregar a tela.
 
-## 2. Etapa 2: Correção do Dashboard Vazio (Hotfix de Código)
-- **Sintoma:** Leituras acontecem no VPS, mas os quadros (Geo e Dispositivos) não montam os gráficos.
-- **Causa Raiz:** O TypeORM não traduz nomes de propriedades da entidade (`deviceType`) para colunas nativas (`device_type`) em cláusulas `andWhere` e `groupBy`, gerando um erro 500 no endpoint de agregação do `AnalyticsService`.
-- **Ação:** No `AnalyticsService.breakdown`, aplicar a variável correta mapeada (`colName`) nas cláusulas `.andWhere(log.${colName} IS NOT NULL)` e `.groupBy(log.${colName})`.
+## 3. Solução 2: Auto-Provisionamento no Backend (Padrão Ouro)
+- **Onde:** `MembershipsService` (ou fluxo de adição de equipe)
+- **Ação:** 
+  1. Garantir que no momento em que um usuário aceita ou recebe uma permissão (Membership) para entrar numa Workspace, o sistema automaticamente invoca a criação de sua Tag de Perfil inicial para aquele Tenant.
+  2. Isso zera a fricção: na imensa maioria das vezes, o usuário já entra com tudo pronto, sem depender da contingência.
 
-## 3. Ação Proposta
-1. Aprovação deste plano atualizado.
-2. Commit atômico isolado do `plano.md`.
-3. Criação do script de sincronização (`bkp-postgres/sync-db.sh`), teste prático da restauração local e commit.
-4. Aplicação da correção (TDD RED/GREEN) no `AnalyticsService` e commit do Hotfix.
+## 4. Ação Proposta (Execução)
+1. Aprovação deste plano.
+2. Commit atômico isolado deste plano.
+3. Implementação e testes (RED/GREEN) do Botão de Contingência (Frontend).
+4. Implementação e testes (RED/GREEN) do Auto-Provisionamento via Membership (Backend).
