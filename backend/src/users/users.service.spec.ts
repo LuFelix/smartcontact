@@ -338,9 +338,9 @@ describe('UsersService', () => {
       mockUserRepo.findOne.mockResolvedValueOnce(existingUser); // findByEmail at the end
       mockUserRepo.merge.mockImplementation((dest, src) => Object.assign(dest, src));
 
-      const payload = {
+      const payload: any = {
         tags: [
-          { id: 'tag-personal', nfcRedirectMode: 'custom', nfcCustomUrl: 'https://newurl.com' },
+          { id: 'tag-personal', nfcRedirectMode: 'CUSTOM_URL', nfcCustomUrl: 'https://newurl.com' },
         ],
       };
 
@@ -350,8 +350,16 @@ describe('UsersService', () => {
       expect(tagRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
           id: 'tag-personal',
-          nfcRedirectMode: 'custom',
+          nfcRedirectMode: 'CUSTOM_URL',
           nfcCustomUrl: 'https://newurl.com',
+          user: { id: 'user-123' } // GARANTE QUE A TAG NÃO FICA ÓRFÃ
+        })
+      );
+      
+      // GARANTE QUE AS TAGS FORAM DELETADAS DO OBJETO USUÁRIO ANTES DO SAVE (PREVINE BUG DE RELAÇÃO DO TYPEORM)
+      expect(mockUserRepo.save).toHaveBeenCalledWith(
+        expect.not.objectContaining({
+          tags: expect.anything()
         })
       );
     });
@@ -369,8 +377,8 @@ describe('UsersService', () => {
       mockUserRepo.findOne.mockResolvedValueOnce(existingUser); // findByEmail at the end
       mockUserRepo.merge.mockImplementation((dest, src) => Object.assign(dest, src));
 
-      const payload = {
-        nfcRedirectMode: 'custom',
+      const payload: any = {
+        nfcRedirectMode: 'CUSTOM_URL',
         nfcCustomUrl: 'https://personalurl.com',
       };
 
@@ -589,7 +597,7 @@ describe('UsersService', () => {
       mockUserRepo.findOne.mockResolvedValueOnce(existingUser); // findByEmail at the end
       mockUserRepo.merge.mockImplementation((dest, src) => Object.assign(dest, src));
 
-      const payload = {
+      const payload: any = {
         tags: [{ id: 'tag-personal', qrRedirectMode: 'CUSTOM_URL', qrCustomUrl: 'https://redirect-me.com' }]
       };
 

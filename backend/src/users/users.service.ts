@@ -247,7 +247,8 @@ export class UsersService {
             userId: savedUser.id,
             tenantId: tenantId,
             roleId: assignedRole.id,
-            profileId: profileId
+            profileId: profileId,
+            alias: createUserDto.name
         });
 
         // RETORNA O USUÁRIO COMPLETO COM RELAÇÕES CARREGADAS
@@ -270,6 +271,10 @@ export class UsersService {
             (user as any).tenantId = activeMembership?.tenantId;
             if (activeMembership?.profile) {
                 (user as any).profile = activeMembership.profile;
+            }
+
+            if (activeMembership?.alias) {
+                user.name = activeMembership.alias;
             }
         }
         return user;
@@ -469,6 +474,12 @@ export class UsersService {
             // não é mais membro da equipe e não deve ter badge de Equipe.
             (user as any).profile = activeMembership?.profile || undefined;
 
+            // Injeção de Alias: Se o contato tiver um apelido salvo no tenant,
+            // ele sobrescreve dinamicamente o nome global no DTO de resposta.
+            if (activeMembership?.alias) {
+                user.name = activeMembership.alias;
+            }
+
             // Filtro de Segurança ABAC: Admins e Donos vêem tudo, outros vêem básico
             if (isSystemAdmin || isOwnProfile || isTenantAdmin) {
                 return user; 
@@ -560,6 +571,7 @@ export class UsersService {
                             if (tagData.nfcCustomUrl !== undefined) tagToUpdate.nfcCustomUrl = tagData.nfcCustomUrl;
                             if (tagData.qrRedirectMode) tagToUpdate.qrRedirectMode = tagData.qrRedirectMode;
                             if (tagData.qrCustomUrl !== undefined) tagToUpdate.qrCustomUrl = tagData.qrCustomUrl;
+                            tagToUpdate.user = { id: user!.id } as any;
                             await this.tagRepository.save(tagToUpdate);
                         }
                     }
@@ -567,6 +579,7 @@ export class UsersService {
             }
         }
 
+        delete (user! as any).tags;
         await this.usersRepository.save(user!);
 
         // --- ATUALIZAÇÃO DE ROLE (Via Membership) ---
@@ -584,8 +597,8 @@ export class UsersService {
             }
         }
 
-        // FORÇA O RECARREGAMENTO TOTAL DO BANCO para garantir que as novas memberships/roles sejam lidas
-        const updatedUser = await this.findByEmail(user!.email as string, currentUser); 
+        // FORÇA O RECARREGAMENTO TOTAL DO BANCO para garantir que as novas memberships/roles e tags sejam lidas no contexto correto
+        const updatedUser = await this.findById(user!.id, currentUser); 
         return updatedUser as User;
     }
 
@@ -940,5 +953,9 @@ export class UsersService {
             }));
             await this.userResourcePermissionRepository.save(newPermissions);
         }
+    }
+
+    async updateGlobalNameAndVerify(userId: string, name: string): Promise<void> {
+        await this.usersRepository.update(userId, { name, isVerified: true });
     }
 }

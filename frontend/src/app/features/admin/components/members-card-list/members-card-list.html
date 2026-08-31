@@ -31,12 +31,14 @@
         </mat-card-content>
         
         <mat-card-actions align="end">
+          @if (isAdmin) {
           <button mat-icon-button color="accent" (click)="delegateResources.emit(member)" matTooltip="Gerenciar Acessos (ABAC)">
             <mat-icon>key</mat-icon>
           </button>
           <button mat-icon-button color="warn" (click)="removeMember.emit(member)" matTooltip="Remover Membro" [disabled]="isOwner(member)">
             <mat-icon>person_remove</mat-icon>
           </button>
+          }
         </mat-card-actions>
       </mat-card>
     } @empty {

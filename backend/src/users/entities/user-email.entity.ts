@@ -1,3 +1,4 @@
+import type { Relation } from 'typeorm';
 // users/entities/user-email.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { User } from './user.entity';
@@ -23,5 +24,5 @@ export class UserEmail {
 
   @ManyToOne(() => User, (user) => user.secondaryEmails, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
-  user!: User;
+  user!: Relation<User>;
 }

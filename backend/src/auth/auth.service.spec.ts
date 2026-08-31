@@ -39,6 +39,7 @@ describe('AuthService', () => {
 
   const mockUsersServ = {
     findByEmail: vi.fn(),
+    findById: vi.fn(),
     findByCpf: vi.fn(),
     create: vi.fn(),
     markEmailAsVerified: vi.fn(),
@@ -46,6 +47,7 @@ describe('AuthService', () => {
     setVerificationData: vi.fn().mockResolvedValue(undefined),
     provisionPersonalWorkspace: vi.fn().mockImplementation(user => Promise.resolve(user)),
     createMembershipForUser: vi.fn().mockResolvedValue(undefined),
+    updateGlobalNameAndVerify: vi.fn(),
   };
 
   const mockProfilesServ = {
@@ -339,5 +341,78 @@ describe('AuthService', () => {
       expect(teamService.resolveInvitation).toHaveBeenCalledWith('invite-123');
       expect(usersService.createMembershipForUser).toHaveBeenCalledWith('google-user-123', 'tenant-invited', 'role-invited');
     });
+
+    it('should ALWAYS update user name if google payload name is different, even if already verified', async () => {
+      const mockUser = {
+        id: 'google-user-123',
+        name: 'Nome Desatualizado',
+        email: 'user@google.com',
+        ownerId: 'google-user-123',
+        isVerified: true, // Já era verificado!
+        memberships: [],
+      };
+      mockUsersServ.findByEmail.mockResolvedValue(mockUser);
+      mockMembershipsServ.findTeamWorkspacesByUser.mockResolvedValueOnce([
+        {
+          tenantId: 'tenant-personal',
+          role: { name: 'administrador' },
+          tenant: { slug: 'ws-google-user-123', ownerId: 'google-user-123' }
+        }
+      ]);
+
+      await service.loginWithGoogle({ token: 'google_token' }); // mock devolve payloadGoogle.name = 'Google User'
+      expect(mockUsersServ.updateGlobalNameAndVerify).toHaveBeenCalledWith('google-user-123', 'Google User');
+    });
+
+    it('should NOT call updateGlobalNameAndVerify if user name is already equal to google payload name', async () => {
+      const mockUser = {
+        id: 'google-user-123',
+        name: 'Google User', // Exatamente igual ao payload
+        email: 'user@google.com',
+        ownerId: 'google-user-123',
+        isVerified: true,
+        memberships: [],
+      };
+      mockUsersServ.findByEmail.mockResolvedValue(mockUser);
+      mockMembershipsServ.findTeamWorkspacesByUser.mockResolvedValueOnce([
+        {
+          tenantId: 'tenant-personal',
+          role: { name: 'administrador' },
+          tenant: { slug: 'ws-google-user-123', ownerId: 'google-user-123' }
+        }
+      ]);
+
+      await service.loginWithGoogle({ token: 'google_token' });
+      expect(mockUsersServ.updateGlobalNameAndVerify).not.toHaveBeenCalled();
+    });
+
+  describe('getWorkspaces', () => {
+    it('should map isOwner correctly based on tenant ownerId', async () => {
+      const mockUser = { id: 'user-123', name: 'John Doe' };
+      mockUsersServ.findByEmail.mockResolvedValueOnce(mockUser);
+      
+      const mockWorkspaces = [
+        {
+          tenantId: 'tenant-1',
+          role: { name: 'administrador' },
+          tenant: { name: 'My Workspace', ownerId: 'user-123' },
+          profile: { ownerId: 'user-123' }
+        },
+        {
+          tenantId: 'tenant-2',
+          role: { name: 'membro' },
+          tenant: { name: 'Shared Workspace', ownerId: 'other-user' },
+          profile: { ownerId: 'user-123' } // Profile belongs to user, but tenant does not
+        }
+      ];
+      mockMembershipsServ.findTeamWorkspacesByUser.mockResolvedValueOnce(mockWorkspaces);
+
+      const result = await service.getMyWorkspaces('user-123');
+      
+      expect(result).toHaveLength(2);
+      expect(result[0].isOwner).toBe(true);
+      expect(result[1].isOwner).toBe(false);
+    });
+  });
   });
 });

@@ -1,3 +1,4 @@
+import type { Relation } from 'typeorm';
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { Tenant } from 'src/tenants/entities/tenant.entity';
@@ -14,14 +15,14 @@ export class GroupInvitation {
 
   @ManyToOne(() => Tenant)
   @JoinColumn({ name: 'tenant_id' })
-  tenant!: Tenant;
+  tenant!: Relation<Tenant>;
 
   @Column({ name: 'tenant_id' })
   tenantId!: string;
 
   @ManyToOne(() => Role)
   @JoinColumn({ name: 'role_id' })
-  role!: Role;
+  role!: Relation<Role>;
 
   @Column({ name: 'role_id' })
   roleId!: string;
@@ -34,7 +35,7 @@ export class GroupInvitation {
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'created_by' })
-  createdBy!: User;
+  createdBy!: Relation<User>;
 
   @Column({ name: 'created_by' })
   createdById!: string;

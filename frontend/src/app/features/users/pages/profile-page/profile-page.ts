@@ -533,7 +533,10 @@ export class ProfileComponent implements OnInit, OnDestroy {
     if (payload.tags.length > 0) cleanId(payload.tags[0]);
 
     this.userService.updateUser(this.currentUserData!.id, payload).pipe(
-        finalize(() => this.isLoading = false)
+        finalize(() => {
+            this.isLoading = false;
+            this.cdr.detectChanges();
+        })
     ).subscribe({
         next: () => {
             this.isEditing = false;
@@ -542,8 +545,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
             this.loadInitialProfile();
         },
         error: (err) => {
-            console.error(err);
-            this.snackBar.open('Erro ao atualizar perfil.', 'Fechar', { duration: 3000 });
+            console.error('[ProfilePage] Erro ao atualizar perfil:', err);
+            const errorMessage = err?.error?.message || 'Erro ao atualizar perfil.';
+            this.snackBar.open(Array.isArray(errorMessage) ? errorMessage[0] : errorMessage, 'Fechar', { duration: 4000 });
         }
     });
   }

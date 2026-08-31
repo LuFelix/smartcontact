@@ -27,29 +27,40 @@
             </button>
             <mat-menu #workspaceMenu="matMenu" class="workspace-menu">
                 @if (myWorkspaces().length > 0) {
-                    <div class="menu-title">Meus Workspaces</div>
+                    <div class="menu-section-header">
+                        <mat-icon class="section-icon" color="primary">domain</mat-icon>
+                        <span>Meus Workspaces</span>
+                    </div>
                     @for (ws of myWorkspaces(); track ws.tenantId) {
                         <button mat-menu-item (click)="switchWorkspace(ws.tenantId)" [class.active-ws]="ws.tenantId === activeTenantId()">
+                            <mat-icon [class.invisible-icon]="ws.tenantId !== activeTenantId()" color="primary">check</mat-icon>
                             <div class="ws-item-content">
                                 <span class="ws-name">{{ ws.tenant?.name }}</span>
-                                <span class="ws-role">{{ ws.role?.name | titlecase }}</span>
+                                <span class="ws-badge badge-owner">{{ ws.role?.name | uppercase }}</span>
                             </div>
                         </button>
                     }
                 }
 
                 @if (sharedWorkspaces().length > 0) {
-                    <div class="menu-title" [class.mt-2]="myWorkspaces().length > 0">Compartilhados Comigo</div>
+                    
+                    <div class="custom-divider"></div>
+                    <div class="menu-section-header">
+                        <mat-icon class="section-icon" color="accent">group</mat-icon>
+                        <span>Compartilhados Comigo</span>
+                    </div>
                     @for (ws of sharedWorkspaces(); track ws.tenantId) {
                         <button mat-menu-item (click)="switchWorkspace(ws.tenantId)" [class.active-ws]="ws.tenantId === activeTenantId()">
+                            <mat-icon [class.invisible-icon]="ws.tenantId !== activeTenantId()" color="primary">check</mat-icon>
                             <div class="ws-item-content">
                                 <span class="ws-name">{{ ws.tenant?.name }}</span>
-                                <span class="ws-role">{{ ws.role?.name | titlecase }}</span>
+                                <span class="ws-badge badge-member">{{ ws.role?.name | uppercase }}</span>
                             </div>
                         </button>
                     }
                 }
 
+                
                 <mat-divider></mat-divider>
                 <button mat-menu-item disabled class="add-workspace-btn">
                     <mat-icon>add_circle_outline</mat-icon>

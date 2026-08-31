@@ -151,11 +151,21 @@ describe('TagsService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('should return tags for the tenant', async () => {
+    it('should return all tags for the tenant if user is administrador', async () => {
       mockTagRepo.find.mockResolvedValueOnce([{ id: 'tag-1', isResource: true }]);
-      const result = await service.findAll({ isSuperAdmin: false }, 'tenant-1');
+      const result = await service.findAll({ sub: 'admin-1', role: 'administrador', isSuperAdmin: false }, 'tenant-1');
       expect(result).toHaveLength(1);
-      expect(mockTagRepo.find).toHaveBeenCalled();
+      expect(mockTagRepo.find).toHaveBeenCalledWith(expect.objectContaining({
+         where: { tenantId: 'tenant-1', isResource: true }
+      }));
+    });
+
+    it('should return ONLY delegated tags if user is a common membro', async () => {
+      const mockTags = [{ id: 'tag-2', isResource: true }];
+      mockQueryBuilder.getMany.mockResolvedValueOnce(mockTags);
+      const result = await service.findAll({ sub: 'membro-1', role: 'membro', isSuperAdmin: false }, 'tenant-1');
+      expect(result).toEqual(mockTags);
+      expect(mockQueryBuilder.innerJoin).toHaveBeenCalledWith('user_resources_permissions', 'urp', 'tag.id = urp.tag_id');
     });
   });
 

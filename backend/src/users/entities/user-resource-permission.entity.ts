@@ -1,3 +1,4 @@
+import type { Relation } from 'typeorm';
 import { Entity, PrimaryGeneratedColumn, Column, Index, CreateDateColumn } from 'typeorm';
 
 @Entity('user_resources_permissions')
