@@ -1,5 +1,4 @@
 import { HttpClient } from '@angular/common/http';
-import { HttpClient } from '@angular/common/http';
 // Caminho: src/app/features/users/pages/profile-page/profile-page.ts
 
 import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef, ChangeDetectorRef, signal } from '@angular/core';
@@ -62,6 +61,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private userService = inject(UserService);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
+  private http = inject(HttpClient);
   private router = inject(Router);
   private cepService = inject(CepService);
   private cdr = inject(ChangeDetectorRef);
@@ -82,6 +82,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   profileForm: FormGroup;
   currentUserData: FullUserResponse | null = null;
   activeTag: Tag | null = null;
+  needsInitialization = false;
   
   isLoading = true;
   isSaving = false;
@@ -396,7 +397,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
         if (userProfile.tags && userProfile.tags.length > 0) {
             const activeTenantId = this.authService.activeTenantId();
-            this.activeTag = userProfile.tags.find((t: Tag) => !t.isResource && t.tenantId === activeTenantId);
+            this.activeTag = userProfile.tags.find((t: Tag) => !t.isResource && t.tenantId === activeTenantId) || null;
             
             if (this.activeTag) {
                 this.needsInitialization = false;
