@@ -1,3 +1,4 @@
+import type { Relation } from 'typeorm';
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Tenant } from '../../tenants/entities/tenant.entity';
@@ -15,21 +16,21 @@ export class Membership {
 
   @ManyToOne(() => User, (user) => user.memberships, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
-  user!: User;
+  user!: Relation<User>;
 
   @Column({ type: 'uuid', name: 'tenant_id' })
   tenantId!: string;
 
   @ManyToOne(() => Tenant, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'tenant_id' })
-  tenant!: Tenant;
+  tenant!: Relation<Tenant>;
 
   @Column({ type: 'uuid', name: 'role_id' })
   roleId!: string;
 
   @ManyToOne(() => Role, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'role_id' })
-  role!: Role;
+  role!: Relation<Role>;
 
   @Column({ type: 'uuid', name: 'profile_id', nullable: true })
   profileId!: string | null;

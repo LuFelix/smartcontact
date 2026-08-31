@@ -1,4 +1,5 @@
 import { User } from 'src/users/entities/user.entity';
+import type { Relation } from 'typeorm';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -37,7 +38,7 @@ export class Profile {
 
   @ManyToOne(() => User, (user) => user.profiles)
   @JoinColumn({ name: 'user_id' })
-  user!: User;
+  user!: Relation<User>;
 
   @Column({ type: 'uuid', name: 'user_id' })
   userId!: string;

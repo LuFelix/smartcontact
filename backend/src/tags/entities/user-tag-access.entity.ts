@@ -1,3 +1,4 @@
+import type { Relation } from 'typeorm';
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { Tag } from './tag.entity';
@@ -14,14 +15,14 @@ export class UserTagAccess {
 
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
-  user!: User;
+  user!: Relation<User>;
 
   @Column({ name: 'user_id' })
   userId!: string;
 
   @ManyToOne(() => Tag, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'tag_id' })
-  tag!: Tag;
+  tag!: Relation<Tag>;
 
   @Column({ name: 'tag_id' })
   tagId!: string;

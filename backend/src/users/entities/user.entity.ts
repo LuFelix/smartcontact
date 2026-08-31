@@ -1,4 +1,5 @@
 // users/entities/user.entity.ts
+import type { Relation } from 'typeorm';
 import { Role } from 'src/roles/entities/role.entity';
 import { Profile } from '../../profiles/entities/profile.entity';
 import { Tag } from '../../tags/entities/tag.entity';
@@ -63,26 +64,26 @@ export class User {
     profilePictureUrl!: string | null;
 
     @OneToMany(() => Profile, (profile) => profile.user)
-    profiles?: Profile[];
+    profiles?: Relation<Profile[]>; // SWC circular dependency fix
 
     @OneToMany(() => Membership, (membership) => membership.user)
-    memberships!: Membership[];
+    memberships!: Relation<Membership[]>;
 
     @OneToMany(() => Tag, (tag) => tag.user)
-    tags?: Tag[];
+    tags?: Relation<Tag[]>;
 
     @OneToMany(() => Phone, (phone) => phone.user, { cascade: true })
-    phones?: Phone[];
+    phones?: Relation<Phone[]>;
 
     @OneToMany(() => Address, (address) => address.user, { cascade: true })
-    addresses?: Address[];
+    addresses?: Relation<Address[]>;
 
     @OneToMany(() => UserEmail, (email) => email.user, { cascade: true })
-    secondaryEmails?: UserEmail[];
+    secondaryEmails?: Relation<UserEmail[]>;
 
     @OneToMany(() => UserLink, (link) => link.user, { cascade: true })
-    links?: UserLink[];
+    links?: Relation<UserLink[]>;
 
     @OneToMany(() => UserTagAccess, (access) => access.user)
-    tagAccesses?: UserTagAccess[];
+    tagAccesses?: Relation<UserTagAccess[]>;
 }
