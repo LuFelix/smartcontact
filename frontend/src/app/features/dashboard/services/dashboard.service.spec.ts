@@ -99,6 +99,9 @@ describe('DashboardService', () => {
         byDevice: [],
         byBrowser: [],
         bySource: [],
+        byCity: [],
+        byRegion: [],
+        byCountry: [],
       };
 
       service.loadSummary(7);
