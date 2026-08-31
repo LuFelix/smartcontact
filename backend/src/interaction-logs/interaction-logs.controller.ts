@@ -20,7 +20,7 @@ export class InteractionLogsController {
     @Body('tagId') tagIdParam: string // Caso venha no body, ou use o param
   ) {
     const metadata = {
-        ip: req.ip || req.headers['x-forwarded-for'] || '0.0.0.0',
+        ip: (req.headers['x-forwarded-for'] ? String(req.headers['x-forwarded-for']).split(',')[0].trim() : req.ip) || '0.0.0.0',
         userAgent: req.headers['user-agent'] || 'unknown',
     };
     // tagId deve vir da URL ou do body

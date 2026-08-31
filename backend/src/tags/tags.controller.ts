@@ -26,7 +26,7 @@ export class TagsController {
     @Req() req?: Request
   ) {
     const metadata = req ? {
-        ip: req.ip || req.headers['x-forwarded-for'] as string || '0.0.0.0',
+        ip: (req.headers['x-forwarded-for'] ? String(req.headers['x-forwarded-for']).split(',')[0].trim() : req.ip) || '0.0.0.0',
         userAgent: req.headers['user-agent'] || 'unknown',
     } : undefined;
     const data = await this.tagsService.resolveTag(identifier, source, metadata);
