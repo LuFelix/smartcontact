@@ -80,6 +80,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   profileForm: FormGroup;
   currentUserData: FullUserResponse | null = null;
   activeTag: Tag | null = null;
+  needsInitialization = false;
   
   isLoading = true;
   isSaving = false;
@@ -394,24 +395,29 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
         if (userProfile.tags && userProfile.tags.length > 0) {
             const activeTenantId = this.authService.activeTenantId();
-            this.activeTag = userProfile.tags.find((t: Tag) => !t.isResource && t.tenantId === activeTenantId && t.isActive)
-                || userProfile.tags.find((t: Tag) => !t.isResource && t.tenantId === activeTenantId)
-                || userProfile.tags.find((t: Tag) => !t.isResource && t.isActive)
-                || userProfile.tags.find((t: Tag) => !t.isResource)
-                || userProfile.tags.find((t: Tag) => t.isActive)
-                || userProfile.tags[0];
-            this.profileForm.get('tagSettings')?.patchValue({
-                id: this.activeTag.id,
-                nfcRedirectMode: this.activeTag.nfcRedirectMode,
-                nfcCustomUrl: this.activeTag.nfcCustomUrl,
-                qrRedirectMode: this.activeTag.qrRedirectMode,
-                qrCustomUrl: this.activeTag.qrCustomUrl
-            });
-            this.cdr.detectChanges();
-            this.generatePersonalQR();
-        }
-
-        this.phones.clear();
+            this.activeTag = userProfile.tags.find((t: Tag) => !t.isResource && t.tenantId === activeTenantId) || null;
+            
+            if (this.activeTag) {
+                this.needsInitialization = false;
+                this.profileForm.get('tagSettings')?.patchValue({
+                    id: this.activeTag.id,
+                    nfcRedirectMode: this.activeTag.nfcRedirectMode,
+                    nfcCustomUrl: this.activeTag.nfcCustomUrl,
+                    qrRedirectMode: this.activeTag.qrRedirectMode,
+                    qrCustomUrl: this.activeTag.qrCustomUrl
+                });
+                this.cdr.detectChanges();
+                this.generatePersonalQR();
+            } else {
+                this.needsInitialization = true;
+                console.log('DEBUG: needsInitialization set to true', { tags: userProfile.tags, activeTenantId: this.authService.activeTenantId() });
+                this.cdr.detectChanges();
+            }
+        } else {
+            this.needsInitialization = true;
+                console.log('DEBUG: needsInitialization set to true', { tags: userProfile.tags, activeTenantId: this.authService.activeTenantId() });
+                this.cdr.detectChanges();
+        }    this.phones.clear();
         if (userProfile.phones) {
             const sortedPhones = [...userProfile.phones].sort((a, b) => (b.isMain ? 1 : 0) - (a.isMain ? 1 : 0));
             sortedPhones.forEach(p => this.addPhone(p));
@@ -449,6 +455,21 @@ export class ProfileComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.snackBar.open('Erro ao carregar seu perfil.', 'Fechar', { duration: 5000 });
+      }
+    });
+  }
+
+  
+  initializeProfile(): void {
+    this.isLoading = true;
+    this.userService.initializeProfile(this.currentUserData!.id).subscribe({
+      next: () => {
+        this.snackBar.open('Perfil inicializado com sucesso!', 'Fechar', { duration: 3000 });
+        this.loadInitialProfile();
+      },
+      error: () => {
+        this.snackBar.open('Erro ao inicializar perfil.', 'Fechar', { duration: 5000 });
+        this.isLoading = false;
       }
     });
   }
@@ -617,3 +638,4 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
   }
 }
+// trigger rebuild

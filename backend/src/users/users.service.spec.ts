@@ -676,5 +676,34 @@ describe('UsersService', () => {
       );
     });
   });
+
+  describe('ensureUserHasDefaultTagForTenant', () => {
+    it('should return existing tag if one exists for the tenant', async () => {
+        usersRepository.findOne.mockResolvedValue({ id: 'user-1', ownerId: 'owner-1' });
+        tagRepository.findOne.mockResolvedValue({ id: 'tag-1' });
+
+        const result = await service.ensureUserHasDefaultTagForTenant('user-1', 'tenant-1');
+        
+        expect(result).toEqual({ id: 'tag-1' });
+        expect(tagsService.createDefaultTag).not.toHaveBeenCalled();
+    });
+
+    it('should create a new tag if none exists for the tenant', async () => {
+        usersRepository.findOne.mockResolvedValue({ id: 'user-1', ownerId: 'owner-1' });
+        tagRepository.findOne.mockResolvedValue(null);
+        tagsService.createDefaultTag.mockResolvedValue({ id: 'new-tag' });
+
+        const result = await service.ensureUserHasDefaultTagForTenant('user-1', 'tenant-1');
+        
+        expect(tagsService.createDefaultTag).toHaveBeenCalledWith('user-1', 'owner-1', 'tenant-1');
+        expect(result).toEqual({ message: 'Perfil inicializado com sucesso.' });
+    });
+
+    it('should throw NotFoundException if user does not exist', async () => {
+        usersRepository.findOne.mockResolvedValue(null);
+
+        await expect(service.ensureUserHasDefaultTagForTenant('user-1', 'tenant-1')).rejects.toThrow('Usuário não encontrado');
+    });
+  });
 });
 

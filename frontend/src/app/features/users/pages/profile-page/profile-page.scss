@@ -487,3 +487,37 @@ a[mat-flat-button] {
   .array-item-row { flex-direction: column; align-items: stretch; }
   .item-actions { justify-content: flex-end; }
 }
+
+
+.empty-state-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  text-align: center;
+  background-color: var(--mat-sys-surface-container-lowest);
+  border: 1px dashed var(--mat-sys-outline-variant);
+  border-radius: 12px;
+  margin-bottom: 2rem;
+
+  .empty-icon {
+    font-size: 48px;
+    height: 48px;
+    width: 48px;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+  }
+
+  h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+    color: var(--mat-sys-on-surface);
+  }
+
+  p {
+    margin: 0 0 1.5rem;
+    color: var(--mat-sys-on-surface-variant);
+    max-width: 400px;
+  }
+}

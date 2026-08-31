@@ -807,6 +807,9 @@ export class UsersService {
             roleId,
             profileId
         });
+
+        // Auto-provisioning of the profile tag (Padrão Ouro)
+        await this.ensureUserHasDefaultTagForTenant(userId, tenantId);
     }
 
     async demoteFromTeam(id: string, currentUser: any): Promise<void> {
@@ -957,5 +960,20 @@ export class UsersService {
 
     async updateGlobalNameAndVerify(userId: string, name: string): Promise<void> {
         await this.usersRepository.update(userId, { name, isVerified: true });
+    }
+
+    async ensureUserHasDefaultTagForTenant(userId: string, tenantId: string): Promise<any> {
+        const user = await this.usersRepository.findOne({ where: { id: userId } });
+        if (!user) throw new NotFoundException('Usuário não encontrado');
+        
+        // Verifica se já existe tag pessoal para este tenant
+        const existing = await this.tagRepository.findOne({
+            where: { userId, tenantId, isResource: false }
+        });
+        
+        if (existing) return existing;
+
+        await this.tagsService.createDefaultTag(userId, user.ownerId || userId, tenantId);
+        return { message: 'Perfil inicializado com sucesso.' };
     }
 }

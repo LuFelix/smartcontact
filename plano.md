@@ -1,41 +1,23 @@
-# Plano TDD - Frontend Dashboard Analytics (Geo & Devices) - Issue #303
+# Plano de Ação - Auto-Provisionamento e Contingência de Perfil (Multi-Tenant)
 
-## 1. Objetivo Visual e Funcional
-- Exibir aos usuários corporativos e premium (B2B) informações riquíssimas e visuais de **Onde** e **Como** as tags estão sendo lidas.
-- Impressionar visualmente: Gráficos de fácil leitura, interativos (ApexCharts) e bonitos com base nos tokens do Angular Material 3.
+## 1. O Problema
+Usuários legados (ou afetados por falhas de rede) ficam sem uma "Tag Pessoal" no Tenant atual, causando o erro "Nenhuma tag ativa encontrada" na tela de Perfil. 
 
-## 2. Modificações na Tipagem (Modelos)
-- Arquivo alvo: `frontend/src/app/core/models/analytics.model.ts`
-- Adicionar interfaces para o retorno geográfico e de devices:
-  ```typescript
-  export interface AnalyticsMetric { name: string; count: number; }
-  export interface AnalyticsSummary {
-    ...
-    byDevice: AnalyticsMetric[];
-    byBrowser: AnalyticsMetric[];
-    byCity: AnalyticsMetric[];
-    byRegion: AnalyticsMetric[];
-    byCountry: AnalyticsMetric[];
-  }
-  ```
+## 2. Solução 1: Contingência no Frontend (Botão Inicializar)
+- **Onde:** `profile-page.html` e `profile-page.ts`
+- **Ação:** 
+  1. Detectar quando o backend retorna que o usuário não possui tag válida para o Tenant atual.
+  2. Substituir o aviso de erro seco por um estado vazio (Empty State) amigável com um botão **"Inicializar Perfil Profissional"**.
+  3. Ao clicar, o frontend fará um disparo (POST) limpo para gerar a tag sob demanda e recarregar a tela.
 
-## 3. Modificações no Componente Smart (Dashboard)
-- Arquivos alvo: `dashboard.component.ts` e `dashboard.component.html` (e/ou criar um componente "Dumb" de GeoAnalytics).
-- Processar os novos dados da API (`summary()`) para o formato lido pelo `ApexCharts`.
+## 3. Solução 2: Auto-Provisionamento no Backend (Padrão Ouro)
+- **Onde:** `MembershipsService` (ou fluxo de adição de equipe)
+- **Ação:** 
+  1. Garantir que no momento em que um usuário aceita ou recebe uma permissão (Membership) para entrar numa Workspace, o sistema automaticamente invoca a criação de sua Tag de Perfil inicial para aquele Tenant.
+  2. Isso zera a fricção: na imensa maioria das vezes, o usuário já entra com tudo pronto, sem depender da contingência.
 
-## 4. Estruturação dos Gráficos (Apresentação - Impressionante)
-Vamos criar 3 novos painéis na interface:
-1. **Gráfico de Dispositivos (Rosca/Donut):** Mostrando a divisão entre Mobile, Tablet e Desktop.
-2. **Gráfico de Navegadores (Rosca/Donut ou Barras Horizontais):** Firefox, Chrome, Safari, etc.
-3. **Top Cidades/Regiões (Barra Horizontal Ranking):** Uma tabela estilizada ou gráfico de barras horizontais rankeando as Top 5 Cidades e Países com maior engajamento.
-
-## 5. Testes Unitários (Vitest - Phase RED)
-- Testar a injeção do modelo atualizado.
-- Atualizar os mocks do serviço `AnalyticsService` para devolverem dados de `byCity`, `byRegion` e `byDevice`.
-- O teste do `dashboard.component.spec.ts` precisará validar a montagem da _Series_ do ApexChart para esses novos dados sem quebrar.
-
-## 6. Fluxo de Trabalho
-1. Aprovação do plano pelo usuário.
-2. **Commit Atômico** isolado do arquivo `plano.md`.
-3. Início da fase TDD (RED -> GREEN) nas tipagens e componente.
-4. Refinamento visual da tela (garantindo que fique com alto impacto B2B).
+## 4. Ação Proposta (Execução)
+1. Aprovação deste plano.
+2. Commit atômico isolado deste plano.
+3. Implementação e testes (RED/GREEN) do Botão de Contingência (Frontend).
+4. Implementação e testes (RED/GREEN) do Auto-Provisionamento via Membership (Backend).

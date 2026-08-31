@@ -423,6 +423,16 @@
                     </div>
                   </mat-card-content>
                 </mat-card>
+              } @else if (needsInitialization) {
+                <div class="empty-state-card">
+                  <mat-icon class="empty-icon" color="primary">assignment_ind</mat-icon>
+                  <h3>Perfil Não Inicializado</h3>
+                  <p>Você ainda não possui um cartão de perfil ativo para este Workspace. Clique abaixo para inicializá-lo e começar a usar.</p>
+                  <button mat-flat-button color="primary" type="button" (click)="initializeProfile()" [disabled]="isLoading">
+                      <mat-icon>add_circle</mat-icon>
+                      Inicializar Perfil Profissional
+                  </button>
+                </div>
               } @else {
                 <div class="no-tag-msg">
                   <mat-icon>info</mat-icon>
