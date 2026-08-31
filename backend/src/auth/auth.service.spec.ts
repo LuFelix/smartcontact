@@ -47,6 +47,7 @@ describe('AuthService', () => {
     setVerificationData: vi.fn().mockResolvedValue(undefined),
     provisionPersonalWorkspace: vi.fn().mockImplementation(user => Promise.resolve(user)),
     createMembershipForUser: vi.fn().mockResolvedValue(undefined),
+    updateGlobalNameAndVerify: vi.fn(),
   };
 
   const mockProfilesServ = {
@@ -339,6 +340,50 @@ describe('AuthService', () => {
       await service.loginWithGoogle({ token: 'google_token', invitationToken: 'invite-123' });
       expect(teamService.resolveInvitation).toHaveBeenCalledWith('invite-123');
       expect(usersService.createMembershipForUser).toHaveBeenCalledWith('google-user-123', 'tenant-invited', 'role-invited');
+    });
+
+    it('should ALWAYS update user name if google payload name is different, even if already verified', async () => {
+      const mockUser = {
+        id: 'google-user-123',
+        name: 'Nome Desatualizado',
+        email: 'user@google.com',
+        ownerId: 'google-user-123',
+        isVerified: true, // Já era verificado!
+        memberships: [],
+      };
+      mockUsersServ.findByEmail.mockResolvedValue(mockUser);
+      mockMembershipsServ.findTeamWorkspacesByUser.mockResolvedValueOnce([
+        {
+          tenantId: 'tenant-personal',
+          role: { name: 'administrador' },
+          tenant: { slug: 'ws-google-user-123', ownerId: 'google-user-123' }
+        }
+      ]);
+
+      await service.loginWithGoogle({ token: 'google_token' }); // mock devolve payloadGoogle.name = 'Google User'
+      expect(mockUsersServ.updateGlobalNameAndVerify).toHaveBeenCalledWith('google-user-123', 'Google User');
+    });
+
+    it('should NOT call updateGlobalNameAndVerify if user name is already equal to google payload name', async () => {
+      const mockUser = {
+        id: 'google-user-123',
+        name: 'Google User', // Exatamente igual ao payload
+        email: 'user@google.com',
+        ownerId: 'google-user-123',
+        isVerified: true,
+        memberships: [],
+      };
+      mockUsersServ.findByEmail.mockResolvedValue(mockUser);
+      mockMembershipsServ.findTeamWorkspacesByUser.mockResolvedValueOnce([
+        {
+          tenantId: 'tenant-personal',
+          role: { name: 'administrador' },
+          tenant: { slug: 'ws-google-user-123', ownerId: 'google-user-123' }
+        }
+      ]);
+
+      await service.loginWithGoogle({ token: 'google_token' });
+      expect(mockUsersServ.updateGlobalNameAndVerify).not.toHaveBeenCalled();
     });
 
   describe('getWorkspaces', () => {

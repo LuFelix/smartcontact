@@ -28,6 +28,9 @@ export class Membership {
   @Column({ type: 'uuid', name: 'role_id' })
   roleId!: string;
 
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  alias!: string | null;
+
   @ManyToOne(() => Role, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'role_id' })
   role!: Relation<Role>;

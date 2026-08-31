@@ -241,7 +241,20 @@ export class AuthService {
         user = await this.usersService.findByEmail(payloadGoogle.email);
       } else {
           // O usuário já existe no banco (pode ter sido criado como lead ou já ter conta).
-          
+
+          // SOBRESCRITA DE IDENTIDADE (Sincronização Contínua):
+          // Como temos a arquitetura de 'Membership.alias' para manter o nome de agenda de terceiros intacto,
+          // a tabela global 'Users' pode e deve ser 100% espelhada na identidade oficial do Google.
+          const officialName = payloadGoogle.name || 'Usuário Google';
+          if (user.name !== officialName) {
+              await this.usersService.updateGlobalNameAndVerify(user.id, officialName);
+              user.name = officialName;
+              user.isVerified = true;
+          } else if (!user.isVerified) {
+              await this.usersService.markEmailAsVerified(user.id);
+              user.isVerified = true;
+          }
+
           // Atualiza a foto se necessário
           if (payloadGoogle.picture && user.profilePictureUrl !== payloadGoogle.picture) {
               await this.usersService.updateProfilePicture(user.id, payloadGoogle.picture);
