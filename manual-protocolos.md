@@ -85,7 +85,8 @@ Para o desenvolvimento com Test-Driven Development (TDD) no SmartContact, a IA d
    - **Sintaxe de Mocking:** Utilizar sempre a API do Vitest (`vi.fn()`, `vi.mock()`, `vi.spyOn()`) e NUNCA APIs do Jest (`jest.fn()`).
 
 2. **Fluxo de Trabalho TDD Obrigatório:**
-   - **Planejamento (`plano.md`):** Antes de codificar qualquer alteração, o agente deve apresentar o plano dos testes e aguardar aprovação.
+   - **Planejamento (`plano.md`):** Antes de codificar, o agente deve SEMPRE criar/sobrescrever o arquivo `plano.md` na raiz do projeto com o plano de ação e testes.
+   - **Commit do Plano (Regra Estrita):** Assim que o plano for aprovado pelo usuário, o `plano.md` DEVE ser commitado de forma atômica e 100% isolada (ex: `docs: aprova plano de execução da Issue #ID`), SEM nenhuma modificação de código junto. Se o plano mudar no meio do caminho, a alteração no `plano.md` também deve receber seu próprio commit isolado.
    - **Fase RED:** Escrever os testes unitários (`.spec.ts`) validando a nova regra de negócio e executar via terminal (`npm run test -- arquivo.spec.ts`). O agente deve comprovar que o teste falhou.
    - **Fase GREEN:** Escrever/alterar o código de produção (`.ts`) estritamente necessário para fazer o teste passar, e executar novamente comprovando o sucesso.
    - **Validação Global:** Executar a suíte inteira (`npm run test`) para assegurar a ausência de regressões no projeto (Manter a barreira de 95%+ de cobertura intacta).
