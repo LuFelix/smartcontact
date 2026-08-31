@@ -1,4 +1,3 @@
-import { HttpClient } from '@angular/common/http';
 // Caminho: src/app/features/users/pages/profile-page/profile-page.ts
 
 import { Component, OnInit, OnDestroy, inject, ViewChild, ElementRef, ChangeDetectorRef, signal } from '@angular/core';
@@ -61,7 +60,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
   private userService = inject(UserService);
   private authService = inject(AuthService);
   private snackBar = inject(MatSnackBar);
-  private http = inject(HttpClient);
   private router = inject(Router);
   private cepService = inject(CepService);
   private cdr = inject(ChangeDetectorRef);
@@ -412,11 +410,13 @@ export class ProfileComponent implements OnInit, OnDestroy {
                 this.generatePersonalQR();
             } else {
                 this.needsInitialization = true;
+                console.log('DEBUG: needsInitialization set to true', { tags: userProfile.tags, activeTenantId: this.authService.activeTenantId() });
                 this.cdr.detectChanges();
             }
         } else {
             this.needsInitialization = true;
-            this.cdr.detectChanges();
+                console.log('DEBUG: needsInitialization set to true', { tags: userProfile.tags, activeTenantId: this.authService.activeTenantId() });
+                this.cdr.detectChanges();
         }    this.phones.clear();
         if (userProfile.phones) {
             const sortedPhones = [...userProfile.phones].sort((a, b) => (b.isMain ? 1 : 0) - (a.isMain ? 1 : 0));
@@ -462,7 +462,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   
   initializeProfile(): void {
     this.isLoading = true;
-    this.http.post(`/api/users/${this.currentUserData!.id}/initialize-profile`, {}).subscribe({
+    this.userService.initializeProfile(this.currentUserData!.id).subscribe({
       next: () => {
         this.snackBar.open('Perfil inicializado com sucesso!', 'Fechar', { duration: 3000 });
         this.loadInitialProfile();
@@ -638,3 +638,4 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
   }
 }
+// trigger rebuild
