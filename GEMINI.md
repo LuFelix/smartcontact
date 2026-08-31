@@ -65,8 +65,8 @@ O sistema opera em um paradigma Multi-Tenant N:N (estilo Google Drive).
 - [x] **PASSO AG (Issue #286):** Fix do Erro 500 no Salvamento de Perfil (Falso Negativo) — Isolamento correto do ownerId no interceptor/jwt strategy. (OK).
 - [x] **PASSO AH (Issue #297):** Hotfix de Build e Strict Dependencies (TypeORM) — Migração do backend para SWC Compiler resolvendo crash silencioso no boot do Node 20+ (OK).
 - [x] **PASSO AI (Issue #299):** Arquitetura de Identidade Multi-Tenant — Sincronização contínua do nome global (User) via Google Auth isolada do apelido contextual de terceiros (Membership.alias) (OK).
+- [x] **PASSO AJ (Issue #302):** Backend Analytics — Captura de GeoIP persistida na TagReadLog via `geoip-lite` e extração robusta de User-Agent via `ua-parser-js`, com agregações por cidade, estado e país (OK).
 - [ ] **PRÓXIMOS PASSOS (Backlog Estratégico - Go-to-Market):**
-  - #302: [Backend] Captura GeoIP e Analytics Persistente na TagReadLog
   - #303: [Frontend] Dashboard Analytics com Painel Geográfico e Dados de SO/Browser
   - #259: [CI/QA] Pipeline de CI/CD com Barreira de Cobertura Mínima de 95%
   - #169: [BE/FE] Módulo de Gestão Administrativa de Tenants (Workspaces)
