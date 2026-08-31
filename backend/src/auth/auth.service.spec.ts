@@ -47,6 +47,7 @@ describe('AuthService', () => {
     setVerificationData: vi.fn().mockResolvedValue(undefined),
     provisionPersonalWorkspace: vi.fn().mockImplementation(user => Promise.resolve(user)),
     createMembershipForUser: vi.fn().mockResolvedValue(undefined),
+    updateGlobalNameAndVerify: vi.fn(),
   };
 
   const mockProfilesServ = {
@@ -339,6 +340,50 @@ describe('AuthService', () => {
       await service.loginWithGoogle({ token: 'google_token', invitationToken: 'invite-123' });
       expect(teamService.resolveInvitation).toHaveBeenCalledWith('invite-123');
       expect(usersService.createMembershipForUser).toHaveBeenCalledWith('google-user-123', 'tenant-invited', 'role-invited');
+    });
+
+    it('should update user name and verify if user exists but is unverified (first real login)', async () => {
+      const mockUser = {
+        id: 'google-user-123',
+        name: 'Borracheiro João',
+        email: 'user@google.com',
+        ownerId: 'some-other-id',
+        isVerified: false,
+        memberships: [],
+      };
+      mockUsersServ.findByEmail.mockResolvedValue(mockUser);
+      mockMembershipsServ.findTeamWorkspacesByUser.mockResolvedValueOnce([
+        {
+          tenantId: 'tenant-personal',
+          role: { name: 'administrador' },
+          tenant: { slug: 'ws-google-user-123', ownerId: 'google-user-123' }
+        }
+      ]);
+
+      await service.loginWithGoogle({ token: 'google_token' });
+      expect(mockUsersServ.updateGlobalNameAndVerify).toHaveBeenCalledWith('google-user-123', 'Google User');
+    });
+
+    it('should NOT update user name if user exists and is already verified', async () => {
+      const mockUser = {
+        id: 'google-user-123',
+        name: 'João Silva',
+        email: 'user@google.com',
+        ownerId: 'google-user-123',
+        isVerified: true,
+        memberships: [],
+      };
+      mockUsersServ.findByEmail.mockResolvedValue(mockUser);
+      mockMembershipsServ.findTeamWorkspacesByUser.mockResolvedValueOnce([
+        {
+          tenantId: 'tenant-personal',
+          role: { name: 'administrador' },
+          tenant: { slug: 'ws-google-user-123', ownerId: 'google-user-123' }
+        }
+      ]);
+
+      await service.loginWithGoogle({ token: 'google_token' });
+      expect(mockUsersServ.updateGlobalNameAndVerify).not.toHaveBeenCalled();
     });
 
   describe('getWorkspaces', () => {

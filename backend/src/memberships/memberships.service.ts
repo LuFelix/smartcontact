@@ -12,7 +12,7 @@ export class MembershipsService {
     private readonly membershipRepository: Repository<Membership>,
   ) {}
 
-  async create(data: { userId: string; tenantId: string; roleId: string; profileId?: string | null }) {
+  async create(data: { userId: string; tenantId: string; roleId: string; profileId?: string | null; alias?: string | null }) {
     try {
       const membership = this.membershipRepository.create(data);
       return await this.membershipRepository.save(membership);

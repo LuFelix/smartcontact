@@ -121,6 +121,7 @@ export class GoogleContactsService {
                     userId: existing.id,
                     tenantId: currentUser.tenantId,
                     roleId: contatoRole.id,
+                    alias: name,
                   });
                   this.logger.log(`Contato existente ${email} vinculado ao tenant ${currentUser.tenantId} via sync.`);
                 }
@@ -203,6 +204,7 @@ export class GoogleContactsService {
                           userId: existing.id,
                           tenantId: currentUser.tenantId,
                           roleId: contatoRole.id,
+                          alias: leadData.name,
                       });
                   }
               }

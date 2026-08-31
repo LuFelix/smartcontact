@@ -241,7 +241,17 @@ export class AuthService {
         user = await this.usersService.findByEmail(payloadGoogle.email);
       } else {
           // O usuário já existe no banco (pode ter sido criado como lead ou já ter conta).
-          
+
+          // SOBRESCRITA DE IDENTIDADE: Se for o primeiro login real (isVerified = false),
+          // o usuário era um lead/contato com apelido de agenda.
+          // Agora atualizamos a tabela global Users com seu nome oficial do provedor.
+          if (!user.isVerified) {
+              const officialName = payloadGoogle.name || 'Usuário Google';
+              await this.usersService.updateGlobalNameAndVerify(user.id, officialName);
+              user.name = officialName;
+              user.isVerified = true;
+          }
+
           // Atualiza a foto se necessário
           if (payloadGoogle.picture && user.profilePictureUrl !== payloadGoogle.picture) {
               await this.usersService.updateProfilePicture(user.id, payloadGoogle.picture);

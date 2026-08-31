@@ -247,7 +247,8 @@ export class UsersService {
             userId: savedUser.id,
             tenantId: tenantId,
             roleId: assignedRole.id,
-            profileId: profileId
+            profileId: profileId,
+            alias: createUserDto.name
         });
 
         // RETORNA O USUÁRIO COMPLETO COM RELAÇÕES CARREGADAS
@@ -270,6 +271,10 @@ export class UsersService {
             (user as any).tenantId = activeMembership?.tenantId;
             if (activeMembership?.profile) {
                 (user as any).profile = activeMembership.profile;
+            }
+
+            if (activeMembership?.alias) {
+                user.name = activeMembership.alias;
             }
         }
         return user;
@@ -468,6 +473,12 @@ export class UsersService {
             // Se a membership não tiver profile (profileId null), o usuário
             // não é mais membro da equipe e não deve ter badge de Equipe.
             (user as any).profile = activeMembership?.profile || undefined;
+
+            // Injeção de Alias: Se o contato tiver um apelido salvo no tenant,
+            // ele sobrescreve dinamicamente o nome global no DTO de resposta.
+            if (activeMembership?.alias) {
+                user.name = activeMembership.alias;
+            }
 
             // Filtro de Segurança ABAC: Admins e Donos vêem tudo, outros vêem básico
             if (isSystemAdmin || isOwnProfile || isTenantAdmin) {
@@ -942,5 +953,9 @@ export class UsersService {
             }));
             await this.userResourcePermissionRepository.save(newPermissions);
         }
+    }
+
+    async updateGlobalNameAndVerify(userId: string, name: string): Promise<void> {
+        await this.usersRepository.update(userId, { name, isVerified: true });
     }
 }
