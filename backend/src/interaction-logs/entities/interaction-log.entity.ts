@@ -1,3 +1,4 @@
+import type { Relation } from 'typeorm';
 import { Tag } from 'src/tags/entities/tag.entity';
 import { User } from 'src/users/entities/user.entity';
 import {
@@ -22,7 +23,7 @@ export class InteractionLog {
 
   @ManyToOne(() => Tag, (tag) => tag.interactionLogs, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'tag_id' })
-  tag!: Tag;
+  tag!: Relation<Tag>;
 
   @Column({ type: 'uuid', name: 'tag_id' })
   tagId!: string;

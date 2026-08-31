@@ -1,3 +1,4 @@
+import type { Relation } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { InteractionLog } from 'src/interaction-logs/entities/interaction-log.entity';
 import { UserTagAccess } from './user-tag-access.entity';
@@ -101,7 +102,7 @@ export class Tag {
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })
-  user!: User;
+  user!: Relation<User>;
 
   @Column({ type: 'uuid', name: 'user_id' })
   userId!: string;
@@ -118,10 +119,10 @@ export class Tag {
   isActive!: boolean;
 
   @OneToMany(() => InteractionLog, (log) => log.tag)
-  interactionLogs!: InteractionLog[];
+  interactionLogs!: Relation<InteractionLog[]>;
 
   @OneToMany(() => UserTagAccess, (access) => access.tag)
-  accesses!: UserTagAccess[];
+  accesses!: Relation<UserTagAccess[]>;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

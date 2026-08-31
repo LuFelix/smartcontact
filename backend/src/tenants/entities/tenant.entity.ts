@@ -1,3 +1,4 @@
+import type { Relation } from 'typeorm';
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { Membership } from '../../memberships/entities/membership.entity';
 import { User } from '../../users/entities/user.entity';
@@ -26,7 +27,7 @@ export class Tenant {
   owner!: User | null;
 
   @OneToMany(() => Membership, (membership) => membership.tenant)
-  memberships!: Membership[];
+  memberships!: Relation<Membership[]>;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

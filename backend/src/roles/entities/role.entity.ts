@@ -1,3 +1,4 @@
+import type { Relation } from 'typeorm';
 // roles/entities/role.entity.ts
 import { Membership } from '../../memberships/entities/membership.entity';
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, Index } from 'typeorm';
@@ -34,7 +35,7 @@ export class Role {
    * Lista de vínculos de membros que utilizam esta 'role'.
    */
   @OneToMany(() => Membership, (membership) => membership.role)
-  memberships!: Membership[];
+  memberships!: Relation<Membership[]>;
 
   @Column({ type: 'uuid', name: 'tenant_id', nullable: true })
   @Index()
