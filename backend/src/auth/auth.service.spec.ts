@@ -342,13 +342,13 @@ describe('AuthService', () => {
       expect(usersService.createMembershipForUser).toHaveBeenCalledWith('google-user-123', 'tenant-invited', 'role-invited');
     });
 
-    it('should update user name and verify if user exists but is unverified (first real login)', async () => {
+    it('should ALWAYS update user name if google payload name is different, even if already verified', async () => {
       const mockUser = {
         id: 'google-user-123',
-        name: 'Borracheiro João',
+        name: 'Nome Desatualizado',
         email: 'user@google.com',
-        ownerId: 'some-other-id',
-        isVerified: false,
+        ownerId: 'google-user-123',
+        isVerified: true, // Já era verificado!
         memberships: [],
       };
       mockUsersServ.findByEmail.mockResolvedValue(mockUser);
@@ -360,14 +360,14 @@ describe('AuthService', () => {
         }
       ]);
 
-      await service.loginWithGoogle({ token: 'google_token' });
+      await service.loginWithGoogle({ token: 'google_token' }); // mock devolve payloadGoogle.name = 'Google User'
       expect(mockUsersServ.updateGlobalNameAndVerify).toHaveBeenCalledWith('google-user-123', 'Google User');
     });
 
-    it('should NOT update user name if user exists and is already verified', async () => {
+    it('should NOT call updateGlobalNameAndVerify if user name is already equal to google payload name', async () => {
       const mockUser = {
         id: 'google-user-123',
-        name: 'João Silva',
+        name: 'Google User', // Exatamente igual ao payload
         email: 'user@google.com',
         ownerId: 'google-user-123',
         isVerified: true,

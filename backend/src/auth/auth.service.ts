@@ -242,13 +242,16 @@ export class AuthService {
       } else {
           // O usuário já existe no banco (pode ter sido criado como lead ou já ter conta).
 
-          // SOBRESCRITA DE IDENTIDADE: Se for o primeiro login real (isVerified = false),
-          // o usuário era um lead/contato com apelido de agenda.
-          // Agora atualizamos a tabela global Users com seu nome oficial do provedor.
-          if (!user.isVerified) {
-              const officialName = payloadGoogle.name || 'Usuário Google';
+          // SOBRESCRITA DE IDENTIDADE (Sincronização Contínua):
+          // Como temos a arquitetura de 'Membership.alias' para manter o nome de agenda de terceiros intacto,
+          // a tabela global 'Users' pode e deve ser 100% espelhada na identidade oficial do Google.
+          const officialName = payloadGoogle.name || 'Usuário Google';
+          if (user.name !== officialName) {
               await this.usersService.updateGlobalNameAndVerify(user.id, officialName);
               user.name = officialName;
+              user.isVerified = true;
+          } else if (!user.isVerified) {
+              await this.usersService.markEmailAsVerified(user.id);
               user.isVerified = true;
           }
 
