@@ -82,3 +82,22 @@ território** antes de começar — regra da
 | `docker compose up -d db api` | Sobe API + Postgres (porta 5433) |
 | `npm run build` (em `frontend/`) | Build de produção (pré-PR) |
 | `ls frontend/shots/` | Evidências geradas (gitignored) |
+
+## Caso real — faixa de abas da profile-page
+
+Primeiro caso registrado com esta rotina (base do "efeito nativo" mobile):
+
+- **Sintoma:** em viewport mobile a faixa de abas
+  (Geral/Contatos/Endereços/Social/Tags & QR) transborda e depende de
+  gesto/scroll pouco evidente — setas de navegação pouco visíveis.
+- **Evidências já geradas** pela suíte (regeneráveis):
+  `frontend/shots/profile-iphone-13-*.png` e
+  `frontend/shots/profile-pixel-7-{geral,tags-qr}.png`
+  — fonte: `frontend/src/app/features/users/pages/profile-page/profile-page.html`
+  (`mat-tab-group`).
+- **Fluxo previsto:** abrir a issue no **M2** com os PNGs acima anexados e a
+  `**Fronteira de arquivos:**` (provável: `frontend/src/app/features/users/pages/profile-page/**`),
+  corrigir seguindo o checklist "nativo" da skill `mobile-native-ux`
+  (`.opencode/skills/mobile-native-ux/SKILL.md`) e, se a correção pedir
+  proteção de regressão, criar a spec em `frontend/e2e/` **comentando antes
+  na issue M1 correspondente** (§4.2).
