@@ -34,6 +34,7 @@ Regras: só adicionar a dependência estritamente necessária ao próprio territ
 | **M0** Supervisão, Governança & Pipeline CI | `.docs/governance/**`, `.github/workflows/**` (exceto `e2e-mobile.yml`), `manual-protocolos.md`, `manual-issues.md`, `issues-*.js` | **Proibido** `frontend/src`, `backend/src`. Herda a #259 (CI de cobertura). |
 | **M1** Testes Visuais Mobile (Playwright) | `frontend/playwright.config.ts`, `frontend/e2e/**`, `shots/**` (gitignored), `.github/workflows/e2e-mobile.yml` | `frontend/package.json` é universal (Seção 2). Specs de regressão criadas pelo M2 entram aqui (§4.2). |
 | **M2** Bugs Visuais & UX Mobile (permanente) | Declarado **por issue** na seção `**Fronteira de arquivos:**` | Cross-cutting: pode tocar qualquer arquivo de produto **desde que** declare a fronteira e comente previamente na issue do milestone dono do território (§4.5). |
+| **Agentes do projeto (opencode)** | `.opencode/**` (skills, agents, commands, plugins) | Artefato de agente: segue o protocolo normal de issue/PR, **não** é universal (sem rebase) e não mistura com código de produto numa mesma issue. |
 | **Backlog** | Triagem | Issue só sai daqui **para um milestone** antes de virar trabalho. |
 | *Futuros milestones de produto* | A definir na abertura do milestone | Ex.: `features/users/**`, `features/dashboard/**` — sempre com linha nova nesta tabela. |
 
