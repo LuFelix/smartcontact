@@ -2,6 +2,8 @@
 
 Este arquivo é a fonte da verdade para todos os agentes Gemini CLI que atuarem neste repositório. As instruções abaixo têm **precedência absoluta**.
 
+> **⚠️ CONTRATO DE EXECUÇÃO DE MILESTONES (issue #312):** ANTES de iniciar qualquer milestone ou issue de feature, leia `.docs/governance/milestone-file-matrix.md` — matriz de território de arquivos por milestone (M0 Supervisão, M1 Testes Visuais Mobile, M2 Bugs Visuais & UX Mobile), precedências obrigatórias, arquivos universais (`package.json`/lockfiles e este `GEMINI.md` — conflito resolve por `git rebase`, nunca merge manual), seção `**Fronteira de arquivos:**` obrigatória no corpo de toda issue e checklist pré-PR. Ela impede choques de arquivo entre milestones executados por sessões/agentes distintos: **issue de um milestone jamais edita o território de outro milestone.**
+
 ## 🎯 1. O que é o Sistema?
 O **SmartContact** resolve a fricção do networking físico através de **Cartões de Visita Digitais Inteligentes**. 
 - O usuário possui uma Tag (NFC ou QR Code).
@@ -86,3 +88,4 @@ O sistema opera em um paradigma Multi-Tenant N:N (estilo Google Drive).
 ## 📄 6. Protocolos
 1. **Rigor:** Leia sempre `manual-protocolos.md` e `DOCUMENTACAO_ARQUITETURA.md`.
 2. **Branches:** Siga o Protocolo Padrão Ouro para abertura e fechamento.
+3. **Paralelismo:** Antes de qualquer issue, consulte `.docs/governance/milestone-file-matrix.md` — território do seu milestone, arquivos universais (rebase) e fronteira obrigatória.
