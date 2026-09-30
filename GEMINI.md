@@ -69,7 +69,9 @@ O sistema opera em um paradigma Multi-Tenant N:N (estilo Google Drive).
 - [x] **PASSO AI (Issue #299):** Arquitetura de Identidade Multi-Tenant — Sincronização contínua do nome global (User) via Google Auth isolada do apelido contextual de terceiros (Membership.alias) (OK).
 - [x] **PASSO AJ (Issue #302):** Backend Analytics — Captura de GeoIP persistida na TagReadLog via `geoip-lite` e extração robusta de User-Agent via `ua-parser-js`, com agregações por cidade, estado e país (OK).
 - [x] **PASSO AK (Issue #303):** Frontend Dashboard Analytics — Interface B2B de alto impacto com novos painéis gráficos de Dispositivos (Mobile/Desktop), Navegadores e Ranking de Regiões utilizando ApexCharts integrado (OK).
+- [x] **PASSO AL (Issue #312):** Governança de Paralelismo Multi-Agente — Matriz de Independência de Milestones (`.docs/governance/milestone-file-matrix.md`) com territórios M0/M1/M2, arquivos universais resolvidos por rebase (`package.json`/lockfiles + `GEMINI.md`), `**Fronteira de arquivos:**` obrigatória no corpo de toda issue, plano por issue (`plano-<nome-issue>.md`) e sync do `manual-protocolos.md` com o baseline do mas-ia (novo passo de `gh pr ready` + remoção de `WIP:` no encerramento) (PR #313) (OK).
 - [ ] **PRÓXIMOS PASSOS (Backlog Estratégico - Go-to-Market):**
+  - Milestones ativos (fronteiras em `.docs/governance/milestone-file-matrix.md`): **M0** Supervisão, Governança & Pipeline CI · **M1** Testes Visuais Mobile (Playwright) · **M2** Bugs Visuais & UX Mobile (permanente)
   - #259: [CI/QA] Pipeline de CI/CD com Barreira de Cobertura Mínima de 95%
   - #169: [BE/FE] Módulo de Gestão Administrativa de Tenants (Workspaces)
   - #220-223: [BE/FE] Motor Dinâmico de Permissões e Roles Customizadas
