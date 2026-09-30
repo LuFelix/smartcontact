@@ -1,0 +1,117 @@
+name: E2E Mobile (Playwright)
+
+on:
+  pull_request:
+    paths:
+      - 'frontend/e2e/**'
+      - 'frontend/playwright.config.ts'
+      - 'frontend/package.json'
+      - 'frontend/package-lock.json'
+      - '.github/workflows/e2e-mobile.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Create CI .env (dummy values)
+        run: |
+          cat > .env <<'EOF'
+          DB_TYPE=postgres
+          DB_HOST=localhost
+          DB_PORT=5432
+          DB_USERNAME=postgres
+          DB_PASSWORD=ci-dummy-password
+          DB_DATABASE=mydb
+          POSTGRES_DB=mydb
+          POSTGRES_USER=postgres
+          POSTGRES_PASSWORD=ci-dummy-password
+          POSTGRES_PORT=5432
+          BACKEND_PORT=3000
+          NODE_ENV=development
+          FRONTEND_PORT=4200
+          JWT_SECRET=ci-dummy-jwt-secret
+          JWT_EXPIRES_IN=1d
+          API_URL=http://localhost:3000
+          GEMINI_API_KEY=ci-dummy
+          WP_PORT=8080
+          WP_DB_NAME=ci_wp
+          WP_DB_USER=ci_wp
+          WP_DB_PASSWORD=ci_wp_password
+          WP_DB_ROOT_PASSWORD=ci_wp_root_password
+          MYSQL_PORT=3306
+          EOF
+
+      - name: Start stack (db + api)
+        run: docker compose up -d db api
+
+      - name: Wait for API
+        run: |
+          for i in $(seq 1 60); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:3000/api || true)
+            if [ "$code" != "000" ]; then
+              echo "API reachable (HTTP $code) after ${i} attempts"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "API did not become reachable"
+          docker compose logs api | tail -50
+          exit 1
+
+      - name: Seed database
+        run: docker compose exec -T api npm run seed
+
+      - name: Login readiness gate (HTTP 201)
+        run: |
+          for i in $(seq 1 12); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:3000/api/auth/login \
+              -H 'Content-Type: application/json' \
+              -d '{"identifier":"admin@smartcontact.com.br","password":"Senha@123"}')
+            if [ "$code" = "201" ]; then
+              echo "Login OK (HTTP 201) after ${i} attempts"
+              exit 0
+            fi
+            echo "attempt ${i}: HTTP $code"
+            sleep 5
+          done
+          echo "Login gate failed"
+          docker compose logs api | tail -50
+          exit 1
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Playwright browsers (Chromium + WebKit)
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Run mobile visual suite
+        working-directory: frontend
+        run: npm run e2e:visual
+
+      - name: Upload artifacts (shots, traces, report)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-e2e-artifacts
+          path: |
+            frontend/shots/
+            frontend/test-results/
+            frontend/playwright-report/
+          if-no-files-found: ignore
