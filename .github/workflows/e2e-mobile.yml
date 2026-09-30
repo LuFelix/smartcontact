@@ -73,8 +73,8 @@ jobs:
           docker compose logs api | tail -50
           exit 1
 
-      - name: Seed database
-        run: docker compose exec -T api npm run seed
+      - name: Seed database (transpile-only, como o runtime SWC)
+        run: docker compose exec -T api npx ts-node --transpileOnly -r tsconfig-paths/register src/seed.ts
 
       - name: Login readiness gate (HTTP 201)
         run: |
