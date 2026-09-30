@@ -521,3 +521,103 @@ a[mat-flat-button] {
     max-width: 400px;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Issue #327 — native overflow affordances for the profile tab strip
+   (iOS HIG × Material 3). Scoped with :host because mat-tab-group is also
+   used by admin pages. Palette-agnostic: fades via mask, colors via
+   currentColor — valid in both light and dark modes.
+   --------------------------------------------------------------------------- */
+
+:host {
+  ::ng-deep .mat-mdc-tab-header {
+    .mat-mdc-tab-label-container {
+      // Hard mid-letter cuts read as broken; the fade says "keep scrolling".
+      -webkit-mask-image: linear-gradient(
+        to right,
+        transparent 0,
+        #000 20px,
+        #000 calc(100% - 20px),
+        transparent 100%
+      );
+      mask-image: linear-gradient(
+        to right,
+        transparent 0,
+        #000 20px,
+        #000 calc(100% - 20px),
+        transparent 100%
+      );
+      overscroll-behavior-x: contain;
+    }
+
+    // At the start only the right edge is cut — keep the active tab crisp.
+    &.mat-mdc-tab-header-pagination-controls-enabled:has(
+        .mat-mdc-tab-header-pagination-before.mat-mdc-tab-header-pagination-disabled
+      )
+      .mat-mdc-tab-label-container {
+      -webkit-mask-image: linear-gradient(
+        to right,
+        #000 0,
+        #000 calc(100% - 20px),
+        transparent 100%
+      );
+      mask-image: linear-gradient(
+        to right,
+        #000 0,
+        #000 calc(100% - 20px),
+        transparent 100%
+      );
+    }
+
+    // At the end only the left edge is cut — keep the last tab crisp.
+    &.mat-mdc-tab-header-pagination-controls-enabled:has(
+        .mat-mdc-tab-header-pagination-after.mat-mdc-tab-header-pagination-disabled
+      )
+      .mat-mdc-tab-label-container {
+      -webkit-mask-image: linear-gradient(
+        to right,
+        transparent 0,
+        #000 20px,
+        #000 100%
+      );
+      mask-image: linear-gradient(
+        to right,
+        transparent 0,
+        #000 20px,
+        #000 100%
+      );
+    }
+
+    .mat-mdc-tab-header-pagination {
+      min-width: 44px; // iOS HIG touch target (height already 49px)
+      padding: 0;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 200ms cubic-bezier(0.05, 0.7, 0.1, 1);
+
+      .mat-mdc-tab-header-pagination-chevron {
+        width: 10px;
+        height: 10px;
+        border-color: currentColor; // follows light/dark theme automatically
+      }
+
+      &:active:not(.mat-mdc-tab-header-pagination-disabled) {
+        transform: scale(0.92);
+      }
+
+      &.mat-mdc-tab-header-pagination-disabled {
+        opacity: 0.38; // Material disabled state — "can't go further"
+      }
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    ::ng-deep .mat-mdc-tab-header-pagination {
+      transition: none;
+
+      &:active {
+        transform: none;
+      }
+    }
+  }
+}
