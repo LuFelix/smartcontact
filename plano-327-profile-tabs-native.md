@@ -66,3 +66,22 @@ Configuração"/FAB (issue M2 separada).
 - Sobreposição "Testar Configuração"/FAB → issue M2 própria
 - Spec de regressão nova → só com comentário prévio na #315 (matriz §4.2)
 - Ajustar largura/padding das abas (mudaria o layout desktop)
+
+## Aditivo — pedido do usuário na revisão do shot dark (2026-09-30)
+
+Escopo alargado (mesma fronteira, mesmos arquivos, continua **só CSS**):
+
+1. **Setas "ruim como um todo"** → viram chips circulares 44×44 com superfície
+   (`surface-container-high`), chevron 10px; disabled agora apaga só o chevron
+   (0.38) e mantém o chip visível (afordância permanece).
+2. **Rolagem melhor / tap-to-scroll** → `touch-action: pan-y` no header
+   (gesto horizontal reservado ao swipe do Material, vertical continua
+   rolando a página nativamente); tap em aba parcialmente visível já rola
+   animado para ela (comportamento nativo do Material preservado).
+3. **Avatar grande ocupa espaço** → no mobile (≤768px): avatar 160→112px,
+   header 40→24px de padding, título 2.25→1.75rem, gaps reduzidos — a faixa
+   e o conteúdo sobem ~80px (melhora também o shot iPhone da evidência).
+4. **Botões estourando texto** → é o overlap "Testar Configuração" = issue
+   **#329** (PR separado, faixa de issues do M2).
+
+Commits continuam os mesmos do plano (item 3 absorve o aditivo).
