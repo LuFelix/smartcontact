@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
+    "e2e:visual": "playwright test",
     "seed:certifications": "node src/utils/certifications/seed-certifications.js",
     "seed:users": "node src/utils/users/seed-users.js"
   },
