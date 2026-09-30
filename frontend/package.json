@@ -39,15 +39,16 @@
     "zone.js": "~0.15.0"
   },
   "devDependencies": {
+    "@analogjs/vite-plugin-angular": "^1.9.3",
+    "@analogjs/vitest-angular": "^1.9.3",
     "@angular/build": "^20.0.1",
     "@angular/cli": "^20.0.1",
     "@angular/compiler-cli": "^20.0.0",
+    "@playwright/test": "^1.63.0",
     "@types/crypto-js": "^4.2.2",
-    "typescript": "~5.8.2",
-    "vitest": "^2.1.8",
     "@vitest/coverage-v8": "^2.1.8",
     "jsdom": "^25.0.1",
-    "@analogjs/vitest-angular": "^1.9.3",
-    "@analogjs/vite-plugin-angular": "^1.9.3"
+    "typescript": "~5.8.2",
+    "vitest": "^2.1.8"
   }
 }

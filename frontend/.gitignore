@@ -1,0 +1,4 @@
+# Playwright evidence screenshots (never committed)
+shots/
+test-results/
+playwright-report/
