@@ -85,3 +85,44 @@ Escopo alargado (mesma fronteira, mesmos arquivos, continua **só CSS**):
    **#329** (PR separado, faixa de issues do M2).
 
 Commits continuam os mesmos do plano (item 3 absorve o aditivo).
+
+## Aditivo 2 — iteração de feedback ao vivo (2026-09-30, após merge visual dos chips)
+
+Teste real do usuário (container `:4200`, S25 305×780, prints em
+`frontend/shots/bugs/`): "apenas as setas agora são botões, mas tem que rolar a
+tela e depois clicar na aba; o ideal é tap + setas rolando as abas como
+carrossel".
+
+### Diagnóstico runtime (Playwright no dev server)
+
+| Fato | Valor |
+|---|---|
+| `.mat-mdc-tab-label-container` | 202px, `overflow: hidden` — **não há scroller nativo horizontal**; o Material rola só programaticamente |
+| Setas do Material | `next()/previous()` calculam o alvo pela **aba selecionada**, não pela janela visível → com "Geral" selecionada ≈ no-op |
+| Swipe horizontal | sem handler no Material v20; `touch-action: pan-y` deixa o gesto sem dono → morre |
+| Scroll container da página | **`.page-content`** (`overflow-y: auto`), não a `window` |
+| Assassino do sticky | `mat-card.profile-card` com `overflow: hidden` (corte dos cantos 32px) — sticky morre dentro de ancestor com overflow ≠ visible |
+
+### Mudanças (approved pelo usuário: sticky = sim, passo = ~2 abas por tap)
+
+1. **F1 setas = carrossel** (`html` + `ts`): interceptor em captura no
+   `.mat-mdc-tab-header`; alvo calculado pela **janela visível**
+   (revela ~2 abas) via API pública `MatTabHeader.scrollToLabel()`; no limite →
+   no-op. TDD (RED→GREEN).
+2. **F2 swipe 1:1** (`ts`): `touchstart/touchend` no
+   `.mat-mdc-tab-label-container`; `|dx| > 32px && |dx| > 1.2|dy|` →
+   `scrollBy({left: dx, behavior: smooth})`; `touch-action: pan-y` permanece
+   (vertical segue nativa). TDD (RED→GREEN).
+3. **F3 sticky no mobile ≤768px** (`scss`): `position: sticky; top: 0; z-index: 3`
+   + fundo `--mat-sys-surface-container` no `.mat-mdc-tab-header`; **e**
+   `.profile-card { overflow: visible }` só no mobile (desktop mantém o
+   clipping dos cantos) + `border-radius` compensatório no
+   `.profile-card-header`. App bar fica fora do scroller → `top: 0` segura a
+   faixa abaixo dela.
+4. **Regressão**: spec "arrow scrolls the tab strip" + spec de swipe
+   (`profile-page.spec.ts`); `npm run test` (95%+), `npm run build`,
+   `npm run e2e:visual` 6/6, runtime 2 dispositivos × claro/escuro.
+
+Commits da iteração (α atômica, inglês, What/Why/Testing):
+`docs:` (este aditivo) → `feat(327)` setas → `feat(327)` swipe →
+`feat(327)` sticky → encerramento §2.
