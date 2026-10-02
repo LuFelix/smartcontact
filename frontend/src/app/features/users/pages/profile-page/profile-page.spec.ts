@@ -67,6 +67,7 @@ describe('ProfileComponent', () => {
     mockUserService = {
       findById: vi.fn().mockReturnValue(of(mockUser)),
       update: vi.fn().mockReturnValue(of(mockUser)),
+      initializeProfile: vi.fn().mockReturnValue(of({ success: true })),
     };
 
     mockAuthService = {
@@ -166,29 +167,23 @@ describe('ProfileComponent', () => {
 
   describe('initializeProfile', () => {
     it('should call initialize profile endpoint and reload data on success', () => {
-      const mockHttp = {
-        post: vi.fn().mockReturnValue(of({ message: 'Success' }))
-      };
-      (component as any).http = mockHttp;
+      mockUserService.initializeProfile = vi.fn().mockReturnValue(of({ message: 'Success' }));
       const loadInitialProfileSpy = vi.spyOn(component as any, 'loadInitialProfile').mockImplementation(() => {});
 
       component.initializeProfile();
 
       expect(component.isLoading).toBe(true);
-      expect(mockHttp.post).toHaveBeenCalledWith('/api/users/user-123/initialize-profile', {});
+      expect(mockUserService.initializeProfile).toHaveBeenCalledWith('user-123');
       expect(mockSnackBar.open).toHaveBeenCalledWith('Perfil inicializado com sucesso!', 'Fechar', { duration: 3000 });
       expect(loadInitialProfileSpy).toHaveBeenCalled();
     });
 
     it('should handle initialization error', () => {
-      const mockHttp = {
-        post: vi.fn().mockReturnValue(throwError(() => new Error('Error')))
-      };
-      (component as any).http = mockHttp;
+      mockUserService.initializeProfile = vi.fn().mockReturnValue(throwError(() => new Error('Error')));
 
       component.initializeProfile();
 
-      expect(mockHttp.post).toHaveBeenCalledWith('/api/users/user-123/initialize-profile', {});
+      expect(mockUserService.initializeProfile).toHaveBeenCalledWith('user-123');
       expect(mockSnackBar.open).toHaveBeenCalledWith('Erro ao inicializar perfil.', 'Fechar', { duration: 5000 });
       expect(component.isLoading).toBe(false);
     });
