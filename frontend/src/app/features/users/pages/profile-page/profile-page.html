@@ -115,7 +115,7 @@
 
                         <div class="item-actions">
                           <div class="toggle-with-label">
-                            <mat-slide-toggle formControlName="isWhatsapp">
+                            <mat-slide-toggle formControlName="isWhatsapp" [disabled]="!isEditing">
                               <mat-icon [color]="phone.get('isWhatsapp')?.value ? 'primary' : 'disabled'" class="whatsapp-status-icon">
                                 {{ phone.get('isWhatsapp')?.value ? 'chat' : 'chat_bubble_outline' }}
                               </mat-icon>
@@ -211,7 +211,7 @@
                       <div [formGroupName]="$index" class="address-item-block">
                         <div class="address-header">
                           <mat-form-field appearance="outline" class="tag-select">
-                            <mat-select formControlName="tag">
+                            <mat-select formControlName="tag" [disabled]="!isEditing">
                               @for (tag of addressTags; track tag) {
                                 <mat-option [value]="tag">{{ addressTagLabels[tag] }}</mat-option>
                               }
@@ -349,7 +349,7 @@
                         <h4 class="source-label"><mat-icon>contactless</mat-icon> Destino do Chip NFC</h4>
                         <mat-form-field appearance="outline" class="w-full">
                           <mat-label>Onde o NFC vai abrir?</mat-label>
-                          <mat-select formControlName="nfcRedirectMode">
+                          <mat-select formControlName="nfcRedirectMode" [disabled]="!isEditing">
                             @for (mode of redirectModes; track mode.value) {
                               <mat-option [value]="mode.value">{{ mode.label }}</mat-option>
                             }
@@ -368,7 +368,7 @@
                         <h4 class="source-label"><mat-icon>qr_code_2</mat-icon> Destino do QR Code</h4>
                         <mat-form-field appearance="outline" class="w-full">
                           <mat-label>Onde o QR vai abrir?</mat-label>
-                          <mat-select formControlName="qrRedirectMode">
+                          <mat-select formControlName="qrRedirectMode" [disabled]="!isEditing">
                             @for (mode of redirectModes; track mode.value) {
                               <mat-option [value]="mode.value">{{ mode.label }}</mat-option>
                             }

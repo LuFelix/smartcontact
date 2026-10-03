@@ -388,7 +388,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
       })
     ).subscribe({
       next: (userProfile: FullUserResponse) => {
-        this.currentUserData = userProfile;
+        this.currentUserData = JSON.parse(JSON.stringify(userProfile));
         this.populateFormWithUserData(userProfile);
         this.setFormControlsState(this.isEditing);
       },
@@ -593,7 +593,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   onCancel(): void {
     this.isEditing = false;
     if (this.currentUserData) {
-      this.populateFormWithUserData(this.currentUserData);
+      this.populateFormWithUserData(JSON.parse(JSON.stringify(this.currentUserData)));
     } else {
       this.loadInitialProfile();
     }
