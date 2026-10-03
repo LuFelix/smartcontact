@@ -286,6 +286,10 @@
   width: 100%;
   box-sizing: border-box;
 
+  @media (max-width: 768px) {
+    margin-top: 16px;
+  }
+
   .qr-preview-card {
     display: flex;
     align-items: center;
@@ -298,6 +302,11 @@
     width: 100%;
     box-sizing: border-box;
     overflow: hidden;
+
+    @media (max-width: 768px) {
+      padding: 16px 14px;
+      border-radius: 16px;
+    }
 
     canvas {
       background: white;
@@ -398,8 +407,21 @@
     overflow: hidden;
 
     @media (max-width: 768px) {
-      padding: 16px 12px;
-      border-radius: 18px;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      border-radius: 0;
+      padding: 0;
+      margin-bottom: 12px;
+      overflow: visible;
+
+      mat-card-header {
+        padding: 0 0 8px 0;
+      }
+
+      mat-card-content {
+        padding: 0;
+      }
     }
 }
 
@@ -414,7 +436,7 @@
     @media (max-width: 768px) {
         grid-template-columns: 1fr;
         gap: 16px;
-        margin-top: 14px;
+        margin-top: 8px;
     }
 }
 
@@ -431,7 +453,8 @@
     width: 100%;
 
     @media (max-width: 768px) {
-      padding: 14px 12px;
+      padding: 16px 14px;
+      border-radius: 16px;
     }
 
     .source-label {
@@ -458,6 +481,10 @@
     justify-content: center;
     width: 100%;
     box-sizing: border-box;
+
+    @media (max-width: 768px) {
+      margin-top: 16px;
+    }
 }
 
 .nfc-display-card {
@@ -545,8 +572,9 @@
         }
     }
 
-    @media (max-width: 600px) {
+    @media (max-width: 768px) {
         padding: 16px 14px;
+        border-radius: 16px;
     }
 
     .desktop-only {
