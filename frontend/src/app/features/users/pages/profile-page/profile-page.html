@@ -29,17 +29,17 @@
               <mat-icon>edit</mat-icon> Editar Perfil
             </button>
           } @else {
-            <div class="flex gap-2">
-              <button mat-raised-button color="accent" (click)="onSave()" [disabled]="profileForm.invalid || isSaving" class="avatar-action-btn">
+            <div class="edit-actions-group">
+              <button type="button" mat-flat-button color="primary" (click)="onSave()" [disabled]="profileForm.invalid || isSaving" class="avatar-action-btn save-btn">
                 @if (isSaving) {
                   <mat-spinner [diameter]="18"></mat-spinner>
                 } @else {
                   <ng-container>
-                    <mat-icon>save</mat-icon> Salvar Alterações
+                    <mat-icon>save</mat-icon> Salvar
                   </ng-container>
                 }
               </button>
-              <button mat-stroked-button color="warn" (click)="onCancel()" [disabled]="isSaving" class="avatar-action-btn">
+              <button type="button" mat-stroked-button color="warn" (click)="onCancel()" [disabled]="isSaving" class="avatar-action-btn cancel-btn">
                 <mat-icon>cancel</mat-icon> Cancelar
               </button>
             </div>
