@@ -171,6 +171,32 @@
       @media (max-width: 768px) {
         margin-top: 0;
         gap: 8px;
+        flex: 1;
+        min-width: 0;
+      }
+  }
+
+  .edit-actions-group {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+
+      @media (max-width: 768px) {
+        gap: 8px;
+        width: 100%;
+        align-items: center;
+
+        .avatar-action-btn {
+          flex: 1;
+          min-width: 0;
+          padding: 0 10px;
+          height: 38px;
+          font-size: 0.85rem;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
       }
   }
 
@@ -248,10 +274,7 @@
       align-items: stretch;
       gap: 12px;
 
-      a[mat-flat-button],
-      a[mat-stroked-button],
-      button[mat-flat-button],
-      button[mat-stroked-button] {
+      a, button {
         width: 100%;
         display: flex;
         justify-content: center;
@@ -301,13 +324,6 @@
     box-shadow: var(--mat-sys-level1);
     width: 100%;
     box-sizing: border-box;
-    overflow: hidden;
-
-    @media (max-width: 768px) {
-      padding: 16px 14px;
-      border-radius: 16px;
-    }
-
     canvas {
       background: white;
       padding: 8px;
@@ -355,10 +371,11 @@
       }
     }
 
-    @media (max-width: 600px) {
+    @media (max-width: 768px) {
       flex-direction: column;
       text-align: center;
-      padding: 20px 16px;
+      padding: 16px 14px;
+      border-radius: 16px;
       gap: 16px;
 
       canvas {
@@ -561,7 +578,7 @@
             }
         }
 
-        @media (max-width: 600px) {
+        @media (max-width: 768px) {
             flex-direction: column;
             gap: 8px;
 
@@ -596,6 +613,11 @@
     width: 100%;
     
     .flex-grow { flex: 1; }
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      align-items: stretch;
+    }
 }
 
 .item-actions {
@@ -603,6 +625,10 @@
     align-items: center;
     gap: 8px;
     height: 56px;
+
+    @media (max-width: 768px) {
+      justify-content: flex-end;
+    }
 }
 
 .toggle-with-label {
@@ -645,9 +671,19 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
 }
 
-.col-span-2 { grid-column: span 2; }
+.col-span-2 {
+    grid-column: span 2;
+
+    @media (max-width: 768px) {
+      grid-column: span 1;
+    }
+}
 
 .spacer { flex: 1; }
 
@@ -658,31 +694,11 @@
     padding: 16px;
 }
 
-// Estilização GLOBAL dos botões para este componente
-button[mat-flat-button], 
-button[mat-raised-button], 
-button[mat-stroked-button], 
-a[mat-flat-button] {
-    border-radius: 32px !important;
-}
-
 .button-content-wrapper {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
-}
-
-@media (max-width: 768px) {
-  .profile-card-header { 
-      flex-direction: column; 
-      text-align: center;
-      .header-text-container { align-items: center; }
-  }
-  .address-grid { grid-template-columns: 1fr; }
-  .col-span-2 { grid-column: span 1; }
-  .array-item-row { flex-direction: column; align-items: stretch; }
-  .item-actions { justify-content: flex-end; }
 }
 
 
@@ -728,70 +744,25 @@ a[mat-flat-button] {
 
 :host {
   ::ng-deep .mat-mdc-tab-header {
-    // Horizontal gestures belong to Material's swipe handler; vertical still
-    // scrolls the page natively → reliable tap/swipe scrolling on the strip.
     touch-action: pan-y;
 
     .mat-mdc-tab-label-container {
-      // Hard mid-letter cuts read as broken; the fade says "keep scrolling".
-      -webkit-mask-image: linear-gradient(
-        to right,
-        transparent 0,
-        #000 20px,
-        #000 calc(100% - 20px),
-        transparent 100%
-      );
-      mask-image: linear-gradient(
-        to right,
-        transparent 0,
-        #000 20px,
-        #000 calc(100% - 20px),
-        transparent 100%
-      );
+      mask-image: linear-gradient(to right, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);
       overscroll-behavior-x: contain;
     }
 
-    // At the start only the right edge is cut — keep the active tab crisp.
-    &.mat-mdc-tab-header-pagination-controls-enabled:has(
-        .mat-mdc-tab-header-pagination-before.mat-mdc-tab-header-pagination-disabled
-      )
-      .mat-mdc-tab-label-container {
-      -webkit-mask-image: linear-gradient(
-        to right,
-        #000 0,
-        #000 calc(100% - 20px),
-        transparent 100%
-      );
-      mask-image: linear-gradient(
-        to right,
-        #000 0,
-        #000 calc(100% - 20px),
-        transparent 100%
-      );
-    }
-
-    // At the end only the left edge is cut — keep the last tab crisp.
-    &.mat-mdc-tab-header-pagination-controls-enabled:has(
-        .mat-mdc-tab-header-pagination-after.mat-mdc-tab-header-pagination-disabled
-      )
-      .mat-mdc-tab-label-container {
-      -webkit-mask-image: linear-gradient(
-        to right,
-        transparent 0,
-        #000 20px,
-        #000 100%
-      );
-      mask-image: linear-gradient(
-        to right,
-        transparent 0,
-        #000 20px,
-        #000 100%
-      );
+    &.mat-mdc-tab-header-pagination-controls-enabled {
+      &:has(.mat-mdc-tab-header-pagination-before.mat-mdc-tab-header-pagination-disabled) .mat-mdc-tab-label-container {
+        mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 20px), transparent 100%);
+      }
+      &:has(.mat-mdc-tab-header-pagination-after.mat-mdc-tab-header-pagination-disabled) .mat-mdc-tab-label-container {
+        mask-image: linear-gradient(to right, transparent 0, #000 20px, #000 100%);
+      }
     }
 
     .mat-mdc-tab-header-pagination {
       align-self: center;
-      min-width: 44px; // iOS HIG touch target
+      min-width: 44px;
       height: 44px;
       margin: 0 4px;
       padding: 0;
@@ -799,14 +770,12 @@ a[mat-flat-button] {
       border-radius: 50%;
       background-color: var(--mat-sys-surface-container-high);
       -webkit-tap-highlight-color: transparent;
-      transition:
-        transform 200ms cubic-bezier(0.05, 0.7, 0.1, 1),
-        background-color 200ms linear;
+      transition: transform 200ms cubic-bezier(0.05, 0.7, 0.1, 1), background-color 200ms linear;
 
       .mat-mdc-tab-header-pagination-chevron {
         width: 10px;
         height: 10px;
-        border-color: currentColor; // follows light/dark theme automatically
+        border-color: currentColor;
       }
 
       &:active:not(.mat-mdc-tab-header-pagination-disabled) {
@@ -814,11 +783,11 @@ a[mat-flat-button] {
       }
 
       &.mat-mdc-tab-header-pagination-disabled {
-        background-color: var(--mat-sys-surface-container); // chip stays visible
+        background-color: var(--mat-sys-surface-container);
         cursor: default;
 
         .mat-mdc-tab-header-pagination-chevron {
-          opacity: 0.38; // dim only the chevron — affordance remains
+          opacity: 0.38;
         }
       }
     }
@@ -827,10 +796,7 @@ a[mat-flat-button] {
   @media (prefers-reduced-motion: reduce) {
     ::ng-deep .mat-mdc-tab-header-pagination {
       transition: none;
-
-      &:active {
-        transform: none;
-      }
+      &:active { transform: none; }
     }
   }
 }
