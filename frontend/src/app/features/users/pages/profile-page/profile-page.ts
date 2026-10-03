@@ -214,7 +214,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
     this.phones.push(phoneGroup);
     if (!this.isEditing) phoneGroup.disable();
-    this.focusNewItem('.focus-target-phone');
+    if (!phone) this.focusNewItem('.focus-target-phone');
   }
 
   removePhone(index: number): void {
@@ -228,7 +228,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
     this.secondaryEmails.push(emailGroup);
     if (!this.isEditing) emailGroup.disable();
-    this.focusNewItem('.focus-target-email');
+    if (!email) this.focusNewItem('.focus-target-email');
   }
 
   removeSecondaryEmail(index: number): void {
@@ -243,7 +243,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
     this.links.push(linkGroup);
     if (!this.isEditing) linkGroup.disable();
-    this.focusNewItem('.focus-target-link');
+    if (!link) this.focusNewItem('.focus-target-link');
   }
 
   removeLink(index: number): void {
@@ -267,7 +267,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.addresses.push(addressGroup);
     if (!this.isEditing) addressGroup.disable();
     this.setupAddressCepSubscription(index);
-    this.focusNewItem('.focus-target-address');
+    if (!address) this.focusNewItem('.focus-target-address');
   }
 
   private focusNewItem(selector: string): void {
@@ -380,77 +380,88 @@ export class ProfileComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.profileSubscription?.unsubscribe();
     this.profileSubscription = this.userService.findById(currentUserId).pipe(
-      finalize(() => this.isLoading = false)
+      finalize(() => {
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      })
     ).subscribe({
       next: (userProfile: FullUserResponse) => {
         this.currentUserData = userProfile;
-        
-        this.profileForm.patchValue({
-          email: userProfile.email,
-          firstName: userProfile.name?.split(' ')[0] || '',
-          lastName: userProfile.name?.split(' ').slice(1).join(' ') || '',
-          cpf: userProfile.cpf || ''
-        });
-
-        if (userProfile.tags && userProfile.tags.length > 0) {
-            const activeTenantId = this.authService.activeTenantId();
-            this.activeTag = userProfile.tags.find((t: Tag) => !t.isResource && t.tenantId === activeTenantId) || null;
-            
-            if (this.activeTag) {
-                this.needsInitialization = false;
-                this.profileForm.get('tagSettings')?.patchValue({
-                    id: this.activeTag.id,
-                    nfcRedirectMode: this.activeTag.nfcRedirectMode,
-                    nfcCustomUrl: this.activeTag.nfcCustomUrl,
-                    qrRedirectMode: this.activeTag.qrRedirectMode,
-                    qrCustomUrl: this.activeTag.qrCustomUrl
-                });
-                this.cdr.detectChanges();
-                this.generatePersonalQR();
-            } else {
-                this.needsInitialization = true;
-                console.log('DEBUG: needsInitialization set to true', { tags: userProfile.tags, activeTenantId: this.authService.activeTenantId() });
-                this.cdr.detectChanges();
-            }
-        } else {
-            this.needsInitialization = true;
-                console.log('DEBUG: needsInitialization set to true', { tags: userProfile.tags, activeTenantId: this.authService.activeTenantId() });
-                this.cdr.detectChanges();
-        }    this.phones.clear();
-        if (userProfile.phones) {
-            const sortedPhones = [...userProfile.phones].sort((a, b) => (b.isMain ? 1 : 0) - (a.isMain ? 1 : 0));
-            sortedPhones.forEach(p => this.addPhone(p));
-        }
-
-        this.clearCepSubscriptions();
-        this.addresses.clear();
-        if (userProfile.addresses) userProfile.addresses.forEach(a => this.addAddress(a));
-
-        this.secondaryEmails.clear();
-        if (userProfile.secondaryEmails) userProfile.secondaryEmails.forEach(e => this.addSecondaryEmail(e));
-
-        this.links.clear();
-        if (userProfile.links) userProfile.links.forEach(l => this.addLink(l));
-
-        const avatarUrl = userProfile.profile?.profilePictureUrl || userProfile.profilePictureUrl;
-        if (avatarUrl && typeof avatarUrl === 'string' && avatarUrl.length > 5) {
-            if (avatarUrl.startsWith('http')) {
-                this.profilePicturePreview = avatarUrl;
-            } else {
-                const baseUrl = environment.apiUrl.replace('/api', '');
-                this.profilePicturePreview = `${baseUrl}/${avatarUrl}`;
-            }
-        } else {
-            this.profilePicturePreview = null;
-        }
-
-        this.setFormControlsState(false);
+        this.populateFormWithUserData(userProfile);
+        this.setFormControlsState(this.isEditing);
       },
       error: () => {
         this.snackBar.open('Erro ao carregar seu perfil.', 'Fechar', { duration: 5000 });
       }
     });
+  }
+
+  private populateFormWithUserData(userProfile: FullUserResponse): void {
+    this.profileForm.patchValue({
+      email: userProfile.email,
+      firstName: userProfile.name?.split(' ')[0] || '',
+      lastName: userProfile.name?.split(' ').slice(1).join(' ') || '',
+      cpf: userProfile.cpf || ''
+    });
+
+    if (userProfile.tags && userProfile.tags.length > 0) {
+      const activeTenantId = this.authService.activeTenantId();
+      this.activeTag = userProfile.tags.find((t: Tag) => !t.isResource && t.tenantId === activeTenantId) || null;
+      
+      if (this.activeTag) {
+        this.needsInitialization = false;
+        this.profileForm.get('tagSettings')?.patchValue({
+          id: this.activeTag.id,
+          nfcRedirectMode: this.activeTag.nfcRedirectMode,
+          nfcCustomUrl: this.activeTag.nfcCustomUrl,
+          qrRedirectMode: this.activeTag.qrRedirectMode,
+          qrCustomUrl: this.activeTag.qrCustomUrl
+        });
+        this.generatePersonalQR();
+      } else {
+        this.needsInitialization = true;
+      }
+    } else {
+      this.needsInitialization = true;
+    }
+
+    this.phones.clear();
+    if (userProfile.phones) {
+      const sortedPhones = [...userProfile.phones].sort((a, b) => (b.isMain ? 1 : 0) - (a.isMain ? 1 : 0));
+      sortedPhones.forEach(p => this.addPhone(p));
+    }
+
+    this.clearCepSubscriptions();
+    this.addresses.clear();
+    if (userProfile.addresses) {
+      userProfile.addresses.forEach(a => this.addAddress(a));
+    }
+
+    this.secondaryEmails.clear();
+    if (userProfile.secondaryEmails) {
+      userProfile.secondaryEmails.forEach(e => this.addSecondaryEmail(e));
+    }
+
+    this.links.clear();
+    if (userProfile.links) {
+      userProfile.links.forEach(l => this.addLink(l));
+    }
+
+    const avatarUrl = userProfile.profile?.profilePictureUrl || userProfile.profilePictureUrl;
+    if (avatarUrl && typeof avatarUrl === 'string' && avatarUrl.length > 5) {
+      if (avatarUrl.startsWith('http')) {
+        this.profilePicturePreview = avatarUrl;
+      } else {
+        const baseUrl = environment.apiUrl.replace('/api', '');
+        this.profilePicturePreview = `${baseUrl}/${avatarUrl}`;
+      }
+    } else {
+      this.profilePicturePreview = null;
+    }
+
+    this.cdr.detectChanges();
   }
 
   private setFormControlsState(enabled: boolean): void {
@@ -581,8 +592,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   onCancel(): void {
     this.isEditing = false;
+    if (this.currentUserData) {
+      this.populateFormWithUserData(this.currentUserData);
+    } else {
+      this.loadInitialProfile();
+    }
     this.setFormControlsState(false);
-    this.loadInitialProfile();
     this.snackBar.open('Edição cancelada.', 'Fechar', { duration: 1500 });
   }
 

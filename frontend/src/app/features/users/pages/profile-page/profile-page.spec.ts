@@ -295,5 +295,36 @@ describe('ProfileComponent', () => {
       expect(component.links.controls.every(c => c.disabled)).toBe(true);
       expect(component.profileForm.get('tagSettings')?.disabled).toBe(true);
     });
+
+    it('should allow enabling controls again on a second edit activation after cancel', () => {
+      // 1. Initial profile loaded with data
+      component.currentUserData = mockUser;
+      component.loadInitialProfile();
+      expect(component.isEditing).toBe(false);
+
+      // 2. First edit activation
+      component.toggleEditMode();
+      expect(component.isEditing).toBe(true);
+      expect(component.profileForm.get('firstName')?.enabled).toBe(true);
+      expect(component.phones.controls.every(c => c.enabled)).toBe(true);
+      expect(component.addresses.controls.every(c => c.enabled)).toBe(true);
+
+      // 3. User cancels
+      component.onCancel();
+      expect(component.isEditing).toBe(false);
+      expect(component.profileForm.get('firstName')?.disabled).toBe(true);
+      expect(component.phones.controls.every(c => c.disabled)).toBe(true);
+      expect(component.addresses.controls.every(c => c.disabled)).toBe(true);
+
+      // 4. Second edit activation (Issue reported: controls must re-enable)
+      component.toggleEditMode();
+      expect(component.isEditing).toBe(true);
+      expect(component.profileForm.get('firstName')?.enabled).toBe(true);
+      expect(component.phones.controls.every(c => c.enabled)).toBe(true);
+      expect(component.addresses.controls.every(c => c.enabled)).toBe(true);
+      expect(component.secondaryEmails.controls.every(c => c.enabled)).toBe(true);
+      expect(component.links.controls.every(c => c.enabled)).toBe(true);
+      expect(component.profileForm.get('tagSettings')?.enabled).toBe(true);
+    });
   });
 });
