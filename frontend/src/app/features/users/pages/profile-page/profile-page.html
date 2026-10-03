@@ -47,7 +47,7 @@
         </div>
       </div>
 
-      <form [formGroup]="profileForm" class="config-form" autocomplete="off">
+      <form [formGroup]="profileForm" class="config-form" [class.view-mode]="!isEditing" autocomplete="off">
         <mat-tab-group color="primary">
 
           <!-- TAB 1: GERAL -->
@@ -66,17 +66,17 @@
 
                   <mat-form-field appearance="outline">
                     <mat-label>Nome</mat-label>
-                    <input matInput formControlName="firstName" autocomplete="off" />
+                    <input matInput formControlName="firstName" [readonly]="!isEditing" autocomplete="off" />
                   </mat-form-field>
 
                   <mat-form-field appearance="outline">
                     <mat-label>Sobrenome</mat-label>
-                    <input matInput formControlName="lastName" autocomplete="off" />
+                    <input matInput formControlName="lastName" [readonly]="!isEditing" autocomplete="off" />
                   </mat-form-field>
 
                   <mat-form-field appearance="outline" class="md:col-span-2">
                     <mat-label>CPF</mat-label>
-                    <input matInput formControlName="cpf" mask="000.000.000-00" [dropSpecialCharacters]="true" placeholder="000.000.000-00" autocomplete="off" />
+                    <input matInput formControlName="cpf" mask="000.000.000-00" [dropSpecialCharacters]="true" placeholder="000.000.000-00" [readonly]="!isEditing" autocomplete="off" />
                   </mat-form-field>
 
                   <mat-form-field appearance="outline" class="md:col-span-2">
@@ -110,7 +110,7 @@
                       <div [formGroupName]="$index" class="array-item-row">
                         <mat-form-field appearance="outline" class="flex-grow">
                           <mat-label>Telefone / Celular</mat-label>
-                          <input matInput formControlName="phoneNumber" mask="(00) 00000-0000" [dropSpecialCharacters]="true" placeholder="(00) 00000-0000" autocomplete="off" class="focus-target-phone">
+                          <input matInput formControlName="phoneNumber" mask="(00) 00000-0000" [dropSpecialCharacters]="true" placeholder="(00) 00000-0000" [readonly]="!isEditing" autocomplete="off" class="focus-target-phone">
                         </mat-form-field>
 
                         <div class="item-actions">
@@ -162,7 +162,7 @@
                       <div [formGroupName]="$index" class="array-item-row">
                         <mat-form-field appearance="outline" class="flex-grow">
                           <mat-label>E-mail Secundário</mat-label>
-                          <input matInput formControlName="address" placeholder="outro@email.com" autocomplete="off" class="focus-target-email">
+                          <input matInput formControlName="address" placeholder="outro@email.com" [readonly]="!isEditing" autocomplete="off" class="focus-target-email">
                         </mat-form-field>
 
                         <div class="item-actions">
@@ -239,7 +239,7 @@
                         <div class="address-grid">
                           <mat-form-field appearance="outline">
                             <mat-label>CEP</mat-label>
-                            <input matInput formControlName="zipCode" mask="00000-000" [dropSpecialCharacters]="true" placeholder="00000-000" class="focus-target-address">
+                            <input matInput formControlName="zipCode" mask="00000-000" [dropSpecialCharacters]="true" placeholder="00000-000" [readonly]="!isEditing" class="focus-target-address">
                             @if (isFetchingCep[$index]) {
                               <mat-spinner matSuffix [diameter]="18"></mat-spinner>
                             }
@@ -247,32 +247,32 @@
 
                           <mat-form-field appearance="outline">
                             <mat-label>Nº Residência</mat-label>
-                            <input matInput formControlName="streetNumber" autocomplete="off">
+                            <input matInput formControlName="streetNumber" [readonly]="!isEditing" autocomplete="off">
                           </mat-form-field>
 
                           <mat-form-field appearance="outline" class="col-span-2">
                             <mat-label>Logradouro/Rua</mat-label>
-                            <input matInput formControlName="street" autocomplete="off">
+                            <input matInput formControlName="street" [readonly]="!isEditing" autocomplete="off">
                           </mat-form-field>
 
                           <mat-form-field appearance="outline">
                             <mat-label>Bairro</mat-label>
-                            <input matInput formControlName="neighborhood" autocomplete="off">
+                            <input matInput formControlName="neighborhood" [readonly]="!isEditing" autocomplete="off">
                           </mat-form-field>
 
                           <mat-form-field appearance="outline">
                             <mat-label>Complemento</mat-label>
-                            <input matInput formControlName="complement" autocomplete="off">
+                            <input matInput formControlName="complement" [readonly]="!isEditing" autocomplete="off">
                           </mat-form-field>
 
                           <mat-form-field appearance="outline">
                             <mat-label>Cidade</mat-label>
-                            <input matInput formControlName="city" autocomplete="off">
+                            <input matInput formControlName="city" [readonly]="!isEditing" autocomplete="off">
                           </mat-form-field>
 
                           <mat-form-field appearance="outline">
                             <mat-label>UF</mat-label>
-                            <input matInput formControlName="state" maxlength="2" autocomplete="off">
+                            <input matInput formControlName="state" maxlength="2" [readonly]="!isEditing" autocomplete="off">
                           </mat-form-field>
                         </div>
                       </div>
@@ -305,12 +305,12 @@
                       <div [formGroupName]="$index" class="array-item-row">
                         <mat-form-field appearance="outline" style="width: 150px;">
                           <mat-label>Título</mat-label>
-                          <input matInput formControlName="title" placeholder="Ex: Instagram" class="focus-target-link">
+                          <input matInput formControlName="title" placeholder="Ex: Instagram" [readonly]="!isEditing" class="focus-target-link">
                         </mat-form-field>
 
                         <mat-form-field appearance="outline" class="flex-grow">
                           <mat-label>URL</mat-label>
-                          <input matInput formControlName="url" placeholder="https://...">
+                          <input matInput formControlName="url" placeholder="https://..." [readonly]="!isEditing">
                         </mat-form-field>
 
                         <div class="item-actions">
@@ -359,7 +359,7 @@
                         @if (profileForm.get('tagSettings.nfcRedirectMode')?.value === 'CUSTOM_URL') {
                           <mat-form-field appearance="outline" class="w-full fade-in">
                             <mat-label>URL Personalizada (NFC)</mat-label>
-                            <input matInput formControlName="nfcCustomUrl" placeholder="https://exemplo.com">
+                            <input matInput formControlName="nfcCustomUrl" placeholder="https://exemplo.com" [readonly]="!isEditing">
                           </mat-form-field>
                         }
                       </div>
@@ -378,7 +378,7 @@
                         @if (profileForm.get('tagSettings.qrRedirectMode')?.value === 'CUSTOM_URL') {
                           <mat-form-field appearance="outline" class="w-full fade-in">
                             <mat-label>URL Personalizada (QR)</mat-label>
-                            <input matInput formControlName="qrCustomUrl" placeholder="https://exemplo.com">
+                            <input matInput formControlName="qrCustomUrl" placeholder="https://exemplo.com" [readonly]="!isEditing">
                           </mat-form-field>
                         }
                       </div>

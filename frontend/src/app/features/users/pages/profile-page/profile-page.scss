@@ -192,13 +192,8 @@
           flex: 1 1 0;
           min-width: 80px;
           padding: 0 10px;
-          height: 38px;
           font-size: 0.85rem;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
           white-space: nowrap;
-          box-sizing: border-box;
         }
       }
   }
@@ -229,6 +224,10 @@
 .config-form {
   display: flex;
   flex-direction: column;
+
+  &.view-mode input[readonly] {
+    cursor: default;
+  }
 }
 
 .tab-padding {
