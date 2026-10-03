@@ -186,16 +186,19 @@
         gap: 8px;
         width: 100%;
         align-items: center;
+        flex-wrap: wrap;
 
         .avatar-action-btn {
-          flex: 1;
-          min-width: 0;
+          flex: 1 1 0;
+          min-width: 80px;
           padding: 0 10px;
           height: 38px;
           font-size: 0.85rem;
           display: inline-flex;
           align-items: center;
           justify-content: center;
+          white-space: nowrap;
+          box-sizing: border-box;
         }
       }
   }
@@ -735,12 +738,7 @@
   }
 }
 
-/* ---------------------------------------------------------------------------
-   Issue #327 — native overflow affordances for the profile tab strip
-   (iOS HIG × Material 3). Scoped with :host because mat-tab-group is also
-   used by admin pages. Palette-agnostic: fades via mask, colors via
-   currentColor — valid in both light and dark modes.
-   --------------------------------------------------------------------------- */
+// Issue #327: Native overflow affordances for tab strip
 
 :host {
   ::ng-deep .mat-mdc-tab-header {

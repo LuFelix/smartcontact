@@ -267,4 +267,33 @@ describe('ProfileComponent', () => {
       expect(mockCepService.fetchAddressFromCep).toHaveBeenCalledWith('01001000');
     });
   });
+
+  describe('edit mode and form controls state', () => {
+    it('should enable form arrays on toggleEditMode(true)', () => {
+      component.isEditing = false;
+      component.toggleEditMode();
+
+      expect(component.isEditing).toBe(true);
+      expect(component.phones.controls.every(c => c.enabled)).toBe(true);
+      expect(component.addresses.controls.every(c => c.enabled)).toBe(true);
+      expect(component.secondaryEmails.controls.every(c => c.enabled)).toBe(true);
+      expect(component.links.controls.every(c => c.enabled)).toBe(true);
+      expect(component.profileForm.get('tagSettings')?.enabled).toBe(true);
+      expect(component.profileForm.get('email')?.disabled).toBe(true); // email remains read-only
+    });
+
+    it('should synchronously disable all form arrays on onCancel()', () => {
+      component.isEditing = true;
+      component.toggleEditMode(); // enables controls
+
+      component.onCancel();
+
+      expect(component.isEditing).toBe(false);
+      expect(component.phones.controls.every(c => c.disabled)).toBe(true);
+      expect(component.addresses.controls.every(c => c.disabled)).toBe(true);
+      expect(component.secondaryEmails.controls.every(c => c.disabled)).toBe(true);
+      expect(component.links.controls.every(c => c.disabled)).toBe(true);
+      expect(component.profileForm.get('tagSettings')?.disabled).toBe(true);
+    });
+  });
 });

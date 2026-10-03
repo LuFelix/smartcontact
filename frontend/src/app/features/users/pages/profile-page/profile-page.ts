@@ -445,13 +445,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
             this.profilePicturePreview = null;
         }
 
-        this.profileForm.disable();
-        this.phones.controls.forEach(c => c.disable());
-        this.addresses.controls.forEach(c => c.disable());
-        this.secondaryEmails.controls.forEach(c => c.disable());
-        this.links.controls.forEach(c => c.disable());
-        this.profileForm.get('tagSettings')?.disable();
-        this.cdr.detectChanges();
+        this.setFormControlsState(false);
       },
       error: () => {
         this.snackBar.open('Erro ao carregar seu perfil.', 'Fechar', { duration: 5000 });
@@ -459,7 +453,26 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
   }
 
-  
+  private setFormControlsState(enabled: boolean): void {
+    if (enabled) {
+      this.profileForm.enable();
+      this.profileForm.get('email')?.disable();
+      this.phones.controls.forEach(c => c.enable());
+      this.addresses.controls.forEach(c => c.enable());
+      this.secondaryEmails.controls.forEach(c => c.enable());
+      this.links.controls.forEach(c => c.enable());
+      this.profileForm.get('tagSettings')?.enable();
+    } else {
+      this.profileForm.disable();
+      this.phones.controls.forEach(c => c.disable());
+      this.addresses.controls.forEach(c => c.disable());
+      this.secondaryEmails.controls.forEach(c => c.disable());
+      this.links.controls.forEach(c => c.disable());
+      this.profileForm.get('tagSettings')?.disable();
+    }
+    this.cdr.detectChanges();
+  }
+
   initializeProfile(): void {
     this.isLoading = true;
     this.userService.initializeProfile(this.currentUserData!.id).subscribe({
@@ -477,14 +490,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   toggleEditMode(): void {
     this.isEditing = !this.isEditing;
     if (this.isEditing) {
-      this.profileForm.enable();
-      this.profileForm.get('email')?.disable();
-      this.phones.controls.forEach(c => c.enable());
-      this.addresses.controls.forEach(c => c.enable());
-      this.secondaryEmails.controls.forEach(c => c.enable());
-      this.links.controls.forEach(c => c.enable());
-      this.profileForm.get('tagSettings')?.enable();
-      this.cdr.detectChanges();
+      this.setFormControlsState(true);
     } else {
       this.onCancel();
     }
@@ -561,7 +567,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     ).subscribe({
         next: () => {
             this.isEditing = false;
-            this.profileForm.disable();
+            this.setFormControlsState(false);
             this.snackBar.open('Perfil atualizado com sucesso!', 'OK', { duration: 3000 });
             this.loadInitialProfile();
         },
@@ -575,6 +581,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
 
   onCancel(): void {
     this.isEditing = false;
+    this.setFormControlsState(false);
     this.loadInitialProfile();
     this.snackBar.open('Edição cancelada.', 'Fechar', { duration: 1500 });
   }
