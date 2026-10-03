@@ -207,9 +207,6 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  min-height: 400px;
-  max-height: 65vh;
-  overflow-y: auto;
 }
 
 .section-card {
@@ -283,33 +280,105 @@
 }
 
 .personal-qr-preview-container {
+  margin-top: 24px;
   display: flex;
   justify-content: center;
-  padding-bottom: 20px;
+  width: 100%;
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    margin-top: 16px;
+  }
 
   .qr-preview-card {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 12px;
-    background: white;
-    border-radius: 12px;
+    gap: 20px;
+    padding: 20px;
+    background: var(--mat-sys-surface-container);
+    border-radius: 20px;
     border: 1px solid var(--mat-sys-outline-variant);
+    box-shadow: var(--mat-sys-level1);
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+
+    @media (max-width: 768px) {
+      padding: 16px 14px;
+      border-radius: 16px;
+    }
 
     canvas {
       background: white;
-      padding: 4px;
-      border-radius: 4px;
+      padding: 8px;
+      border-radius: 12px;
+      box-shadow: var(--mat-sys-level1);
+      flex-shrink: 0;
+      max-width: 140px;
+      height: auto !important;
     }
 
     .qr-preview-info {
-      p { margin: 0; line-height: 1.2; color: #333; }
-      .text-xs { color: #666; }
-      .download-qr-btn {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      min-width: 0;
+
+      .text-sm {
+        margin: 0;
+        font-size: 1.05rem;
         font-weight: 700;
-        margin-top: 8px;
-        transition: transform 0.2s ease;
-        &:hover { transform: scale(1.02); }
+        color: var(--mat-sys-on-surface);
+      }
+
+      .text-xs {
+        margin: 0;
+        font-size: 0.85rem;
+        color: var(--mat-sys-on-surface-variant);
+        line-height: 1.3;
+      }
+
+      .qr-actions-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+
+        button {
+          border-radius: 20px !important;
+          font-size: 0.85rem;
+          padding: 0 16px;
+          height: 38px;
+          font-weight: 700;
+        }
+      }
+    }
+
+    @media (max-width: 600px) {
+      flex-direction: column;
+      text-align: center;
+      padding: 20px 16px;
+      gap: 16px;
+
+      canvas {
+        margin: 0 auto;
+      }
+
+      .qr-preview-info {
+        align-items: center;
+        width: 100%;
+
+        .qr-actions-row {
+          justify-content: center;
+          width: 100%;
+
+          button {
+            flex: 1;
+            min-width: 120px;
+            justify-content: center;
+          }
+        }
       }
     }
   }
@@ -329,26 +398,45 @@
 .tag-management-section {
     background-color: var(--mat-sys-surface-container-low);
     border-radius: 24px;
-    padding: 32px;
+    padding: 24px;
     margin-bottom: 24px;
-    border: 1px dashed var(--mat-sys-outline-variant);
+    border: 1px solid var(--mat-sys-outline-variant);
+    box-shadow: var(--mat-sys-level1);
+    box-sizing: border-box;
+    width: 100%;
+    overflow: hidden;
 
     @media (max-width: 768px) {
-      padding: 20px 16px;
-      border-radius: 20px;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      border-radius: 0;
+      padding: 0;
+      margin-bottom: 12px;
+      overflow: visible;
+
+      mat-card-header {
+        padding: 0 0 8px 0;
+      }
+
+      mat-card-content {
+        padding: 0;
+      }
     }
 }
 
 .tag-settings-dual-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 32px;
-    margin-top: 24px;
+    gap: 24px;
+    margin-top: 20px;
+    width: 100%;
+    box-sizing: border-box;
     
     @media (max-width: 768px) {
         grid-template-columns: 1fr;
-        gap: 20px;
-        margin-top: 16px;
+        gap: 16px;
+        margin-top: 8px;
     }
 }
 
@@ -356,105 +444,116 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 24px;
-    background: var(--mat-sys-surface-container-highest);
-    border-radius: 16px;
+    padding: 20px;
+    background: var(--mat-sys-surface-container);
+    border-radius: 18px;
+    border: 1px solid var(--mat-sys-outline-variant);
+    box-shadow: var(--mat-sys-level1);
+    box-sizing: border-box;
+    width: 100%;
 
     @media (max-width: 768px) {
-      padding: 16px;
+      padding: 16px 14px;
+      border-radius: 16px;
     }
-}
 
-.source-label {
-    margin: 0 0 8px 0;
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--mat-sys-primary);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    
-    mat-icon {
-        font-size: 24px;
-        width: 24px;
-        height: 24px;
+    .source-label {
+        margin: 0 0 4px 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--mat-sys-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        
+        mat-icon {
+            font-size: 22px;
+            width: 22px;
+            height: 22px;
+        }
     }
 }
 
 /* --- NFC LINK SECTION --- */
 .nfc-link-section {
-    margin-top: 32px;
+    margin-top: 24px;
     display: flex;
     justify-content: center;
+    width: 100%;
+    box-sizing: border-box;
+
+    @media (max-width: 768px) {
+      margin-top: 16px;
+    }
 }
 
 .nfc-display-card {
     display: flex;
     align-items: center;
-    padding: 24px 32px;
-    background: var(--mat-sys-surface-container-low);
+    padding: 20px 24px;
+    background: var(--mat-sys-surface-container);
     border-radius: 20px;
-    border: 1px dashed var(--mat-sys-primary);
+    border: 1px solid var(--mat-sys-outline-variant);
     box-shadow: var(--mat-sys-level1);
     width: 100%;
-    max-width: 600px;
+    box-sizing: border-box;
 
     .nfc-info {
         width: 100%;
 
         h4 {
-            margin: 0 0 8px 0;
-            font-size: 1.1rem;
+            margin: 0 0 6px 0;
+            font-size: 1.05rem;
             font-weight: 700;
             color: var(--mat-sys-primary);
             display: flex;
             align-items: center;
             gap: 8px;
 
-            mat-icon { font-size: 24px; width: 24px; height: 24px; }
+            mat-icon { font-size: 22px; width: 22px; height: 22px; }
         }
 
         p {
-            margin: 0 0 16px 0;
-            font-size: 0.9rem;
+            margin: 0 0 12px 0;
+            font-size: 0.85rem;
             color: var(--mat-sys-on-surface-variant);
-            line-height: 1.4;
+            line-height: 1.35;
         }
     }
 
     .nfc-url-display {
         background: var(--mat-sys-surface-container-highest);
         border-radius: 12px;
-        padding: 14px 18px;
-        margin-bottom: 16px;
+        padding: 12px 14px;
+        margin-bottom: 14px;
         overflow: hidden;
+        border: 1px solid var(--mat-sys-outline-variant);
 
         code {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             word-break: break-all;
             color: var(--mat-sys-on-surface);
             display: block;
-            line-height: 1.5;
+            line-height: 1.4;
         }
     }
 
     .nfc-actions-row {
         display: flex;
-        gap: 12px;
+        gap: 10px;
 
         .nfc-action-btn {
             font-weight: 700;
-            letter-spacing: 0.5px;
-            padding: 0 24px;
-            height: 48px;
-            border-radius: 32px !important;
+            letter-spacing: 0.3px;
+            padding: 0 20px;
+            height: 40px;
+            border-radius: 20px !important;
             box-shadow: var(--mat-sys-level1);
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
             &:hover {
                 transform: translateY(-2px);
-                box-shadow: var(--mat-sys-level3);
-                filter: brightness(1.1);
+                box-shadow: var(--mat-sys-level2);
             }
 
             &:active {
@@ -462,13 +561,20 @@
             }
         }
 
-        @media (max-width: 400px) {
+        @media (max-width: 600px) {
             flex-direction: column;
+            gap: 8px;
+
+            .nfc-action-btn {
+                width: 100%;
+                justify-content: center;
+            }
         }
     }
 
-    @media (max-width: 600px) {
-        padding: 20px;
+    @media (max-width: 768px) {
+        padding: 16px 14px;
+        border-radius: 16px;
     }
 
     .desktop-only {
