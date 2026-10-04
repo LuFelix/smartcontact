@@ -89,7 +89,7 @@ export class InteractionLogsService {
     const parser = new UAParser(uaString);
     const browserName = parser.getBrowser().name || 'Outros';
     
-    let deviceType = parser.getDevice().type;
+    let deviceType: string | undefined = parser.getDevice().type;
     // ua-parser-js returns undefined for desktop usually, or 'mobile', 'tablet'
     if (!deviceType) {
       deviceType = 'Desktop';

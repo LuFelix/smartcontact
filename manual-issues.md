@@ -16,7 +16,7 @@ Cada issue deve ser representada como um objeto JSON contendo exatamente as segu
     "camada-afetada",
     "tipo-de-mudança"
   ],
-  "body": "**Problema:** \\n\\n**Descrição:** \\n\\n**Tarefas e Etapas (Commits Atômicos):** \\n\\n**Critérios de Aceite:**"
+  "body": "**Problema:** \\n\\n**Descrição:** \\n\\n**Tarefas e Etapas (Commits Atômicos):** \\n\\n**Critérios de Aceite:** \\n\\n**Fronteira de arquivos:**"
 }
 ```
 
@@ -45,6 +45,7 @@ Texto em formato Markdown (com quebras de linha normalizadas em `\n` no JSON). D
 2. **`**Descrição:**`** Visão geral da solução a ser implementada.
 3. **`**Tarefas e Etapas (Commits Atômicos):**`** Lista numerada e detalhada de passos de codificação separados de forma atômica por camada (Frontend e Backend).
 4. **`**Critérios de Aceite:**`** Regras de validação estritas que determinam quando a issue pode ser dada como concluída.
+5. **`**Fronteira de arquivos:**`** (OBRIGATÓRIA — regra do paralelismo, `.docs/governance/milestone-file-matrix.md` §6): lista explícita das pastas/arquivos que a execução pode tocar. Fora da lista = parar e combinar com o milestone dono do território.
 
 ---
 
@@ -68,6 +69,9 @@ Ao escrever o corpo da issue, utilize a seguinte base:
 **Critérios de Aceite:**
 - [Critério 1 de funcionamento]
 - [Critério 2 de segurança ou isolamento]
+
+**Fronteira de arquivos:**
+- <pasta-arquivo que a execução pode tocar — ex: `frontend/src/app/features/tags/**`>
 ```
 
 ---
@@ -86,7 +90,7 @@ Aqui está um exemplo exato de como uma nova entrada deve ser inserida na lista 
     "fix",
     "tags"
   ],
-  "body": "**Problema:** Ao configurar o redirecionamento de tags na tela de perfil, as edições colidem com as tags criadas na gestão administrativa do mesmo tenant, pois o backend ignora o ID da tag no payload e resolve uma tag genérica do tenant. No frontend, a tag genérica é exibida por vir primeiro no array ordenado por data de criação.\\n\\n**Descrição:** Ajustar o salvamento de tags por ID no backend e filtrar a tag pessoal no frontend para isolar o comportamento do perfil.\\n\\n**Tarefas e Etapas (Commits Atômicos):**\\n1. **Backend - UsersService:**\\n   - No `update` de `UsersService`, iterar pelo array `tags` do payload e atualizar especificamente as tags pelo seu `id` correspondente.\\n   - Se vier configurações na raiz do DTO, atualizar preferencialmente a tag onde `isResource === false` (tag de perfil do usuário).\\n2. **Frontend - ProfileComponent:**\\n   - Em `loadInitialProfile()`, filtrar e selecionar a tag ativa priorizando a tag onde `isResource` é falso (tag de perfil pessoal do usuário).\\n\\n**Critérios de Aceite:**\\n- Salvar configurações no Perfil altera apenas a tag pessoal do usuário.\\n- Alterar tags na gestão administrativa não desconfigura a tag pessoal de perfil.\\n- O QR Code renderizado no perfil aponta para a tag pessoal do usuário."
+  "body": "**Problema:** Ao configurar o redirecionamento de tags na tela de perfil, as edições colidem com as tags criadas na gestão administrativa do mesmo tenant, pois o backend ignora o ID da tag no payload e resolve uma tag genérica do tenant. No frontend, a tag genérica é exibida por vir primeiro no array ordenado por data de criação.\\n\\n**Descrição:** Ajustar o salvamento de tags por ID no backend e filtrar a tag pessoal no frontend para isolar o comportamento do perfil.\\n\\n**Tarefas e Etapas (Commits Atômicos):**\\n1. **Backend - UsersService:**\\n   - No `update` de `UsersService`, iterar pelo array `tags` do payload e atualizar especificamente as tags pelo seu `id` correspondente.\\n   - Se vier configurações na raiz do DTO, atualizar preferencialmente a tag onde `isResource === false` (tag de perfil do usuário).\\n2. **Frontend - ProfileComponent:**\\n   - Em `loadInitialProfile()`, filtrar e selecionar a tag ativa priorizando a tag onde `isResource` é falso (tag de perfil pessoal do usuário).\\n\\n**Critérios de Aceite:**\\n- Salvar configurações no Perfil altera apenas a tag pessoal do usuário.\\n- Alterar tags na gestão administrativa não desconfigura a tag pessoal de perfil.\\n- O QR Code renderizado no perfil aponta para a tag pessoal do usuário.\\n\\n**Fronteira de arquivos:**\\n- `backend/src/users/users.service.ts`\\n- `backend/src/tags/**`\\n- `frontend/src/app/features/users/pages/profile-page/**`"
 }
 ```
 

@@ -67,6 +67,7 @@ describe('ProfileComponent', () => {
     mockUserService = {
       findById: vi.fn().mockReturnValue(of(mockUser)),
       update: vi.fn().mockReturnValue(of(mockUser)),
+      initializeProfile: vi.fn().mockReturnValue(of({ success: true })),
     };
 
     mockAuthService = {
@@ -166,29 +167,23 @@ describe('ProfileComponent', () => {
 
   describe('initializeProfile', () => {
     it('should call initialize profile endpoint and reload data on success', () => {
-      const mockHttp = {
-        post: vi.fn().mockReturnValue(of({ message: 'Success' }))
-      };
-      (component as any).http = mockHttp;
+      mockUserService.initializeProfile = vi.fn().mockReturnValue(of({ message: 'Success' }));
       const loadInitialProfileSpy = vi.spyOn(component as any, 'loadInitialProfile').mockImplementation(() => {});
 
       component.initializeProfile();
 
       expect(component.isLoading).toBe(true);
-      expect(mockHttp.post).toHaveBeenCalledWith('/api/users/user-123/initialize-profile', {});
+      expect(mockUserService.initializeProfile).toHaveBeenCalledWith('user-123');
       expect(mockSnackBar.open).toHaveBeenCalledWith('Perfil inicializado com sucesso!', 'Fechar', { duration: 3000 });
       expect(loadInitialProfileSpy).toHaveBeenCalled();
     });
 
     it('should handle initialization error', () => {
-      const mockHttp = {
-        post: vi.fn().mockReturnValue(throwError(() => new Error('Error')))
-      };
-      (component as any).http = mockHttp;
+      mockUserService.initializeProfile = vi.fn().mockReturnValue(throwError(() => new Error('Error')));
 
       component.initializeProfile();
 
-      expect(mockHttp.post).toHaveBeenCalledWith('/api/users/user-123/initialize-profile', {});
+      expect(mockUserService.initializeProfile).toHaveBeenCalledWith('user-123');
       expect(mockSnackBar.open).toHaveBeenCalledWith('Erro ao inicializar perfil.', 'Fechar', { duration: 5000 });
       expect(component.isLoading).toBe(false);
     });
@@ -270,6 +265,66 @@ describe('ProfileComponent', () => {
       await new Promise(resolve => setTimeout(resolve, 600));
 
       expect(mockCepService.fetchAddressFromCep).toHaveBeenCalledWith('01001000');
+    });
+  });
+
+  describe('edit mode and form controls state', () => {
+    it('should enable form arrays on toggleEditMode(true)', () => {
+      component.isEditing = false;
+      component.toggleEditMode();
+
+      expect(component.isEditing).toBe(true);
+      expect(component.phones.controls.every(c => c.enabled)).toBe(true);
+      expect(component.addresses.controls.every(c => c.enabled)).toBe(true);
+      expect(component.secondaryEmails.controls.every(c => c.enabled)).toBe(true);
+      expect(component.links.controls.every(c => c.enabled)).toBe(true);
+      expect(component.profileForm.get('tagSettings')?.enabled).toBe(true);
+      expect(component.profileForm.get('email')?.disabled).toBe(true); // email remains read-only
+    });
+
+    it('should synchronously disable all form arrays on onCancel()', () => {
+      component.isEditing = true;
+      component.toggleEditMode(); // enables controls
+
+      component.onCancel();
+
+      expect(component.isEditing).toBe(false);
+      expect(component.phones.controls.every(c => c.disabled)).toBe(true);
+      expect(component.addresses.controls.every(c => c.disabled)).toBe(true);
+      expect(component.secondaryEmails.controls.every(c => c.disabled)).toBe(true);
+      expect(component.links.controls.every(c => c.disabled)).toBe(true);
+      expect(component.profileForm.get('tagSettings')?.disabled).toBe(true);
+    });
+
+    it('should allow enabling controls again on a second edit activation after cancel', () => {
+      // 1. Initial profile loaded with data
+      component.currentUserData = mockUser;
+      component.loadInitialProfile();
+      expect(component.isEditing).toBe(false);
+
+      // 2. First edit activation
+      component.toggleEditMode();
+      expect(component.isEditing).toBe(true);
+      expect(component.profileForm.get('firstName')?.enabled).toBe(true);
+      expect(component.phones.controls.every(c => c.enabled)).toBe(true);
+      expect(component.addresses.controls.every(c => c.enabled)).toBe(true);
+
+      // 3. User cancels
+      component.onCancel();
+      expect(component.isEditing).toBe(false);
+      expect(component.profileForm.get('firstName')?.disabled).toBe(true);
+      expect(component.phones.controls.every(c => c.disabled)).toBe(true);
+      expect(component.addresses.controls.every(c => c.disabled)).toBe(true);
+
+      // 4. Second edit activation (Issue reported: controls must re-enable)
+      component.toggleEditMode();
+      expect(component.isEditing).toBe(true);
+      expect(component.profileForm.get('firstName')?.enabled).toBe(true);
+      expect(component.phones.controls.every(c => c.enabled)).toBe(true);
+      expect(component.addresses.controls.every(c => c.enabled)).toBe(true);
+      expect(component.secondaryEmails.controls.every(c => c.enabled)).toBe(true);
+      expect(component.links.controls.every(c => c.enabled)).toBe(true);
+      expect(component.profileForm.get('tagSettings')?.enabled).toBe(true);
     });
   });
 });

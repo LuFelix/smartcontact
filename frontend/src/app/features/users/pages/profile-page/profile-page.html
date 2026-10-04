@@ -29,17 +29,17 @@
               <mat-icon>edit</mat-icon> Editar Perfil
             </button>
           } @else {
-            <div class="flex gap-2">
-              <button mat-raised-button color="accent" (click)="onSave()" [disabled]="profileForm.invalid || isSaving" class="avatar-action-btn">
+            <div class="edit-actions-group">
+              <button type="button" mat-flat-button color="primary" (click)="onSave()" [disabled]="profileForm.invalid || isSaving" class="avatar-action-btn save-btn">
                 @if (isSaving) {
                   <mat-spinner [diameter]="18"></mat-spinner>
                 } @else {
                   <ng-container>
-                    <mat-icon>save</mat-icon> Salvar Alterações
+                    <mat-icon>save</mat-icon> Salvar
                   </ng-container>
                 }
               </button>
-              <button mat-stroked-button color="warn" (click)="onCancel()" [disabled]="isSaving" class="avatar-action-btn">
+              <button type="button" mat-stroked-button color="warn" (click)="onCancel()" [disabled]="isSaving" class="avatar-action-btn cancel-btn">
                 <mat-icon>cancel</mat-icon> Cancelar
               </button>
             </div>
@@ -47,7 +47,7 @@
         </div>
       </div>
 
-      <form [formGroup]="profileForm" class="config-form" autocomplete="off">
+      <form [formGroup]="profileForm" class="config-form" [class.view-mode]="!isEditing" autocomplete="off">
         <mat-tab-group color="primary">
 
           <!-- TAB 1: GERAL -->
@@ -66,17 +66,17 @@
 
                   <mat-form-field appearance="outline">
                     <mat-label>Nome</mat-label>
-                    <input matInput formControlName="firstName" autocomplete="off" />
+                    <input matInput formControlName="firstName" [disabled]="!isEditing" autocomplete="off" />
                   </mat-form-field>
 
                   <mat-form-field appearance="outline">
                     <mat-label>Sobrenome</mat-label>
-                    <input matInput formControlName="lastName" autocomplete="off" />
+                    <input matInput formControlName="lastName" [disabled]="!isEditing" autocomplete="off" />
                   </mat-form-field>
 
                   <mat-form-field appearance="outline" class="md:col-span-2">
                     <mat-label>CPF</mat-label>
-                    <input matInput formControlName="cpf" mask="000.000.000-00" [dropSpecialCharacters]="true" placeholder="000.000.000-00" autocomplete="off" />
+                    <input matInput formControlName="cpf" mask="000.000.000-00" [dropSpecialCharacters]="true" placeholder="000.000.000-00" [disabled]="!isEditing" autocomplete="off" />
                   </mat-form-field>
 
                   <mat-form-field appearance="outline" class="md:col-span-2">
@@ -110,12 +110,12 @@
                       <div [formGroupName]="$index" class="array-item-row">
                         <mat-form-field appearance="outline" class="flex-grow">
                           <mat-label>Telefone / Celular</mat-label>
-                          <input matInput formControlName="phoneNumber" mask="(00) 00000-0000" [dropSpecialCharacters]="true" placeholder="(00) 00000-0000" autocomplete="off" class="focus-target-phone">
+                          <input matInput formControlName="phoneNumber" mask="(00) 00000-0000" [dropSpecialCharacters]="true" placeholder="(00) 00000-0000" [disabled]="!isEditing" autocomplete="off" class="focus-target-phone">
                         </mat-form-field>
 
                         <div class="item-actions">
                           <div class="toggle-with-label">
-                            <mat-slide-toggle formControlName="isWhatsapp">
+                            <mat-slide-toggle formControlName="isWhatsapp" [disabled]="!isEditing">
                               <mat-icon [color]="phone.get('isWhatsapp')?.value ? 'primary' : 'disabled'" class="whatsapp-status-icon">
                                 {{ phone.get('isWhatsapp')?.value ? 'chat' : 'chat_bubble_outline' }}
                               </mat-icon>
@@ -162,7 +162,7 @@
                       <div [formGroupName]="$index" class="array-item-row">
                         <mat-form-field appearance="outline" class="flex-grow">
                           <mat-label>E-mail Secundário</mat-label>
-                          <input matInput formControlName="address" placeholder="outro@email.com" autocomplete="off" class="focus-target-email">
+                          <input matInput formControlName="address" placeholder="outro@email.com" [disabled]="!isEditing" autocomplete="off" class="focus-target-email">
                         </mat-form-field>
 
                         <div class="item-actions">
@@ -211,7 +211,7 @@
                       <div [formGroupName]="$index" class="address-item-block">
                         <div class="address-header">
                           <mat-form-field appearance="outline" class="tag-select">
-                            <mat-select formControlName="tag">
+                            <mat-select formControlName="tag" [disabled]="!isEditing">
                               @for (tag of addressTags; track tag) {
                                 <mat-option [value]="tag">{{ addressTagLabels[tag] }}</mat-option>
                               }
@@ -239,7 +239,7 @@
                         <div class="address-grid">
                           <mat-form-field appearance="outline">
                             <mat-label>CEP</mat-label>
-                            <input matInput formControlName="zipCode" mask="00000-000" [dropSpecialCharacters]="true" placeholder="00000-000" class="focus-target-address">
+                            <input matInput formControlName="zipCode" mask="00000-000" [dropSpecialCharacters]="true" placeholder="00000-000" [disabled]="!isEditing" class="focus-target-address">
                             @if (isFetchingCep[$index]) {
                               <mat-spinner matSuffix [diameter]="18"></mat-spinner>
                             }
@@ -247,32 +247,32 @@
 
                           <mat-form-field appearance="outline">
                             <mat-label>Nº Residência</mat-label>
-                            <input matInput formControlName="streetNumber" autocomplete="off">
+                            <input matInput formControlName="streetNumber" [disabled]="!isEditing" autocomplete="off">
                           </mat-form-field>
 
                           <mat-form-field appearance="outline" class="col-span-2">
                             <mat-label>Logradouro/Rua</mat-label>
-                            <input matInput formControlName="street" autocomplete="off">
+                            <input matInput formControlName="street" [disabled]="!isEditing" autocomplete="off">
                           </mat-form-field>
 
                           <mat-form-field appearance="outline">
                             <mat-label>Bairro</mat-label>
-                            <input matInput formControlName="neighborhood" autocomplete="off">
+                            <input matInput formControlName="neighborhood" [disabled]="!isEditing" autocomplete="off">
                           </mat-form-field>
 
                           <mat-form-field appearance="outline">
                             <mat-label>Complemento</mat-label>
-                            <input matInput formControlName="complement" autocomplete="off">
+                            <input matInput formControlName="complement" [disabled]="!isEditing" autocomplete="off">
                           </mat-form-field>
 
                           <mat-form-field appearance="outline">
                             <mat-label>Cidade</mat-label>
-                            <input matInput formControlName="city" autocomplete="off">
+                            <input matInput formControlName="city" [disabled]="!isEditing" autocomplete="off">
                           </mat-form-field>
 
                           <mat-form-field appearance="outline">
                             <mat-label>UF</mat-label>
-                            <input matInput formControlName="state" maxlength="2" autocomplete="off">
+                            <input matInput formControlName="state" maxlength="2" [disabled]="!isEditing" autocomplete="off">
                           </mat-form-field>
                         </div>
                       </div>
@@ -305,12 +305,12 @@
                       <div [formGroupName]="$index" class="array-item-row">
                         <mat-form-field appearance="outline" style="width: 150px;">
                           <mat-label>Título</mat-label>
-                          <input matInput formControlName="title" placeholder="Ex: Instagram" class="focus-target-link">
+                          <input matInput formControlName="title" placeholder="Ex: Instagram" [disabled]="!isEditing" class="focus-target-link">
                         </mat-form-field>
 
                         <mat-form-field appearance="outline" class="flex-grow">
                           <mat-label>URL</mat-label>
-                          <input matInput formControlName="url" placeholder="https://...">
+                          <input matInput formControlName="url" placeholder="https://..." [disabled]="!isEditing">
                         </mat-form-field>
 
                         <div class="item-actions">
@@ -349,7 +349,7 @@
                         <h4 class="source-label"><mat-icon>contactless</mat-icon> Destino do Chip NFC</h4>
                         <mat-form-field appearance="outline" class="w-full">
                           <mat-label>Onde o NFC vai abrir?</mat-label>
-                          <mat-select formControlName="nfcRedirectMode">
+                          <mat-select formControlName="nfcRedirectMode" [disabled]="!isEditing">
                             @for (mode of redirectModes; track mode.value) {
                               <mat-option [value]="mode.value">{{ mode.label }}</mat-option>
                             }
@@ -359,7 +359,7 @@
                         @if (profileForm.get('tagSettings.nfcRedirectMode')?.value === 'CUSTOM_URL') {
                           <mat-form-field appearance="outline" class="w-full fade-in">
                             <mat-label>URL Personalizada (NFC)</mat-label>
-                            <input matInput formControlName="nfcCustomUrl" placeholder="https://exemplo.com">
+                            <input matInput formControlName="nfcCustomUrl" placeholder="https://exemplo.com" [disabled]="!isEditing">
                           </mat-form-field>
                         }
                       </div>
@@ -368,7 +368,7 @@
                         <h4 class="source-label"><mat-icon>qr_code_2</mat-icon> Destino do QR Code</h4>
                         <mat-form-field appearance="outline" class="w-full">
                           <mat-label>Onde o QR vai abrir?</mat-label>
-                          <mat-select formControlName="qrRedirectMode">
+                          <mat-select formControlName="qrRedirectMode" [disabled]="!isEditing">
                             @for (mode of redirectModes; track mode.value) {
                               <mat-option [value]="mode.value">{{ mode.label }}</mat-option>
                             }
@@ -378,7 +378,7 @@
                         @if (profileForm.get('tagSettings.qrRedirectMode')?.value === 'CUSTOM_URL') {
                           <mat-form-field appearance="outline" class="w-full fade-in">
                             <mat-label>URL Personalizada (QR)</mat-label>
-                            <input matInput formControlName="qrCustomUrl" placeholder="https://exemplo.com">
+                            <input matInput formControlName="qrCustomUrl" placeholder="https://exemplo.com" [disabled]="!isEditing">
                           </mat-form-field>
                         }
                       </div>
