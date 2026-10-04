@@ -12,6 +12,7 @@ import { TagsService } from 'src/tags/tags.service';
 import { MembershipsService } from '../memberships/memberships.service';
 import { TenantsService } from '../tenants/tenants.service';
 import { Repository } from 'typeorm';
+import type { Mocked } from 'vitest';
 import { BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 
 vi.mock('bcrypt', () => ({
@@ -20,13 +21,13 @@ vi.mock('bcrypt', () => ({
 
 describe('UsersService', () => {
   let service: UsersService;
-  let usersRepository: Repository<User>;
-  let tagRepository: Repository<Tag>;
+  let usersRepository: Mocked<Repository<User>>;
+  let tagRepository: Mocked<Repository<Tag>>;
   let rolesRepository: Repository<Role>;
   let membershipsService: MembershipsService;
   let tenantsService: TenantsService;
   let profilesService: ProfilesService;
-  let tagsService: TagsService;
+  let tagsService: Mocked<TagsService>;
 
   const mockQueryBuilder = {
     leftJoinAndSelect: vi.fn().mockReturnThis(),
@@ -171,13 +172,13 @@ describe('UsersService', () => {
     }).compile();
 
     service = module.get<UsersService>(UsersService);
-    usersRepository = module.get<Repository<User>>(getRepositoryToken(User));
-    tagRepository = module.get<Repository<Tag>>(getRepositoryToken(Tag));
+    usersRepository = module.get<Repository<User>>(getRepositoryToken(User)) as unknown as Mocked<Repository<User>>;
+    tagRepository = module.get<Repository<Tag>>(getRepositoryToken(Tag)) as unknown as Mocked<Repository<Tag>>;
     rolesRepository = module.get<Repository<Role>>(getRepositoryToken(Role));
     membershipsService = module.get<MembershipsService>(MembershipsService);
     tenantsService = module.get<TenantsService>(TenantsService);
     profilesService = module.get<ProfilesService>(ProfilesService);
-    tagsService = module.get<TagsService>(TagsService);
+    tagsService = module.get<TagsService>(TagsService) as unknown as Mocked<TagsService>;
   });
 
   afterEach(() => {
@@ -679,8 +680,8 @@ describe('UsersService', () => {
 
   describe('ensureUserHasDefaultTagForTenant', () => {
     it('should return existing tag if one exists for the tenant', async () => {
-        usersRepository.findOne.mockResolvedValue({ id: 'user-1', ownerId: 'owner-1' });
-        tagRepository.findOne.mockResolvedValue({ id: 'tag-1' });
+        usersRepository.findOne.mockResolvedValue({ id: 'user-1', ownerId: 'owner-1' } as unknown as User);
+        tagRepository.findOne.mockResolvedValue({ id: 'tag-1' } as unknown as Tag);
 
         const result = await service.ensureUserHasDefaultTagForTenant('user-1', 'tenant-1');
         
@@ -689,9 +690,9 @@ describe('UsersService', () => {
     });
 
     it('should create a new tag if none exists for the tenant', async () => {
-        usersRepository.findOne.mockResolvedValue({ id: 'user-1', ownerId: 'owner-1' });
+        usersRepository.findOne.mockResolvedValue({ id: 'user-1', ownerId: 'owner-1' } as unknown as User);
         tagRepository.findOne.mockResolvedValue(null);
-        tagsService.createDefaultTag.mockResolvedValue({ id: 'new-tag' });
+        tagsService.createDefaultTag.mockResolvedValue({ id: 'new-tag' } as unknown as Tag);
 
         const result = await service.ensureUserHasDefaultTagForTenant('user-1', 'tenant-1');
         
