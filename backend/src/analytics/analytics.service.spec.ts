@@ -47,6 +47,10 @@ describe('AnalyticsService', () => {
     expect(summary).toHaveProperty('byCity');
     expect(summary).toHaveProperty('byRegion');
     expect(summary).toHaveProperty('byCountry');
+
+    if (!('byCity' in summary)) {
+      throw new Error('esperava o resumo completo com geodados');
+    }
     expect(summary.byCity).toEqual([{ name: 'Test', count: 10 }]);
   });
 });
