@@ -206,15 +206,19 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   addPhone(phone?: any): void {
-    const phoneGroup = this.fb.group({
+    const phoneGroup = this.createPhoneGroup(phone);
+    this.phones.push(phoneGroup);
+    if (!this.isEditing) phoneGroup.disable();
+    if (!phone) this.focusNewItem('.focus-target-phone');
+  }
+
+  private createPhoneGroup(phone?: any): FormGroup {
+    return this.fb.group({
         id: [phone?.id || null],
         phoneNumber: [phone?.number || '', Validators.required],
         isWhatsapp: [phone?.isWhatsapp ?? false],
         isMain: [phone?.isMain ?? false]
     });
-    this.phones.push(phoneGroup);
-    if (!this.isEditing) phoneGroup.disable();
-    if (!phone) this.focusNewItem('.focus-target-phone');
   }
 
   removePhone(index: number): void {
@@ -222,13 +226,17 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   addSecondaryEmail(email?: any): void {
-    const emailGroup = this.fb.group({
-        id: [email?.id || null],
-        address: [email?.address || '', [Validators.required, Validators.email]]
-    });
+    const emailGroup = this.createSecondaryEmailGroup(email);
     this.secondaryEmails.push(emailGroup);
     if (!this.isEditing) emailGroup.disable();
     if (!email) this.focusNewItem('.focus-target-email');
+  }
+
+  private createSecondaryEmailGroup(email?: any): FormGroup {
+    return this.fb.group({
+        id: [email?.id || null],
+        address: [email?.address || '', [Validators.required, Validators.email]]
+    });
   }
 
   removeSecondaryEmail(index: number): void {
@@ -236,14 +244,18 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   addLink(link?: any): void {
-    const linkGroup = this.fb.group({
+    const linkGroup = this.createLinkGroup(link);
+    this.links.push(linkGroup);
+    if (!this.isEditing) linkGroup.disable();
+    if (!link) this.focusNewItem('.focus-target-link');
+  }
+
+  private createLinkGroup(link?: any): FormGroup {
+    return this.fb.group({
         id: [link?.id || null],
         title: [link?.title || '', Validators.required],
         url: [link?.url || '', [Validators.required, Validators.pattern(/https?:\/\/.+/)]]
     });
-    this.links.push(linkGroup);
-    if (!this.isEditing) linkGroup.disable();
-    if (!link) this.focusNewItem('.focus-target-link');
   }
 
   removeLink(index: number): void {
@@ -251,7 +263,16 @@ export class ProfileComponent implements OnInit, OnDestroy {
   }
 
   addAddress(address?: any): void {
-    const addressGroup = this.fb.group({
+    const addressGroup = this.createAddressGroup(address);
+    const index = this.addresses.length;
+    this.addresses.push(addressGroup);
+    if (!this.isEditing) addressGroup.disable();
+    this.setupAddressCepSubscription(index);
+    if (!address) this.focusNewItem('.focus-target-address');
+  }
+
+  private createAddressGroup(address?: any): FormGroup {
+    return this.fb.group({
         id: [address?.id || null],
         street: [address?.street || '', Validators.required],
         streetNumber: [address?.number || '', Validators.required],
@@ -263,11 +284,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
         tag: [address?.tag || AddressTag.OTHER],
         isMain: [address?.isMain ?? false]
     });
-    const index = this.addresses.length;
-    this.addresses.push(addressGroup);
-    if (!this.isEditing) addressGroup.disable();
-    this.setupAddressCepSubscription(index);
-    if (!address) this.focusNewItem('.focus-target-address');
   }
 
   private focusNewItem(selector: string): void {
@@ -398,6 +414,19 @@ export class ProfileComponent implements OnInit, OnDestroy {
     });
   }
 
+  private syncFormArray(array: FormArray, items: unknown[], factory: (item: any) => FormGroup): void {
+    while (array.length > items.length) {
+      array.removeAt(array.length - 1);
+    }
+    items.forEach((item, index) => {
+      if (index < array.length) {
+        (array.at(index) as FormGroup).patchValue(factory(item).value, { emitEvent: false });
+      } else {
+        array.push(factory(item));
+      }
+    });
+  }
+
   private populateFormWithUserData(userProfile: FullUserResponse): void {
     this.profileForm.patchValue({
       email: userProfile.email,
@@ -427,27 +456,18 @@ export class ProfileComponent implements OnInit, OnDestroy {
       this.needsInitialization = true;
     }
 
-    this.phones.clear();
-    if (userProfile.phones) {
-      const sortedPhones = [...userProfile.phones].sort((a, b) => (b.isMain ? 1 : 0) - (a.isMain ? 1 : 0));
-      sortedPhones.forEach(p => this.addPhone(p));
-    }
+    const sortedPhones = [...(userProfile.phones ?? [])].sort((a, b) => (b.isMain ? 1 : 0) - (a.isMain ? 1 : 0));
+    this.syncFormArray(this.phones, sortedPhones, phone => this.createPhoneGroup(phone));
 
     this.clearCepSubscriptions();
-    this.addresses.clear();
-    if (userProfile.addresses) {
-      userProfile.addresses.forEach(a => this.addAddress(a));
+    this.syncFormArray(this.addresses, userProfile.addresses ?? [], address => this.createAddressGroup(address));
+    for (let index = 0; index < this.addresses.length; index++) {
+      this.setupAddressCepSubscription(index);
     }
 
-    this.secondaryEmails.clear();
-    if (userProfile.secondaryEmails) {
-      userProfile.secondaryEmails.forEach(e => this.addSecondaryEmail(e));
-    }
+    this.syncFormArray(this.secondaryEmails, userProfile.secondaryEmails ?? [], email => this.createSecondaryEmailGroup(email));
 
-    this.links.clear();
-    if (userProfile.links) {
-      userProfile.links.forEach(l => this.addLink(l));
-    }
+    this.syncFormArray(this.links, userProfile.links ?? [], link => this.createLinkGroup(link));
 
     const avatarUrl = userProfile.profile?.profilePictureUrl || userProfile.profilePictureUrl;
     if (avatarUrl && typeof avatarUrl === 'string' && avatarUrl.length > 5) {
