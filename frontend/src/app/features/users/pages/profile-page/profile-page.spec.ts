@@ -255,6 +255,45 @@ describe('ProfileComponent', () => {
     });
   });
 
+  describe('populateFormWithUserData reuses existing controls (#339)', () => {
+    it('keeps the same FormGroup instances after a cancel cycle', () => {
+      component.currentUserData = mockUser;
+      component.loadInitialProfile();
+
+      const phone = component.phones.at(0);
+      const address = component.addresses.at(0);
+      const email = component.secondaryEmails.at(0);
+      const link = component.links.at(0);
+
+      component.toggleEditMode();
+      phone.get('phoneNumber')?.setValue('11900000000', { emitEvent: false });
+      component.onCancel();
+
+      expect(component.phones.at(0)).toBe(phone);
+      expect(component.addresses.at(0)).toBe(address);
+      expect(component.secondaryEmails.at(0)).toBe(email);
+      expect(component.links.at(0)).toBe(link);
+      expect(phone.get('phoneNumber')?.value).toBe('11999999999');
+      expect(phone.disabled).toBe(true);
+    });
+
+    it('trims extra controls on repopulate without replacing the remaining ones', () => {
+      component.currentUserData = mockUser;
+      component.loadInitialProfile();
+
+      component.toggleEditMode();
+      const phone = component.phones.at(0);
+      component.addPhone();
+      expect(component.phones.length).toBe(2);
+
+      component.onCancel();
+
+      expect(component.phones.length).toBe(1);
+      expect(component.phones.at(0)).toBe(phone);
+      expect(phone.get('phoneNumber')?.value).toBe('11999999999');
+    });
+  });
+
   describe('CEP integration', () => {
     it('should query address details on zipCode change', async () => {
       component.isEditing = true;
