@@ -28,6 +28,10 @@ async function visitTab(page: Page, tab: string): Promise<void> {
     strip?.scrollTo({ left: (el as HTMLElement).offsetLeft - 40 });
     (el as HTMLElement).click();
   });
+  await expect.poll(async () => {
+    const selected = await t.getAttribute('aria-selected');
+    return selected === 'true';
+  }, { timeout: 5000, message: `Tab "${tab}" did not become selected` }).toBe(true);
   await page.waitForTimeout(450);
 }
 
@@ -80,6 +84,7 @@ async function expectEditableNamed(page: Page, tab: string, label: string, names
     ).toBe(true);
   }
 }
+
 
 test.describe('Profile — ciclo de edição/cancelamento (#339)', () => {
   test('campos travam e destravam de forma coerente em cada ciclo de edição', async ({ page }) => {
