@@ -60,7 +60,7 @@
                 <mat-card-content class="config-fields">
                   <mat-form-field appearance="outline" class="md:col-span-2">
                     <mat-label>Email de Login (Ativo)</mat-label>
-                    <input matInput formControlName="email" readonly />
+                    <input matInput formControlName="email" [disabled]="true" />
                     <mat-icon matSuffix matTooltip="E-mail principal de acesso (Protegido).">lock</mat-icon>
                   </mat-form-field>
 
@@ -79,12 +79,14 @@
                     <input matInput formControlName="cpf" mask="000.000.000-00" [dropSpecialCharacters]="true" placeholder="000.000.000-00" autocomplete="off" />
                   </mat-form-field>
 
-                  <mat-form-field appearance="outline" class="md:col-span-2">
-                    <mat-label>Seu Username (URL Única)</mat-label>
-                    <input matInput [value]="userUsername()" disabled readonly />
-                    <mat-icon matSuffix matTooltip="Identificador único para link direto.">verified</mat-icon>
-                    <mat-hint>Link direto: {{ currentHost }}/t/{{ activeTag?.handle || userUsername() }}</mat-hint>
-                  </mat-form-field>
+                  <div class="username-display md:col-span-2">
+                    <label class="username-label">Seu Username (URL Única)</label>
+                    <div class="username-value">
+                      <input [value]="userUsername()" disabled readonly />
+                      <mat-icon matTooltip="Identificador único para link direto.">verified</mat-icon>
+                    </div>
+                    <div class="username-hint">Link direto: {{ currentHost }}/t/{{ activeTag?.handle || userUsername() }}</div>
+                  </div>
                 </mat-card-content>
               </mat-card>
             </div>
@@ -212,13 +214,13 @@
                         <div class="address-header">
                           <mat-form-field appearance="outline" class="tag-select">
                             <mat-select formControlName="tag" [disabled]="!isEditing">
+                              @if (addressTags.length > 0) {
                               @for (tag of addressTags; track tag) {
                                 <mat-option [value]="tag">{{ addressTagLabels[tag] }}</mat-option>
                               }
+                            }
                             </mat-select>
                           </mat-form-field>
-
-                          <span class="spacer"></span>
 
                           <button type="button" mat-icon-button
                                   class="icon-align-fix"
