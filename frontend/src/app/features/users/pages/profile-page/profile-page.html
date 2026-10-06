@@ -214,13 +214,13 @@
                         <div class="address-header">
                           <mat-form-field appearance="outline" class="tag-select">
                             <mat-select formControlName="tag" [disabled]="!isEditing">
+                              @if (addressTags.length > 0) {
                               @for (tag of addressTags; track tag) {
                                 <mat-option [value]="tag">{{ addressTagLabels[tag] }}</mat-option>
                               }
+                            }
                             </mat-select>
                           </mat-form-field>
-
-                          <span class="spacer"></span>
 
                           <button type="button" mat-icon-button
                                   class="icon-align-fix"
