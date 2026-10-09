@@ -128,3 +128,6 @@ Desktop.ini
 
 bkp-postgres/
 bkp-postgres/
+
+# Smoke test artifacts (backend/test/smoke)
+backend/test/smoke/reports/
