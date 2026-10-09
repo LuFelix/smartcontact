@@ -23,7 +23,16 @@
 - `GEMINI.md`
 - `plano-<nome-issue>.md` (raiz) — arquivo por issue; somente a própria issue edita o seu
 
-Regras: só adicionar a dependência estritamente necessária ao próprio território; nunca editar scripts/confs de outros pacotes; conflito de lockfile → `git rebase` + reinstalação limpa (`rm -rf node_modules && npm ci`), **nunca** merge manual de `package-lock.json`. Conflito no `GEMINI.md` → `git rebase` reaplicando o bullet do seu milestone, **nunca** merge manual.
+**Pontos de registro/acesso compartilhados** (vários milestones precisam se registrar aqui — só acréscimo aditivo estritamente necessário, uma linha/entrada por issue):
+
+- `backend/src/app.module.ts`, `backend/src/main.ts` (imports, guards, interceptors, providers)
+- `frontend/src/app/app.config.ts`, `frontend/src/app/app.routes.ts` (providers e rotas lazy)
+- `frontend/index.html` (somente meta tags de política — território de uso do M5)
+- `env.example` (somente as variáveis do próprio território)
+- `backend/test/smoke/run-all-smoke-tests.sh` (somente a linha de registro do script do próprio módulo)
+- `backend/test/smoke/**` — cada módulo cria o **seu** `test-<modulo>-api.sh`; o runner é o único arquivo compartilhado
+
+Regras: só adicionar a dependência/registro estritamente necessário ao próprio território; nunca editar scripts/confs de outros pacotes; conflito de lockfile → `git rebase` + reinstalação limpa (`rm -rf node_modules && npm ci`), **nunca** merge manual de `package-lock.json`. Conflito no `GEMINI.md` ou num ponto de registro → `git rebase` reaplicando a sua linha, **nunca** merge manual.
 
 ---
 
@@ -34,6 +43,10 @@ Regras: só adicionar a dependência estritamente necessária ao próprio territ
 | **M0** Supervisão, Governança & Pipeline CI | `.docs/governance/**`, `.github/workflows/**` (exceto `e2e-mobile.yml`), `manual-protocolos.md`, `manual-issues.md`, `issues-*.js` | **Proibido** `frontend/src`, `backend/src`. Herda a #259 (CI de cobertura). |
 | **M1** Testes Visuais Mobile (Playwright) | `frontend/playwright.config.ts`, `frontend/e2e/**`, `shots/**` (gitignored), `.github/workflows/e2e-mobile.yml` | `frontend/package.json` é universal (Seção 2). Specs de regressão criadas pelo M2 entram aqui (§4.2). |
 | **M2** Bugs Visuais & UX Mobile (permanente) | Declarado **por issue** na seção `**Fronteira de arquivos:**` | Cross-cutting: pode tocar qualquer arquivo de produto **desde que** declare a fronteira e comente previamente na issue do milestone dono do território (§4.5). |
+| **M3** Billing & Planos de Cobrança | `backend/src/billing/**`, `backend/migrations/billing/**`, `frontend/src/app/features/billing/**`, `libs/billing-shared/**` | Go-to-Market (#349–#354). Não altera `backend/src/users/**` nem `backend/src/auth/**` — assinatura resolve por tabela própria (`subscription` por `tenant_id`). |
+| **M4** LGPD & Proteção de Dados | `backend/src/lgpd/**`, `backend/migrations/lgpd/**`, `frontend/src/app/features/lgpd/**`, `docs/lgpd/**` + **aditivo** em `frontend/src/app/features/auth/register/**` | (#355–#361). Leitura dos demais módulos **somente via repositórios TypeORM** (sem editar `users`, `auth`, `interaction-logs`). |
+| **M5** Segurança & Pentest | `scripts/security/**`, `backend/src/security/**`, `backend/migrations/security/**`, `.github/dependabot.yml`, `docs/security/**` | (#362–#368). **Proibido** `.github/workflows/**` (M0) — ativação dos scripts é issue M0 com comentário cruzado na #363. `frontend/index.html` só meta de política (§2). |
+| **M6** Core Unification (× mas-ia) | `libs/**` (auth-core, permissions-core, abac-engine, observability-core), `docs/architecture/**` | (#369–#375). Cross-cutting de **criação**: só cria libs/docs. A **adoção** no código de produto acontece via issue do milestone consumidor com fronteira + comentário cruzado (§4.5). |
 | **Agentes do projeto (opencode)** | `.opencode/**` (skills, agents, commands, plugins) | Artefato de agente: segue o protocolo normal de issue/PR, **não** é universal (sem rebase) e não mistura com código de produto numa mesma issue. |
 | **Backlog** | Triagem | Issue só sai daqui **para um milestone** antes de virar trabalho. |
 | *Futuros milestones de produto* | A definir na abertura do milestone | Ex.: `features/users/**`, `features/dashboard/**` — sempre com linha nova nesta tabela. |
@@ -48,6 +61,11 @@ Regras: só adicionar a dependência estritamente necessária ao próprio territ
 4. **`plano-<nome-issue>.md`:** cada issue tem o seu na raiz — zero conflito por construção. Nunca reaproveite o plano de outra issue.
 5. **Bugs visuais são cross-cutting (padrão CODEOWNERS):** não se impede o toque no arquivo, exige-se fronteira declarada + aprovação (comentário) de quem é dono do território. Sem comentário prévio, o PR é bloqueado no checklist (Seção 7).
 6. **Arquivos universais de lockfile** só via rebase (Seção 2).
+7. **M3 × M4 × M5 (produto paralelo):** territórios disjuntos por construção — billing não toca LGPD, LGPD não toca segurança etc. `backend/src/users/**` e `backend/src/auth/**` são **código compartilhado sem dono**: M3 e M4 operam sem alterá-los (M3 = tabelas próprias de assinatura; M4 = leitura via repositórios; consentimento no registro = aditivo §2). Precisou tocar? Declare a fronteira e comente na outra issue antes do PR.
+8. **M5 × M0 (workflows):** o M5 só **entrega** `scripts/security/**` + snippet em `docs/security/`. A ativação em `.github/workflows/**` é issue do **M0**, que comenta na **#363** (BE-SEC-002) — e vice-versa: o M0 não inventa regra de segurança sem a doc do M5.
+9. **M6 × consumidores (adoção):** o M6 **nunca** edita `backend/src/**` nem `frontend/src/**`. A troca de implementação por `@smartcontact/*` é issue do consumidor com `**Fronteira de arquivos:**` + comentário prévio na issue M6 correspondente (padrão §4.5). Bloqueio interno do M6: **#369 (ADR) aprova antes de #371/#373/#374/#370/#375**.
+10. **Dependências de sequência entre issues do mesmo milestone** (billing: #349 → #351/#353 → #350/#352/#354; LGPD: #355/#359 → #356 → #358/#361; segurança: runner do #363 antes do #366) são internas ao milestone — não afetam o paralelismo **entre** milestones.
+11. **Registro em `run-all-smoke-tests.sh`:** linha aditiva por módulo, resolvida por rebase (Seção 2).
 
 ---
 
@@ -57,7 +75,10 @@ Regras: só adicionar a dependência estritamente necessária ao próprio territ
 M0 (governança e CI base, zero choque com produto)
   → M1 (setup de QA visual — desbloqueia a validação das telas)
     → M2 (bugs visuais — primeiro caso: abas da profile-page)
-  → Futuros milestones de produto (um por território declarado)
+  → M3 Billing · M4 LGPD · M5 Segurança · M6 Core Unification
+      (4 tracks PARALELOS — territórios disjuntos Seção 3; precedências internas na Seção 4.7-4.11)
+      M6: #369 (ADR) bloqueia as demais issues do M6
+      M4: #355/#359 (ROPA/docs) antes dos endpoints
 ```
 
 ---
