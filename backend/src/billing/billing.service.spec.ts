@@ -95,7 +95,7 @@ describe('BillingService', () => {
           isActive: true,
           sortOrder: 2,
         },
-      } as Record<string, Plan>;
+      } as unknown as Record<string, Plan>;
 
       mockPlanRepository.findOne.mockImplementation(({ where }) =>
         Promise.resolve(existing[where.code] ?? null),

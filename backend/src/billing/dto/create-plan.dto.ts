@@ -1,6 +1,7 @@
 // billing/dto/create-plan.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  IsBoolean,
   IsEnum,
   IsInt,
   IsNotEmpty,
@@ -97,6 +98,11 @@ export class CreatePlanDto {
   maxLeads?: number | null;
 
   @ApiProperty({ description: 'Plano visível no catálogo', example: true, required: false })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+
+  @ApiProperty({ description: 'Ordem de exibição no catálogo', example: 0, required: false })
   @IsOptional()
   @IsInt()
   sortOrder?: number;
