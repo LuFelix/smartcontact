@@ -2,7 +2,7 @@
 
 Este arquivo é a fonte da verdade para todos os agentes Gemini CLI que atuarem neste repositório. As instruções abaixo têm **precedência absoluta**.
 
-> **⚠️ CONTRATO DE EXECUÇÃO DE MILESTONES (issue #312):** ANTES de iniciar qualquer milestone ou issue de feature, leia `.docs/governance/milestone-file-matrix.md` — matriz de território de arquivos por milestone (M0 Supervisão, M1 Testes Visuais Mobile, M2 Bugs Visuais & UX Mobile), precedências obrigatórias, arquivos universais (`package.json`/lockfiles e este `GEMINI.md` — conflito resolve por `git rebase`, nunca merge manual), seção `**Fronteira de arquivos:**` obrigatória no corpo de toda issue e checklist pré-PR. Ela impede choques de arquivo entre milestones executados por sessões/agentes distintos: **issue de um milestone jamais edita o território de outro milestone.**
+> **⚠️ CONTRATO DE EXECUÇÃO DE MILESTONES (issue #312):** ANTES de iniciar qualquer milestone ou issue de feature, leia `.docs/governance/milestone-file-matrix.md` — matriz de território de arquivos por milestone (M0 Supervisão, M1 Testes Visuais Mobile, M2 Bugs Visuais & UX Mobile, M3 Billing, M4 LGPD, M5 Segurança, M6 Core Unification), precedências obrigatórias, arquivos universais (`package.json`/lockfiles, pontos de registro `app.module.ts`/`main.ts`/`app.config.ts`/`app.routes.ts`/`index.html`/`env.example`/runner de smoke e este `GEMINI.md` — conflito resolve por `git rebase`, nunca merge manual), seção `**Fronteira de arquivos:**` obrigatória no corpo de toda issue e checklist pré-PR. Ela impede choques de arquivo entre milestones executados por sessões/agentes distintos: **issue de um milestone jamais edita o território de outro milestone.**
 
 ## 🎯 1. O que é o Sistema?
 O **SmartContact** resolve a fricção do networking físico através de **Cartões de Visita Digitais Inteligentes**. 
@@ -87,6 +87,10 @@ O sistema opera em um paradigma Multi-Tenant N:N (estilo Google Drive).
 - [x] **PASSO BC (Issue #343):** Botão Cancelar estourando em viewports ≤320px e com fonte ampliada — avatar 56px, padding 4px, botões 44px/12px/0.75rem, flex 1 1 auto + min/max-width 100% + ellipsis; fix Firefox (max-width 100% no container + item); spec `profile-edit-actions-visual.spec.ts` (6 viewports × 2 temas × 2 devices); **fix address tag dropdown**: @if (addressTags.length > 0) wrapper para forçar change detection no @for aninhado; vitest 99/99, e2e 36/36, build OK (PR #346) (OK).
 - [ ] **PRÓXIMOS PASSOS (Backlog Estratégico - Go-to-Market):**
   - Milestones ativos (fronteiras em `.docs/governance/milestone-file-matrix.md`): **M0** Supervisão, Governança & Pipeline CI · **M1** Testes Visuais Mobile (Playwright) · **M2** Bugs Visuais & UX Mobile (permanente)
+  - **M3** Billing & Planos de Cobrança (#349–#354): entidades Plan/Subscription, Stripe/MercadoPago, enforcement de limites, pricing/upsell/uso — **para começar a vender**
+  - **M4** LGPD & Proteção de Dados (#355–#361): ROPA/DPIA, consentimentos, direitos do titular, retenção/expurgo, incidentes, Privacy Center
+  - **M5** Segurança & Pentest (#362–#368): pentest, SAST/DAST, secrets/Dependabot/SBOM, rate limit, audit log, criptografia, headers/CSP
+  - **M6** Core Unification × mas-ia (#369–#375): ADR (#369 bloqueante) → libs `@smartcontact/auth-core`, `permissions-core`, `abac-engine`, `observability-core` → rollout
   - #259: [CI/QA] Pipeline de CI/CD com Barreira de Cobertura Mínima de 95%
   - #169: [BE/FE] Módulo de Gestão Administrativa de Tenants (Workspaces)
   - #220-223: [BE/FE] Motor Dinâmico de Permissões e Roles Customizadas
