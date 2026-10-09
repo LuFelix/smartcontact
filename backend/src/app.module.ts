@@ -17,6 +17,7 @@ import { TagsModule } from './tags/tags.module';
 import { InteractionLogsModule } from './interaction-logs/interaction-logs.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { MembershipsModule } from './memberships/memberships.module';
+import { BillingModule } from './billing/billing.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { MembershipsModule } from './memberships/memberships.module';
     TagsModule,
     InteractionLogsModule,
     AnalyticsModule,
+    BillingModule,
     GlobalJwtModule,
     SeedModule,
   ],
