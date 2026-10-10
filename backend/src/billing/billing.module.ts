@@ -8,9 +8,12 @@ import { Plan } from './entities/plan.entity';
 import { Subscription } from './entities/subscription.entity';
 import { Invoice } from './entities/invoice.entity';
 import { WebhookEvent } from './entities/webhook-event.entity';
+import { Membership } from '../memberships/entities/membership.entity';
+import { Tag } from '../tags/entities/tag.entity';
+import { InteractionLog } from '../interaction-logs/entities/interaction-log.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Plan, Subscription, Invoice, WebhookEvent])],
+  imports: [TypeOrmModule.forFeature([Plan, Subscription, Invoice, WebhookEvent, Membership, Tag, InteractionLog])],
   controllers: [BillingController],
   providers: [BillingService, PaymentGatewayFactory],
   exports: [BillingService, PaymentGatewayFactory],

@@ -66,9 +66,9 @@ record() {
 }
 
 http_request() {
-  # http_request <method> <path> <body> <token>
+  # http_request <method> <path> <body> <token> [tenantId]
   # Seta HTTP_CODE, HTTP_TIME e HTTP_BODY no escopo do chamador (sem subshell).
-  local method="$1" path="$2" body="$3" token="$4"
+  local method="$1" path="$2" body="$3" token="$4" tenantId="${5:-}"
   local out
   local -a args=(-s -o "$REPORT_DIR/.body" -w "%{http_code} %{time_total}" -X "$method" "$BASE_URL$path")
   if [ -n "$body" ]; then
@@ -76,6 +76,9 @@ http_request() {
   fi
   if [ -n "$token" ]; then
     args+=(-H "Authorization: Bearer $token")
+  fi
+  if [ -n "$tenantId" ]; then
+    args+=(-H "X-Tenant-ID: $tenantId")
   fi
   out=$(curl "${args[@]}")
   HTTP_CODE="${out%% *}"
@@ -106,6 +109,13 @@ TOKEN_ADMIN="$(extract_token "$HTTP_BODY")"
 login_code="$HTTP_CODE"
 if [ -z "$TOKEN_ADMIN" ]; then login_code="000"; fi
 record "Login admin (token dinâmico)" "201" "$login_code" "$HTTP_CODE" "$HTTP_TIME"
+
+# Extrair tenantId do token admin (JWT payload)
+TENANT_ID=$(echo "$TOKEN_ADMIN" | cut -d'.' -f2 | base64 -d 2>/dev/null | grep -o '"tenantId":"[^"]*"' | cut -d'"' -f4)
+if [ -z "$TENANT_ID" ]; then
+  # Fallback: usar o tenant conhecido do admin seed
+  TENANT_ID="aebfbdfa-0088-4bf1-9bee-36529cfc3866"
+fi
 
 http_request POST /api/auth/login "{\"identifier\":\"$USER_EMAIL\",\"password\":\"$USER_PASSWORD\"}" ""
 TOKEN_USER="$(extract_token "$HTTP_BODY")"
@@ -193,6 +203,78 @@ http_request GET /api/billing/subscription "" ""
 record "GET /billing/subscription sem token (401)" "401" "$HTTP_CODE" "$HTTP_CODE" "$HTTP_TIME"
 
 # ----------------------------------------------------------------------------
+# 5. ENFORCEMENT DE LIMITES (BE-BILL-003)
+# ----------------------------------------------------------------------------
+cyan "▶ Enforcement de limites (402)"
+
+# Limpar tags existentes do tenant para teste limpo
+cyan "  Limpando tags existentes..."
+for tid in $(curl -s -H "Authorization: Bearer $TOKEN_ADMIN" -H "X-Tenant-ID: $TENANT_ID" "$BASE_URL/api/tags" | grep -o '"id":"[^"]*"' | cut -d'"' -f4); do
+  curl -s -X DELETE -H "Authorization: Bearer $TOKEN_ADMIN" -H "X-Tenant-ID: $TENANT_ID" "$BASE_URL/api/tags/$tid" >/dev/null
+done
+# Aguardar limpeza propagar
+sleep 1
+
+# Verificar se limpeza funcionou
+remaining=$(curl -s -H "Authorization: Bearer $TOKEN_ADMIN" -H "X-Tenant-ID: $TENANT_ID" "$BASE_URL/api/tags" | grep -o '"id":"[^"]*"' | wc -l)
+if [ "$remaining" -gt 0 ]; then
+  cyan "  Aviso: $remaining tags restantes após limpeza"
+fi
+
+# Teste 1: Exceder limite de membros (Free = maxMembers=1)
+# Primeiro cria 1 membro (deve passar), depois tenta criar o 2º (deve falhar 402)
+# Como não temos endpoint fácil de criar membro sem convite complexo, testamos via tags/leads
+
+# Teste 2: Exceder limite de tags (Free = maxTags=5)
+TAG_IDS=()
+for i in 1 2 3 4 5; do
+  http_request POST /api/tags "{\"name\":\"Tag Smoke $i\",\"technologyType\":\"QR_CODE\",\"applicationType\":\"REDIRECT\"}" "$TOKEN_ADMIN" "$TENANT_ID"
+  if [ "$HTTP_CODE" = "201" ]; then
+    tag_id=$(extract_field "$HTTP_BODY" "id")
+    TAG_IDS+=("$tag_id")
+  fi
+done
+record "POST /tags cria 5 tags (limite Free)" "201" "$HTTP_CODE" "$HTTP_CODE" "$HTTP_TIME"
+
+# 6ª tag deve falhar com 402
+http_request POST /api/tags "{\"name\":\"Tag Smoke 6\",\"technologyType\":\"QR_CODE\",\"applicationType\":\"REDIRECT\"}" "$TOKEN_ADMIN" "$TENANT_ID"
+if [ "$HTTP_CODE" = "402" ] && echo "$HTTP_BODY" | grep -q "PLAN_LIMIT_REACHED"; then
+  record "POST /tags excede limite (maxTags=5) => 402 PLAN_LIMIT_REACHED" "402" "402" "$HTTP_CODE" "$HTTP_TIME"
+else
+  record "POST /tags excede limite (maxTags=5) => 402 PLAN_LIMIT_REACHED" "402:PLAN_LIMIT_REACHED" "$HTTP_CODE:$(echo "$HTTP_BODY" | grep -o 'PLAN_LIMIT_REACHED' || echo 'MISSING')" "$HTTP_CODE" "$HTTP_TIME"
+fi
+
+# Limpar tags criadas
+for tid in "${TAG_IDS[@]}"; do
+  http_request DELETE "/api/tags/$tid" "" "$TOKEN_ADMIN" >/dev/null
+done
+
+# Teste 3: Exceder limite de leads (Free = maxLeads=50) - mais difícil de testar sem setup complexo
+# Skip: lead creation requires valid tagId and public endpoint
+
+# Teste 4: Verificar payload do erro 402 tem campos esperados
+http_request POST /api/tags "{\"name\":\"Tag Payload\",\"technologyType\":\"QR_CODE\",\"applicationType\":\"REDIRECT\"}" "$TOKEN_ADMIN" "$TENANT_ID"
+# Criar mais 5 para atingir limite novamente
+for i in 1 2 3 4 5; do
+  http_request POST /api/tags "{\"name\":\"Tag Payload $i\",\"technologyType\":\"QR_CODE\",\"applicationType\":\"REDIRECT\"}" "$TOKEN_ADMIN" "$TENANT_ID" >/dev/null
+done
+http_request POST /api/tags "{\"name\":\"Tag Payload Excesso\",\"technologyType\":\"QR_CODE\",\"applicationType\":\"REDIRECT\"}" "$TOKEN_ADMIN" "$TENANT_ID"
+error_code=$(echo "$HTTP_BODY" | grep -o '"error":"PLAN_LIMIT_REACHED"' || echo "MISSING")
+details_limit=$(echo "$HTTP_BODY" | grep -o '"limit":[0-9]*' || echo "MISSING")
+details_usage=$(echo "$HTTP_BODY" | grep -o '"currentUsage":[0-9]*' || echo "MISSING")
+details_resource=$(echo "$HTTP_BODY" | grep -o '"resource":"tags"' || echo "MISSING")
+upgrade_url=$(echo "$HTTP_BODY" | grep -o '"upgradeUrl":"[^"]*"' || echo "MISSING")
+if [ "$HTTP_CODE" = "402" ] && [ "$error_code" != "MISSING" ] && [ "$details_limit" != "MISSING" ] && [ "$details_usage" != "MISSING" ] && [ "$details_resource" != "MISSING" ] && [ "$upgrade_url" != "MISSING" ]; then
+  record "POST /tags 402 payload completo (error, limit, usage, resource, upgradeUrl)" "402" "402" "$HTTP_CODE" "$HTTP_TIME"
+else
+  record "POST /tags 402 payload completo (error, limit, usage, resource, upgradeUrl)" "402:COMPLETO" "$HTTP_CODE:error=$error_code,limit=$details_limit,usage=$details_usage,resource=$details_resource,upgrade=$upgrade_url" "$HTTP_CODE" "$HTTP_TIME"
+fi
+
+# Limpar
+for tid in $(echo "$HTTP_BODY" | grep -o '"id":"[^"]*"' | cut -d'"' -f4); do
+  http_request DELETE "/api/tags/$tid" "" "$TOKEN_ADMIN" >/dev/null
+done
+
 echo ""
 cyan "────────────────────────────────────────────────────────────"
 if [ "$FAIL_COUNT" -eq 0 ]; then

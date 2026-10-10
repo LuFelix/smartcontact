@@ -7,6 +7,7 @@ import { TeamService } from './team.service';
 import { CreateMemberDto } from './dto/create-member.dto';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { CreateInvitationDto } from './dto/create-invitation.dto';
+import { Limits } from '../billing/decorators/limits.decorator';
 
 @ApiTags('Team Management')
 @ApiBearerAuth()
@@ -17,9 +18,11 @@ export class TeamController {
 
   @Post('members')
   @Roles('administrador')
+  @Limits({ resource: 'members' })
   @ApiOperation({ summary: 'Convidar um novo membro para a equipe (Workspace)' })
   @ApiBody({ type: CreateMemberDto })
   @ApiResponse({ status: 201, description: 'Membro convidado com sucesso' })
+  @ApiResponse({ status: 402, description: 'Limite de membros do plano atingido' })
   async addMember(@Body() createMemberDto: CreateMemberDto, @GetUser() currentUser: any) {
     return this.teamService.addMember(createMemberDto, currentUser);
   }

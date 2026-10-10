@@ -9,6 +9,7 @@ import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
 import { Request } from 'express';
+import { Limits } from '../billing/decorators/limits.decorator';
 
 @ApiTags('Tags')
 @Controller('tags')
@@ -39,9 +40,11 @@ export class TagsController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('administrador', 'owner')
+  @Limits({ resource: 'tags' })
   @Post()
   @ApiOperation({ summary: 'Cadastra uma nova tag no estoque do Workspace (Apenas Admin)' })
   @ApiBody({ type: CreateTagDto })
+  @ApiResponse({ status: 402, description: 'Limite de tags do plano atingido' })
   async create(
       @Body() createTagDto: CreateTagDto,
       @GetUser() currentUser: any,
