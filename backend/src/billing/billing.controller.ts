@@ -1,0 +1,115 @@
+// billing/billing.controller.ts
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { GetUser } from 'src/auth/decorators/get-user.decorator';
+import { BillingService } from './billing.service';
+import { CreatePlanDto } from './dto/create-plan.dto';
+import { UpdatePlanDto } from './dto/update-plan.dto';
+import { Plan } from './entities/plan.entity';
+import { Subscription } from './entities/subscription.entity';
+
+@ApiTags('Billing')
+@ApiBearerAuth()
+@UseGuards(AuthGuard('jwt'), RolesGuard)
+@Controller('billing')
+export class BillingController {
+  constructor(private readonly billingService: BillingService) {}
+
+  @Post('plans')
+  @Roles('administrador')
+  @ApiOperation({ summary: 'Cria um plano no catálogo global' })
+  @ApiResponse({ status: 201, description: 'Plano criado', type: Plan })
+  async createPlan(@Body() createPlanDto: CreatePlanDto): Promise<Plan> {
+    return this.billingService.createPlan(createPlanDto);
+  }
+
+  @Get('plans')
+  @ApiOperation({ summary: 'Lista os planos do catálogo (ordem de exibição)' })
+  @ApiResponse({ status: 200, description: 'Planos listados', type: [Plan] })
+  async findAllPlans(): Promise<Plan[]> {
+    return this.billingService.findAllPlans();
+  }
+
+  @Get('plans/:id')
+  @ApiOperation({ summary: 'Detalha um plano pelo id' })
+  @ApiParam({ name: 'id', type: String })
+  @ApiResponse({ status: 200, description: 'Plano encontrado', type: Plan })
+  @ApiResponse({ status: 404, description: 'Plano não encontrado' })
+  async findOnePlan(@Param('id', ParseUUIDPipe) id: string): Promise<Plan> {
+    return this.billingService.findOnePlan(id);
+  }
+
+  @Patch('plans/:id')
+  @Roles('administrador')
+  @ApiOperation({ summary: 'Atualiza um plano do catálogo' })
+  @ApiParam({ name: 'id', type: String })
+  @ApiResponse({ status: 200, description: 'Plano atualizado', type: Plan })
+  @ApiResponse({ status: 404, description: 'Plano não encontrado' })
+  async updatePlan(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updatePlanDto: UpdatePlanDto,
+  ): Promise<Plan> {
+    return this.billingService.updatePlan(id, updatePlanDto);
+  }
+
+  @Delete('plans/:id')
+  @Roles('administrador')
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Desativa um plano (soft delete — FK protegida)' })
+  @ApiParam({ name: 'id', type: String })
+  @ApiResponse({ status: 204, description: 'Plano desativado' })
+  @ApiResponse({ status: 404, description: 'Plano não encontrado' })
+  async removePlan(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+    return this.billingService.removePlan(id);
+  }
+
+  @Get('subscription')
+  @ApiOperation({
+    summary:
+      'Assinatura e plano EFETIVO do tenant do contexto (X-Tenant-ID). Sem subscription = Free.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Assinatura (ou null) e plano efetivo do tenant',
+    schema: {
+      example: {
+        subscription: null,
+        plan: {
+          code: 'free',
+          name: 'Free',
+          maxMembers: 1,
+          maxTags: 5,
+          maxLeads: 50,
+        },
+      },
+    },
+  })
+  async findEffectiveSubscription(
+    @GetUser() currentUser: any,
+  ): Promise<{ subscription: Subscription | null; plan: Plan }> {
+    const { plan, subscription } = await this.billingService.getEffectivePlan(
+      currentUser.tenantId,
+    );
+    return { subscription, plan };
+  }
+}
