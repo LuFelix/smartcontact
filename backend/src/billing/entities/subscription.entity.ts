@@ -55,6 +55,24 @@ export class Subscription {
   @Column({ type: 'varchar', length: 120, name: 'external_id', nullable: true })
   externalId!: string | null;
 
+  /**
+   * ID do cliente no gateway (Stripe customer ID, MercadoPago payer ID).
+   */
+  @Column({ type: 'varchar', length: 120, name: 'provider_customer_id', nullable: true })
+  providerCustomerId!: string | null;
+
+  /**
+   * ID da assinatura no gateway (Stripe subscription ID, MercadoPago preapproval ID).
+   */
+  @Column({ type: 'varchar', length: 120, name: 'provider_subscription_id', nullable: true })
+  providerSubscriptionId!: string | null;
+
+  /**
+   * Data de cancelamento da assinatura.
+   */
+  @Column({ type: 'timestamp', name: 'canceled_at', nullable: true })
+  canceledAt!: Date | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

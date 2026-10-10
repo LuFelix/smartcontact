@@ -3,9 +3,14 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Raw body para webhooks (Stripe/MP precisam do body bruto para verificação de assinatura)
+  app.use('/api/billing/webhook/stripe', express.raw({ type: 'application/json' }));
+  app.use('/api/billing/webhook/mercadopago', express.raw({ type: 'application/json' }));
 
   // Habilita 'trust proxy' para capturar o IP real do cliente atrás do Nginx/Traefik
   const httpAdapter = app.getHttpAdapter();

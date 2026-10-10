@@ -5,7 +5,10 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { BillingService } from './billing.service';
 import { Plan } from './entities/plan.entity';
 import { Subscription } from './entities/subscription.entity';
+import { Invoice } from './entities/invoice.entity';
+import { WebhookEvent } from './entities/webhook-event.entity';
 import { BillingInterval, SubscriptionStatus, DEFAULT_PLAN_CODES } from './billing.constants';
+import { PaymentGatewayFactory } from './gateways/payment-gateway.factory';
 
 describe('BillingService', () => {
   let service: BillingService;
@@ -21,6 +24,22 @@ describe('BillingService', () => {
   const mockSubscriptionRepository = {
     findOne: vi.fn(),
     save: vi.fn(),
+    create: vi.fn(),
+  };
+
+  const mockInvoiceRepository = {
+    findOne: vi.fn(),
+    save: vi.fn(),
+    create: vi.fn(),
+  };
+
+  const mockWebhookEventRepository = {
+    findOne: vi.fn(),
+    save: vi.fn(),
+    create: vi.fn(),
+  };
+
+  const mockGatewayFactory = {
     create: vi.fn(),
   };
 
@@ -56,12 +75,24 @@ describe('BillingService', () => {
     mockPlanRepository.save.mockImplementation((entity) => Promise.resolve(entity));
     mockSubscriptionRepository.create.mockImplementation((dto) => ({ ...dto }));
     mockSubscriptionRepository.save.mockImplementation((entity) => Promise.resolve(entity));
+    mockInvoiceRepository.create.mockImplementation((dto) => ({ ...dto }));
+    mockInvoiceRepository.save.mockImplementation((entity) => Promise.resolve(entity));
+    mockWebhookEventRepository.create.mockImplementation((dto) => ({ ...dto }));
+    mockWebhookEventRepository.save.mockImplementation((entity) => Promise.resolve(entity));
+    mockGatewayFactory.create.mockReturnValue({
+      createCheckoutSession: vi.fn().mockResolvedValue({ sessionId: 'cs_test', checkoutUrl: 'https://checkout.stripe.com/test' }),
+      createPortalSession: vi.fn().mockResolvedValue({ portalUrl: 'https://billing.stripe.com/test' }),
+      verifyWebhookSignature: vi.fn().mockResolvedValue({ provider: 'stripe', eventId: 'evt_test', eventType: 'test', payload: {} }),
+    });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BillingService,
         { provide: getRepositoryToken(Plan), useValue: mockPlanRepository },
         { provide: getRepositoryToken(Subscription), useValue: mockSubscriptionRepository },
+        { provide: getRepositoryToken(Invoice), useValue: mockInvoiceRepository },
+        { provide: getRepositoryToken(WebhookEvent), useValue: mockWebhookEventRepository },
+        { provide: PaymentGatewayFactory, useValue: mockGatewayFactory },
       ],
     }).compile();
 
