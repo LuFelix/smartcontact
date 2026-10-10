@@ -1,5 +1,6 @@
 // billing/billing.controller.ts
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -9,11 +10,14 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  RawBodyRequest,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiOperation,
   ApiParam,
   ApiResponse,
@@ -25,6 +29,8 @@ import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { BillingService } from './billing.service';
 import { CreatePlanDto } from './dto/create-plan.dto';
 import { UpdatePlanDto } from './dto/update-plan.dto';
+import { CreateCheckoutDto } from './dto/create-checkout.dto';
+import { CreatePortalDto } from './dto/create-portal.dto';
 import { Plan } from './entities/plan.entity';
 import { Subscription } from './entities/subscription.entity';
 
@@ -111,5 +117,59 @@ export class BillingController {
       currentUser.tenantId,
     );
     return { subscription, plan };
+  }
+
+  @Post('checkout')
+  @Roles('administrador')
+  @ApiOperation({ summary: 'Cria sessão de checkout para assinatura do tenant' })
+  @ApiResponse({ status: 201, description: 'Sessão de checkout criada', schema: { example: { sessionId: 'cs_test_...', checkoutUrl: 'https://checkout.stripe.com/...', expiresAt: '2024-01-01T00:00:00.000Z' } } })
+  async createCheckout(
+    @GetUser() currentUser: any,
+    @Body() dto: CreateCheckoutDto,
+  ): Promise<{ sessionId: string; checkoutUrl: string; expiresAt?: Date }> {
+    return this.billingService.createCheckoutSession(currentUser.tenantId, currentUser.email, dto);
+  }
+
+  @Post('portal')
+  @Roles('administrador')
+  @ApiOperation({ summary: 'Cria sessão do portal do cliente para gerenciar assinatura' })
+  @ApiResponse({ status: 201, description: 'Sessão do portal criada', schema: { example: { portalUrl: 'https://billing.stripe.com/...' } } })
+  async createPortal(
+    @GetUser() currentUser: any,
+    @Body() dto: CreatePortalDto,
+  ): Promise<{ portalUrl: string }> {
+    return this.billingService.createPortalSession(currentUser.tenantId, dto);
+  }
+
+  @Post('webhook/stripe')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Webhook do Stripe (sem auth — validação por assinatura)' })
+  @ApiBody({ schema: { type: 'object', description: 'Payload bruto do Stripe' } })
+  async stripeWebhook(
+    @Req() req: RawBodyRequest<Request>,
+  ): Promise<{ received: boolean }> {
+    const signature = req.headers['stripe-signature'] as string;
+    const rawBody = req.rawBody as string | Buffer;
+    if (!rawBody) {
+      throw new BadRequestException('Raw body não disponível para verificação de assinatura');
+    }
+    await this.billingService.handleStripeWebhook(rawBody, signature);
+    return { received: true };
+  }
+
+  @Post('webhook/mercadopago')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Webhook do MercadoPago (sem auth — validação por assinatura)' })
+  @ApiBody({ schema: { type: 'object', description: 'Payload bruto do MercadoPago' } })
+  async mercadoPagoWebhook(
+    @Req() req: RawBodyRequest<Request>,
+  ): Promise<{ received: boolean }> {
+    const signature = req.headers['x-signature'] as string;
+    const rawBody = req.rawBody as string | Buffer;
+    if (!rawBody) {
+      throw new BadRequestException('Raw body não disponível para verificação de assinatura');
+    }
+    await this.billingService.handleMercadoPagoWebhook(rawBody, signature);
+    return { received: true };
   }
 }
