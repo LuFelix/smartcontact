@@ -13,6 +13,9 @@ import { Plan } from './entities/plan.entity';
 import { Subscription } from './entities/subscription.entity';
 import { Invoice } from './entities/invoice.entity';
 import { WebhookEvent } from './entities/webhook-event.entity';
+import { Membership } from '../memberships/entities/membership.entity';
+import { Tag } from '../tags/entities/tag.entity';
+import { InteractionLog } from '../interaction-logs/entities/interaction-log.entity';
 import { CreatePlanDto } from './dto/create-plan.dto';
 import { UpdatePlanDto } from './dto/update-plan.dto';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
@@ -88,6 +91,12 @@ export class BillingService implements OnModuleInit {
     private readonly invoiceRepository: Repository<Invoice>,
     @InjectRepository(WebhookEvent)
     private readonly webhookEventRepository: Repository<WebhookEvent>,
+    @InjectRepository(Membership)
+    private readonly membershipRepository: Repository<Membership>,
+    @InjectRepository(Tag)
+    private readonly tagRepository: Repository<Tag>,
+    @InjectRepository(InteractionLog)
+    private readonly interactionLogRepository: Repository<InteractionLog>,
     private readonly gatewayFactory: PaymentGatewayFactory,
   ) {}
 
@@ -435,5 +444,24 @@ export class BillingService implements OnModuleInit {
 
   private hashPayload(payload: string | Buffer): string {
     return crypto.createHash('sha256').update(payload).digest('hex');
+  }
+
+  async countResourceUsage(tenantId: string, resource: 'members' | 'tags' | 'leads'): Promise<number> {
+    switch (resource) {
+      case 'members':
+        return this.membershipRepository.count({
+          where: { tenantId },
+        });
+      case 'tags':
+        return this.tagRepository.count({
+          where: { tenantId, isResource: true },
+        });
+      case 'leads':
+        return this.interactionLogRepository.count({
+          where: { tenantId },
+        });
+      default:
+        return 0;
+    }
   }
 }

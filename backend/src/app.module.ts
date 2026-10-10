@@ -1,5 +1,6 @@
 // app.module.ts
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -18,6 +19,7 @@ import { InteractionLogsModule } from './interaction-logs/interaction-logs.modul
 import { AnalyticsModule } from './analytics/analytics.module';
 import { MembershipsModule } from './memberships/memberships.module';
 import { BillingModule } from './billing/billing.module';
+import { LimitsGuard } from './billing/guards/limits.guard';
 
 @Module({
   imports: [
@@ -69,6 +71,9 @@ import { BillingModule } from './billing/billing.module';
     SeedModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: APP_GUARD, useClass: LimitsGuard },
+  ],
 })
 export class AppModule {}

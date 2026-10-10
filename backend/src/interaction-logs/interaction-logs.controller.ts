@@ -1,10 +1,11 @@
 import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { InteractionLogsService } from './interaction-logs.service';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { Request } from 'express';
+import { Limits } from '../billing/decorators/limits.decorator';
 
 @ApiTags('Interaction Logs')
 @Controller('interaction-logs')
@@ -13,7 +14,9 @@ export class InteractionLogsController {
 
   @Public()
   @Post('capture-lead/:tagId')
+  @Limits({ resource: 'leads' })
   @ApiOperation({ summary: 'Captura dados de um lead vindo de uma tag NFC' })
+  @ApiResponse({ status: 402, description: 'Limite de leads do plano atingido' })
   async captureLead(
     @Body() leadData: { name: string, email: string, phone?: string, note?: string },
     @Req() req: Request,

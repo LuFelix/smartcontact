@@ -7,6 +7,9 @@ import { Plan } from './entities/plan.entity';
 import { Subscription } from './entities/subscription.entity';
 import { Invoice } from './entities/invoice.entity';
 import { WebhookEvent } from './entities/webhook-event.entity';
+import { Membership } from '../memberships/entities/membership.entity';
+import { Tag } from '../tags/entities/tag.entity';
+import { InteractionLog } from '../interaction-logs/entities/interaction-log.entity';
 import { BillingInterval, SubscriptionStatus, DEFAULT_PLAN_CODES } from './billing.constants';
 import { PaymentGatewayFactory } from './gateways/payment-gateway.factory';
 
@@ -37,6 +40,18 @@ describe('BillingService', () => {
     findOne: vi.fn(),
     save: vi.fn(),
     create: vi.fn(),
+  };
+
+  const mockMembershipRepository = {
+    count: vi.fn(),
+  };
+
+  const mockTagRepository = {
+    count: vi.fn(),
+  };
+
+  const mockInteractionLogRepository = {
+    count: vi.fn(),
   };
 
   const mockGatewayFactory = {
@@ -79,6 +94,9 @@ describe('BillingService', () => {
     mockInvoiceRepository.save.mockImplementation((entity) => Promise.resolve(entity));
     mockWebhookEventRepository.create.mockImplementation((dto) => ({ ...dto }));
     mockWebhookEventRepository.save.mockImplementation((entity) => Promise.resolve(entity));
+    mockMembershipRepository.count.mockResolvedValue(0);
+    mockTagRepository.count.mockResolvedValue(0);
+    mockInteractionLogRepository.count.mockResolvedValue(0);
     mockGatewayFactory.create.mockReturnValue({
       createCheckoutSession: vi.fn().mockResolvedValue({ sessionId: 'cs_test', checkoutUrl: 'https://checkout.stripe.com/test' }),
       createPortalSession: vi.fn().mockResolvedValue({ portalUrl: 'https://billing.stripe.com/test' }),
@@ -92,6 +110,9 @@ describe('BillingService', () => {
         { provide: getRepositoryToken(Subscription), useValue: mockSubscriptionRepository },
         { provide: getRepositoryToken(Invoice), useValue: mockInvoiceRepository },
         { provide: getRepositoryToken(WebhookEvent), useValue: mockWebhookEventRepository },
+        { provide: getRepositoryToken(Membership), useValue: mockMembershipRepository },
+        { provide: getRepositoryToken(Tag), useValue: mockTagRepository },
+        { provide: getRepositoryToken(InteractionLog), useValue: mockInteractionLogRepository },
         { provide: PaymentGatewayFactory, useValue: mockGatewayFactory },
       ],
     }).compile();
